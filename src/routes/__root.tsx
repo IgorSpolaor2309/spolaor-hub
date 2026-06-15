@@ -81,9 +81,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Central operacional interna da Spolaor Company. Gestão de clientes, documentos e pendências em um só lugar." },
       { name: "author", content: "Spolaor Company" },
       { property: "og:title", content: "SC Central — Spolaor Company" },
-      { property: "og:description", content: "Central operacional interna da Spolaor Company." },
+      { property: "og:description", content: "Central operacional interna da Spolaor Company. Gestão de clientes, documentos e pendências em um só lugar." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "SC Central — Spolaor Company" },
+      { name: "twitter:description", content: "Central operacional interna da Spolaor Company. Gestão de clientes, documentos e pendências em um só lugar." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/kzSU1V3yhYdBIDHVGkzjHYhRKKO2/social-images/social-1781545968206-Logo_Company.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/kzSU1V3yhYdBIDHVGkzjHYhRKKO2/social-images/social-1781545968206-Logo_Company.webp" },
     ],
     links: [
       {
