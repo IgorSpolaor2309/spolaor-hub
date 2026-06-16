@@ -18,8 +18,9 @@ import { toast } from "sonner";
 
 import { useCurrentUser } from "@/hooks/use-current-user";
 import {
-  TASK_STATUSES, TASK_PRIORITIES, DOC_TYPES, DOC_STATUSES, INTERACTION_TYPES, labelOf,
+  TASK_STATUSES, TASK_PRIORITIES, DOC_TYPES, DOC_STATUSES, INTERACTION_TYPES, CLIENT_TYPES, labelOf,
 } from "@/lib/sc-types";
+
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
