@@ -12,11 +12,12 @@ import { Loader2 } from "lucide-react";
 export const Route = createFileRoute("/auth")({
   ssr: false,
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (data.user) throw redirect({ to: "/" });
+    const { data } = await supabase.auth.getSession();
+    if (data.session) throw redirect({ to: "/" });
   },
   component: AuthPage,
 });
+
 
 function AuthPage() {
   const navigate = useNavigate();
