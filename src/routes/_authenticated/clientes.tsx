@@ -86,6 +86,7 @@ function ClientsPage() {
                   <th className="py-2 pr-4">Documento</th>
                   <th className="py-2 pr-4">Entrada</th>
                   <th className="py-2 pr-4">Status</th>
+                  {role === "admin" && <th className="w-10"></th>}
                 </tr>
               </thead>
               <tbody>
@@ -101,6 +102,13 @@ function ClientsPage() {
                     <td className="py-3 pr-4 font-mono text-xs">{c.documento ?? "—"}</td>
                     <td className="py-3 pr-4">{c.data_entrada ? new Date(c.data_entrada).toLocaleDateString("pt-BR") : "—"}</td>
                     <td className="py-3 pr-4"><StatusBadge value={c.status} /></td>
+                    {role === "admin" && (
+                      <td>
+                        <Button variant="ghost" size="icon" aria-label="Editar" onClick={() => setEditing(c)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -108,6 +116,19 @@ function ClientsPage() {
           </div>
         )}
       </Card>
+
+      {editing && (
+        <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
+          <EditClientDialog
+            client={editing}
+            onDone={() => {
+              setEditing(null);
+              qc.invalidateQueries({ queryKey: ["clients"] });
+            }}
+          />
+        </Dialog>
+      )}
+
     </div>
   );
 }
