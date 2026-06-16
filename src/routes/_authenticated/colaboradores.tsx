@@ -284,7 +284,9 @@ function CollaboratorDialog({
             Este colaborador já possui conta de acesso vinculada. O perfil de acesso é gerenciado em Configurações.
           </p>
         )}
+        {editing && <CollaboratorClientsSection collaboratorId={editing.id} />}
       </div>
+
       <DialogFooter>
         <Button disabled={mut.isPending} onClick={() => mut.mutate()}>
           {mut.isPending ? "Salvando…" : "Salvar"}
