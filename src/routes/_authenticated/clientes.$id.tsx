@@ -82,8 +82,23 @@ function ClientDetail() {
       <PageHeader
         title={client.razao_social}
         description={client.nome_fantasia ?? ""}
-        action={<StatusBadge value={client.status} />}
+        action={
+          <div className="flex items-center gap-2">
+            <StatusBadge value={client.status} />
+            {role === "admin" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.dispatchEvent(new CustomEvent("sc:edit-client", { detail: client }))}
+              >
+                <Pencil className="mr-2 h-4 w-4" /> Editar cliente
+              </Button>
+            )}
+          </div>
+        }
       />
+      {role === "admin" && <EditClientInline client={client} onSaved={() => qc.invalidateQueries({ queryKey: ["client", id] })} />}
+
 
       <div className="mb-6 grid gap-4 lg:grid-cols-4">
         <Card className="p-4"><div className="text-xs uppercase text-muted-foreground">Documento</div><div className="mt-1 font-mono text-sm">{client.documento ?? "—"}</div></Card>
