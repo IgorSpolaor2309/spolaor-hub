@@ -565,3 +565,210 @@ function EditClientDialogInline({ client, onDone }: { client: any; onDone: () =>
     </DialogContent>
   );
 }
+
+/* ---------- Dados fiscais ---------- */
+const REGIMES = [
+  { value: "simples_nacional", label: "Simples Nacional" },
+  { value: "lucro_presumido", label: "Lucro Presumido" },
+  { value: "lucro_real", label: "Lucro Real" },
+  { value: "mei", label: "MEI" },
+  { value: "pessoa_fisica", label: "Pessoa Física" },
+  { value: "outro", label: "Outro" },
+];
+const TIPOS_EMPRESA = [
+  { value: "me", label: "ME" },
+  { value: "epp", label: "EPP" },
+  { value: "ltda", label: "LTDA" },
+  { value: "slu", label: "SLU" },
+  { value: "sa", label: "S/A" },
+  { value: "mei", label: "MEI" },
+  { value: "pessoa_fisica", label: "Pessoa Física" },
+  { value: "outro", label: "Outro" },
+];
+const UFS = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
+
+function FiscalSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-md border border-border bg-card p-4">
+      <div className="mb-3 border-l-4 border-secondary pl-2 text-sm font-semibold uppercase tracking-wide text-primary">
+        {title}
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">{children}</div>
+    </div>
+  );
+}
+
+function FiscalTab({ clientId, canEdit, isAdmin }: { clientId: string; canEdit: boolean; isAdmin: boolean }) {
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["client-fiscal", clientId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("client_fiscal_data")
+        .select("*")
+        .eq("client_id", clientId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const empty = {
+    regime_tributario: "", tipo_empresa: "", cnae_principal: "", cnaes_secundarios: "",
+    inscricao_municipal: "", inscricao_estadual: "", municipio: "", uf: "",
+    responsavel_legal: "", socios: "",
+    possui_certificado_digital: null as boolean | null,
+    validade_certificado_digital: "", prefeitura_sistema: "",
+    observacoes_fiscais: "", observacoes_contabeis: "", observacoes_dp: "", observacoes_internas: "",
+    omie_cliente_id: "", omie_sync_status: "", omie_sync_error: "",
+  };
+  const [form, setForm] = useState<any>(empty);
+  const [hydrated, setHydrated] = useState(false);
+
+  if (data && !hydrated) {
+    setForm({ ...empty, ...Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v ?? (typeof empty[k as keyof typeof empty] === "boolean" ? null : "")])) });
+    setHydrated(true);
+  }
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const payload: any = {
+        client_id: clientId,
+        regime_tributario: form.regime_tributario || null,
+        tipo_empresa: form.tipo_empresa || null,
+        cnae_principal: form.cnae_principal || null,
+        cnaes_secundarios: form.cnaes_secundarios || null,
+        inscricao_municipal: form.inscricao_municipal || null,
+        inscricao_estadual: form.inscricao_estadual || null,
+        municipio: form.municipio || null,
+        uf: form.uf || null,
+        responsavel_legal: form.responsavel_legal || null,
+        socios: form.socios || null,
+        possui_certificado_digital: form.possui_certificado_digital,
+        validade_certificado_digital: form.validade_certificado_digital || null,
+        prefeitura_sistema: form.prefeitura_sistema || null,
+        observacoes_fiscais: form.observacoes_fiscais || null,
+        observacoes_contabeis: form.observacoes_contabeis || null,
+        observacoes_dp: form.observacoes_dp || null,
+        observacoes_internas: form.observacoes_internas || null,
+      };
+      if (isAdmin) {
+        payload.omie_cliente_id = form.omie_cliente_id || null;
+      }
+      const { error } = await supabase
+        .from("client_fiscal_data")
+        .upsert(payload, { onConflict: "client_id" });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Dados fiscais salvos.");
+      qc.invalidateQueries({ queryKey: ["client-fiscal", clientId] });
+    },
+    onError: (e: any) =>
+      toast.error(
+        /row-level security|permission/i.test(e?.message ?? "")
+          ? "Você não tem permissão para editar os dados fiscais deste cliente."
+          : (e?.message ?? "Não foi possível salvar os dados fiscais."),
+      ),
+  });
+
+  if (isLoading) return <Card className="p-5 text-sm text-muted-foreground">Carregando dados fiscais…</Card>;
+
+  const disabled = !canEdit;
+  const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
+
+  return (
+    <div className="space-y-4">
+      <FiscalSection title="Dados tributários">
+        <div className="space-y-1.5">
+          <Label>Regime tributário</Label>
+          <Select value={form.regime_tributario || undefined} onValueChange={(v) => set("regime_tributario", v)} disabled={disabled}>
+            <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+            <SelectContent>{REGIMES.map((r) => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label>Tipo de empresa</Label>
+          <Select value={form.tipo_empresa || undefined} onValueChange={(v) => set("tipo_empresa", v)} disabled={disabled}>
+            <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+            <SelectContent>{TIPOS_EMPRESA.map((r) => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label>CNAE principal</Label>
+          <Input value={form.cnae_principal} onChange={(e) => set("cnae_principal", e.target.value)} disabled={disabled} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>CNAEs secundários</Label>
+          <Input value={form.cnaes_secundarios} onChange={(e) => set("cnaes_secundarios", e.target.value)} placeholder="Separe por vírgula" disabled={disabled} />
+        </div>
+      </FiscalSection>
+
+      <FiscalSection title="Inscrições e localização">
+        <div className="space-y-1.5"><Label>Inscrição municipal</Label><Input value={form.inscricao_municipal} onChange={(e) => set("inscricao_municipal", e.target.value)} disabled={disabled} /></div>
+        <div className="space-y-1.5"><Label>Inscrição estadual</Label><Input value={form.inscricao_estadual} onChange={(e) => set("inscricao_estadual", e.target.value)} disabled={disabled} /></div>
+        <div className="space-y-1.5"><Label>Município de atuação principal</Label><Input value={form.municipio} onChange={(e) => set("municipio", e.target.value)} disabled={disabled} /></div>
+        <div className="space-y-1.5">
+          <Label>UF</Label>
+          <Select value={form.uf || undefined} onValueChange={(v) => set("uf", v)} disabled={disabled}>
+            <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+            <SelectContent>{UFS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+      </FiscalSection>
+
+      <FiscalSection title="Responsáveis">
+        <div className="space-y-1.5"><Label>Responsável legal</Label><Input value={form.responsavel_legal} onChange={(e) => set("responsavel_legal", e.target.value)} disabled={disabled} /></div>
+        <div className="space-y-1.5 sm:col-span-2"><Label>Sócios / responsáveis</Label><Textarea rows={3} value={form.socios} onChange={(e) => set("socios", e.target.value)} placeholder="Um por linha" disabled={disabled} /></div>
+      </FiscalSection>
+
+      <FiscalSection title="Certificado digital">
+        <div className="space-y-1.5">
+          <Label>Possui certificado digital?</Label>
+          <Select
+            value={form.possui_certificado_digital === null || form.possui_certificado_digital === undefined ? undefined : String(form.possui_certificado_digital)}
+            onValueChange={(v) => set("possui_certificado_digital", v === "true")}
+            disabled={disabled}
+          >
+            <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="true">Sim</SelectItem>
+              <SelectItem value="false">Não</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5"><Label>Validade do certificado</Label><Input type="date" value={form.validade_certificado_digital ?? ""} onChange={(e) => set("validade_certificado_digital", e.target.value)} disabled={disabled} /></div>
+        <div className="space-y-1.5 sm:col-span-2"><Label>Prefeitura vinculada / sistema municipal</Label><Input value={form.prefeitura_sistema} onChange={(e) => set("prefeitura_sistema", e.target.value)} disabled={disabled} /></div>
+      </FiscalSection>
+
+      <FiscalSection title="Observações internas">
+        <div className="space-y-1.5 sm:col-span-2"><Label>Observações fiscais</Label><Textarea rows={3} value={form.observacoes_fiscais} onChange={(e) => set("observacoes_fiscais", e.target.value)} disabled={disabled} /></div>
+        <div className="space-y-1.5 sm:col-span-2"><Label>Observações contábeis</Label><Textarea rows={3} value={form.observacoes_contabeis} onChange={(e) => set("observacoes_contabeis", e.target.value)} disabled={disabled} /></div>
+        <div className="space-y-1.5 sm:col-span-2"><Label>Observações de departamento pessoal</Label><Textarea rows={3} value={form.observacoes_dp} onChange={(e) => set("observacoes_dp", e.target.value)} disabled={disabled} /></div>
+        <div className="space-y-1.5 sm:col-span-2"><Label>Observações internas da equipe</Label><Textarea rows={3} value={form.observacoes_internas} onChange={(e) => set("observacoes_internas", e.target.value)} disabled={disabled} /></div>
+      </FiscalSection>
+
+      {isAdmin && (
+        <FiscalSection title="Preparação OMIE (não conectado)">
+          <div className="space-y-1.5 sm:col-span-2">
+            <p className="text-xs text-muted-foreground">
+              Campos técnicos de preparação para futura integração com o OMIE. Nenhuma comunicação com o OMIE está ativa.
+            </p>
+          </div>
+          <div className="space-y-1.5"><Label>omie_cliente_id</Label><Input value={form.omie_cliente_id} onChange={(e) => set("omie_cliente_id", e.target.value)} disabled={disabled} /></div>
+          <div className="space-y-1.5"><Label>Última sincronização</Label><Input value={data?.omie_last_synced_at ? new Date(data.omie_last_synced_at).toLocaleString("pt-BR") : "—"} disabled /></div>
+          <div className="space-y-1.5"><Label>Status sync</Label><Input value={data?.omie_sync_status ?? ""} disabled /></div>
+          <div className="space-y-1.5"><Label>Último erro</Label><Input value={data?.omie_sync_error ?? ""} disabled /></div>
+        </FiscalSection>
+      )}
+
+      {canEdit && (
+        <div className="flex justify-end">
+          <Button onClick={() => save.mutate()} disabled={save.isPending}>
+            {save.isPending ? "Salvando…" : "Salvar dados fiscais"}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
