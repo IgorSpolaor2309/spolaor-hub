@@ -249,6 +249,13 @@ function PendingTab({ clientId, tasks, canCreate, canUpdate, onChange }: any) {
                   <div><Label>Tipo</Label><Input value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })} /></div>
                   <div><Label>Competência</Label><Input placeholder="ex: 2026-06" value={form.competencia} onChange={(e) => setForm({ ...form, competencia: e.target.value })} /></div>
                 </div>
+                <div>
+                  <Label>Departamento</Label>
+                  <Select value={form.departamento || undefined} onValueChange={(v) => setForm({ ...form, departamento: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione o departamento" /></SelectTrigger>
+                    <SelectContent>{DEPARTMENTS.map((d) => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
               </div>
               <DialogFooter><Button onClick={() => save.mutate()} disabled={!form.titulo || save.isPending}>{save.isPending ? "Salvando…" : "Criar"}</Button></DialogFooter>
             </DialogContent>
