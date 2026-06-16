@@ -95,12 +95,15 @@ function SettingsPage() {
             <DialogTrigger asChild>
               <Button><Plus className="mr-2 h-4 w-4" /> Nova conta de acesso</Button>
             </DialogTrigger>
-            <NewUserDialog
-              onDone={() => {
-                setOpen(false);
-                qc.invalidateQueries({ queryKey: ["all-profiles-roles"] });
-              }}
-            />
+            {open && (
+              <NewUserDialog
+                key={open ? "open" : "closed"}
+                onDone={() => {
+                  setOpen(false);
+                  qc.invalidateQueries({ queryKey: ["all-profiles-roles"] });
+                }}
+              />
+            )}
           </Dialog>
         }
       />
