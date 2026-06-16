@@ -124,9 +124,12 @@ function CollaboratorsPage() {
                   </td>
                   <td><StatusBadge value={c.status} /></td>
                   <td>
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(c)} aria-label="Editar">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(c)} aria-label="Editar">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <InactivateCollaboratorButton collaborator={c} />
+                    </div>
                   </td>
                 </tr>
               ))}
