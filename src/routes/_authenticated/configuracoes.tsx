@@ -497,7 +497,7 @@ function VerifyLinksButton() {
   const { data, isFetching, refetch } = useQuery({
     enabled: open,
     queryKey: ["verify-links"],
-    queryFn: () => verifyFn({ data: undefined as any }),
+    queryFn: () => verifyFn(),
   });
 
   return (
