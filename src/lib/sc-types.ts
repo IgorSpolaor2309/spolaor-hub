@@ -96,13 +96,13 @@ export function labelOf<T extends { value: string; label: string }>(
 }
 
 export const DOC_VALIDITY_CATEGORIES = [
-  { value: "certificado_digital", label: "Certificado digital" },
-  { value: "procuracao_eletronica", label: "Procuração eletrônica" },
-  { value: "contrato_social", label: "Contrato social" },
-  { value: "alvara", label: "Alvará" },
-  { value: "inscricao_municipal", label: "Inscrição municipal" },
-  { value: "inscricao_estadual", label: "Inscrição estadual" },
-  { value: "certidao", label: "Certidão" },
-  { value: "documento_socio", label: "Documento de sócio" },
+  { value: "certificado digital", label: "Certificado digital" },
+  { value: "procuração eletrônica", label: "Procuração eletrônica" },
+  { value: "contrato social", label: "Contrato social" },
+  { value: "alvará", label: "Alvará" },
+  { value: "inscrição municipal", label: "Inscrição municipal" },
+  { value: "inscrição estadual", label: "Inscrição estadual" },
+  { value: "certidão", label: "Certidão" },
+  { value: "documento de sócio", label: "Documento de sócio" },
   { value: "outro", label: "Outro" },
 ] as const;
