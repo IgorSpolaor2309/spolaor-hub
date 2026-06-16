@@ -377,3 +377,67 @@ function CollaboratorClientsSection({ collaboratorId }: { collaboratorId: string
     </div>
   );
 }
+
+function InactivateCollaboratorButton({ collaborator }: { collaborator: CollabRow }) {
+  const qc = useQueryClient();
+  const setStatusFn = useServerFn(adminSetCollaboratorStatus);
+  const isInactive = collaborator.status === "inactive";
+  const mut = useMutation({
+    mutationFn: () =>
+      setStatusFn({
+        data: {
+          collaborator_id: collaborator.id,
+          status: isInactive ? "active" : "inactive",
+          remove_links: !isInactive,
+        },
+      }),
+    onSuccess: () => {
+      toast.success(isInactive ? "Colaborador reativado." : "Colaborador removido com sucesso.");
+      qc.invalidateQueries({ queryKey: ["collaborators"] });
+    },
+    onError: (e: any) =>
+      toast.error(
+        /row-level security|permission/i.test(e?.message ?? "")
+          ? "Você não tem permissão para realizar esta ação."
+          : (e?.message ?? "Não foi possível atualizar o colaborador."),
+      ),
+  });
+
+  if (isInactive) {
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label="Reativar colaborador"
+        onClick={() => mut.mutate()}
+        disabled={mut.isPending}
+      >
+        <Power className="h-4 w-4 text-green-600" />
+      </Button>
+    );
+  }
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label="Remover colaborador">
+          <PowerOff className="h-4 w-4 text-destructive" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Remover colaborador</AlertDialogTitle>
+          <AlertDialogDescription>
+            Tem certeza que deseja remover este colaborador? Ele será marcado como inativo
+            e os vínculos com clientes serão removidos. A conta de acesso vinculada não será
+            excluída automaticamente — gerencie-a em Configurações se desejar desativá-la.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={() => mut.mutate()}>Remover colaborador</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
