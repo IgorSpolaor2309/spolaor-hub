@@ -202,14 +202,15 @@ function ClientDetail() {
 /* ---------- Pendências ---------- */
 function PendingTab({ clientId, tasks, canCreate, canUpdate, onChange }: any) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ titulo: "", descricao: "", tipo: "", prazo: "", prioridade: "media", competencia: "" });
+  const [form, setForm] = useState({ titulo: "", descricao: "", tipo: "", prazo: "", prioridade: "media", competencia: "", departamento: "" });
 
   const save = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("pending_tasks").insert({ ...form, client_id: clientId, prazo: form.prazo || null });
+      const payload: any = { ...form, client_id: clientId, prazo: form.prazo || null, departamento: form.departamento || null };
+      const { error } = await supabase.from("pending_tasks").insert(payload);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Pendência criada"); setOpen(false); onChange(); setForm({ titulo: "", descricao: "", tipo: "", prazo: "", prioridade: "media", competencia: "" }); },
+    onSuccess: () => { toast.success("Pendência criada"); setOpen(false); onChange(); setForm({ titulo: "", descricao: "", tipo: "", prazo: "", prioridade: "media", competencia: "", departamento: "" }); },
     onError: (e: any) => toast.error(e.message),
   });
 
