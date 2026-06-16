@@ -42,6 +42,9 @@ export function useCurrentUser() {
     profile: profileQuery.data?.profile ?? null,
     role: profileQuery.data?.role ?? null,
     hasRole: !!profileQuery.data?.role,
+    mustChangePassword: !!profileQuery.data?.profile?.must_change_password,
     loading: !ready || (!!userId && profileQuery.isLoading),
+    refetch: profileQuery.refetch,
   };
 }
+
