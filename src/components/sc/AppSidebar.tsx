@@ -22,6 +22,8 @@ const ITEMS: Item[] = [
   { to: "/clientes", label: "Meus clientes", icon: Briefcase, roles: ["collaborator"] },
   { to: "/colaboradores", label: "Colaboradores", icon: UserCog, roles: ["admin"] },
   { to: "/pendencias", label: "Pendências", icon: ClipboardList, roles: ["admin", "collaborator"] },
+  { to: "/kanban", label: "Kanban", icon: KanbanSquare, roles: ["admin", "collaborator"] },
+  { to: "/modelos", label: "Modelos de mensagens", icon: MessagesSquare, roles: ["admin", "collaborator"] },
   { to: "/documentos", label: "Documentos", icon: FileText, roles: ["admin", "collaborator"] },
   { to: "/solicitacoes", label: "Solicitações", icon: Inbox, roles: ["admin", "collaborator", "client"] },
   { to: "/validades", label: "Validades", icon: CalendarClock, roles: ["admin", "collaborator"] },
