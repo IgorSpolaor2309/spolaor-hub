@@ -302,6 +302,9 @@ function DocsTab({ clientId, docs, userId, onChange }: any) {
   const [uploading, setUploading] = useState(false);
   const [tipo, setTipo] = useState("outro");
   const [competencia, setCompetencia] = useState("");
+  const [hasValidity, setHasValidity] = useState(false);
+  const [dataValidade, setDataValidade] = useState("");
+  const [categoriaValidade, setCategoriaValidade] = useState("");
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]; if (!file) return;
@@ -310,12 +313,18 @@ function DocsTab({ clientId, docs, userId, onChange }: any) {
       const path = `${clientId}/${Date.now()}-${file.name}`;
       const { error: upErr } = await supabase.storage.from("documents").upload(path, file);
       if (upErr) throw upErr;
-      const { error } = await supabase.from("documents").insert({
+      const payload: any = {
         client_id: clientId, nome: file.name, tipo, competencia: competencia || null,
         storage_path: path, uploaded_by: userId, status: "recebido",
-      });
+      };
+      if (hasValidity) {
+        payload.data_validade = dataValidade || null;
+        payload.categoria_validade = categoriaValidade || null;
+      }
+      const { error } = await supabase.from("documents").insert(payload);
       if (error) throw error;
       toast.success("Documento enviado");
+      setHasValidity(false); setDataValidade(""); setCategoriaValidade("");
       onChange();
     } catch (err: any) { toast.error(err.message); }
     finally { setUploading(false); e.target.value = ""; }
@@ -330,22 +339,43 @@ function DocsTab({ clientId, docs, userId, onChange }: any) {
 
   return (
     <Card className="p-5">
-      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-md border bg-muted/30 p-3">
-        <div className="space-y-1.5"><Label className="text-xs">Tipo</Label>
-          <Select value={tipo} onValueChange={setTipo}>
-            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-            <SelectContent>{DOC_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
-          </Select>
+      <div className="mb-4 space-y-3 rounded-md border bg-muted/30 p-3">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="space-y-1.5"><Label className="text-xs">Tipo</Label>
+            <Select value={tipo} onValueChange={setTipo}>
+              <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+              <SelectContent>{DOC_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5"><Label className="text-xs">Competência</Label>
+            <Input className="w-[140px]" placeholder="2026-06" value={competencia} onChange={(e) => setCompetencia(e.target.value)} />
+          </div>
+          <label className="ml-auto">
+            <input type="file" className="hidden" onChange={handleUpload} disabled={uploading} />
+            <Button asChild variant="secondary" disabled={uploading}>
+              <span><Upload className="mr-2 h-4 w-4" />{uploading ? "Enviando…" : "Enviar documento"}</span>
+            </Button>
+          </label>
         </div>
-        <div className="space-y-1.5"><Label className="text-xs">Competência</Label>
-          <Input className="w-[140px]" placeholder="2026-06" value={competencia} onChange={(e) => setCompetencia(e.target.value)} />
+        <div className="flex flex-wrap items-end gap-3 border-t pt-3">
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <input type="checkbox" className="h-4 w-4 accent-primary" checked={hasValidity} onChange={(e) => setHasValidity(e.target.checked)} />
+            Documento possui validade?
+          </label>
+          {hasValidity && (
+            <>
+              <div className="space-y-1.5"><Label className="text-xs">Data de validade</Label>
+                <Input type="date" className="w-[160px]" value={dataValidade} onChange={(e) => setDataValidade(e.target.value)} />
+              </div>
+              <div className="space-y-1.5"><Label className="text-xs">Categoria da validade</Label>
+                <Select value={categoriaValidade || undefined} onValueChange={setCategoriaValidade}>
+                  <SelectTrigger className="w-[220px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>{DOC_VALIDITY_CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
         </div>
-        <label className="ml-auto">
-          <input type="file" className="hidden" onChange={handleUpload} disabled={uploading} />
-          <Button asChild variant="secondary" disabled={uploading}>
-            <span><Upload className="mr-2 h-4 w-4" />{uploading ? "Enviando…" : "Enviar documento"}</span>
-          </Button>
-        </label>
       </div>
       {docs.length === 0 ? <EmptyState title="Sem documentos" /> : (
         <table className="w-full text-sm">
