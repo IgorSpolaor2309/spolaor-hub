@@ -16,6 +16,8 @@ import { EmptyState } from "@/components/sc/EmptyState";
 import { useState } from "react";
 import { Plus, UserCog, Pencil } from "lucide-react";
 import { toast } from "sonner";
+import { MultiSelect } from "@/components/sc/MultiSelect";
+
 
 export const Route = createFileRoute("/_authenticated/colaboradores")({
   component: CollaboratorsPage,
@@ -282,12 +284,86 @@ function CollaboratorDialog({
             Este colaborador já possui conta de acesso vinculada. O perfil de acesso é gerenciado em Configurações.
           </p>
         )}
+        {editing && <CollaboratorClientsSection collaboratorId={editing.id} />}
       </div>
+
       <DialogFooter>
         <Button disabled={mut.isPending} onClick={() => mut.mutate()}>
           {mut.isPending ? "Salvando…" : "Salvar"}
         </Button>
       </DialogFooter>
     </DialogContent>
+  );
+}
+
+function CollaboratorClientsSection({ collaboratorId }: { collaboratorId: string }) {
+  const qc = useQueryClient();
+  const { data: assigned = [] } = useQuery({
+    queryKey: ["collab-clients", collaboratorId],
+    queryFn: async () =>
+      (await supabase
+        .from("client_collaborators")
+        .select("client_id, clients(razao_social, nome_fantasia)")
+        .eq("collaborator_id", collaboratorId)).data ?? [],
+  });
+  const { data: allClients = [] } = useQuery({
+    queryKey: ["all-clients-for-collab"],
+    queryFn: async () =>
+      (await supabase.from("clients").select("id, razao_social, nome_fantasia").order("razao_social")).data ?? [],
+  });
+
+  const currentIds = assigned.map((a: any) => a.client_id);
+
+  const setAssignments = useMutation({
+    mutationFn: async (next: string[]) => {
+      const toAdd = next.filter((id) => !currentIds.includes(id));
+      const toRemove = currentIds.filter((id: string) => !next.includes(id));
+      if (toAdd.length) {
+        const { error } = await supabase
+          .from("client_collaborators")
+          .upsert(
+            toAdd.map((client_id) => ({ client_id, collaborator_id: collaboratorId })),
+            { onConflict: "client_id,collaborator_id", ignoreDuplicates: true },
+          );
+        if (error) throw error;
+      }
+      if (toRemove.length) {
+        const { error } = await supabase
+          .from("client_collaborators")
+          .delete()
+          .eq("collaborator_id", collaboratorId)
+          .in("client_id", toRemove);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Clientes atribuídos atualizados.");
+      qc.invalidateQueries({ queryKey: ["collab-clients", collaboratorId] });
+    },
+    onError: (e: any) =>
+      toast.error(
+        /row-level security|permission/i.test(e?.message ?? "")
+          ? "Você não tem permissão para realizar esta ação."
+          : (e?.message ?? "Não foi possível atualizar os vínculos."),
+      ),
+  });
+
+  return (
+    <div className="rounded-md border p-3">
+      <Label className="text-xs uppercase text-muted-foreground">Clientes atribuídos a este colaborador</Label>
+      <p className="mb-2 text-xs text-muted-foreground">Adicione ou remova clientes vinculados.</p>
+      <MultiSelect
+        options={allClients.map((c: any) => ({
+          value: c.id,
+          label: c.razao_social,
+          hint: c.nome_fantasia,
+        }))}
+        value={currentIds}
+        onChange={(next) => setAssignments.mutate(next)}
+        placeholder="Buscar cliente…"
+        emptyMessage="Nenhum cliente cadastrado."
+        noneSelectedMessage="Nenhum cliente selecionado."
+      />
+    </div>
   );
 }

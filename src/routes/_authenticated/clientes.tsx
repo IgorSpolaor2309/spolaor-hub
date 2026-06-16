@@ -12,8 +12,9 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { StatusBadge } from "@/components/sc/StatusBadge";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { useState } from "react";
-import { Plus, Search, Users } from "lucide-react";
+import { Plus, Search, Users, Pencil } from "lucide-react";
 import { toast } from "sonner";
+
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { CLIENT_TYPES, labelOf } from "@/lib/sc-types";
 
@@ -26,6 +27,8 @@ function ClientsPage() {
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<any | null>(null);
+
 
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ["clients"],
@@ -83,6 +86,7 @@ function ClientsPage() {
                   <th className="py-2 pr-4">Documento</th>
                   <th className="py-2 pr-4">Entrada</th>
                   <th className="py-2 pr-4">Status</th>
+                  {role === "admin" && <th className="w-10"></th>}
                 </tr>
               </thead>
               <tbody>
@@ -98,6 +102,13 @@ function ClientsPage() {
                     <td className="py-3 pr-4 font-mono text-xs">{c.documento ?? "—"}</td>
                     <td className="py-3 pr-4">{c.data_entrada ? new Date(c.data_entrada).toLocaleDateString("pt-BR") : "—"}</td>
                     <td className="py-3 pr-4"><StatusBadge value={c.status} /></td>
+                    {role === "admin" && (
+                      <td>
+                        <Button variant="ghost" size="icon" aria-label="Editar" onClick={() => setEditing(c)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -105,6 +116,19 @@ function ClientsPage() {
           </div>
         )}
       </Card>
+
+      {editing && (
+        <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
+          <EditClientDialog
+            client={editing}
+            onDone={() => {
+              setEditing(null);
+              qc.invalidateQueries({ queryKey: ["clients"] });
+            }}
+          />
+        </Dialog>
+      )}
+
     </div>
   );
 }
@@ -150,6 +174,91 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
       <DialogFooter>
         <Button onClick={() => mut.mutate()} disabled={!form.razao_social || mut.isPending}>
           {mut.isPending ? "Salvando…" : "Criar cliente"}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+
+function EditClientDialog({ client, onDone }: { client: any; onDone: () => void }) {
+  const [form, setForm] = useState({
+    razao_social: client.razao_social ?? "",
+    nome_fantasia: client.nome_fantasia ?? "",
+    documento: client.documento ?? "",
+    email: client.email ?? "",
+    telefone: client.telefone ?? "",
+    tipo: client.tipo ?? "comercio",
+    data_entrada: client.data_entrada ?? "",
+    status: client.status ?? "active",
+    observacoes: client.observacoes ?? "",
+  });
+  const mut = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("clients")
+        .update({
+          razao_social: form.razao_social.trim(),
+          nome_fantasia: form.nome_fantasia || null,
+          documento: form.documento || null,
+          email: form.email || null,
+          telefone: form.telefone || null,
+          tipo: form.tipo || null,
+          data_entrada: form.data_entrada || null,
+          status: form.status || "active",
+          observacoes: form.observacoes || null,
+        })
+        .eq("id", client.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Cliente atualizado com sucesso."); onDone(); },
+    onError: (e: any) => toast.error(
+      /row-level security|permission/i.test(e?.message ?? "")
+        ? "Você não tem permissão para realizar esta ação."
+        : (e?.message ?? "Não foi possível atualizar o cliente."),
+    ),
+  });
+
+  return (
+    <DialogContent className="max-w-2xl">
+      <DialogHeader><DialogTitle>Editar cliente</DialogTitle></DialogHeader>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label>Razão social / Nome *</Label>
+          <Input value={form.razao_social} onChange={(e) => setForm({ ...form, razao_social: e.target.value })} />
+        </div>
+        <div className="space-y-1.5"><Label>Nome fantasia</Label><Input value={form.nome_fantasia} onChange={(e) => setForm({ ...form, nome_fantasia: e.target.value })} /></div>
+        <div className="space-y-1.5"><Label>CNPJ / CPF</Label><Input value={form.documento} onChange={(e) => setForm({ ...form, documento: e.target.value })} /></div>
+        <div className="space-y-1.5"><Label>E-mail principal</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+        <div className="space-y-1.5"><Label>Telefone / WhatsApp</Label><Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} /></div>
+        <div className="space-y-1.5">
+          <Label>Tipo de cliente</Label>
+          <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>{CLIENT_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label>Data de entrada</Label>
+          <Input type="date" value={form.data_entrada ?? ""} onChange={(e) => setForm({ ...form, data_entrada: e.target.value })} />
+        </div>
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label>Status</Label>
+          <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">Ativo</SelectItem>
+              <SelectItem value="inactive">Inativo</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label>Observações internas</Label>
+          <Textarea rows={3} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button onClick={() => mut.mutate()} disabled={!form.razao_social.trim() || mut.isPending}>
+          {mut.isPending ? "Salvando…" : "Salvar alterações"}
         </Button>
       </DialogFooter>
     </DialogContent>

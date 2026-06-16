@@ -23,6 +23,8 @@ import { Plus, Trash2 } from "lucide-react";
 import {
   adminCreateUser, adminSetUserRole, adminDeleteUser,
 } from "@/lib/admin-users.functions";
+import { MultiSelect } from "@/components/sc/MultiSelect";
+
 
 export const Route = createFileRoute("/_authenticated/configuracoes")({
   component: SettingsPage,
@@ -219,6 +221,8 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
     client_status: "active",
     observacoes: "",
   });
+  const [assignClientIds, setAssignClientIds] = useState<string[]>([]);
+  const [assignCollabIds, setAssignCollabIds] = useState<string[]>([]);
   const [created, setCreated] = useState<{ email: string; password: string } | null>(null);
 
   const { data: clients = [] } = useQuery({
@@ -231,6 +235,17 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
     queryFn: async () =>
       (await supabase.from("collaborators").select("id, nome, user_id").is("user_id", null).order("nome")).data ?? [],
   });
+  const { data: allClients = [] } = useQuery({
+    queryKey: ["all-clients-assign"],
+    queryFn: async () =>
+      (await supabase.from("clients").select("id, razao_social, nome_fantasia").order("razao_social")).data ?? [],
+  });
+  const { data: allCollabs = [] } = useQuery({
+    queryKey: ["all-collabs-assign"],
+    queryFn: async () =>
+      (await supabase.from("collaborators").select("id, nome, email").eq("status", "active").order("nome")).data ?? [],
+  });
+
 
   const createFn = useServerFn(adminCreateUser);
   const mut = useMutation({
@@ -261,8 +276,11 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
             status: form.client_status || "active",
             observacoes: form.observacoes || null,
           } : null,
+          assign_client_ids: form.role === "collaborator" ? assignClientIds : null,
+          assign_collaborator_ids: form.role === "client" ? assignCollabIds : null,
         },
       }),
+
     onSuccess: (res: any) => {
       toast.success("Conta de acesso criada com sucesso.");
       setCreated({ email: form.email, password: res?.provisional_password ?? form.password });
@@ -413,8 +431,25 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
                 </div>
               </div>
             )}
+            <div className="border-t pt-3">
+              <Label className="text-xs uppercase text-muted-foreground">Clientes atribuídos a este colaborador</Label>
+              <p className="mb-2 text-xs text-muted-foreground">Você poderá alterar esses vínculos depois.</p>
+              <MultiSelect
+                options={allClients.map((c: any) => ({
+                  value: c.id,
+                  label: c.razao_social,
+                  hint: c.nome_fantasia,
+                }))}
+                value={assignClientIds}
+                onChange={setAssignClientIds}
+                placeholder="Buscar cliente…"
+                emptyMessage="Nenhum cliente cadastrado."
+                noneSelectedMessage="Nenhum cliente selecionado."
+              />
+            </div>
           </section>
         )}
+
 
         {form.role === "client" && (
           <section className="space-y-3 rounded-md border p-4">
@@ -482,8 +517,25 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
                 </div>
               </div>
             )}
+            <div className="border-t pt-3">
+              <Label className="text-xs uppercase text-muted-foreground">Colaboradores atribuídos a este cliente</Label>
+              <p className="mb-2 text-xs text-muted-foreground">Você poderá alterar esses vínculos depois.</p>
+              <MultiSelect
+                options={allCollabs.map((c: any) => ({
+                  value: c.id,
+                  label: c.nome,
+                  hint: c.email,
+                }))}
+                value={assignCollabIds}
+                onChange={setAssignCollabIds}
+                placeholder="Buscar colaborador…"
+                emptyMessage="Nenhum colaborador ativo cadastrado."
+                noneSelectedMessage="Nenhum colaborador selecionado."
+              />
+            </div>
           </section>
         )}
+
 
         {form.role === "admin" && (
           <p className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
