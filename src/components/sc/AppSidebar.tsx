@@ -91,7 +91,9 @@ export function AppSidebar() {
               <div className="truncate text-xs font-medium text-sidebar-foreground">
                 {profile?.full_name || profile?.email || "Usuário"}
               </div>
-              <div className="truncate text-[10px] uppercase tracking-wide text-sidebar-foreground/60">{role ?? "—"}</div>
+              <div className="truncate text-[10px] uppercase tracking-wide text-sidebar-foreground/60">
+                {role === "client" ? "CLIENTE" : role === "admin" ? "ADMINISTRADOR" : role === "collaborator" ? "COLABORADOR" : (role ?? "—")}
+              </div>
             </div>
           )}
           <button
