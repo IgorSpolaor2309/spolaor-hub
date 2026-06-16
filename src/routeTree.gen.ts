@@ -16,9 +16,11 @@ import { Route as AuthenticatedValidadesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedSolicitacoesRouteImport } from './routes/_authenticated/solicitacoes'
 import { Route as AuthenticatedPendenciasRouteImport } from './routes/_authenticated/pendencias'
 import { Route as AuthenticatedNotificacoesRouteImport } from './routes/_authenticated/notificacoes'
+import { Route as AuthenticatedModelosRouteImport } from './routes/_authenticated/modelos'
 import { Route as AuthenticatedMinhasPendenciasRouteImport } from './routes/_authenticated/minhas-pendencias'
 import { Route as AuthenticatedMinhaAreaRouteImport } from './routes/_authenticated/minha-area'
 import { Route as AuthenticatedMeusDocumentosRouteImport } from './routes/_authenticated/meus-documentos'
+import { Route as AuthenticatedKanbanRouteImport } from './routes/_authenticated/kanban'
 import { Route as AuthenticatedInteracoesRouteImport } from './routes/_authenticated/interacoes'
 import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
 import { Route as AuthenticatedGuiasRouteImport } from './routes/_authenticated/guias'
@@ -26,6 +28,7 @@ import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authentic
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedColaboradoresRouteImport } from './routes/_authenticated/colaboradores'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
+import { Route as AuthenticatedIntegracoesOmieRouteImport } from './routes/_authenticated/integracoes.omie'
 import { Route as AuthenticatedClientesIdRouteImport } from './routes/_authenticated/clientes.$id'
 
 const AuthRoute = AuthRouteImport.update({
@@ -64,6 +67,11 @@ const AuthenticatedNotificacoesRoute =
     path: '/notificacoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedModelosRoute = AuthenticatedModelosRouteImport.update({
+  id: '/modelos',
+  path: '/modelos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMinhasPendenciasRoute =
   AuthenticatedMinhasPendenciasRouteImport.update({
     id: '/minhas-pendencias',
@@ -81,6 +89,11 @@ const AuthenticatedMeusDocumentosRoute =
     path: '/meus-documentos',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedKanbanRoute = AuthenticatedKanbanRouteImport.update({
+  id: '/kanban',
+  path: '/kanban',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedInteracoesRoute = AuthenticatedInteracoesRouteImport.update({
   id: '/interacoes',
   path: '/interacoes',
@@ -118,6 +131,12 @@ const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
   path: '/clientes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedIntegracoesOmieRoute =
+  AuthenticatedIntegracoesOmieRouteImport.update({
+    id: '/integracoes/omie',
+    path: '/integracoes/omie',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedClientesIdRoute = AuthenticatedClientesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -134,14 +153,17 @@ export interface FileRoutesByFullPath {
   '/guias': typeof AuthenticatedGuiasRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/interacoes': typeof AuthenticatedInteracoesRoute
+  '/kanban': typeof AuthenticatedKanbanRoute
   '/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
   '/minha-area': typeof AuthenticatedMinhaAreaRoute
   '/minhas-pendencias': typeof AuthenticatedMinhasPendenciasRoute
+  '/modelos': typeof AuthenticatedModelosRoute
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/pendencias': typeof AuthenticatedPendenciasRoute
   '/solicitacoes': typeof AuthenticatedSolicitacoesRoute
   '/validades': typeof AuthenticatedValidadesRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
+  '/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -152,15 +174,18 @@ export interface FileRoutesByTo {
   '/guias': typeof AuthenticatedGuiasRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/interacoes': typeof AuthenticatedInteracoesRoute
+  '/kanban': typeof AuthenticatedKanbanRoute
   '/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
   '/minha-area': typeof AuthenticatedMinhaAreaRoute
   '/minhas-pendencias': typeof AuthenticatedMinhasPendenciasRoute
+  '/modelos': typeof AuthenticatedModelosRoute
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/pendencias': typeof AuthenticatedPendenciasRoute
   '/solicitacoes': typeof AuthenticatedSolicitacoesRoute
   '/validades': typeof AuthenticatedValidadesRoute
   '/': typeof AuthenticatedIndexRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
+  '/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -173,15 +198,18 @@ export interface FileRoutesById {
   '/_authenticated/guias': typeof AuthenticatedGuiasRoute
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
   '/_authenticated/interacoes': typeof AuthenticatedInteracoesRoute
+  '/_authenticated/kanban': typeof AuthenticatedKanbanRoute
   '/_authenticated/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
   '/_authenticated/minha-area': typeof AuthenticatedMinhaAreaRoute
   '/_authenticated/minhas-pendencias': typeof AuthenticatedMinhasPendenciasRoute
+  '/_authenticated/modelos': typeof AuthenticatedModelosRoute
   '/_authenticated/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/_authenticated/pendencias': typeof AuthenticatedPendenciasRoute
   '/_authenticated/solicitacoes': typeof AuthenticatedSolicitacoesRoute
   '/_authenticated/validades': typeof AuthenticatedValidadesRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/clientes/$id': typeof AuthenticatedClientesIdRoute
+  '/_authenticated/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -195,14 +223,17 @@ export interface FileRouteTypes {
     | '/guias'
     | '/historico'
     | '/interacoes'
+    | '/kanban'
     | '/meus-documentos'
     | '/minha-area'
     | '/minhas-pendencias'
+    | '/modelos'
     | '/notificacoes'
     | '/pendencias'
     | '/solicitacoes'
     | '/validades'
     | '/clientes/$id'
+    | '/integracoes/omie'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -213,15 +244,18 @@ export interface FileRouteTypes {
     | '/guias'
     | '/historico'
     | '/interacoes'
+    | '/kanban'
     | '/meus-documentos'
     | '/minha-area'
     | '/minhas-pendencias'
+    | '/modelos'
     | '/notificacoes'
     | '/pendencias'
     | '/solicitacoes'
     | '/validades'
     | '/'
     | '/clientes/$id'
+    | '/integracoes/omie'
   id:
     | '__root__'
     | '/_authenticated'
@@ -233,15 +267,18 @@ export interface FileRouteTypes {
     | '/_authenticated/guias'
     | '/_authenticated/historico'
     | '/_authenticated/interacoes'
+    | '/_authenticated/kanban'
     | '/_authenticated/meus-documentos'
     | '/_authenticated/minha-area'
     | '/_authenticated/minhas-pendencias'
+    | '/_authenticated/modelos'
     | '/_authenticated/notificacoes'
     | '/_authenticated/pendencias'
     | '/_authenticated/solicitacoes'
     | '/_authenticated/validades'
     | '/_authenticated/'
     | '/_authenticated/clientes/$id'
+    | '/_authenticated/integracoes/omie'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -300,6 +337,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNotificacoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/modelos': {
+      id: '/_authenticated/modelos'
+      path: '/modelos'
+      fullPath: '/modelos'
+      preLoaderRoute: typeof AuthenticatedModelosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/minhas-pendencias': {
       id: '/_authenticated/minhas-pendencias'
       path: '/minhas-pendencias'
@@ -319,6 +363,13 @@ declare module '@tanstack/react-router' {
       path: '/meus-documentos'
       fullPath: '/meus-documentos'
       preLoaderRoute: typeof AuthenticatedMeusDocumentosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/kanban': {
+      id: '/_authenticated/kanban'
+      path: '/kanban'
+      fullPath: '/kanban'
+      preLoaderRoute: typeof AuthenticatedKanbanRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/interacoes': {
@@ -370,6 +421,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClientesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/integracoes/omie': {
+      id: '/_authenticated/integracoes/omie'
+      path: '/integracoes/omie'
+      fullPath: '/integracoes/omie'
+      preLoaderRoute: typeof AuthenticatedIntegracoesOmieRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/clientes/$id': {
       id: '/_authenticated/clientes/$id'
       path: '/$id'
@@ -401,14 +459,17 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedGuiasRoute: typeof AuthenticatedGuiasRoute
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
   AuthenticatedInteracoesRoute: typeof AuthenticatedInteracoesRoute
+  AuthenticatedKanbanRoute: typeof AuthenticatedKanbanRoute
   AuthenticatedMeusDocumentosRoute: typeof AuthenticatedMeusDocumentosRoute
   AuthenticatedMinhaAreaRoute: typeof AuthenticatedMinhaAreaRoute
   AuthenticatedMinhasPendenciasRoute: typeof AuthenticatedMinhasPendenciasRoute
+  AuthenticatedModelosRoute: typeof AuthenticatedModelosRoute
   AuthenticatedNotificacoesRoute: typeof AuthenticatedNotificacoesRoute
   AuthenticatedPendenciasRoute: typeof AuthenticatedPendenciasRoute
   AuthenticatedSolicitacoesRoute: typeof AuthenticatedSolicitacoesRoute
   AuthenticatedValidadesRoute: typeof AuthenticatedValidadesRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedIntegracoesOmieRoute: typeof AuthenticatedIntegracoesOmieRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -419,14 +480,17 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedGuiasRoute: AuthenticatedGuiasRoute,
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
   AuthenticatedInteracoesRoute: AuthenticatedInteracoesRoute,
+  AuthenticatedKanbanRoute: AuthenticatedKanbanRoute,
   AuthenticatedMeusDocumentosRoute: AuthenticatedMeusDocumentosRoute,
   AuthenticatedMinhaAreaRoute: AuthenticatedMinhaAreaRoute,
   AuthenticatedMinhasPendenciasRoute: AuthenticatedMinhasPendenciasRoute,
+  AuthenticatedModelosRoute: AuthenticatedModelosRoute,
   AuthenticatedNotificacoesRoute: AuthenticatedNotificacoesRoute,
   AuthenticatedPendenciasRoute: AuthenticatedPendenciasRoute,
   AuthenticatedSolicitacoesRoute: AuthenticatedSolicitacoesRoute,
   AuthenticatedValidadesRoute: AuthenticatedValidadesRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedIntegracoesOmieRoute: AuthenticatedIntegracoesOmieRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

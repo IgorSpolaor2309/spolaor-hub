@@ -2,6 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, UserCog, ClipboardList, FileText, MessageSquare,
   Bell, Settings, LogOut, Briefcase, History, Inbox, CalendarClock, Receipt,
+  KanbanSquare, MessagesSquare, Plug,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -21,6 +22,8 @@ const ITEMS: Item[] = [
   { to: "/clientes", label: "Meus clientes", icon: Briefcase, roles: ["collaborator"] },
   { to: "/colaboradores", label: "Colaboradores", icon: UserCog, roles: ["admin"] },
   { to: "/pendencias", label: "Pendências", icon: ClipboardList, roles: ["admin", "collaborator"] },
+  { to: "/kanban", label: "Kanban", icon: KanbanSquare, roles: ["admin", "collaborator"] },
+  { to: "/modelos", label: "Modelos de mensagens", icon: MessagesSquare, roles: ["admin", "collaborator"] },
   { to: "/documentos", label: "Documentos", icon: FileText, roles: ["admin", "collaborator"] },
   { to: "/solicitacoes", label: "Solicitações", icon: Inbox, roles: ["admin", "collaborator", "client"] },
   { to: "/validades", label: "Validades", icon: CalendarClock, roles: ["admin", "collaborator"] },
@@ -32,6 +35,7 @@ const ITEMS: Item[] = [
   { to: "/historico", label: "Histórico", icon: History, roles: ["client"] },
   { to: "/notificacoes", label: "Notificações", icon: Bell, roles: ["admin", "collaborator", "client"] },
   { to: "/configuracoes", label: "Configurações", icon: Settings, roles: ["admin"] },
+  { to: "/integracoes/omie", label: "Integração OMIE", icon: Plug, roles: ["admin"] },
 ];
 
 
