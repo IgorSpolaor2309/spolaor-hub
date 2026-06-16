@@ -97,7 +97,7 @@ function CollaboratorsPage() {
                 <th className="py-2 pr-4">Nome</th>
                 <th>E-mail</th>
                 <th>Cargo</th>
-                <th>Departamento</th>
+                <th>&nbsp;DEPARTAMENTO&nbsp;</th>
                 <th>Acesso ao sistema</th>
                 <th>Status</th>
                 <th className="w-10"></th>
