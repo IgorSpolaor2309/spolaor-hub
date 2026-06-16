@@ -17,6 +17,7 @@ import { Plus, Upload, ArrowLeft, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { MonthStatusSelector } from "@/routes/_authenticated/index";
 import {
   TASK_STATUSES, TASK_PRIORITIES, DOC_TYPES, DOC_STATUSES, INTERACTION_TYPES, CLIENT_TYPES, labelOf,
 } from "@/lib/sc-types";
@@ -86,8 +87,11 @@ function ClientDetail() {
         title={client.razao_social}
         description={client.nome_fantasia ?? ""}
         action={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <StatusBadge value={client.status} />
+            {role !== "client" && userId && (
+              <MonthStatusSelector clientId={client.id} userId={userId} />
+            )}
             {role === "admin" && (
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
                 <Pencil className="mr-2 h-4 w-4" /> Editar cliente
