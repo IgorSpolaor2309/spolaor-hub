@@ -28,6 +28,7 @@ import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authentic
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedColaboradoresRouteImport } from './routes/_authenticated/colaboradores'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
+import { Route as AuthenticatedIntegracoesOmieRouteImport } from './routes/_authenticated/integracoes.omie'
 import { Route as AuthenticatedClientesIdRouteImport } from './routes/_authenticated/clientes.$id'
 
 const AuthRoute = AuthRouteImport.update({
@@ -130,6 +131,12 @@ const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
   path: '/clientes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedIntegracoesOmieRoute =
+  AuthenticatedIntegracoesOmieRouteImport.update({
+    id: '/integracoes/omie',
+    path: '/integracoes/omie',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedClientesIdRoute = AuthenticatedClientesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -156,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/solicitacoes': typeof AuthenticatedSolicitacoesRoute
   '/validades': typeof AuthenticatedValidadesRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
+  '/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -177,6 +185,7 @@ export interface FileRoutesByTo {
   '/validades': typeof AuthenticatedValidadesRoute
   '/': typeof AuthenticatedIndexRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
+  '/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -200,6 +209,7 @@ export interface FileRoutesById {
   '/_authenticated/validades': typeof AuthenticatedValidadesRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/clientes/$id': typeof AuthenticatedClientesIdRoute
+  '/_authenticated/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -223,6 +233,7 @@ export interface FileRouteTypes {
     | '/solicitacoes'
     | '/validades'
     | '/clientes/$id'
+    | '/integracoes/omie'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -244,6 +255,7 @@ export interface FileRouteTypes {
     | '/validades'
     | '/'
     | '/clientes/$id'
+    | '/integracoes/omie'
   id:
     | '__root__'
     | '/_authenticated'
@@ -266,6 +278,7 @@ export interface FileRouteTypes {
     | '/_authenticated/validades'
     | '/_authenticated/'
     | '/_authenticated/clientes/$id'
+    | '/_authenticated/integracoes/omie'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -408,6 +421,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClientesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/integracoes/omie': {
+      id: '/_authenticated/integracoes/omie'
+      path: '/integracoes/omie'
+      fullPath: '/integracoes/omie'
+      preLoaderRoute: typeof AuthenticatedIntegracoesOmieRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/clientes/$id': {
       id: '/_authenticated/clientes/$id'
       path: '/$id'
@@ -449,6 +469,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSolicitacoesRoute: typeof AuthenticatedSolicitacoesRoute
   AuthenticatedValidadesRoute: typeof AuthenticatedValidadesRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedIntegracoesOmieRoute: typeof AuthenticatedIntegracoesOmieRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -469,6 +490,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSolicitacoesRoute: AuthenticatedSolicitacoesRoute,
   AuthenticatedValidadesRoute: AuthenticatedValidadesRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedIntegracoesOmieRoute: AuthenticatedIntegracoesOmieRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
