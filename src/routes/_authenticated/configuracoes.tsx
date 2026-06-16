@@ -19,9 +19,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { useState } from "react";
-import { Plus, Trash2, Pencil } from "lucide-react";
+import { Plus, Trash2, Pencil, ShieldCheck } from "lucide-react";
 import {
   adminCreateUser, adminSetUserRole, adminDeleteUser, adminUpdateUser,
+  adminVerifyLinks, adminDiagnoseUser,
 } from "@/lib/admin-users.functions";
 import { MultiSelect } from "@/components/sc/MultiSelect";
 
