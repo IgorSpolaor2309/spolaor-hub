@@ -122,7 +122,10 @@ function CollabDashboard({ name, userId }: { name: string; userId: string }) {
   const { data } = useQuery({
     queryKey: ["dash-collab", userId],
     queryFn: async () => {
-      const { data: links } = await supabase.from("client_collaborators").select("client_id").eq("collaborator_profile_id", userId);
+      const { data: collab } = await supabase.from("collaborators").select("id").eq("user_id", userId).maybeSingle();
+      const { data: links } = collab?.id
+        ? await supabase.from("client_collaborators").select("client_id").eq("collaborator_id", collab.id)
+        : { data: [] as { client_id: string }[] };
       const clientIds = (links ?? []).map((l) => l.client_id);
       if (!clientIds.length) return { clients: 0, openTasks: 0, overdue: 0, recentDocs: [], events: [] };
       const today = new Date().toISOString().slice(0, 10);
