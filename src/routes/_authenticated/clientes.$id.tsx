@@ -17,6 +17,7 @@ import { Plus, Upload, ArrowLeft, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { MonthStatusSelector } from "@/routes/_authenticated/index";
 import {
   TASK_STATUSES, TASK_PRIORITIES, DOC_TYPES, DOC_STATUSES, INTERACTION_TYPES, CLIENT_TYPES, labelOf,
 } from "@/lib/sc-types";
