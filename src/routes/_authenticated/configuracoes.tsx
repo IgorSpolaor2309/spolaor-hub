@@ -221,6 +221,8 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
     client_status: "active",
     observacoes: "",
   });
+  const [assignClientIds, setAssignClientIds] = useState<string[]>([]);
+  const [assignCollabIds, setAssignCollabIds] = useState<string[]>([]);
   const [created, setCreated] = useState<{ email: string; password: string } | null>(null);
 
   const { data: clients = [] } = useQuery({
@@ -233,6 +235,17 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
     queryFn: async () =>
       (await supabase.from("collaborators").select("id, nome, user_id").is("user_id", null).order("nome")).data ?? [],
   });
+  const { data: allClients = [] } = useQuery({
+    queryKey: ["all-clients-assign"],
+    queryFn: async () =>
+      (await supabase.from("clients").select("id, razao_social, nome_fantasia").order("razao_social")).data ?? [],
+  });
+  const { data: allCollabs = [] } = useQuery({
+    queryKey: ["all-collabs-assign"],
+    queryFn: async () =>
+      (await supabase.from("collaborators").select("id, nome, email").eq("status", "active").order("nome")).data ?? [],
+  });
+
 
   const createFn = useServerFn(adminCreateUser);
   const mut = useMutation({
