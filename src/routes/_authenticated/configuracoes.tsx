@@ -23,6 +23,8 @@ import { Plus, Trash2 } from "lucide-react";
 import {
   adminCreateUser, adminSetUserRole, adminDeleteUser,
 } from "@/lib/admin-users.functions";
+import { MultiSelect } from "@/components/sc/MultiSelect";
+
 
 export const Route = createFileRoute("/_authenticated/configuracoes")({
   component: SettingsPage,
