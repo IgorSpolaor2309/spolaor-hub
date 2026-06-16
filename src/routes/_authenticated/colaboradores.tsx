@@ -16,6 +16,8 @@ import { EmptyState } from "@/components/sc/EmptyState";
 import { useState } from "react";
 import { Plus, UserCog, Pencil } from "lucide-react";
 import { toast } from "sonner";
+import { MultiSelect } from "@/components/sc/MultiSelect";
+
 
 export const Route = createFileRoute("/_authenticated/colaboradores")({
   component: CollaboratorsPage,
