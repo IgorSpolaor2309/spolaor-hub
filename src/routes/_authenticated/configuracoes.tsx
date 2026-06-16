@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/configuracoes")({
   component: SettingsPage,
 });
 
-type UserRow = { id: string; full_name: string | null; email: string | null; roles: string[] };
+type UserRow = { id: string; full_name: string | null; email: string | null; phone: string | null; roles: string[] };
 
 function friendly(err: any) {
   const raw = err?.message ?? "";
