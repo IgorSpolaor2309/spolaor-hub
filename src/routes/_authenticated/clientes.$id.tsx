@@ -68,7 +68,7 @@ function ClientDetail() {
   const { data: collabs = [] } = useQuery({
     queryKey: ["client-collabs", id],
     enabled: role === "admin",
-    queryFn: async () => (await supabase.from("client_collaborators").select("collaborator_profile_id, profiles(full_name, email)").eq("client_id", id)).data ?? [],
+    queryFn: async () => (await supabase.from("client_collaborators").select("collaborator_id, collaborators(nome, email)").eq("client_id", id)).data ?? [],
   });
 
   if (!client) return <div className="text-sm text-muted-foreground">Carregando…</div>;
