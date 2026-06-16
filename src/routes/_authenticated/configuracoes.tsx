@@ -19,9 +19,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { useState } from "react";
-import { Plus, Trash2, Pencil } from "lucide-react";
+import { Plus, Trash2, Pencil, ShieldCheck } from "lucide-react";
 import {
   adminCreateUser, adminSetUserRole, adminDeleteUser, adminUpdateUser,
+  adminVerifyLinks, adminDiagnoseUser,
 } from "@/lib/admin-users.functions";
 import { MultiSelect } from "@/components/sc/MultiSelect";
 
@@ -94,20 +95,23 @@ function SettingsPage() {
         title="Configurações"
         description="Gerenciamento de contas de acesso e perfis de permissão da plataforma."
         action={
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button><Plus className="mr-2 h-4 w-4" /> Nova conta de acesso</Button>
-            </DialogTrigger>
-            {open && (
-              <NewUserDialog
-                key={open ? "open" : "closed"}
-                onDone={() => {
-                  setOpen(false);
-                  qc.invalidateQueries({ queryKey: ["all-profiles-roles"] });
-                }}
-              />
-            )}
-          </Dialog>
+          <div className="flex gap-2">
+            <VerifyLinksButton />
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button><Plus className="mr-2 h-4 w-4" /> Nova conta de acesso</Button>
+              </DialogTrigger>
+              {open && (
+                <NewUserDialog
+                  key={open ? "open" : "closed"}
+                  onDone={() => {
+                    setOpen(false);
+                    qc.invalidateQueries({ queryKey: ["all-profiles-roles"] });
+                  }}
+                />
+              )}
+            </Dialog>
+          </div>
         }
       />
 
@@ -305,6 +309,8 @@ function EditUserDialog({ user, onDone }: { user: UserRow; onDone: () => void })
             Exigir troca de senha no próximo acesso (mesmo sem definir nova senha aqui).
           </label>
         </div>
+
+        <AccountLinksEditor userId={user.id} roles={user.roles} />
       </div>
       <DialogFooter>
         <Button variant="outline" onClick={onDone}>Cancelar</Button>
@@ -313,6 +319,288 @@ function EditUserDialog({ user, onDone }: { user: UserRow; onDone: () => void })
         </Button>
       </DialogFooter>
     </DialogContent>
+  );
+}
+
+function AccountLinksEditor({ userId, roles }: { userId: string; roles: string[] }) {
+  const qc = useQueryClient();
+  const role = roles[0];
+
+  // collaborator: load collaborator row + assigned clients
+  const { data: collab } = useQuery({
+    enabled: role === "collaborator",
+    queryKey: ["edit-user-collab", userId],
+    queryFn: async () =>
+      (await supabase.from("collaborators").select("id, nome").eq("user_id", userId).maybeSingle()).data,
+  });
+  const { data: client } = useQuery({
+    enabled: role === "client",
+    queryKey: ["edit-user-client", userId],
+    queryFn: async () =>
+      (await supabase.from("clients").select("id, razao_social").eq("owner_profile_id", userId).maybeSingle()).data,
+  });
+
+  const { data: allClients = [] } = useQuery({
+    enabled: role === "collaborator" && !!collab,
+    queryKey: ["all-clients-for-link"],
+    queryFn: async () =>
+      (await supabase.from("clients").select("id, razao_social, nome_fantasia, documento, status").order("razao_social")).data ?? [],
+  });
+  const { data: allCollabs = [] } = useQuery({
+    enabled: role === "client" && !!client,
+    queryKey: ["all-collabs-for-link"],
+    queryFn: async () =>
+      (await supabase.from("collaborators").select("id, nome, cargo, departamento, status").order("nome")).data ?? [],
+  });
+
+  const { data: assignedClients = [] } = useQuery({
+    enabled: !!collab,
+    queryKey: ["edit-user-collab-clients", collab?.id],
+    queryFn: async () =>
+      (await supabase.from("client_collaborators").select("client_id").eq("collaborator_id", collab!.id)).data ?? [],
+  });
+  const { data: assignedCollabs = [] } = useQuery({
+    enabled: !!client,
+    queryKey: ["edit-user-client-collabs", client?.id],
+    queryFn: async () =>
+      (await supabase.from("client_collaborators").select("collaborator_id").eq("client_id", client!.id)).data ?? [],
+  });
+
+  const currentClientIds = assignedClients.map((a: any) => a.client_id);
+  const currentCollabIds = assignedCollabs.map((a: any) => a.collaborator_id);
+
+  const updateCollabLinks = useMutation({
+    mutationFn: async (next: string[]) => {
+      const toAdd = next.filter((id) => !currentClientIds.includes(id));
+      const toRemove = currentClientIds.filter((id: string) => !next.includes(id));
+      if (toAdd.length) {
+        const { error } = await supabase
+          .from("client_collaborators")
+          .upsert(
+            toAdd.map((client_id) => ({ client_id, collaborator_id: collab!.id })),
+            { onConflict: "client_id,collaborator_id", ignoreDuplicates: true },
+          );
+        if (error) throw error;
+      }
+      if (toRemove.length) {
+        const { error } = await supabase
+          .from("client_collaborators")
+          .delete()
+          .eq("collaborator_id", collab!.id)
+          .in("client_id", toRemove);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Vínculos atualizados.");
+      qc.invalidateQueries({ queryKey: ["edit-user-collab-clients", collab?.id] });
+      qc.invalidateQueries({ queryKey: ["collab-clients"] });
+      qc.invalidateQueries({ queryKey: ["clients"] });
+    },
+    onError: (e: any) => toast.error(friendly(e)),
+  });
+
+  const updateClientLinks = useMutation({
+    mutationFn: async (next: string[]) => {
+      const toAdd = next.filter((id) => !currentCollabIds.includes(id));
+      const toRemove = currentCollabIds.filter((id: string) => !next.includes(id));
+      if (toAdd.length) {
+        const { error } = await supabase
+          .from("client_collaborators")
+          .upsert(
+            toAdd.map((collaborator_id) => ({ client_id: client!.id, collaborator_id })),
+            { onConflict: "client_id,collaborator_id", ignoreDuplicates: true },
+          );
+        if (error) throw error;
+      }
+      if (toRemove.length) {
+        const { error } = await supabase
+          .from("client_collaborators")
+          .delete()
+          .eq("client_id", client!.id)
+          .in("collaborator_id", toRemove);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Vínculos atualizados.");
+      qc.invalidateQueries({ queryKey: ["edit-user-client-collabs", client?.id] });
+      qc.invalidateQueries({ queryKey: ["clients"] });
+    },
+    onError: (e: any) => toast.error(friendly(e)),
+  });
+
+  if (role === "admin") return null;
+
+  if (role === "collaborator") {
+    if (!collab) {
+      return (
+        <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+          Esta conta de colaborador ainda não possui cadastro vinculado em Colaboradores.
+        </div>
+      );
+    }
+    return (
+      <div className="rounded-md border p-3">
+        <Label className="text-xs uppercase text-muted-foreground">Clientes atribuídos a este colaborador</Label>
+        <p className="mb-2 text-xs text-muted-foreground">As alterações sincronizam com as abas Clientes e Colaboradores.</p>
+        <MultiSelect
+          options={allClients.map((c: any) => ({
+            value: c.id,
+            label: c.razao_social,
+            hint: [c.nome_fantasia, c.documento].filter(Boolean).join(" · ") || null,
+          }))}
+          value={currentClientIds}
+          onChange={(next) => updateCollabLinks.mutate(next)}
+          placeholder="Buscar por nome, razão social ou CNPJ/CPF…"
+          emptyMessage="Nenhum cliente cadastrado."
+          noneSelectedMessage="Nenhum cliente atribuído."
+        />
+      </div>
+    );
+  }
+
+  if (role === "client") {
+    if (!client) {
+      return (
+        <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+          Esta conta de cliente ainda não possui cadastro vinculado em Clientes.
+        </div>
+      );
+    }
+    return (
+      <div className="rounded-md border p-3">
+        <Label className="text-xs uppercase text-muted-foreground">Colaboradores atribuídos a este cliente</Label>
+        <p className="mb-2 text-xs text-muted-foreground">As alterações sincronizam com a aba Equipe do cliente.</p>
+        <MultiSelect
+          options={allCollabs.map((c: any) => ({
+            value: c.id,
+            label: c.nome,
+            hint: [c.cargo, c.departamento].filter(Boolean).join(" · ") || null,
+          }))}
+          value={currentCollabIds}
+          onChange={(next) => updateClientLinks.mutate(next)}
+          placeholder="Buscar por nome, cargo ou departamento…"
+          emptyMessage="Nenhum colaborador cadastrado."
+          noneSelectedMessage="Nenhum colaborador atribuído."
+        />
+      </div>
+    );
+  }
+
+  return null;
+}
+
+function VerifyLinksButton() {
+  const [open, setOpen] = useState(false);
+  const verifyFn = useServerFn(adminVerifyLinks);
+  const { data, isFetching, refetch } = useQuery({
+    enabled: open,
+    queryKey: ["verify-links"],
+    queryFn: () => verifyFn(),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline">
+          <ShieldCheck className="mr-2 h-4 w-4" /> Verificar vínculos
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Verificação de vínculos</DialogTitle>
+        </DialogHeader>
+        {isFetching || !data ? (
+          <p className="text-sm text-muted-foreground">Verificando…</p>
+        ) : (
+          <VerifyLinksResult report={data} />
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => refetch()}>Rodar novamente</Button>
+          <Button onClick={() => setOpen(false)}>Fechar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function VerifyLinksResult({ report }: { report: any }) {
+  const { totals, issues } = report;
+  const allOk =
+    issues.clients_without_collaborator.length === 0 &&
+    issues.collaborators_without_client.length === 0 &&
+    issues.client_accounts_without_client.length === 0 &&
+    issues.collab_accounts_without_collaborator.length === 0 &&
+    issues.users_without_role.length === 0 &&
+    issues.duplicate_links.length === 0 &&
+    issues.broken_links.length === 0 &&
+    issues.inactive_links.length === 0;
+
+  return (
+    <div className="space-y-4 text-sm">
+      <div className="grid grid-cols-3 gap-3">
+        <Stat label="Clientes ativos" value={totals.clients_active} />
+        <Stat label="Colaboradores ativos" value={totals.collaborators_active} />
+        <Stat label="Vínculos ativos" value={totals.links_active} />
+      </div>
+      {allOk ? (
+        <p className="rounded-md border border-green-500/30 bg-green-500/10 p-3 text-green-700 dark:text-green-400">
+          Todos os vínculos estão funcionando corretamente.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          <IssueList title="Clientes sem colaborador" items={issues.clients_without_collaborator.map((c: any) => c.name)} />
+          <IssueList title="Colaboradores sem clientes" items={issues.collaborators_without_client.map((c: any) => c.name)} />
+          <IssueList
+            title="Contas de cliente sem cadastro vinculado"
+            items={issues.client_accounts_without_client.map((u: any) => u.email)}
+          />
+          <IssueList
+            title="Contas de colaborador sem cadastro vinculado"
+            items={issues.collab_accounts_without_collaborator.map((u: any) => u.email)}
+          />
+          <IssueList
+            title="Usuários sem perfil de acesso"
+            items={issues.users_without_role.map((u: any) => u.email)}
+          />
+          <IssueList
+            title="Vínculos com cadastro inativo"
+            items={issues.inactive_links.map((l: any) => `${l.client} ↔ ${l.collaborator} (${l.reason})`)}
+          />
+          <IssueList
+            title="Vínculos quebrados"
+            items={issues.broken_links.map((l: any) => `${l.client_id} ↔ ${l.collaborator_id} (${l.reason})`)}
+          />
+          <IssueList
+            title="Vínculos duplicados"
+            items={issues.duplicate_links.map((l: any) => `${l.client_id} ↔ ${l.collaborator_id}`)}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-md border bg-muted/30 p-3">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-2xl font-semibold">{value}</div>
+    </div>
+  );
+}
+
+function IssueList({ title, items }: { title: string; items: string[] }) {
+  if (items.length === 0) return null;
+  return (
+    <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3">
+      <div className="text-xs font-semibold text-amber-700 dark:text-amber-400">{title} ({items.length})</div>
+      <ul className="mt-1 list-disc pl-4 text-xs text-muted-foreground">
+        {items.slice(0, 20).map((it, i) => <li key={i}>{it}</li>)}
+        {items.length > 20 && <li>… e mais {items.length - 20}</li>}
+      </ul>
+    </div>
   );
 }
 

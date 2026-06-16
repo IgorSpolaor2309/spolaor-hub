@@ -12,8 +12,15 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { StatusBadge } from "@/components/sc/StatusBadge";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { useState } from "react";
-import { Plus, Search, Users, Pencil } from "lucide-react";
+import { Plus, Search, Users, Pencil, PowerOff, Power } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useServerFn } from "@tanstack/react-start";
+import { adminSetClientStatus } from "@/lib/admin-users.functions";
 
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { CLIENT_TYPES, labelOf } from "@/lib/sc-types";
@@ -104,9 +111,12 @@ function ClientsPage() {
                     <td className="py-3 pr-4"><StatusBadge value={c.status} /></td>
                     {role === "admin" && (
                       <td>
-                        <Button variant="ghost" size="icon" aria-label="Editar" onClick={() => setEditing(c)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button variant="ghost" size="icon" aria-label="Editar" onClick={() => setEditing(c)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <InactivateClientButton client={c} />
+                        </div>
                       </td>
                     )}
                   </tr>
@@ -262,5 +272,65 @@ function EditClientDialog({ client, onDone }: { client: any; onDone: () => void 
         </Button>
       </DialogFooter>
     </DialogContent>
+  );
+}
+
+function InactivateClientButton({ client }: { client: any }) {
+  const qc = useQueryClient();
+  const setStatusFn = useServerFn(adminSetClientStatus);
+  const isInactive = client.status === "inactive";
+  const mut = useMutation({
+    mutationFn: () =>
+      setStatusFn({
+        data: { client_id: client.id, status: isInactive ? "active" : "inactive" },
+      }),
+    onSuccess: () => {
+      toast.success(isInactive ? "Cliente reativado." : "Cliente removido com sucesso.");
+      qc.invalidateQueries({ queryKey: ["clients"] });
+    },
+    onError: (e: any) =>
+      toast.error(
+        /row-level security|permission/i.test(e?.message ?? "")
+          ? "Você não tem permissão para realizar esta ação."
+          : (e?.message ?? "Não foi possível atualizar o cliente."),
+      ),
+  });
+
+  if (isInactive) {
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label="Reativar cliente"
+        onClick={() => mut.mutate()}
+        disabled={mut.isPending}
+      >
+        <Power className="h-4 w-4 text-green-600" />
+      </Button>
+    );
+  }
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label="Remover cliente">
+          <PowerOff className="h-4 w-4 text-destructive" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Remover cliente</AlertDialogTitle>
+          <AlertDialogDescription>
+            Tem certeza que deseja remover este cliente? Ele será marcado como inativo
+            e deixará de aparecer para os colaboradores. O histórico, documentos,
+            pendências e vínculos serão preservados e poderão ser restaurados.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={() => mut.mutate()}>Remover cliente</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
