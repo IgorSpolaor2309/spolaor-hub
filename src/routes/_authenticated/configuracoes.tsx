@@ -517,8 +517,25 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
                 </div>
               </div>
             )}
+            <div className="border-t pt-3">
+              <Label className="text-xs uppercase text-muted-foreground">Colaboradores atribuídos a este cliente</Label>
+              <p className="mb-2 text-xs text-muted-foreground">Você poderá alterar esses vínculos depois.</p>
+              <MultiSelect
+                options={allCollabs.map((c: any) => ({
+                  value: c.id,
+                  label: c.nome,
+                  hint: c.email,
+                }))}
+                value={assignCollabIds}
+                onChange={setAssignCollabIds}
+                placeholder="Buscar colaborador…"
+                emptyMessage="Nenhum colaborador ativo cadastrado."
+                noneSelectedMessage="Nenhum colaborador selecionado."
+              />
+            </div>
           </section>
         )}
+
 
         {form.role === "admin" && (
           <p className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
