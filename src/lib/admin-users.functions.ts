@@ -16,6 +16,25 @@ async function ensureAdmin(supabase: any, userId: string) {
 
 const DEFAULT_PROVISIONAL_PASSWORD = "Spolaor@123";
 
+type CollaboratorData = {
+  cargo?: string | null;
+  departamento?: string | null;
+  data_admissao?: string | null;
+  status?: string | null;
+  observacoes?: string | null;
+};
+
+type ClientData = {
+  razao_social?: string | null;
+  nome_fantasia?: string | null;
+  documento?: string | null;
+  telefone?: string | null;
+  tipo?: string | null;
+  data_entrada?: string | null;
+  status?: string | null;
+  observacoes?: string | null;
+};
+
 export const adminCreateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
@@ -25,8 +44,13 @@ export const adminCreateUser = createServerFn({ method: "POST" })
       full_name: string;
       role: AppRole;
       phone?: string | null;
+      // modo de vínculo: criar novo cadastro ou vincular existente
+      link_mode?: "create" | "existing";
       client_id?: string | null;
       collaborator_id?: string | null;
+      // dados para auto-criação
+      collaborator?: CollaboratorData | null;
+      client?: ClientData | null;
     }) => input,
   )
   .handler(async ({ data, context }) => {
@@ -41,6 +65,16 @@ export const adminCreateUser = createServerFn({ method: "POST" })
       : DEFAULT_PROVISIONAL_PASSWORD;
     if (!data.full_name?.trim()) {
       throw new Error("Informe o nome completo.");
+    }
+
+    const linkMode = data.link_mode ?? "create";
+
+    // Validações por perfil antes de criar usuário
+    if (data.role === "collaborator" && linkMode === "existing" && !data.collaborator_id) {
+      throw new Error("Selecione o colaborador existente para vincular.");
+    }
+    if (data.role === "client" && linkMode === "existing" && !data.client_id) {
+      throw new Error("Selecione o cliente existente para vincular.");
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -59,7 +93,7 @@ export const adminCreateUser = createServerFn({ method: "POST" })
 
     const userId = created.user.id;
 
-    // garantir profile (trigger já cria, mas reforçamos campos + flag de troca obrigatória)
+    // profile
     await supabaseAdmin.from("profiles").upsert({
       id: userId,
       full_name: data.full_name,
@@ -73,20 +107,63 @@ export const adminCreateUser = createServerFn({ method: "POST" })
     const { error: roleErr } = await supabaseAdmin
       .from("user_roles")
       .insert({ user_id: userId, role: data.role });
-    if (roleErr) throw new Error("Não foi possível definir o perfil de acesso.");
-
-    // vínculos
-    if (data.role === "client" && data.client_id) {
-      await supabaseAdmin
-        .from("clients")
-        .update({ owner_profile_id: userId })
-        .eq("id", data.client_id);
+    if (roleErr) {
+      await supabaseAdmin.auth.admin.deleteUser(userId).catch(() => {});
+      throw new Error("Não foi possível definir o perfil de acesso.");
     }
-    if (data.role === "collaborator" && data.collaborator_id) {
-      await supabaseAdmin
-        .from("collaborators")
-        .update({ user_id: userId })
-        .eq("id", data.collaborator_id);
+
+    // vínculos / auto-criação
+    try {
+      if (data.role === "collaborator") {
+        if (linkMode === "existing" && data.collaborator_id) {
+          await supabaseAdmin
+            .from("collaborators")
+            .update({ user_id: userId })
+            .eq("id", data.collaborator_id);
+        } else {
+          const c = data.collaborator ?? {};
+          await supabaseAdmin.from("collaborators").insert({
+            user_id: userId,
+            nome: data.full_name,
+            email,
+            telefone: data.phone ?? null,
+            cargo: c.cargo ?? null,
+            departamento: c.departamento ?? null,
+            data_admissao: c.data_admissao || null,
+            status: c.status || "active",
+            observacoes: c.observacoes ?? null,
+          });
+        }
+      } else if (data.role === "client") {
+        if (linkMode === "existing" && data.client_id) {
+          await supabaseAdmin
+            .from("clients")
+            .update({ owner_profile_id: userId })
+            .eq("id", data.client_id);
+        } else {
+          const cl = data.client ?? {};
+          if (!cl.razao_social?.trim()) {
+            throw new Error("Informe a Razão Social do cliente.");
+          }
+          await supabaseAdmin.from("clients").insert({
+            owner_profile_id: userId,
+            razao_social: cl.razao_social,
+            nome_fantasia: cl.nome_fantasia ?? null,
+            documento: cl.documento ?? null,
+            email,
+            telefone: cl.telefone ?? data.phone ?? null,
+            tipo: cl.tipo ?? null,
+            data_entrada: cl.data_entrada || null,
+            status: cl.status || "active",
+            observacoes: cl.observacoes ?? null,
+            origem_cadastro: "manual",
+          });
+        }
+      }
+    } catch (linkErr: any) {
+      // rollback do usuário se o cadastro vinculado falhar
+      await supabaseAdmin.auth.admin.deleteUser(userId).catch(() => {});
+      throw new Error(linkErr?.message || "Não foi possível criar o cadastro vinculado.");
     }
 
     return { ok: true, user_id: userId, provisional_password: password };
