@@ -282,7 +282,12 @@ export const adminUpdateUser = createServerFn({ method: "POST" })
       }
     }
 
-    const profileUpdate: Record<string, any> = {};
+    const profileUpdate: {
+      full_name?: string;
+      email?: string;
+      phone?: string | null;
+      must_change_password?: boolean;
+    } = {};
     if (data.full_name != null) profileUpdate.full_name = data.full_name;
     if (data.email != null) profileUpdate.email = data.email.trim().toLowerCase();
     if (data.phone !== undefined) profileUpdate.phone = data.phone;
