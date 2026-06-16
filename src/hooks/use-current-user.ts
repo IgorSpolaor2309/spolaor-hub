@@ -27,10 +27,11 @@ export function useCurrentUser() {
         supabase.from("user_roles").select("role").eq("user_id", userId!),
       ]);
       const roleList = (roles ?? []).map((r) => r.role as AppRole);
-      const role: AppRole =
+      const role: AppRole | null =
         roleList.includes("admin") ? "admin" :
         roleList.includes("collaborator") ? "collaborator" :
-        roleList.includes("client") ? "client" : "client";
+        roleList.includes("client") ? "client" :
+        null;
       return { profile, role, roles: roleList };
     },
   });
@@ -40,6 +41,7 @@ export function useCurrentUser() {
     ready,
     profile: profileQuery.data?.profile ?? null,
     role: profileQuery.data?.role ?? null,
-    loading: !ready || profileQuery.isLoading,
+    hasRole: !!profileQuery.data?.role,
+    loading: !ready || (!!userId && profileQuery.isLoading),
   };
 }
