@@ -117,52 +117,92 @@ export const adminCreateUser = createServerFn({ method: "POST" })
     }
 
     // vínculos / auto-criação
+    let collaboratorIdResolved: string | null = null;
+    let clientIdResolved: string | null = null;
     try {
       if (data.role === "collaborator") {
         if (linkMode === "existing" && data.collaborator_id) {
-          await supabaseAdmin
+          const { error } = await supabaseAdmin
             .from("collaborators")
             .update({ user_id: userId })
             .eq("id", data.collaborator_id);
+          if (error) throw error;
+          collaboratorIdResolved = data.collaborator_id;
         } else {
           const c = data.collaborator ?? {};
-          await supabaseAdmin.from("collaborators").insert({
-            user_id: userId,
-            nome: data.full_name,
-            email,
-            telefone: data.phone ?? null,
-            cargo: c.cargo ?? null,
-            departamento: c.departamento ?? null,
-            data_admissao: c.data_admissao || null,
-            status: c.status || "active",
-            observacoes: c.observacoes ?? null,
-          });
+          const { data: inserted, error } = await supabaseAdmin
+            .from("collaborators")
+            .insert({
+              user_id: userId,
+              nome: data.full_name,
+              email,
+              telefone: data.phone ?? null,
+              cargo: c.cargo ?? null,
+              departamento: c.departamento ?? null,
+              data_admissao: c.data_admissao || null,
+              status: c.status || "active",
+              observacoes: c.observacoes ?? null,
+            })
+            .select("id")
+            .single();
+          if (error) throw error;
+          collaboratorIdResolved = inserted.id;
         }
       } else if (data.role === "client") {
         if (linkMode === "existing" && data.client_id) {
-          await supabaseAdmin
+          const { error } = await supabaseAdmin
             .from("clients")
             .update({ owner_profile_id: userId })
             .eq("id", data.client_id);
+          if (error) throw error;
+          clientIdResolved = data.client_id;
         } else {
           const cl = data.client ?? {};
           if (!cl.razao_social?.trim()) {
             throw new Error("Informe a Razão Social do cliente.");
           }
-          await supabaseAdmin.from("clients").insert({
-            owner_profile_id: userId,
-            razao_social: cl.razao_social,
-            nome_fantasia: cl.nome_fantasia ?? null,
-            documento: cl.documento ?? null,
-            email,
-            telefone: cl.telefone ?? data.phone ?? null,
-            tipo: cl.tipo ?? null,
-            data_entrada: cl.data_entrada || null,
-            status: cl.status || "active",
-            observacoes: cl.observacoes ?? null,
-            origem_cadastro: "manual",
-          });
+          const { data: inserted, error } = await supabaseAdmin
+            .from("clients")
+            .insert({
+              owner_profile_id: userId,
+              razao_social: cl.razao_social,
+              nome_fantasia: cl.nome_fantasia ?? null,
+              documento: cl.documento ?? null,
+              email,
+              telefone: cl.telefone ?? data.phone ?? null,
+              tipo: cl.tipo ?? null,
+              data_entrada: cl.data_entrada || null,
+              status: cl.status || "active",
+              observacoes: cl.observacoes ?? null,
+              origem_cadastro: "manual",
+            })
+            .select("id")
+            .single();
+          if (error) throw error;
+          clientIdResolved = inserted.id;
         }
+      }
+
+      // vínculos cliente-colaborador
+      if (data.role === "collaborator" && collaboratorIdResolved && data.assign_client_ids?.length) {
+        const rows = data.assign_client_ids.map((cid) => ({
+          collaborator_id: collaboratorIdResolved!,
+          client_id: cid,
+        }));
+        const { error } = await supabaseAdmin
+          .from("client_collaborators")
+          .upsert(rows, { onConflict: "client_id,collaborator_id", ignoreDuplicates: true });
+        if (error) throw error;
+      }
+      if (data.role === "client" && clientIdResolved && data.assign_collaborator_ids?.length) {
+        const rows = data.assign_collaborator_ids.map((cid) => ({
+          client_id: clientIdResolved!,
+          collaborator_id: cid,
+        }));
+        const { error } = await supabaseAdmin
+          .from("client_collaborators")
+          .upsert(rows, { onConflict: "client_id,collaborator_id", ignoreDuplicates: true });
+        if (error) throw error;
       }
     } catch (linkErr: any) {
       // rollback do usuário se o cadastro vinculado falhar
@@ -172,6 +212,7 @@ export const adminCreateUser = createServerFn({ method: "POST" })
 
     return { ok: true, user_id: userId, provisional_password: password };
   });
+
 
 
 export const adminSetUserRole = createServerFn({ method: "POST" })
