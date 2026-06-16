@@ -14,16 +14,13 @@ import { CalendarClock, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DOC_VALIDITY_CATEGORIES, labelOf } from "@/lib/sc-types";
 
 export const Route = createFileRoute("/_authenticated/validades")({
   component: ValidadesPage,
 });
 
-const CATEGORIAS = [
-  "certificado digital", "procuração eletrônica", "contrato social",
-  "alvará", "inscrição municipal", "inscrição estadual",
-  "certidão", "documento dos sócios", "outros",
-];
+const CATEGORIAS = DOC_VALIDITY_CATEGORIES;
 
 function daysUntil(date: string | null) {
   if (!date) return null;
