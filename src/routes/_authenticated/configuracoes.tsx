@@ -95,20 +95,23 @@ function SettingsPage() {
         title="Configurações"
         description="Gerenciamento de contas de acesso e perfis de permissão da plataforma."
         action={
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button><Plus className="mr-2 h-4 w-4" /> Nova conta de acesso</Button>
-            </DialogTrigger>
-            {open && (
-              <NewUserDialog
-                key={open ? "open" : "closed"}
-                onDone={() => {
-                  setOpen(false);
-                  qc.invalidateQueries({ queryKey: ["all-profiles-roles"] });
-                }}
-              />
-            )}
-          </Dialog>
+          <div className="flex gap-2">
+            <VerifyLinksButton />
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button><Plus className="mr-2 h-4 w-4" /> Nova conta de acesso</Button>
+              </DialogTrigger>
+              {open && (
+                <NewUserDialog
+                  key={open ? "open" : "closed"}
+                  onDone={() => {
+                    setOpen(false);
+                    qc.invalidateQueries({ queryKey: ["all-profiles-roles"] });
+                  }}
+                />
+              )}
+            </Dialog>
+          </div>
         }
       />
 
