@@ -16,6 +16,7 @@ import { Route as AuthenticatedValidadesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedSolicitacoesRouteImport } from './routes/_authenticated/solicitacoes'
 import { Route as AuthenticatedPendenciasRouteImport } from './routes/_authenticated/pendencias'
 import { Route as AuthenticatedNotificacoesRouteImport } from './routes/_authenticated/notificacoes'
+import { Route as AuthenticatedModelosRouteImport } from './routes/_authenticated/modelos'
 import { Route as AuthenticatedMinhasPendenciasRouteImport } from './routes/_authenticated/minhas-pendencias'
 import { Route as AuthenticatedMinhaAreaRouteImport } from './routes/_authenticated/minha-area'
 import { Route as AuthenticatedMeusDocumentosRouteImport } from './routes/_authenticated/meus-documentos'
@@ -65,6 +66,11 @@ const AuthenticatedNotificacoesRoute =
     path: '/notificacoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedModelosRoute = AuthenticatedModelosRouteImport.update({
+  id: '/modelos',
+  path: '/modelos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMinhasPendenciasRoute =
   AuthenticatedMinhasPendenciasRouteImport.update({
     id: '/minhas-pendencias',
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
   '/minha-area': typeof AuthenticatedMinhaAreaRoute
   '/minhas-pendencias': typeof AuthenticatedMinhasPendenciasRoute
+  '/modelos': typeof AuthenticatedModelosRoute
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/pendencias': typeof AuthenticatedPendenciasRoute
   '/solicitacoes': typeof AuthenticatedSolicitacoesRoute
@@ -163,6 +170,7 @@ export interface FileRoutesByTo {
   '/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
   '/minha-area': typeof AuthenticatedMinhaAreaRoute
   '/minhas-pendencias': typeof AuthenticatedMinhasPendenciasRoute
+  '/modelos': typeof AuthenticatedModelosRoute
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/pendencias': typeof AuthenticatedPendenciasRoute
   '/solicitacoes': typeof AuthenticatedSolicitacoesRoute
@@ -185,6 +193,7 @@ export interface FileRoutesById {
   '/_authenticated/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
   '/_authenticated/minha-area': typeof AuthenticatedMinhaAreaRoute
   '/_authenticated/minhas-pendencias': typeof AuthenticatedMinhasPendenciasRoute
+  '/_authenticated/modelos': typeof AuthenticatedModelosRoute
   '/_authenticated/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/_authenticated/pendencias': typeof AuthenticatedPendenciasRoute
   '/_authenticated/solicitacoes': typeof AuthenticatedSolicitacoesRoute
@@ -208,6 +217,7 @@ export interface FileRouteTypes {
     | '/meus-documentos'
     | '/minha-area'
     | '/minhas-pendencias'
+    | '/modelos'
     | '/notificacoes'
     | '/pendencias'
     | '/solicitacoes'
@@ -227,6 +237,7 @@ export interface FileRouteTypes {
     | '/meus-documentos'
     | '/minha-area'
     | '/minhas-pendencias'
+    | '/modelos'
     | '/notificacoes'
     | '/pendencias'
     | '/solicitacoes'
@@ -248,6 +259,7 @@ export interface FileRouteTypes {
     | '/_authenticated/meus-documentos'
     | '/_authenticated/minha-area'
     | '/_authenticated/minhas-pendencias'
+    | '/_authenticated/modelos'
     | '/_authenticated/notificacoes'
     | '/_authenticated/pendencias'
     | '/_authenticated/solicitacoes'
@@ -310,6 +322,13 @@ declare module '@tanstack/react-router' {
       path: '/notificacoes'
       fullPath: '/notificacoes'
       preLoaderRoute: typeof AuthenticatedNotificacoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/modelos': {
+      id: '/_authenticated/modelos'
+      path: '/modelos'
+      fullPath: '/modelos'
+      preLoaderRoute: typeof AuthenticatedModelosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/minhas-pendencias': {
@@ -424,6 +443,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMeusDocumentosRoute: typeof AuthenticatedMeusDocumentosRoute
   AuthenticatedMinhaAreaRoute: typeof AuthenticatedMinhaAreaRoute
   AuthenticatedMinhasPendenciasRoute: typeof AuthenticatedMinhasPendenciasRoute
+  AuthenticatedModelosRoute: typeof AuthenticatedModelosRoute
   AuthenticatedNotificacoesRoute: typeof AuthenticatedNotificacoesRoute
   AuthenticatedPendenciasRoute: typeof AuthenticatedPendenciasRoute
   AuthenticatedSolicitacoesRoute: typeof AuthenticatedSolicitacoesRoute
@@ -443,6 +463,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMeusDocumentosRoute: AuthenticatedMeusDocumentosRoute,
   AuthenticatedMinhaAreaRoute: AuthenticatedMinhaAreaRoute,
   AuthenticatedMinhasPendenciasRoute: AuthenticatedMinhasPendenciasRoute,
+  AuthenticatedModelosRoute: AuthenticatedModelosRoute,
   AuthenticatedNotificacoesRoute: AuthenticatedNotificacoesRoute,
   AuthenticatedPendenciasRoute: AuthenticatedPendenciasRoute,
   AuthenticatedSolicitacoesRoute: AuthenticatedSolicitacoesRoute,
