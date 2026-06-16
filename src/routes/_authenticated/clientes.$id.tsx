@@ -397,40 +397,47 @@ function RequirementsTab({ clientId, list, canManage, onChange }: any) {
 
 /* ---------- Team ---------- */
 function TeamTab({ clientId, current, onChange }: any) {
-  const { data: profiles = [] } = useQuery({
-    queryKey: ["collab-profiles"],
-    queryFn: async () => (await supabase.from("collaborators").select("profile_id, profiles(full_name, email)")).data ?? [],
+  const { data: allCollabs = [] } = useQuery({
+    queryKey: ["all-collabs-select"],
+    queryFn: async () => (await supabase.from("collaborators").select("id, nome, email").eq("status", "active").order("nome")).data ?? [],
   });
-  const [pid, setPid] = useState("");
+  const [cid, setCid] = useState("");
   const add = useMutation({
-    mutationFn: async () => { const { error } = await supabase.from("client_collaborators").insert({ client_id: clientId, collaborator_profile_id: pid }); if (error) throw error; },
-    onSuccess: () => { toast.success("Vínculo criado"); setPid(""); onChange(); },
-    onError: (e: any) => toast.error(e.message),
+    mutationFn: async () => {
+      const { error } = await supabase.from("client_collaborators").insert({ client_id: clientId, collaborator_id: cid });
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Colaborador vinculado ao cliente."); setCid(""); onChange(); },
+    onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Você não tem permissão para realizar esta ação." : (e?.message ?? "Não foi possível vincular o colaborador.")),
   });
   const del = useMutation({
-    mutationFn: async (profileId: string) => { const { error } = await supabase.from("client_collaborators").delete().eq("client_id", clientId).eq("collaborator_profile_id", profileId); if (error) throw error; },
+    mutationFn: async (collaboratorId: string) => {
+      const { error } = await supabase.from("client_collaborators").delete().eq("client_id", clientId).eq("collaborator_id", collaboratorId);
+      if (error) throw error;
+    },
     onSuccess: () => onChange(),
+    onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Você não tem permissão para realizar esta ação." : (e?.message ?? "Não foi possível remover o vínculo.")),
   });
   return (
     <Card className="p-5">
       <div className="mb-4 flex items-end gap-3 rounded-md border bg-muted/30 p-3">
         <div className="flex-1"><Label className="text-xs">Vincular colaborador</Label>
-          <Select value={pid} onValueChange={setPid}>
-            <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-            <SelectContent>{profiles.map((c: any) => <SelectItem key={c.profile_id} value={c.profile_id}>{c.profiles?.full_name || c.profiles?.email}</SelectItem>)}</SelectContent>
+          <Select value={cid} onValueChange={setCid}>
+            <SelectTrigger><SelectValue placeholder="Selecione um colaborador" /></SelectTrigger>
+            <SelectContent>{allCollabs.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.nome}{c.email ? ` — ${c.email}` : ""}</SelectItem>)}</SelectContent>
           </Select>
         </div>
-        <Button onClick={() => add.mutate()} disabled={!pid || add.isPending}>Vincular</Button>
+        <Button onClick={() => add.mutate()} disabled={!cid || add.isPending}>Vincular</Button>
       </div>
-      {current.length === 0 ? <EmptyState title="Sem colaboradores vinculados" /> : (
+      {current.length === 0 ? <EmptyState title="Nenhum colaborador vinculado." /> : (
         <ul className="divide-y">
           {current.map((c: any) => (
-            <li key={c.collaborator_profile_id} className="flex items-center justify-between py-3">
+            <li key={c.collaborator_id} className="flex items-center justify-between py-3">
               <div>
-                <div className="text-sm font-medium">{c.profiles?.full_name ?? "—"}</div>
-                <div className="text-xs text-muted-foreground">{c.profiles?.email}</div>
+                <div className="text-sm font-medium">{c.collaborators?.nome ?? "—"}</div>
+                <div className="text-xs text-muted-foreground">{c.collaborators?.email ?? ""}</div>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => del.mutate(c.collaborator_profile_id)}>Remover</Button>
+              <Button variant="ghost" size="sm" onClick={() => del.mutate(c.collaborator_id)}>Remover</Button>
             </li>
           ))}
         </ul>
