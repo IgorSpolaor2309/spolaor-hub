@@ -5,6 +5,7 @@ const MAP: Record<string, { label: string; cls: string }> = {
   aberta: { label: "Aberta", cls: "bg-info/10 text-info border-info/30" },
   em_andamento: { label: "Em andamento", cls: "bg-secondary/10 text-secondary border-secondary/30" },
   aguardando_cliente: { label: "Aguardando cliente", cls: "bg-warning/15 text-warning-foreground border-warning/40" },
+  em_revisao: { label: "Em revisão", cls: "bg-accent/15 text-accent-foreground border-accent/40" },
   concluida: { label: "Concluída", cls: "bg-success/10 text-success border-success/30" },
   vencida: { label: "Vencida", cls: "bg-destructive/10 text-destructive border-destructive/30" },
   cancelada: { label: "Cancelada", cls: "bg-muted text-muted-foreground border-border" },
