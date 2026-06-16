@@ -474,7 +474,7 @@ function TeamTab({ clientId, current, onChange }: any) {
 }
 
 /* ---------- Edit Client (admin) ---------- */
-import { CLIENT_TYPES } from "@/lib/sc-types";
+
 function EditClientDialogInline({ client, onDone }: { client: any; onDone: () => void }) {
   const [form, setForm] = useState({
     razao_social: client.razao_social ?? "",
