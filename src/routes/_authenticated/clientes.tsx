@@ -274,3 +274,63 @@ function EditClientDialog({ client, onDone }: { client: any; onDone: () => void 
     </DialogContent>
   );
 }
+
+function InactivateClientButton({ client }: { client: any }) {
+  const qc = useQueryClient();
+  const setStatusFn = useServerFn(adminSetClientStatus);
+  const isInactive = client.status === "inactive";
+  const mut = useMutation({
+    mutationFn: () =>
+      setStatusFn({
+        data: { client_id: client.id, status: isInactive ? "active" : "inactive" },
+      }),
+    onSuccess: () => {
+      toast.success(isInactive ? "Cliente reativado." : "Cliente removido com sucesso.");
+      qc.invalidateQueries({ queryKey: ["clients"] });
+    },
+    onError: (e: any) =>
+      toast.error(
+        /row-level security|permission/i.test(e?.message ?? "")
+          ? "Você não tem permissão para realizar esta ação."
+          : (e?.message ?? "Não foi possível atualizar o cliente."),
+      ),
+  });
+
+  if (isInactive) {
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label="Reativar cliente"
+        onClick={() => mut.mutate()}
+        disabled={mut.isPending}
+      >
+        <Power className="h-4 w-4 text-green-600" />
+      </Button>
+    );
+  }
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label="Remover cliente">
+          <PowerOff className="h-4 w-4 text-destructive" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Remover cliente</AlertDialogTitle>
+          <AlertDialogDescription>
+            Tem certeza que deseja remover este cliente? Ele será marcado como inativo
+            e deixará de aparecer para os colaboradores. O histórico, documentos,
+            pendências e vínculos serão preservados e poderão ser restaurados.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={() => mut.mutate()}>Remover cliente</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
