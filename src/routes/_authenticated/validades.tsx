@@ -147,7 +147,7 @@ function ValidadesPage() {
                       <tr key={d.id} className="border-b hover:bg-muted/40">
                         <td className="py-2 pr-4 font-medium">{d.nome}</td>
                         <td className="py-2 pr-4">{d.clients?.razao_social ?? "—"}</td>
-                        <td className="py-2 pr-4">{d.categoria_validade ?? "—"}</td>
+                        <td className="py-2 pr-4">{d.categoria_validade ? labelOf(CATEGORIAS, d.categoria_validade) : "—"}</td>
                         <td className="py-2 pr-4">{new Date(d.data_validade).toLocaleDateString("pt-BR")}</td>
                         <td className="py-2 pr-4"><Badge className={st.tone}>{st.label}</Badge></td>
                         <td className="py-2 text-right">
