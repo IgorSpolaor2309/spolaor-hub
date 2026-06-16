@@ -43,6 +43,7 @@ function friendly(err: any) {
 function SettingsPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [editUser, setEditUser] = useState<UserRow | null>(null);
 
   const { data: users = [] } = useQuery({
     queryKey: ["all-profiles-roles"],
