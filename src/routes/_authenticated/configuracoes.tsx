@@ -201,15 +201,27 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
     password: DEFAULT_PROVISIONAL_PASSWORD,
     phone: "",
     role: "collaborator" as "admin" | "collaborator" | "client",
+    link_mode: "create" as "create" | "existing",
     client_id: "",
     collaborator_id: "",
+    cargo: "",
+    departamento: "",
+    data_admissao: "",
+    collab_status: "active",
+    razao_social: "",
+    nome_fantasia: "",
+    documento: "",
+    tipo: "",
+    data_entrada: "",
+    client_status: "active",
+    observacoes: "",
   });
   const [created, setCreated] = useState<{ email: string; password: string } | null>(null);
 
   const { data: clients = [] } = useQuery({
-    queryKey: ["all-clients-select"],
+    queryKey: ["all-clients-select-unlinked"],
     queryFn: async () =>
-      (await supabase.from("clients").select("id, razao_social").order("razao_social")).data ?? [],
+      (await supabase.from("clients").select("id, razao_social").is("owner_profile_id", null).order("razao_social")).data ?? [],
   });
   const { data: collaborators = [] } = useQuery({
     queryKey: ["unlinked-collabs-select"],
@@ -227,8 +239,25 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
           password: form.password,
           phone: form.phone || null,
           role: form.role,
-          client_id: form.role === "client" ? form.client_id || null : null,
-          collaborator_id: form.role === "collaborator" ? form.collaborator_id || null : null,
+          link_mode: form.link_mode,
+          client_id: form.role === "client" && form.link_mode === "existing" ? form.client_id || null : null,
+          collaborator_id: form.role === "collaborator" && form.link_mode === "existing" ? form.collaborator_id || null : null,
+          collaborator: form.role === "collaborator" && form.link_mode === "create" ? {
+            cargo: form.cargo || null,
+            departamento: form.departamento || null,
+            data_admissao: form.data_admissao || null,
+            status: form.collab_status || "active",
+          } : null,
+          client: form.role === "client" && form.link_mode === "create" ? {
+            razao_social: form.razao_social,
+            nome_fantasia: form.nome_fantasia || null,
+            documento: form.documento || null,
+            telefone: form.phone || null,
+            tipo: form.tipo || null,
+            data_entrada: form.data_entrada || null,
+            status: form.client_status || "active",
+            observacoes: form.observacoes || null,
+          } : null,
         },
       }),
     onSuccess: (res: any) => {
@@ -242,7 +271,9 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
     !form.full_name.trim() ||
     !form.email.trim() ||
     form.password.length < 8 ||
-    (form.role === "client" && !form.client_id) ||
+    (form.role === "client" && form.link_mode === "existing" && !form.client_id) ||
+    (form.role === "client" && form.link_mode === "create" && !form.razao_social.trim()) ||
+    (form.role === "collaborator" && form.link_mode === "existing" && !form.collaborator_id) ||
     mut.isPending;
 
   if (created) {
@@ -280,85 +311,181 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <DialogContent className="max-w-lg">
+    <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
       <DialogHeader>
         <DialogTitle>Nova conta de acesso</DialogTitle>
       </DialogHeader>
-      <div className="space-y-4">
-        <div>
-          <Label>Nome completo *</Label>
-          <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label>E-mail *</Label>
-            <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-          </div>
-          <div>
-            <Label>Telefone</Label>
-            <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-          </div>
-        </div>
-        <div>
-          <Label>Senha provisória *</Label>
-          <Input
-            type="text"
-            minLength={8}
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-          />
-          <p className="mt-1 text-xs text-muted-foreground">
-            Padrão sugerido: <code>Spolaor@123</code>. O usuário será obrigado a alterar a senha no primeiro acesso.
-          </p>
-        </div>
-        <div>
-          <Label>Perfil de acesso *</Label>
-          <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as any })}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+      <div className="space-y-5">
+        <div className="rounded-md border bg-muted/30 p-3">
+          <Label className="text-xs uppercase text-muted-foreground">Perfil de acesso *</Label>
+          <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as any, link_mode: "create" })}>
+            <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="admin">Administrador</SelectItem>
-              <SelectItem value="collaborator">Colaborador</SelectItem>
-              <SelectItem value="client">Cliente</SelectItem>
+              <SelectItem value="admin">Administrador — acesso total à plataforma</SelectItem>
+              <SelectItem value="collaborator">Colaborador — equipe interna</SelectItem>
+              <SelectItem value="client">Cliente — acesso à própria área</SelectItem>
             </SelectContent>
           </Select>
+          <p className="mt-2 text-xs text-muted-foreground">
+            <strong>Perfil de acesso</strong> define a permissão na plataforma. <strong>Cargo profissional</strong> (analista, gerente etc.) é dado do colaborador.
+          </p>
         </div>
 
-        {form.role === "client" && (
+        <section className="space-y-3">
+          <h4 className="text-sm font-semibold">Dados de acesso</h4>
           <div>
-            <Label>Cliente vinculado *</Label>
-            <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
-              <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
-              <SelectContent>
-                {clients.map((c: any) => (
-                  <SelectItem key={c.id} value={c.id}>{c.razao_social}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Nome completo *</Label>
+            <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>E-mail *</Label>
+              <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            </div>
+            <div>
+              <Label>Telefone / WhatsApp</Label>
+              <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            </div>
+          </div>
+          <div>
+            <Label>Senha provisória *</Label>
+            <Input type="text" minLength={8} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
             <p className="mt-1 text-xs text-muted-foreground">
-              Este usuário poderá visualizar apenas a área do cliente vinculado.
+              Padrão sugerido: <code>Spolaor@123</code>. O usuário será obrigado a alterar a senha no primeiro acesso.
             </p>
           </div>
-        )}
+        </section>
 
         {form.role === "collaborator" && (
-          <div>
-            <Label>Colaborador vinculado (opcional)</Label>
-            <Select
-              value={form.collaborator_id || "none"}
-              onValueChange={(v) => setForm({ ...form, collaborator_id: v === "none" ? "" : v })}
-            >
-              <SelectTrigger><SelectValue placeholder="Sem colaborador vinculado" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Sem colaborador vinculado</SelectItem>
-                {collaborators.map((c: any) => (
-                  <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Vincule a conta a um colaborador já cadastrado para que ele veja os clientes designados.
-            </p>
-          </div>
+          <section className="space-y-3 rounded-md border p-4">
+            <h4 className="text-sm font-semibold">Cadastro de colaborador</h4>
+            <div>
+              <Label className="text-xs">Modo</Label>
+              <Select value={form.link_mode} onValueChange={(v) => setForm({ ...form, link_mode: v as any })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="create">Criar novo colaborador automaticamente</SelectItem>
+                  <SelectItem value="existing">Vincular a colaborador existente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {form.link_mode === "existing" ? (
+              <div>
+                <Label>Colaborador existente *</Label>
+                <Select value={form.collaborator_id} onValueChange={(v) => setForm({ ...form, collaborator_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o colaborador" /></SelectTrigger>
+                  <SelectContent>
+                    {collaborators.length === 0 && (
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">Nenhum colaborador sem acesso disponível.</div>
+                    )}
+                    {collaborators.map((c: any) => (
+                      <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Cargo profissional</Label>
+                  <Input value={form.cargo} onChange={(e) => setForm({ ...form, cargo: e.target.value })} placeholder="Analista, Gerente…" />
+                </div>
+                <div>
+                  <Label>Departamento</Label>
+                  <Input value={form.departamento} onChange={(e) => setForm({ ...form, departamento: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Data de admissão</Label>
+                  <Input type="date" value={form.data_admissao} onChange={(e) => setForm({ ...form, data_admissao: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <Select value={form.collab_status} onValueChange={(v) => setForm({ ...form, collab_status: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Ativo</SelectItem>
+                      <SelectItem value="inactive">Inativo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {form.role === "client" && (
+          <section className="space-y-3 rounded-md border p-4">
+            <h4 className="text-sm font-semibold">Cadastro de cliente</h4>
+            <div>
+              <Label className="text-xs">Modo</Label>
+              <Select value={form.link_mode} onValueChange={(v) => setForm({ ...form, link_mode: v as any })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="create">Criar novo cliente automaticamente</SelectItem>
+                  <SelectItem value="existing">Vincular a cliente existente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {form.link_mode === "existing" ? (
+              <div>
+                <Label>Cliente existente *</Label>
+                <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
+                  <SelectContent>
+                    {clients.length === 0 && (
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">Nenhum cliente sem acesso disponível.</div>
+                    )}
+                    {clients.map((c: any) => (
+                      <SelectItem key={c.id} value={c.id}>{c.razao_social}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <Label>Razão social / Nome *</Label>
+                  <Input value={form.razao_social} onChange={(e) => setForm({ ...form, razao_social: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Nome fantasia</Label>
+                  <Input value={form.nome_fantasia} onChange={(e) => setForm({ ...form, nome_fantasia: e.target.value })} />
+                </div>
+                <div>
+                  <Label>CNPJ ou CPF</Label>
+                  <Input value={form.documento} onChange={(e) => setForm({ ...form, documento: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Tipo de cliente</Label>
+                  <Input value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })} placeholder="PJ, PF, MEI…" />
+                </div>
+                <div>
+                  <Label>Data de entrada</Label>
+                  <Input type="date" value={form.data_entrada} onChange={(e) => setForm({ ...form, data_entrada: e.target.value })} />
+                </div>
+                <div className="col-span-2">
+                  <Label>Status</Label>
+                  <Select value={form.client_status} onValueChange={(v) => setForm({ ...form, client_status: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Ativo</SelectItem>
+                      <SelectItem value="inactive">Inativo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-2">
+                  <Label>Observações internas</Label>
+                  <Input value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {form.role === "admin" && (
+          <p className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+            Administradores aparecem apenas em Configurações &gt; Contas de acesso. Não é criado registro em Clientes ou Colaboradores.
+          </p>
         )}
       </div>
       <DialogFooter>
