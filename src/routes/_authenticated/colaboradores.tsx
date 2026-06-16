@@ -14,9 +14,16 @@ import {
 import { StatusBadge } from "@/components/sc/StatusBadge";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { useState } from "react";
-import { Plus, UserCog, Pencil } from "lucide-react";
+import { Plus, UserCog, Pencil, PowerOff, Power } from "lucide-react";
 import { toast } from "sonner";
 import { MultiSelect } from "@/components/sc/MultiSelect";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useServerFn } from "@tanstack/react-start";
+import { adminSetCollaboratorStatus } from "@/lib/admin-users.functions";
 
 
 export const Route = createFileRoute("/_authenticated/colaboradores")({
