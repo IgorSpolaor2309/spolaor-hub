@@ -431,8 +431,25 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
                 </div>
               </div>
             )}
+            <div className="border-t pt-3">
+              <Label className="text-xs uppercase text-muted-foreground">Clientes atribuídos a este colaborador</Label>
+              <p className="mb-2 text-xs text-muted-foreground">Você poderá alterar esses vínculos depois.</p>
+              <MultiSelect
+                options={allClients.map((c: any) => ({
+                  value: c.id,
+                  label: c.razao_social,
+                  hint: c.nome_fantasia,
+                }))}
+                value={assignClientIds}
+                onChange={setAssignClientIds}
+                placeholder="Buscar cliente…"
+                emptyMessage="Nenhum cliente cadastrado."
+                noneSelectedMessage="Nenhum cliente selecionado."
+              />
+            </div>
           </section>
         )}
+
 
         {form.role === "client" && (
           <section className="space-y-3 rounded-md border p-4">
