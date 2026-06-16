@@ -14,12 +14,14 @@ async function ensureAdmin(supabase: any, userId: string) {
   if (!data) throw new Error("Apenas administradores podem realizar esta ação.");
 }
 
+const DEFAULT_PROVISIONAL_PASSWORD = "Spolaor@123";
+
 export const adminCreateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
     (input: {
       email: string;
-      password: string;
+      password?: string | null;
       full_name: string;
       role: AppRole;
       phone?: string | null;
@@ -34,9 +36,9 @@ export const adminCreateUser = createServerFn({ method: "POST" })
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       throw new Error("E-mail inválido.");
     }
-    if (!data.password || data.password.length < 8) {
-      throw new Error("A senha provisória precisa ter ao menos 8 caracteres.");
-    }
+    const password = (data.password && data.password.length >= 8)
+      ? data.password
+      : DEFAULT_PROVISIONAL_PASSWORD;
     if (!data.full_name?.trim()) {
       throw new Error("Informe o nome completo.");
     }
@@ -45,7 +47,7 @@ export const adminCreateUser = createServerFn({ method: "POST" })
 
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email,
-      password: data.password,
+      password,
       email_confirm: true,
       user_metadata: { full_name: data.full_name },
     });
@@ -57,12 +59,13 @@ export const adminCreateUser = createServerFn({ method: "POST" })
 
     const userId = created.user.id;
 
-    // garantir profile (trigger já cria, mas reforçamos campos)
+    // garantir profile (trigger já cria, mas reforçamos campos + flag de troca obrigatória)
     await supabaseAdmin.from("profiles").upsert({
       id: userId,
       full_name: data.full_name,
       email,
       phone: data.phone ?? null,
+      must_change_password: true,
     });
 
     // perfil de acesso
@@ -86,8 +89,9 @@ export const adminCreateUser = createServerFn({ method: "POST" })
         .eq("id", data.collaborator_id);
     }
 
-    return { ok: true, user_id: userId };
+    return { ok: true, user_id: userId, provisional_password: password };
   });
+
 
 export const adminSetUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
