@@ -424,6 +424,7 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          must_change_password: boolean
           phone: string | null
           status: string
           updated_at: string
@@ -434,6 +435,7 @@ export type Database = {
           email?: string | null
           full_name?: string
           id: string
+          must_change_password?: boolean
           phone?: string | null
           status?: string
           updated_at?: string
@@ -444,6 +446,7 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          must_change_password?: boolean
           phone?: string | null
           status?: string
           updated_at?: string
@@ -536,6 +539,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      mark_password_changed: { Args: never; Returns: undefined }
       user_has_client_access: {
         Args: { _client_id: string; _user_id: string }
         Returns: boolean
