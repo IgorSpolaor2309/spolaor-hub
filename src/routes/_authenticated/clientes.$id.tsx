@@ -86,8 +86,11 @@ function ClientDetail() {
         title={client.razao_social}
         description={client.nome_fantasia ?? ""}
         action={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <StatusBadge value={client.status} />
+            {role !== "client" && userId && (
+              <MonthStatusSelector clientId={client.id} userId={userId} />
+            )}
             {role === "admin" && (
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
                 <Pencil className="mr-2 h-4 w-4" /> Editar cliente
