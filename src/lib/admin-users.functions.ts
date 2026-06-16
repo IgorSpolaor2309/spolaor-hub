@@ -51,8 +51,12 @@ export const adminCreateUser = createServerFn({ method: "POST" })
       // dados para auto-criação
       collaborator?: CollaboratorData | null;
       client?: ClientData | null;
+      // vínculos cliente-colaborador a criar
+      assign_client_ids?: string[] | null;
+      assign_collaborator_ids?: string[] | null;
     }) => input,
   )
+
   .handler(async ({ data, context }) => {
     await ensureAdmin(context.supabase, context.userId);
 
