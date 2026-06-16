@@ -192,16 +192,19 @@ function SettingsPage() {
   );
 }
 
+const DEFAULT_PROVISIONAL_PASSWORD = "Spolaor@123";
+
 function NewUserDialog({ onDone }: { onDone: () => void }) {
   const [form, setForm] = useState({
     full_name: "",
     email: "",
-    password: "",
+    password: DEFAULT_PROVISIONAL_PASSWORD,
     phone: "",
     role: "collaborator" as "admin" | "collaborator" | "client",
     client_id: "",
     collaborator_id: "",
   });
+  const [created, setCreated] = useState<{ email: string; password: string } | null>(null);
 
   const { data: clients = [] } = useQuery({
     queryKey: ["all-clients-select"],
@@ -228,9 +231,9 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
           collaborator_id: form.role === "collaborator" ? form.collaborator_id || null : null,
         },
       }),
-    onSuccess: () => {
+    onSuccess: (res: any) => {
       toast.success("Conta de acesso criada com sucesso.");
-      onDone();
+      setCreated({ email: form.email, password: res?.provisional_password ?? form.password });
     },
     onError: (e: any) => toast.error(friendly(e)),
   });
@@ -241,6 +244,40 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
     form.password.length < 8 ||
     (form.role === "client" && !form.client_id) ||
     mut.isPending;
+
+  if (created) {
+    return (
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Conta criada</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 text-sm">
+          <p className="text-muted-foreground">
+            Compartilhe os dados abaixo com o usuário. Ele será obrigado a definir uma nova senha no primeiro acesso.
+          </p>
+          <div className="rounded-md border bg-muted/40 p-4">
+            <div><span className="text-muted-foreground">E-mail:</span> <strong>{created.email}</strong></div>
+            <div className="mt-1"><span className="text-muted-foreground">Senha provisória:</span> <strong className="font-mono">{created.password}</strong></div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Após o primeiro acesso, esta senha provisória deixa de funcionar.
+          </p>
+        </div>
+        <DialogFooter>
+          <Button
+            onClick={() => {
+              navigator.clipboard?.writeText(`E-mail: ${created.email}\nSenha provisória: ${created.password}`).catch(() => {});
+              toast.success("Dados copiados para a área de transferência.");
+            }}
+            variant="outline"
+          >
+            Copiar dados
+          </Button>
+          <Button onClick={onDone}>Concluir</Button>
+        </DialogFooter>
+      </DialogContent>
+    );
+  }
 
   return (
     <DialogContent className="max-w-lg">
@@ -271,7 +308,7 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
             onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
           <p className="mt-1 text-xs text-muted-foreground">
-            Mínimo de 8 caracteres. Compartilhe com o usuário para o primeiro acesso.
+            Padrão sugerido: <code>Spolaor@123</code>. O usuário será obrigado a alterar a senha no primeiro acesso.
           </p>
         </div>
         <div>
@@ -332,3 +369,4 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
     </DialogContent>
   );
 }
+
