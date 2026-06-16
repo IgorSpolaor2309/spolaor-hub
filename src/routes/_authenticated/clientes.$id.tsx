@@ -88,18 +88,26 @@ function ClientDetail() {
           <div className="flex items-center gap-2">
             <StatusBadge value={client.status} />
             {role === "admin" && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.dispatchEvent(new CustomEvent("sc:edit-client", { detail: client }))}
-              >
+              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
                 <Pencil className="mr-2 h-4 w-4" /> Editar cliente
               </Button>
             )}
           </div>
         }
       />
-      {role === "admin" && <EditClientInline client={client} onSaved={() => qc.invalidateQueries({ queryKey: ["client", id] })} />}
+      {role === "admin" && editOpen && (
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <EditClientDialogInline
+            client={client}
+            onDone={() => {
+              setEditOpen(false);
+              qc.invalidateQueries({ queryKey: ["client", id] });
+              qc.invalidateQueries({ queryKey: ["clients"] });
+            }}
+          />
+        </Dialog>
+      )}
+
 
 
       <div className="mb-6 grid gap-4 lg:grid-cols-4">
