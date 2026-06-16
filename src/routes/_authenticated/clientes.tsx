@@ -12,8 +12,9 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { StatusBadge } from "@/components/sc/StatusBadge";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { useState } from "react";
-import { Plus, Search, Users } from "lucide-react";
+import { Plus, Search, Users, Pencil } from "lucide-react";
 import { toast } from "sonner";
+
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { CLIENT_TYPES, labelOf } from "@/lib/sc-types";
 
