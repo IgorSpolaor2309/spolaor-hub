@@ -27,6 +27,8 @@ function ClientsPage() {
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<any | null>(null);
+
 
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ["clients"],
