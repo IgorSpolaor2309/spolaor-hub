@@ -32,11 +32,14 @@ function StatCard({ icon: Icon, label, value, accent }: { icon: React.ComponentT
 function Dashboard() {
   const { role, profile, userId, loading } = useCurrentUser();
 
-  if (loading) return <div className="text-sm text-muted-foreground">Carregando…</div>;
+  if (loading || !userId) {
+    return <div className="text-sm text-muted-foreground">Carregando informações...</div>;
+  }
 
   if (role === "admin") return <AdminDashboard name={profile?.full_name ?? ""} />;
-  if (role === "collaborator") return <CollabDashboard name={profile?.full_name ?? ""} userId={userId!} />;
-  return <ClientDashboard name={profile?.full_name ?? ""} userId={userId!} />;
+  if (role === "collaborator") return <CollabDashboard name={profile?.full_name ?? ""} userId={userId} />;
+  if (role === "client") return <ClientDashboard name={profile?.full_name ?? ""} userId={userId} />;
+  return <div className="text-sm text-muted-foreground">Carregando informações...</div>;
 }
 
 function AdminDashboard({ name }: { name: string }) {
