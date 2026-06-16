@@ -17,19 +17,19 @@ export type Database = {
       client_collaborators: {
         Row: {
           client_id: string
-          collaborator_profile_id: string
+          collaborator_id: string
           created_at: string
           id: string
         }
         Insert: {
           client_id: string
-          collaborator_profile_id: string
+          collaborator_id: string
           created_at?: string
           id?: string
         }
         Update: {
           client_id?: string
-          collaborator_profile_id?: string
+          collaborator_id?: string
           created_at?: string
           id?: string
         }
@@ -42,10 +42,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "client_collaborators_collaborator_profile_id_fkey"
-            columns: ["collaborator_profile_id"]
+            foreignKeyName: "client_collaborators_collaborator_id_fkey"
+            columns: ["collaborator_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "collaborators"
             referencedColumns: ["id"]
           },
         ]
@@ -121,35 +121,47 @@ export type Database = {
           created_at: string
           data_admissao: string | null
           departamento: string | null
+          email: string | null
           id: string
-          profile_id: string
+          nome: string
+          observacoes: string | null
           status: string
+          telefone: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           cargo?: string | null
           created_at?: string
           data_admissao?: string | null
           departamento?: string | null
+          email?: string | null
           id?: string
-          profile_id: string
+          nome: string
+          observacoes?: string | null
           status?: string
+          telefone?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           cargo?: string | null
           created_at?: string
           data_admissao?: string | null
           departamento?: string | null
+          email?: string | null
           id?: string
-          profile_id?: string
+          nome?: string
+          observacoes?: string | null
           status?: string
+          telefone?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "collaborators_profile_id_fkey"
-            columns: ["profile_id"]
+            columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -509,6 +521,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_set_user_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
