@@ -1,12 +1,49 @@
 export type AppRole = "admin" | "collaborator" | "client";
 
 export const TASK_STATUSES = [
-  { value: "aberta", label: "Aberta" },
-  { value: "em_andamento", label: "Em andamento" },
+  { value: "aberta", label: "A fazer" },
   { value: "aguardando_cliente", label: "Aguardando cliente" },
+  { value: "em_andamento", label: "Em execução" },
+  { value: "em_revisao", label: "Em revisão" },
   { value: "concluida", label: "Concluída" },
   { value: "vencida", label: "Vencida" },
   { value: "cancelada", label: "Cancelada" },
+] as const;
+
+export const KANBAN_COLUMNS = [
+  { value: "aberta", label: "A fazer" },
+  { value: "aguardando_cliente", label: "Aguardando cliente" },
+  { value: "em_andamento", label: "Em execução" },
+  { value: "em_revisao", label: "Em revisão" },
+  { value: "concluida", label: "Concluído" },
+] as const;
+
+export const DEPARTMENTS = [
+  { value: "contabil", label: "Contábil" },
+  { value: "fiscal", label: "Fiscal" },
+  { value: "dp", label: "Departamento Pessoal" },
+  { value: "financeiro", label: "Financeiro" },
+  { value: "societario", label: "Societário" },
+  { value: "atendimento", label: "Atendimento" },
+  { value: "outros", label: "Outros" },
+] as const;
+
+export const TEMPLATE_CATEGORIES = [
+  { value: "solicitacao_documentos", label: "Solicitação de documentos" },
+  { value: "cobranca_pendencia", label: "Cobrança de pendência" },
+  { value: "guia_disponivel", label: "Guia disponível" },
+  { value: "lembrete_vencimento", label: "Lembrete de vencimento" },
+  { value: "certificado_digital", label: "Certificado digital" },
+  { value: "fechamento_mensal", label: "Fechamento mensal" },
+  { value: "boas_vindas", label: "Boas-vindas" },
+  { value: "primeiro_acesso", label: "Primeiro acesso" },
+  { value: "comprovante_pagamento", label: "Comprovante de pagamento" },
+  { value: "outros", label: "Outros" },
+] as const;
+
+export const TEMPLATE_VARIABLES = [
+  "{nome_cliente}", "{nome_colaborador}", "{competencia}",
+  "{data_vencimento}", "{nome_empresa}", "{tipo_documento}", "{tipo_guia}",
 ] as const;
 
 export const TASK_PRIORITIES = [
