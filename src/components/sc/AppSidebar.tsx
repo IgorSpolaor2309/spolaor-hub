@@ -35,6 +35,7 @@ const ITEMS: Item[] = [
   { to: "/historico", label: "Histórico", icon: History, roles: ["client"] },
   { to: "/notificacoes", label: "Notificações", icon: Bell, roles: ["admin", "collaborator", "client"] },
   { to: "/configuracoes", label: "Configurações", icon: Settings, roles: ["admin"] },
+  { to: "/integracoes/omie", label: "Integração OMIE", icon: Plug, roles: ["admin"] },
 ];
 
 
