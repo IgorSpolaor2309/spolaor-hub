@@ -19,9 +19,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Pencil } from "lucide-react";
 import {
-  adminCreateUser, adminSetUserRole, adminDeleteUser,
+  adminCreateUser, adminSetUserRole, adminDeleteUser, adminUpdateUser,
 } from "@/lib/admin-users.functions";
 import { MultiSelect } from "@/components/sc/MultiSelect";
 
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/configuracoes")({
   component: SettingsPage,
 });
 
-type UserRow = { id: string; full_name: string | null; email: string | null; roles: string[] };
+type UserRow = { id: string; full_name: string | null; email: string | null; phone: string | null; roles: string[] };
 
 function friendly(err: any) {
   const raw = err?.message ?? "";
@@ -43,12 +43,13 @@ function friendly(err: any) {
 function SettingsPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [editUser, setEditUser] = useState<UserRow | null>(null);
 
   const { data: users = [] } = useQuery({
     queryKey: ["all-profiles-roles"],
     queryFn: async (): Promise<UserRow[]> => {
       const [p, r] = await Promise.all([
-        supabase.from("profiles").select("id, full_name, email"),
+        supabase.from("profiles").select("id, full_name, email, phone"),
         supabase.from("user_roles").select("user_id, role"),
       ]);
       const map = new Map<string, string[]>();
@@ -152,27 +153,37 @@ function SettingsPage() {
                     )}
                   </td>
                   <td>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" aria-label="Excluir">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Excluir conta de acesso?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Esta ação remove permanentemente a conta de login de {u.full_name || u.email}. Os registros vinculados (cliente, colaborador) não serão excluídos.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => removeUser.mutate(u.id)}>
-                            Excluir
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Editar"
+                        onClick={() => setEditUser(u)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" aria-label="Excluir">
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir conta de acesso?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta ação remove permanentemente a conta de login de {u.full_name || u.email}. Os registros vinculados (cliente, colaborador) não serão excluídos.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => removeUser.mutate(u.id)}>
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -193,7 +204,115 @@ function SettingsPage() {
           <li>· Recursos de IA — arquitetura pronta para classificação, resumos e assistente interno.</li>
         </ul>
       </Card>
+
+      <Dialog open={!!editUser} onOpenChange={(v) => !v && setEditUser(null)}>
+        {editUser && (
+          <EditUserDialog
+            user={editUser}
+            onDone={() => {
+              setEditUser(null);
+              qc.invalidateQueries({ queryKey: ["all-profiles-roles"] });
+            }}
+          />
+        )}
+      </Dialog>
     </div>
+  );
+}
+
+function EditUserDialog({ user, onDone }: { user: UserRow; onDone: () => void }) {
+  const [form, setForm] = useState({
+    full_name: user.full_name ?? "",
+    email: user.email ?? "",
+    phone: user.phone ?? "",
+    new_password: "",
+    force_password_change: false,
+  });
+  const updateFn = useServerFn(adminUpdateUser);
+  const mut = useMutation({
+    mutationFn: () =>
+      updateFn({
+        data: {
+          user_id: user.id,
+          full_name: form.full_name.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim() || null,
+          new_password: form.new_password ? form.new_password : null,
+          force_password_change: form.force_password_change,
+        },
+      }),
+    onSuccess: () => {
+      toast.success("Conta atualizada com sucesso.");
+      onDone();
+    },
+    onError: (e: any) => toast.error(friendly(e)),
+  });
+
+  const disabled =
+    !form.full_name.trim() ||
+    !form.email.trim() ||
+    (form.new_password.length > 0 && form.new_password.length < 8) ||
+    mut.isPending;
+
+  return (
+    <DialogContent className="max-w-lg">
+      <DialogHeader>
+        <DialogTitle>Editar conta de acesso</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-4">
+        <div>
+          <Label>Nome completo *</Label>
+          <Input
+            value={form.full_name}
+            onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label>E-mail *</Label>
+            <Input
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+            />
+          </div>
+          <div>
+            <Label>Telefone / WhatsApp</Label>
+            <Input
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            />
+          </div>
+        </div>
+        <div className="rounded-md border bg-muted/30 p-3">
+          <Label>Nova senha (opcional)</Label>
+          <Input
+            type="text"
+            placeholder="Deixe em branco para manter a atual"
+            value={form.new_password}
+            onChange={(e) => setForm({ ...form, new_password: e.target.value })}
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            Ao definir uma nova senha, o usuário será obrigado a alterá-la no próximo acesso.
+            Mínimo de 8 caracteres.
+          </p>
+          <label className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={form.force_password_change}
+              onChange={(e) => setForm({ ...form, force_password_change: e.target.checked })}
+            />
+            Exigir troca de senha no próximo acesso (mesmo sem definir nova senha aqui).
+          </label>
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={onDone}>Cancelar</Button>
+        <Button disabled={disabled} onClick={() => mut.mutate()}>
+          {mut.isPending ? "Salvando…" : "Salvar alterações"}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
   );
 }
 
