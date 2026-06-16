@@ -276,8 +276,11 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
             status: form.client_status || "active",
             observacoes: form.observacoes || null,
           } : null,
+          assign_client_ids: form.role === "collaborator" ? assignClientIds : null,
+          assign_collaborator_ids: form.role === "client" ? assignCollabIds : null,
         },
       }),
+
     onSuccess: (res: any) => {
       toast.success("Conta de acesso criada com sucesso.");
       setCreated({ email: form.email, password: res?.provisional_password ?? form.password });
