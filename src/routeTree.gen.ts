@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedValidadesRouteImport } from './routes/_authenticated/validades'
+import { Route as AuthenticatedSolicitacoesRouteImport } from './routes/_authenticated/solicitacoes'
 import { Route as AuthenticatedPendenciasRouteImport } from './routes/_authenticated/pendencias'
 import { Route as AuthenticatedNotificacoesRouteImport } from './routes/_authenticated/notificacoes'
 import { Route as AuthenticatedMinhasPendenciasRouteImport } from './routes/_authenticated/minhas-pendencias'
@@ -19,6 +21,7 @@ import { Route as AuthenticatedMinhaAreaRouteImport } from './routes/_authentica
 import { Route as AuthenticatedMeusDocumentosRouteImport } from './routes/_authenticated/meus-documentos'
 import { Route as AuthenticatedInteracoesRouteImport } from './routes/_authenticated/interacoes'
 import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
+import { Route as AuthenticatedGuiasRouteImport } from './routes/_authenticated/guias'
 import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authenticated/documentos'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedColaboradoresRouteImport } from './routes/_authenticated/colaboradores'
@@ -39,6 +42,17 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedValidadesRoute = AuthenticatedValidadesRouteImport.update({
+  id: '/validades',
+  path: '/validades',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSolicitacoesRoute =
+  AuthenticatedSolicitacoesRouteImport.update({
+    id: '/solicitacoes',
+    path: '/solicitacoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPendenciasRoute = AuthenticatedPendenciasRouteImport.update({
   id: '/pendencias',
   path: '/pendencias',
@@ -77,6 +91,11 @@ const AuthenticatedHistoricoRoute = AuthenticatedHistoricoRouteImport.update({
   path: '/historico',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedGuiasRoute = AuthenticatedGuiasRouteImport.update({
+  id: '/guias',
+  path: '/guias',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDocumentosRoute = AuthenticatedDocumentosRouteImport.update({
   id: '/documentos',
   path: '/documentos',
@@ -112,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/documentos': typeof AuthenticatedDocumentosRoute
+  '/guias': typeof AuthenticatedGuiasRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/interacoes': typeof AuthenticatedInteracoesRoute
   '/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
@@ -119,6 +139,8 @@ export interface FileRoutesByFullPath {
   '/minhas-pendencias': typeof AuthenticatedMinhasPendenciasRoute
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/pendencias': typeof AuthenticatedPendenciasRoute
+  '/solicitacoes': typeof AuthenticatedSolicitacoesRoute
+  '/validades': typeof AuthenticatedValidadesRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
 }
 export interface FileRoutesByTo {
@@ -127,6 +149,7 @@ export interface FileRoutesByTo {
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/documentos': typeof AuthenticatedDocumentosRoute
+  '/guias': typeof AuthenticatedGuiasRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/interacoes': typeof AuthenticatedInteracoesRoute
   '/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
@@ -134,6 +157,8 @@ export interface FileRoutesByTo {
   '/minhas-pendencias': typeof AuthenticatedMinhasPendenciasRoute
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/pendencias': typeof AuthenticatedPendenciasRoute
+  '/solicitacoes': typeof AuthenticatedSolicitacoesRoute
+  '/validades': typeof AuthenticatedValidadesRoute
   '/': typeof AuthenticatedIndexRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
 }
@@ -145,6 +170,7 @@ export interface FileRoutesById {
   '/_authenticated/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/documentos': typeof AuthenticatedDocumentosRoute
+  '/_authenticated/guias': typeof AuthenticatedGuiasRoute
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
   '/_authenticated/interacoes': typeof AuthenticatedInteracoesRoute
   '/_authenticated/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
@@ -152,6 +178,8 @@ export interface FileRoutesById {
   '/_authenticated/minhas-pendencias': typeof AuthenticatedMinhasPendenciasRoute
   '/_authenticated/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/_authenticated/pendencias': typeof AuthenticatedPendenciasRoute
+  '/_authenticated/solicitacoes': typeof AuthenticatedSolicitacoesRoute
+  '/_authenticated/validades': typeof AuthenticatedValidadesRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/clientes/$id': typeof AuthenticatedClientesIdRoute
 }
@@ -164,6 +192,7 @@ export interface FileRouteTypes {
     | '/colaboradores'
     | '/configuracoes'
     | '/documentos'
+    | '/guias'
     | '/historico'
     | '/interacoes'
     | '/meus-documentos'
@@ -171,6 +200,8 @@ export interface FileRouteTypes {
     | '/minhas-pendencias'
     | '/notificacoes'
     | '/pendencias'
+    | '/solicitacoes'
+    | '/validades'
     | '/clientes/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -179,6 +210,7 @@ export interface FileRouteTypes {
     | '/colaboradores'
     | '/configuracoes'
     | '/documentos'
+    | '/guias'
     | '/historico'
     | '/interacoes'
     | '/meus-documentos'
@@ -186,6 +218,8 @@ export interface FileRouteTypes {
     | '/minhas-pendencias'
     | '/notificacoes'
     | '/pendencias'
+    | '/solicitacoes'
+    | '/validades'
     | '/'
     | '/clientes/$id'
   id:
@@ -196,6 +230,7 @@ export interface FileRouteTypes {
     | '/_authenticated/colaboradores'
     | '/_authenticated/configuracoes'
     | '/_authenticated/documentos'
+    | '/_authenticated/guias'
     | '/_authenticated/historico'
     | '/_authenticated/interacoes'
     | '/_authenticated/meus-documentos'
@@ -203,6 +238,8 @@ export interface FileRouteTypes {
     | '/_authenticated/minhas-pendencias'
     | '/_authenticated/notificacoes'
     | '/_authenticated/pendencias'
+    | '/_authenticated/solicitacoes'
+    | '/_authenticated/validades'
     | '/_authenticated/'
     | '/_authenticated/clientes/$id'
   fileRoutesById: FileRoutesById
@@ -233,6 +270,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/validades': {
+      id: '/_authenticated/validades'
+      path: '/validades'
+      fullPath: '/validades'
+      preLoaderRoute: typeof AuthenticatedValidadesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/solicitacoes': {
+      id: '/_authenticated/solicitacoes'
+      path: '/solicitacoes'
+      fullPath: '/solicitacoes'
+      preLoaderRoute: typeof AuthenticatedSolicitacoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/pendencias': {
@@ -282,6 +333,13 @@ declare module '@tanstack/react-router' {
       path: '/historico'
       fullPath: '/historico'
       preLoaderRoute: typeof AuthenticatedHistoricoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/guias': {
+      id: '/_authenticated/guias'
+      path: '/guias'
+      fullPath: '/guias'
+      preLoaderRoute: typeof AuthenticatedGuiasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/documentos': {
@@ -340,6 +398,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedColaboradoresRoute: typeof AuthenticatedColaboradoresRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRoute
+  AuthenticatedGuiasRoute: typeof AuthenticatedGuiasRoute
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
   AuthenticatedInteracoesRoute: typeof AuthenticatedInteracoesRoute
   AuthenticatedMeusDocumentosRoute: typeof AuthenticatedMeusDocumentosRoute
@@ -347,6 +406,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMinhasPendenciasRoute: typeof AuthenticatedMinhasPendenciasRoute
   AuthenticatedNotificacoesRoute: typeof AuthenticatedNotificacoesRoute
   AuthenticatedPendenciasRoute: typeof AuthenticatedPendenciasRoute
+  AuthenticatedSolicitacoesRoute: typeof AuthenticatedSolicitacoesRoute
+  AuthenticatedValidadesRoute: typeof AuthenticatedValidadesRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
@@ -355,6 +416,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedColaboradoresRoute: AuthenticatedColaboradoresRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedDocumentosRoute: AuthenticatedDocumentosRoute,
+  AuthenticatedGuiasRoute: AuthenticatedGuiasRoute,
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
   AuthenticatedInteracoesRoute: AuthenticatedInteracoesRoute,
   AuthenticatedMeusDocumentosRoute: AuthenticatedMeusDocumentosRoute,
@@ -362,6 +424,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMinhasPendenciasRoute: AuthenticatedMinhasPendenciasRoute,
   AuthenticatedNotificacoesRoute: AuthenticatedNotificacoesRoute,
   AuthenticatedPendenciasRoute: AuthenticatedPendenciasRoute,
+  AuthenticatedSolicitacoesRoute: AuthenticatedSolicitacoesRoute,
+  AuthenticatedValidadesRoute: AuthenticatedValidadesRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 

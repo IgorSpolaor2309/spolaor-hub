@@ -260,6 +260,88 @@ export type Database = {
           },
         ]
       }
+      document_requests: {
+        Row: {
+          categoria: string | null
+          client_id: string
+          competencia: string | null
+          created_at: string
+          descricao: string | null
+          document_id: string | null
+          id: string
+          observacoes_internas: string | null
+          omie_documento_id: string | null
+          omie_last_synced_at: string | null
+          omie_sync_error: string | null
+          omie_sync_status: string | null
+          prazo: string | null
+          responsavel_profile_id: string | null
+          status: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          categoria?: string | null
+          client_id: string
+          competencia?: string | null
+          created_at?: string
+          descricao?: string | null
+          document_id?: string | null
+          id?: string
+          observacoes_internas?: string | null
+          omie_documento_id?: string | null
+          omie_last_synced_at?: string | null
+          omie_sync_error?: string | null
+          omie_sync_status?: string | null
+          prazo?: string | null
+          responsavel_profile_id?: string | null
+          status?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string | null
+          client_id?: string
+          competencia?: string | null
+          created_at?: string
+          descricao?: string | null
+          document_id?: string | null
+          id?: string
+          observacoes_internas?: string | null
+          omie_documento_id?: string | null
+          omie_last_synced_at?: string | null
+          omie_sync_error?: string | null
+          omie_sync_status?: string | null
+          prazo?: string | null
+          responsavel_profile_id?: string | null
+          status?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_requests_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_requests_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_requests_responsavel_profile_id_fkey"
+            columns: ["responsavel_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_requirements: {
         Row: {
           client_id: string
@@ -300,9 +382,11 @@ export type Database = {
       }
       documents: {
         Row: {
+          categoria_validade: string | null
           client_id: string
           competencia: string | null
           created_at: string
+          data_validade: string | null
           id: string
           nome: string
           observacoes: string | null
@@ -313,9 +397,11 @@ export type Database = {
           uploaded_by: string | null
         }
         Insert: {
+          categoria_validade?: string | null
           client_id: string
           competencia?: string | null
           created_at?: string
+          data_validade?: string | null
           id?: string
           nome: string
           observacoes?: string | null
@@ -326,9 +412,11 @@ export type Database = {
           uploaded_by?: string | null
         }
         Update: {
+          categoria_validade?: string | null
           client_id?: string
           competencia?: string | null
           created_at?: string
+          data_validade?: string | null
           id?: string
           nome?: string
           observacoes?: string | null
@@ -544,6 +632,87 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      tax_guides: {
+        Row: {
+          client_id: string
+          competencia: string | null
+          comprovante_path: string | null
+          comprovante_uploaded_at: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          nome_arquivo: string | null
+          observacoes_internas: string | null
+          omie_last_synced_at: string | null
+          omie_sync_error: string | null
+          omie_sync_status: string | null
+          omie_titulo_id: string | null
+          status: string
+          storage_path: string | null
+          tipo: string
+          updated_at: string
+          valor: number | null
+          vencimento: string | null
+        }
+        Insert: {
+          client_id: string
+          competencia?: string | null
+          comprovante_path?: string | null
+          comprovante_uploaded_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome_arquivo?: string | null
+          observacoes_internas?: string | null
+          omie_last_synced_at?: string | null
+          omie_sync_error?: string | null
+          omie_sync_status?: string | null
+          omie_titulo_id?: string | null
+          status?: string
+          storage_path?: string | null
+          tipo: string
+          updated_at?: string
+          valor?: number | null
+          vencimento?: string | null
+        }
+        Update: {
+          client_id?: string
+          competencia?: string | null
+          comprovante_path?: string | null
+          comprovante_uploaded_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome_arquivo?: string | null
+          observacoes_internas?: string | null
+          omie_last_synced_at?: string | null
+          omie_sync_error?: string | null
+          omie_sync_status?: string | null
+          omie_titulo_id?: string | null
+          status?: string
+          storage_path?: string | null
+          tipo?: string
+          updated_at?: string
+          valor?: number | null
+          vencimento?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_guides_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tax_guides_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       timeline_events: {
         Row: {
