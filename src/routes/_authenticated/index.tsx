@@ -115,7 +115,7 @@ function AdminDashboard({ name }: { name: string }) {
         supabase.from("timeline_events").select("id, tipo, descricao, created_at, clients(razao_social)")
           .order("created_at", { ascending: false }).limit(6),
         supabase.from("clients").select("id, razao_social, client_collaborators(collaborator_id)").eq("status", "active"),
-        supabase.from("pending_tasks").select("assigned_to_collaborator_id").not("status", "in", "(concluida,cancelada)").not("assigned_to_collaborator_id", "is", null),
+        supabase.from("pending_tasks").select("collaborator_id").not("status", "in", "(concluida,cancelada)").not("collaborator_id", "is", null),
         supabase.from("clients").select("id, razao_social").eq("status", "active"),
         supabase.from("documents").select("client_id").gte("created_at", monthStart),
         supabase.from("client_month_status").select("client_id, status, competencia").eq("competencia", competencia),
@@ -124,18 +124,20 @@ function AdminDashboard({ name }: { name: string }) {
       const clientsNoCollab = (unassignedClients.data ?? []).filter((c: any) => !(c.client_collaborators ?? []).length).slice(0, 8);
 
       const counts = new Map<string, number>();
-      for (const r of (collabTaskCounts.data ?? [])) {
-        const k = r.assigned_to_collaborator_id as string;
+      for (const r of (collabTaskCounts.data ?? []) as any[]) {
+        const k = r.collaborator_id as string;
         counts.set(k, (counts.get(k) ?? 0) + 1);
       }
-      const topCollabIds = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
-      const collabIds = topCollabIds.map(([id]) => id);
-      const collabNames = collabIds.length
-        ? (await supabase.from("collaborators").select("id, nome").in("id", collabIds)).data ?? []
+      const topIds = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const profileIds = topIds.map(([id]) => id);
+      const profilesRes = profileIds.length
+        ? (await supabase.from("profiles").select("id, full_name, email").in("id", profileIds)).data ?? []
         : [];
-      const topCollabs = topCollabIds.map(([id, n]) => ({
-        id, n, nome: (collabNames as any[]).find((c) => c.id === id)?.nome ?? "Sem nome",
-      }));
+      const topCollabs = topIds.map(([id, n]) => {
+        const p = (profilesRes as any[]).find((x) => x.id === id);
+        return { id, n, nome: p?.full_name || p?.email || "Sem nome" };
+      });
+
 
       const docsByClient = new Set((docsThisMonth.data ?? []).map((d: any) => d.client_id));
       const clientsNoDocs = (clientsActiveForMonth.data ?? []).filter((c: any) => !docsByClient.has(c.id)).slice(0, 8);
