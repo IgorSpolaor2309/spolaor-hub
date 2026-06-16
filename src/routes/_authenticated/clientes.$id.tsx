@@ -270,6 +270,11 @@ function PendingTab({ clientId, tasks, canCreate, canUpdate, onChange }: any) {
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="font-medium">{t.titulo}</div>
                   <PriorityBadge value={t.prioridade} />
+                  {t.departamento && (
+                    <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                      {labelOf(DEPARTMENTS, t.departamento)}
+                    </span>
+                  )}
                 </div>
                 {t.descricao && <div className="mt-0.5 text-sm text-muted-foreground">{t.descricao}</div>}
                 <div className="mt-1 text-xs text-muted-foreground">
