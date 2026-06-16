@@ -13,8 +13,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
-import { Plus, Upload, ArrowLeft } from "lucide-react";
+import { Plus, Upload, ArrowLeft, Pencil } from "lucide-react";
 import { toast } from "sonner";
+
 import { useCurrentUser } from "@/hooks/use-current-user";
 import {
   TASK_STATUSES, TASK_PRIORITIES, DOC_TYPES, DOC_STATUSES, INTERACTION_TYPES, labelOf,
