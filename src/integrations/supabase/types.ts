@@ -50,6 +50,98 @@ export type Database = {
           },
         ]
       }
+      client_fiscal_data: {
+        Row: {
+          client_id: string
+          cnae_principal: string | null
+          cnaes_secundarios: string | null
+          created_at: string
+          id: string
+          inscricao_estadual: string | null
+          inscricao_municipal: string | null
+          municipio: string | null
+          observacoes_contabeis: string | null
+          observacoes_dp: string | null
+          observacoes_fiscais: string | null
+          observacoes_internas: string | null
+          omie_cliente_id: string | null
+          omie_last_synced_at: string | null
+          omie_sync_error: string | null
+          omie_sync_status: string | null
+          possui_certificado_digital: boolean | null
+          prefeitura_sistema: string | null
+          regime_tributario: string | null
+          responsavel_legal: string | null
+          socios: string | null
+          tipo_empresa: string | null
+          uf: string | null
+          updated_at: string
+          validade_certificado_digital: string | null
+        }
+        Insert: {
+          client_id: string
+          cnae_principal?: string | null
+          cnaes_secundarios?: string | null
+          created_at?: string
+          id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
+          municipio?: string | null
+          observacoes_contabeis?: string | null
+          observacoes_dp?: string | null
+          observacoes_fiscais?: string | null
+          observacoes_internas?: string | null
+          omie_cliente_id?: string | null
+          omie_last_synced_at?: string | null
+          omie_sync_error?: string | null
+          omie_sync_status?: string | null
+          possui_certificado_digital?: boolean | null
+          prefeitura_sistema?: string | null
+          regime_tributario?: string | null
+          responsavel_legal?: string | null
+          socios?: string | null
+          tipo_empresa?: string | null
+          uf?: string | null
+          updated_at?: string
+          validade_certificado_digital?: string | null
+        }
+        Update: {
+          client_id?: string
+          cnae_principal?: string | null
+          cnaes_secundarios?: string | null
+          created_at?: string
+          id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
+          municipio?: string | null
+          observacoes_contabeis?: string | null
+          observacoes_dp?: string | null
+          observacoes_fiscais?: string | null
+          observacoes_internas?: string | null
+          omie_cliente_id?: string | null
+          omie_last_synced_at?: string | null
+          omie_sync_error?: string | null
+          omie_sync_status?: string | null
+          possui_certificado_digital?: boolean | null
+          prefeitura_sistema?: string | null
+          regime_tributario?: string | null
+          responsavel_legal?: string | null
+          socios?: string | null
+          tipo_empresa?: string | null
+          uf?: string | null
+          updated_at?: string
+          validade_certificado_digital?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_fiscal_data_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           created_at: string
