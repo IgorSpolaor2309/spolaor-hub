@@ -31,6 +31,8 @@ function ClientDetail() {
   const { id } = useParams({ from: "/_authenticated/clientes/$id" });
   const { role, userId } = useCurrentUser();
   const qc = useQueryClient();
+  const [editOpen, setEditOpen] = useState(false);
+
 
   const { data: client } = useQuery({
     queryKey: ["client", id],
