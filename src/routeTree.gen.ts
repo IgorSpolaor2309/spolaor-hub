@@ -19,6 +19,7 @@ import { Route as AuthenticatedNotificacoesRouteImport } from './routes/_authent
 import { Route as AuthenticatedMinhasPendenciasRouteImport } from './routes/_authenticated/minhas-pendencias'
 import { Route as AuthenticatedMinhaAreaRouteImport } from './routes/_authenticated/minha-area'
 import { Route as AuthenticatedMeusDocumentosRouteImport } from './routes/_authenticated/meus-documentos'
+import { Route as AuthenticatedKanbanRouteImport } from './routes/_authenticated/kanban'
 import { Route as AuthenticatedInteracoesRouteImport } from './routes/_authenticated/interacoes'
 import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
 import { Route as AuthenticatedGuiasRouteImport } from './routes/_authenticated/guias'
@@ -81,6 +82,11 @@ const AuthenticatedMeusDocumentosRoute =
     path: '/meus-documentos',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedKanbanRoute = AuthenticatedKanbanRouteImport.update({
+  id: '/kanban',
+  path: '/kanban',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedInteracoesRoute = AuthenticatedInteracoesRouteImport.update({
   id: '/interacoes',
   path: '/interacoes',
@@ -134,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/guias': typeof AuthenticatedGuiasRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/interacoes': typeof AuthenticatedInteracoesRoute
+  '/kanban': typeof AuthenticatedKanbanRoute
   '/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
   '/minha-area': typeof AuthenticatedMinhaAreaRoute
   '/minhas-pendencias': typeof AuthenticatedMinhasPendenciasRoute
@@ -152,6 +159,7 @@ export interface FileRoutesByTo {
   '/guias': typeof AuthenticatedGuiasRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/interacoes': typeof AuthenticatedInteracoesRoute
+  '/kanban': typeof AuthenticatedKanbanRoute
   '/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
   '/minha-area': typeof AuthenticatedMinhaAreaRoute
   '/minhas-pendencias': typeof AuthenticatedMinhasPendenciasRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/_authenticated/guias': typeof AuthenticatedGuiasRoute
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
   '/_authenticated/interacoes': typeof AuthenticatedInteracoesRoute
+  '/_authenticated/kanban': typeof AuthenticatedKanbanRoute
   '/_authenticated/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
   '/_authenticated/minha-area': typeof AuthenticatedMinhaAreaRoute
   '/_authenticated/minhas-pendencias': typeof AuthenticatedMinhasPendenciasRoute
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/guias'
     | '/historico'
     | '/interacoes'
+    | '/kanban'
     | '/meus-documentos'
     | '/minha-area'
     | '/minhas-pendencias'
@@ -213,6 +223,7 @@ export interface FileRouteTypes {
     | '/guias'
     | '/historico'
     | '/interacoes'
+    | '/kanban'
     | '/meus-documentos'
     | '/minha-area'
     | '/minhas-pendencias'
@@ -233,6 +244,7 @@ export interface FileRouteTypes {
     | '/_authenticated/guias'
     | '/_authenticated/historico'
     | '/_authenticated/interacoes'
+    | '/_authenticated/kanban'
     | '/_authenticated/meus-documentos'
     | '/_authenticated/minha-area'
     | '/_authenticated/minhas-pendencias'
@@ -321,6 +333,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMeusDocumentosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/kanban': {
+      id: '/_authenticated/kanban'
+      path: '/kanban'
+      fullPath: '/kanban'
+      preLoaderRoute: typeof AuthenticatedKanbanRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/interacoes': {
       id: '/_authenticated/interacoes'
       path: '/interacoes'
@@ -401,6 +420,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedGuiasRoute: typeof AuthenticatedGuiasRoute
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
   AuthenticatedInteracoesRoute: typeof AuthenticatedInteracoesRoute
+  AuthenticatedKanbanRoute: typeof AuthenticatedKanbanRoute
   AuthenticatedMeusDocumentosRoute: typeof AuthenticatedMeusDocumentosRoute
   AuthenticatedMinhaAreaRoute: typeof AuthenticatedMinhaAreaRoute
   AuthenticatedMinhasPendenciasRoute: typeof AuthenticatedMinhasPendenciasRoute
@@ -419,6 +439,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedGuiasRoute: AuthenticatedGuiasRoute,
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
   AuthenticatedInteracoesRoute: AuthenticatedInteracoesRoute,
+  AuthenticatedKanbanRoute: AuthenticatedKanbanRoute,
   AuthenticatedMeusDocumentosRoute: AuthenticatedMeusDocumentosRoute,
   AuthenticatedMinhaAreaRoute: AuthenticatedMinhaAreaRoute,
   AuthenticatedMinhasPendenciasRoute: AuthenticatedMinhasPendenciasRoute,
