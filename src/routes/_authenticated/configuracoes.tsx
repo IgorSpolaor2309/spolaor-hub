@@ -48,7 +48,7 @@ function SettingsPage() {
     queryKey: ["all-profiles-roles"],
     queryFn: async (): Promise<UserRow[]> => {
       const [p, r] = await Promise.all([
-        supabase.from("profiles").select("id, full_name, email"),
+        supabase.from("profiles").select("id, full_name, email, phone"),
         supabase.from("user_roles").select("user_id, role"),
       ]);
       const map = new Map<string, string[]>();
