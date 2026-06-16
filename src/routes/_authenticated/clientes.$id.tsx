@@ -13,13 +13,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
-import { Plus, Upload, ArrowLeft, Pencil } from "lucide-react";
+import { Plus, Upload, ArrowLeft, Pencil, Inbox, Receipt, CalendarClock, KanbanSquare, MessagesSquare } from "lucide-react";
 import { toast } from "sonner";
 
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { MonthStatusSelector } from "@/routes/_authenticated/index";
 import {
-  TASK_STATUSES, TASK_PRIORITIES, DOC_TYPES, DOC_STATUSES, INTERACTION_TYPES, CLIENT_TYPES, labelOf,
+  TASK_STATUSES, TASK_PRIORITIES, DOC_TYPES, DOC_STATUSES, INTERACTION_TYPES, CLIENT_TYPES,
+  DEPARTMENTS, DOC_VALIDITY_CATEGORIES, labelOf,
 } from "@/lib/sc-types";
 
 import { formatDistanceToNow } from "date-fns";
@@ -122,6 +123,19 @@ function ClientDetail() {
         <Card className="p-4"><div className="text-xs uppercase text-muted-foreground">Entrada</div><div className="mt-1 text-sm">{client.data_entrada ? new Date(client.data_entrada).toLocaleDateString("pt-BR") : "—"}</div></Card>
       </div>
 
+      {role !== "client" && (
+        <Card className="mb-6 p-4">
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Ações rápidas</div>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline" size="sm"><Link to="/solicitacoes"><Inbox className="mr-2 h-4 w-4" /> Solicitar documento</Link></Button>
+            <Button asChild variant="outline" size="sm"><Link to="/guias"><Receipt className="mr-2 h-4 w-4" /> Criar guia/imposto</Link></Button>
+            <Button asChild variant="outline" size="sm"><Link to="/validades"><CalendarClock className="mr-2 h-4 w-4" /> Documentos com validade</Link></Button>
+            <Button asChild variant="outline" size="sm"><Link to="/kanban"><KanbanSquare className="mr-2 h-4 w-4" /> Abrir Kanban</Link></Button>
+            <Button asChild variant="outline" size="sm"><Link to="/modelos"><MessagesSquare className="mr-2 h-4 w-4" /> Usar modelo de mensagem</Link></Button>
+          </div>
+        </Card>
+      )}
+
       <Tabs defaultValue="pendencias">
         <TabsList>
           <TabsTrigger value="pendencias">Pendências</TabsTrigger>
@@ -188,14 +202,15 @@ function ClientDetail() {
 /* ---------- Pendências ---------- */
 function PendingTab({ clientId, tasks, canCreate, canUpdate, onChange }: any) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ titulo: "", descricao: "", tipo: "", prazo: "", prioridade: "media", competencia: "" });
+  const [form, setForm] = useState({ titulo: "", descricao: "", tipo: "", prazo: "", prioridade: "media", competencia: "", departamento: "" });
 
   const save = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("pending_tasks").insert({ ...form, client_id: clientId, prazo: form.prazo || null });
+      const payload: any = { ...form, client_id: clientId, prazo: form.prazo || null, departamento: form.departamento || null };
+      const { error } = await supabase.from("pending_tasks").insert(payload);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Pendência criada"); setOpen(false); onChange(); setForm({ titulo: "", descricao: "", tipo: "", prazo: "", prioridade: "media", competencia: "" }); },
+    onSuccess: () => { toast.success("Pendência criada"); setOpen(false); onChange(); setForm({ titulo: "", descricao: "", tipo: "", prazo: "", prioridade: "media", competencia: "", departamento: "" }); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -234,6 +249,13 @@ function PendingTab({ clientId, tasks, canCreate, canUpdate, onChange }: any) {
                   <div><Label>Tipo</Label><Input value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })} /></div>
                   <div><Label>Competência</Label><Input placeholder="ex: 2026-06" value={form.competencia} onChange={(e) => setForm({ ...form, competencia: e.target.value })} /></div>
                 </div>
+                <div>
+                  <Label>Departamento</Label>
+                  <Select value={form.departamento || undefined} onValueChange={(v) => setForm({ ...form, departamento: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione o departamento" /></SelectTrigger>
+                    <SelectContent>{DEPARTMENTS.map((d) => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
               </div>
               <DialogFooter><Button onClick={() => save.mutate()} disabled={!form.titulo || save.isPending}>{save.isPending ? "Salvando…" : "Criar"}</Button></DialogFooter>
             </DialogContent>
@@ -248,6 +270,11 @@ function PendingTab({ clientId, tasks, canCreate, canUpdate, onChange }: any) {
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="font-medium">{t.titulo}</div>
                   <PriorityBadge value={t.prioridade} />
+                  {t.departamento && (
+                    <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                      {labelOf(DEPARTMENTS, t.departamento)}
+                    </span>
+                  )}
                 </div>
                 {t.descricao && <div className="mt-0.5 text-sm text-muted-foreground">{t.descricao}</div>}
                 <div className="mt-1 text-xs text-muted-foreground">
@@ -275,6 +302,9 @@ function DocsTab({ clientId, docs, userId, onChange }: any) {
   const [uploading, setUploading] = useState(false);
   const [tipo, setTipo] = useState("outro");
   const [competencia, setCompetencia] = useState("");
+  const [hasValidity, setHasValidity] = useState(false);
+  const [dataValidade, setDataValidade] = useState("");
+  const [categoriaValidade, setCategoriaValidade] = useState("");
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]; if (!file) return;
@@ -283,12 +313,18 @@ function DocsTab({ clientId, docs, userId, onChange }: any) {
       const path = `${clientId}/${Date.now()}-${file.name}`;
       const { error: upErr } = await supabase.storage.from("documents").upload(path, file);
       if (upErr) throw upErr;
-      const { error } = await supabase.from("documents").insert({
+      const payload: any = {
         client_id: clientId, nome: file.name, tipo, competencia: competencia || null,
         storage_path: path, uploaded_by: userId, status: "recebido",
-      });
+      };
+      if (hasValidity) {
+        payload.data_validade = dataValidade || null;
+        payload.categoria_validade = categoriaValidade || null;
+      }
+      const { error } = await supabase.from("documents").insert(payload);
       if (error) throw error;
       toast.success("Documento enviado");
+      setHasValidity(false); setDataValidade(""); setCategoriaValidade("");
       onChange();
     } catch (err: any) { toast.error(err.message); }
     finally { setUploading(false); e.target.value = ""; }
@@ -303,22 +339,43 @@ function DocsTab({ clientId, docs, userId, onChange }: any) {
 
   return (
     <Card className="p-5">
-      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-md border bg-muted/30 p-3">
-        <div className="space-y-1.5"><Label className="text-xs">Tipo</Label>
-          <Select value={tipo} onValueChange={setTipo}>
-            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-            <SelectContent>{DOC_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
-          </Select>
+      <div className="mb-4 space-y-3 rounded-md border bg-muted/30 p-3">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="space-y-1.5"><Label className="text-xs">Tipo</Label>
+            <Select value={tipo} onValueChange={setTipo}>
+              <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+              <SelectContent>{DOC_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5"><Label className="text-xs">Competência</Label>
+            <Input className="w-[140px]" placeholder="2026-06" value={competencia} onChange={(e) => setCompetencia(e.target.value)} />
+          </div>
+          <label className="ml-auto">
+            <input type="file" className="hidden" onChange={handleUpload} disabled={uploading} />
+            <Button asChild variant="secondary" disabled={uploading}>
+              <span><Upload className="mr-2 h-4 w-4" />{uploading ? "Enviando…" : "Enviar documento"}</span>
+            </Button>
+          </label>
         </div>
-        <div className="space-y-1.5"><Label className="text-xs">Competência</Label>
-          <Input className="w-[140px]" placeholder="2026-06" value={competencia} onChange={(e) => setCompetencia(e.target.value)} />
+        <div className="flex flex-wrap items-end gap-3 border-t pt-3">
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <input type="checkbox" className="h-4 w-4 accent-primary" checked={hasValidity} onChange={(e) => setHasValidity(e.target.checked)} />
+            Documento possui validade?
+          </label>
+          {hasValidity && (
+            <>
+              <div className="space-y-1.5"><Label className="text-xs">Data de validade</Label>
+                <Input type="date" className="w-[160px]" value={dataValidade} onChange={(e) => setDataValidade(e.target.value)} />
+              </div>
+              <div className="space-y-1.5"><Label className="text-xs">Categoria da validade</Label>
+                <Select value={categoriaValidade || undefined} onValueChange={setCategoriaValidade}>
+                  <SelectTrigger className="w-[220px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>{DOC_VALIDITY_CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
         </div>
-        <label className="ml-auto">
-          <input type="file" className="hidden" onChange={handleUpload} disabled={uploading} />
-          <Button asChild variant="secondary" disabled={uploading}>
-            <span><Upload className="mr-2 h-4 w-4" />{uploading ? "Enviando…" : "Enviar documento"}</span>
-          </Button>
-        </label>
       </div>
       {docs.length === 0 ? <EmptyState title="Sem documentos" /> : (
         <table className="w-full text-sm">

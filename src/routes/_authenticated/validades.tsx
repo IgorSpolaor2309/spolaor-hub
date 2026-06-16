@@ -14,16 +14,13 @@ import { CalendarClock, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DOC_VALIDITY_CATEGORIES, labelOf } from "@/lib/sc-types";
 
 export const Route = createFileRoute("/_authenticated/validades")({
   component: ValidadesPage,
 });
 
-const CATEGORIAS = [
-  "certificado digital", "procuração eletrônica", "contrato social",
-  "alvará", "inscrição municipal", "inscrição estadual",
-  "certidão", "documento dos sócios", "outros",
-];
+const CATEGORIAS = DOC_VALIDITY_CATEGORIES;
 
 function daysUntil(date: string | null) {
   if (!date) return null;
@@ -106,7 +103,7 @@ function ValidadesPage() {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
-                {CATEGORIAS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                {CATEGORIAS.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -150,7 +147,7 @@ function ValidadesPage() {
                       <tr key={d.id} className="border-b hover:bg-muted/40">
                         <td className="py-2 pr-4 font-medium">{d.nome}</td>
                         <td className="py-2 pr-4">{d.clients?.razao_social ?? "—"}</td>
-                        <td className="py-2 pr-4">{d.categoria_validade ?? "—"}</td>
+                        <td className="py-2 pr-4">{d.categoria_validade ? labelOf(CATEGORIAS, d.categoria_validade) : "—"}</td>
                         <td className="py-2 pr-4">{new Date(d.data_validade).toLocaleDateString("pt-BR")}</td>
                         <td className="py-2 pr-4"><Badge className={st.tone}>{st.label}</Badge></td>
                         <td className="py-2 text-right">
@@ -199,7 +196,7 @@ function EditValidityDialog({ doc, onDone }: { doc: any; onDone: () => void }) {
           <Label>Categoria</Label>
           <Select value={categoria_validade || undefined} onValueChange={setCat}>
             <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-            <SelectContent>{CATEGORIAS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+            <SelectContent>{CATEGORIAS.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
           </Select>
         </div>
       </div>

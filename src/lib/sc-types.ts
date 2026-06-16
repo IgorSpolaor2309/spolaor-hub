@@ -94,3 +94,15 @@ export function labelOf<T extends { value: string; label: string }>(
   if (!v) return "—";
   return arr.find((x) => x.value === v)?.label ?? v;
 }
+
+export const DOC_VALIDITY_CATEGORIES = [
+  { value: "certificado digital", label: "Certificado digital" },
+  { value: "procuração eletrônica", label: "Procuração eletrônica" },
+  { value: "contrato social", label: "Contrato social" },
+  { value: "alvará", label: "Alvará" },
+  { value: "inscrição municipal", label: "Inscrição municipal" },
+  { value: "inscrição estadual", label: "Inscrição estadual" },
+  { value: "certidão", label: "Certidão" },
+  { value: "documento de sócio", label: "Documento de sócio" },
+  { value: "outro", label: "Outro" },
+] as const;
