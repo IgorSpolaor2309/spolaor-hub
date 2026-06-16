@@ -240,3 +240,61 @@ export const adminDeleteUser = createServerFn({ method: "POST" })
     if (error) throw new Error("Não foi possível excluir o usuário.");
     return { ok: true };
   });
+
+export const adminUpdateUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: {
+      user_id: string;
+      full_name?: string | null;
+      email?: string | null;
+      phone?: string | null;
+      new_password?: string | null;
+      force_password_change?: boolean | null;
+    }) => input,
+  )
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context.supabase, context.userId);
+    if (!data.user_id) throw new Error("Usuário inválido.");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const authUpdate: { email?: string; password?: string } = {};
+    if (data.email != null) {
+      const email = data.email.trim().toLowerCase();
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        throw new Error("E-mail inválido.");
+      }
+      authUpdate.email = email;
+    }
+    if (data.new_password) {
+      if (data.new_password.length < 8) throw new Error("A senha deve ter ao menos 8 caracteres.");
+      authUpdate.password = data.new_password;
+    }
+    if (Object.keys(authUpdate).length > 0) {
+      const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, authUpdate);
+      if (error) {
+        throw new Error(
+          error.message?.includes("already")
+            ? "Já existe um usuário com este e-mail."
+            : "Não foi possível atualizar os dados de acesso.",
+        );
+      }
+    }
+
+    const profileUpdate: Record<string, any> = {};
+    if (data.full_name != null) profileUpdate.full_name = data.full_name;
+    if (data.email != null) profileUpdate.email = data.email.trim().toLowerCase();
+    if (data.phone !== undefined) profileUpdate.phone = data.phone;
+    if (data.force_password_change || data.new_password) profileUpdate.must_change_password = true;
+
+    if (Object.keys(profileUpdate).length > 0) {
+      const { error } = await supabaseAdmin
+        .from("profiles")
+        .update(profileUpdate)
+        .eq("id", data.user_id);
+      if (error) throw new Error("Não foi possível atualizar o perfil.");
+    }
+
+    return { ok: true };
+  });
