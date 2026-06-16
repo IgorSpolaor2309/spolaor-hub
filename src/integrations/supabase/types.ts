@@ -536,6 +536,42 @@ export type Database = {
           },
         ]
       }
+      message_templates: {
+        Row: {
+          assunto: string | null
+          ativo: boolean
+          categoria: string
+          conteudo: string
+          created_at: string
+          created_by: string | null
+          id: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          assunto?: string | null
+          ativo?: boolean
+          categoria?: string
+          conteudo: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          assunto?: string | null
+          ativo?: boolean
+          categoria?: string
+          conteudo?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -569,6 +605,95 @@ export type Database = {
         }
         Relationships: []
       }
+      omie_integration: {
+        Row: {
+          ambiente: string | null
+          app_key: string | null
+          app_secret: string | null
+          created_at: string
+          frequencia_sync: string | null
+          id: string
+          observacoes_internas: string | null
+          proxima_sincronizacao: string | null
+          responsavel_profile_id: string | null
+          status: string
+          sync_ativa: boolean
+          ultima_sincronizacao: string | null
+          updated_at: string
+        }
+        Insert: {
+          ambiente?: string | null
+          app_key?: string | null
+          app_secret?: string | null
+          created_at?: string
+          frequencia_sync?: string | null
+          id?: string
+          observacoes_internas?: string | null
+          proxima_sincronizacao?: string | null
+          responsavel_profile_id?: string | null
+          status?: string
+          sync_ativa?: boolean
+          ultima_sincronizacao?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ambiente?: string | null
+          app_key?: string | null
+          app_secret?: string | null
+          created_at?: string
+          frequencia_sync?: string | null
+          id?: string
+          observacoes_internas?: string | null
+          proxima_sincronizacao?: string | null
+          responsavel_profile_id?: string | null
+          status?: string
+          sync_ativa?: boolean
+          ultima_sincronizacao?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "omie_integration_responsavel_profile_id_fkey"
+            columns: ["responsavel_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      omie_integration_logs: {
+        Row: {
+          created_at: string
+          detalhes: Json | null
+          id: string
+          mensagem: string | null
+          modulo: string | null
+          occurred_at: string
+          status: string | null
+          tipo_operacao: string | null
+        }
+        Insert: {
+          created_at?: string
+          detalhes?: Json | null
+          id?: string
+          mensagem?: string | null
+          modulo?: string | null
+          occurred_at?: string
+          status?: string | null
+          tipo_operacao?: string | null
+        }
+        Update: {
+          created_at?: string
+          detalhes?: Json | null
+          id?: string
+          mensagem?: string | null
+          modulo?: string | null
+          occurred_at?: string
+          status?: string | null
+          tipo_operacao?: string | null
+        }
+        Relationships: []
+      }
       pending_tasks: {
         Row: {
           client_id: string
@@ -577,6 +702,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           data_conclusao: string | null
+          departamento: string | null
           descricao: string | null
           id: string
           prazo: string | null
@@ -593,6 +719,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data_conclusao?: string | null
+          departamento?: string | null
           descricao?: string | null
           id?: string
           prazo?: string | null
@@ -609,6 +736,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data_conclusao?: string | null
+          departamento?: string | null
           descricao?: string | null
           id?: string
           prazo?: string | null
