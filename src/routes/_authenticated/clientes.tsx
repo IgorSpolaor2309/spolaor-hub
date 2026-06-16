@@ -111,9 +111,12 @@ function ClientsPage() {
                     <td className="py-3 pr-4"><StatusBadge value={c.status} /></td>
                     {role === "admin" && (
                       <td>
-                        <Button variant="ghost" size="icon" aria-label="Editar" onClick={() => setEditing(c)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button variant="ghost" size="icon" aria-label="Editar" onClick={() => setEditing(c)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <InactivateClientButton client={c} />
+                        </div>
                       </td>
                     )}
                   </tr>
