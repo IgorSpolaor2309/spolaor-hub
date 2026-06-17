@@ -60,6 +60,7 @@ function ClientsPage() {
       const { data, error } = await supabase
         .from("clients")
         .select("*, client_fiscal_data(regime_tributario, uf, municipio), client_collaborators(collaborator_id, collaborators(id, nome)), client_users(id, ativo)")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
