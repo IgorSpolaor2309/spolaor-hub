@@ -338,7 +338,7 @@ function ChatThread({
                   "mb-0.5 text-[10px] uppercase tracking-wide",
                   mine ? "text-primary-foreground/70" : "text-muted-foreground",
                 )}>
-                  {m.profiles?.full_name ?? (fromStaff ? "Equipe" : "Cliente")} · {m.sender_role}
+                  {(fromStaff ? "Equipe" : "Cliente")} · {m.sender_role}
                 </div>
                 {m.body && <div className="whitespace-pre-wrap break-words">{m.body}</div>}
                 {m.attachment_path && (
