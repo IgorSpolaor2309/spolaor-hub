@@ -136,7 +136,7 @@ function ChatPage() {
         const id = await ensureConversation(search.client!);
         setActiveId(id);
         qc.invalidateQueries({ queryKey: ["chat-convs"] });
-        navigate({ search: { conversation: id }, replace: true });
+        navigate({ to: "/interacoes", search: { conversation: id }, replace: true });
       } catch (e: any) {
         toast.error(e?.message ?? "Não foi possível abrir a conversa");
       }
@@ -207,7 +207,7 @@ function ChatPage() {
             ) : filteredConvs.map((c) => (
               <button
                 key={c.id}
-                onClick={() => { setActiveId(c.id); navigate({ search: { conversation: c.id }, replace: true }); }}
+                onClick={() => { setActiveId(c.id); navigate({ to: "/interacoes", search: { conversation: c.id }, replace: true }); }}
                 className={cn(
                   "block w-full border-b px-3 py-3 text-left transition hover:bg-muted/50",
                   activeId === c.id && "bg-muted",
@@ -556,7 +556,7 @@ function NewConversationButton() {
       const id = await ensureConversation(clientId);
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["chat-convs"] });
-      navigate({ search: { conversation: id }, replace: false });
+      navigate({ to: "/interacoes", search: { conversation: id }, replace: false });
     } catch (e: any) {
       toast.error(e?.message ?? "Falha");
     }
