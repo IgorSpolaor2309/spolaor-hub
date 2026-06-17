@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/sc/EmptyState";
+import { AttachmentButton } from "@/components/sc/AttachmentButton";
 import { useMemo, useState } from "react";
 import { Plus, Upload, Receipt } from "lucide-react";
 import { toast } from "sonner";
