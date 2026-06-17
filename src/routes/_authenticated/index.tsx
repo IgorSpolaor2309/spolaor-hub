@@ -355,22 +355,45 @@ function CollabDashboard({ name, userId }: { name: string; userId: string }) {
 function ClientDashboard({ name, userId }: { name: string; userId: string }) {
   const qc = useQueryClient();
   const competencia = currentCompetencia();
+
+  // Lista as empresas/CNPJs do cliente (RLS filtra; suporta multiempresa).
+  const { data: myCompanies = [] } = useQuery({
+    queryKey: ["dash-client-companies", userId],
+    queryFn: async () =>
+      (await supabase
+        .from("clients")
+        .select("id, razao_social, nome_fantasia, documento")
+        .order("razao_social")).data ?? [],
+  });
+
+  // "" = todas; senão um id específico.
+  const STORAGE_KEY = "sc.dashboardSelectedClient";
+  const initial = (typeof window !== "undefined" && window.localStorage.getItem(STORAGE_KEY)) || "";
+  const [selected, setSelected] = (require("react") as typeof import("react")).useState<string>(initial);
+  const onSelectChange = (v: string) => {
+    setSelected(v);
+    try { window.localStorage.setItem(STORAGE_KEY, v); } catch { /* noop */ }
+  };
+
+  const allIds = myCompanies.map((c: any) => c.id);
+  const scopedIds = selected && allIds.includes(selected) ? [selected] : allIds;
+  const isAll = !selected || scopedIds.length !== 1;
+
   const { data } = useQuery({
-    queryKey: ["dash-client-v2", userId, competencia],
+    queryKey: ["dash-client-v3", userId, competencia, scopedIds.join(",")],
+    enabled: scopedIds.length > 0,
     queryFn: async () => {
-      const { data: cs } = await supabase.from("clients").select("id, razao_social").eq("owner_profile_id", userId);
-      const ids = (cs ?? []).map((c) => c.id);
-      const primary = (cs ?? [])[0] ?? null;
-      if (!ids.length) return null;
+      const ids = scopedIds;
+      const primary = myCompanies.find((c: any) => c.id === ids[0]) ?? myCompanies[0] ?? null;
       const t = today(); const in7 = inDays(7);
       const [requested, sent, openTasks, guidesAvail, guidesSoon, monthStatus, events] = await Promise.all([
-        supabase.from("document_requests").select("id, titulo, status, prazo, categoria").in("client_id", ids).order("created_at", { ascending: false }).limit(20),
-        supabase.from("documents").select("id, nome, status, created_at").in("client_id", ids).order("created_at", { ascending: false }).limit(5),
-        supabase.from("pending_tasks").select("id, titulo, prazo, status").in("client_id", ids).not("status", "in", "(concluida,cancelada)").order("prazo", { ascending: true }).limit(5),
-        supabase.from("tax_guides").select("id, tipo, vencimento, valor, status, storage_path").in("client_id", ids).not("status", "in", "(paga,cancelada)").order("vencimento", { ascending: true }).limit(8),
+        supabase.from("document_requests").select("id, titulo, status, prazo, categoria, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(20),
+        supabase.from("documents").select("id, nome, status, created_at, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(5),
+        supabase.from("pending_tasks").select("id, titulo, prazo, status, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).not("status", "in", "(concluida,cancelada)").order("prazo", { ascending: true }).limit(8),
+        supabase.from("tax_guides").select("id, tipo, vencimento, valor, status, storage_path, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).not("status", "in", "(paga,cancelada)").order("vencimento", { ascending: true }).limit(8),
         supabase.from("tax_guides").select("id", { head: true, count: "exact" }).in("client_id", ids).gte("vencimento", t).lte("vencimento", in7).not("status", "in", "(paga,cancelada)"),
-        primary ? supabase.from("client_month_status").select("status").eq("client_id", primary.id).eq("competencia", competencia).maybeSingle() : Promise.resolve({ data: null }),
-        supabase.from("interactions").select("id, tipo, descricao, created_at").in("client_id", ids).order("created_at", { ascending: false }).limit(5),
+        !isAll && primary ? supabase.from("client_month_status").select("status").eq("client_id", primary.id).eq("competencia", competencia).maybeSingle() : Promise.resolve({ data: null }),
+        supabase.from("interactions").select("id, tipo, descricao, created_at, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(5),
       ]);
       const reqs = requested.data ?? [];
       const reqPending = reqs.filter((r: any) => ["pendente", "reenviar"].includes(r.status));
@@ -388,24 +411,45 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
     },
   });
 
-  if (!data) return <div className="text-sm text-muted-foreground">Sem cliente vinculado.</div>;
+  if (myCompanies.length === 0) return <div className="text-sm text-muted-foreground">Sem cliente vinculado.</div>;
+  if (!data) return <div className="text-sm text-muted-foreground">Carregando…</div>;
 
   const m = monthLabel(data.status);
+  const empresaName = (c: any) => c?.nome_fantasia || c?.razao_social || "Empresa";
 
   return (
     <div>
       <PageHeader title={`Olá, ${name?.split(" ")[0] || "cliente"}`} description={`Status do mês ${competencia}`} />
 
-      <Card className="mb-4 border-l-4 border-primary p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">Status geral do mês</div>
-            <div className="mt-1 font-display text-xl">{m.label}</div>
-            {data.primary && <div className="mt-0.5 text-xs text-muted-foreground">{data.primary.razao_social}</div>}
+      {myCompanies.length > 1 && (
+        <Card className="mb-4 flex flex-wrap items-center gap-3 p-4">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Empresa</div>
+          <Select value={selected || "__all__"} onValueChange={(v) => onSelectChange(v === "__all__" ? "" : v)}>
+            <SelectTrigger className="w-[280px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todas as empresas ({myCompanies.length})</SelectItem>
+              {myCompanies.map((c: any) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {empresaName(c)}{c.documento ? ` · ${c.documento}` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Card>
+      )}
+
+      {!isAll && (
+        <Card className="mb-4 border-l-4 border-primary p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Status geral do mês</div>
+              <div className="mt-1 font-display text-xl">{m.label}</div>
+              {data.primary && <div className="mt-0.5 text-xs text-muted-foreground">{empresaName(data.primary)}</div>}
+            </div>
+            <Badge className={`${m.tone} text-sm`}>{m.label}</Badge>
           </div>
-          <Badge className={`${m.tone} text-sm`}>{m.label}</Badge>
-        </div>
-      </Card>
+        </Card>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={Inbox} label="Documentos solicitados" value={data.reqAll.length} to="/solicitacoes" />
