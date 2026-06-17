@@ -16,7 +16,7 @@ import { EmptyState } from "@/components/sc/EmptyState";
 import { DateRangeFilter, EMPTY_DATE_FILTER, type DateFilterValue } from "@/components/sc/DateRangeFilter";
 import { inRange, resolveRange } from "@/lib/date-ranges";
 import { useMemo, useState } from "react";
-import { Plus, Search, Users, Pencil, PowerOff, Power } from "lucide-react";
+import { Plus, Search, Building2, Pencil, PowerOff, Power, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
