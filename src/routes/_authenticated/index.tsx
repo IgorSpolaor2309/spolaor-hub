@@ -370,7 +370,7 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
   // "" = todas; senão um id específico.
   const STORAGE_KEY = "sc.dashboardSelectedClient";
   const initial = (typeof window !== "undefined" && window.localStorage.getItem(STORAGE_KEY)) || "";
-  const [selected, setSelected] = (require("react") as typeof import("react")).useState<string>(initial);
+  const [selected, setSelected] = useState<string>(initial);
   const onSelectChange = (v: string) => {
     setSelected(v);
     try { window.localStorage.setItem(STORAGE_KEY, v); } catch { /* noop */ }
