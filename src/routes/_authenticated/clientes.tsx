@@ -457,11 +457,19 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
     ultima_consulta_receita: null,
   });
   const [account, setAccount] = useState<AccountMatch | null>(null);
+  const [collabIds, setCollabIds] = useState<string[]>([]);
   const [existing, setExisting] = useState<{ id: string; razao_social: string | null; nome_fantasia: string | null } | null>(null);
+
+  const { data: allCollaborators = [] } = useQuery({
+    queryKey: ["new-client-collab-options"],
+    queryFn: async () =>
+      (await supabase.from("collaborators").select("id, nome, email").eq("status", "active").order("nome")).data ?? [],
+  });
 
   const mut = useMutation({
     mutationFn: async () => {
       if (!account) throw new Error("Vincule uma conta de acesso existente antes de salvar.");
+      if (collabIds.length === 0) throw new Error("Selecione pelo menos um colaborador encarregado.");
       const ok = await ensureNoDuplicateCnpj(form.cnpj);
       if (!ok) throw new Error("__dup__");
       const payload = { ...buildClientPayload(form, form.cnpj), origem_cadastro: "manual" };
@@ -469,7 +477,8 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
         _payload: payload as any,
         _user_id: account.id,
         _papel: "responsavel",
-      });
+        _collaborator_ids: collabIds,
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Cliente criado e vinculado à conta"); onDone(); },
@@ -483,7 +492,27 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
       </DialogHeader>
 
       <div className="space-y-4">
-        <AccountLookup value={account} onChange={setAccount} />
+        <section className="space-y-3">
+          <h3 className="text-sm font-semibold">Contas e responsáveis</h3>
+          <AccountLookup value={account} onChange={setAccount} />
+
+          <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-3">
+            <Label className="text-sm font-semibold">
+              Colaboradores encarregados <span className="text-destructive">*</span>
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Selecione um ou mais colaboradores responsáveis por esta empresa. Apenas eles terão acesso à comunicação, documentos e pendências do cliente.
+            </p>
+            <MultiSelect
+              options={(allCollaborators as any[]).map((c) => ({ value: c.id, label: c.nome, hint: c.email }))}
+              value={collabIds}
+              onChange={setCollabIds}
+              placeholder="Buscar colaborador por nome ou e-mail…"
+              emptyMessage="Nenhum colaborador ativo cadastrado."
+              noneSelectedMessage="Nenhum colaborador selecionado ainda."
+            />
+          </div>
+        </section>
 
         <section className="space-y-2">
           <h3 className="text-sm font-semibold">Preencher por CNPJ</h3>
@@ -538,14 +567,21 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
       <DialogFooter>
         <Button
           onClick={() => mut.mutate()}
-          disabled={!form.razao_social || mut.isPending || !!existing || !account}
+          disabled={!form.razao_social || mut.isPending || !!existing || !account || collabIds.length === 0}
         >
-          {mut.isPending ? "Salvando…" : !account ? "Vincule uma conta para salvar" : "Criar cliente"}
+          {mut.isPending
+            ? "Salvando…"
+            : !account
+              ? "Vincule uma conta para salvar"
+              : collabIds.length === 0
+                ? "Selecione ao menos um colaborador"
+                : "Criar cliente"}
         </Button>
       </DialogFooter>
     </DialogContent>
   );
 }
+
 
 function EditClientDialog({ client, onDone }: { client: any; onDone: () => void }) {
   const initialCnpj = String(client.cnpj ?? client.documento ?? "").replace(/\D/g, "");
