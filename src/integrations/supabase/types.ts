@@ -1081,6 +1081,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      profiles_shares_client: {
+        Args: { _target: string; _viewer: string }
+        Returns: boolean
+      }
       user_has_client_access: {
         Args: { _client_id: string; _user_id: string }
         Returns: boolean
