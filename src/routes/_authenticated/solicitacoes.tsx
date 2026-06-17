@@ -23,6 +23,7 @@ import { formatBR, isPastEndOfDay } from "@/lib/dates";
 
 export const Route = createFileRoute("/_authenticated/solicitacoes")({
   component: RequestsPage,
+  errorComponent: () => <EmptyState icon={<FileText className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />,
 });
 
 const CATEGORIAS = [
@@ -314,7 +315,7 @@ function NewRequestDialog({ clients, onDone }: { clients: any[]; onDone: () => v
       <div className="grid gap-3">
         <div className="space-y-1.5">
           <Label>Cliente *</Label>
-          <Select value={f.client_id || undefined} onValueChange={(v) => setF({ ...f, client_id: v })}>
+          <Select value={f.client_id} onValueChange={(v) => setF({ ...f, client_id: v })}>
             <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
             <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.razao_social}</SelectItem>)}</SelectContent>
           </Select>
@@ -324,7 +325,7 @@ function NewRequestDialog({ clients, onDone }: { clients: any[]; onDone: () => v
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label>Categoria</Label>
-            <Select value={f.categoria || undefined} onValueChange={(v) => setF({ ...f, categoria: v })}>
+            <Select value={f.categoria} onValueChange={(v) => setF({ ...f, categoria: v })}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>{CATEGORIAS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
