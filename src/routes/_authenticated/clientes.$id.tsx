@@ -111,7 +111,7 @@ function ClientDetail() {
             )}
             {role === "admin" && (
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-                <Pencil className="mr-2 h-4 w-4" /> Editar cliente
+                <Pencil className="mr-2 h-4 w-4" /> Editar empresa
               </Button>
             )}
           </div>
