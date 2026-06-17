@@ -958,11 +958,33 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
                 </Select>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2">
-                  <Label>Razão social / Nome *</Label>
-                  <Input value={form.razao_social} onChange={(e) => setForm({ ...form, razao_social: e.target.value })} />
-                </div>
+              <div className="space-y-3">
+                <CnpjLookup
+                  value={form.documento}
+                  onChange={(v) => setForm({ ...form, documento: v })}
+                  onResult={(r: ReceitaData) => {
+                    const m = mapReceitaToForm(r);
+                    setReceita(m);
+                    setReceitaAt(new Date().toISOString());
+                    setForm({
+                      ...form,
+                      documento: m.cnpj || form.documento,
+                      razao_social: m.razao_social || form.razao_social,
+                      nome_fantasia: m.nome_fantasia || form.nome_fantasia,
+                    });
+                  }}
+                />
+                {receita?.situacao_cadastral &&
+                  receita.situacao_cadastral.toUpperCase() !== "ATIVA" && (
+                  <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                    Atenção: este CNPJ está com situação cadastral diferente de ATIVA ({receita.situacao_cadastral}).
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2">
+                    <Label>Razão social / Nome *</Label>
+                    <Input value={form.razao_social} onChange={(e) => setForm({ ...form, razao_social: e.target.value })} />
+                  </div>
                 <div>
                   <Label>Nome fantasia</Label>
                   <Input value={form.nome_fantasia} onChange={(e) => setForm({ ...form, nome_fantasia: e.target.value })} />
