@@ -578,7 +578,7 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
               ? "Vincule uma conta para salvar"
               : collabIds.length === 0
                 ? "Selecione ao menos um colaborador"
-                : "Criar cliente"}
+                : "Cadastrar empresa"}
         </Button>
       </DialogFooter>
     </DialogContent>
