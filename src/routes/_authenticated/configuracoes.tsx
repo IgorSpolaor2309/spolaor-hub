@@ -463,31 +463,7 @@ function AccountLinksEditor({ userId, roles }: { userId: string; roles: string[]
   }
 
   if (role === "client") {
-    if (!client) {
-      return (
-        <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
-          Esta conta de cliente ainda não possui cadastro vinculado em Clientes.
-        </div>
-      );
-    }
-    return (
-      <div className="rounded-md border p-3">
-        <Label className="text-xs uppercase text-muted-foreground">Colaboradores atribuídos a este cliente</Label>
-        <p className="mb-2 text-xs text-muted-foreground">As alterações sincronizam com a aba Equipe do cliente.</p>
-        <MultiSelect
-          options={allCollabs.map((c: any) => ({
-            value: c.id,
-            label: c.nome,
-            hint: [c.cargo, c.departamento].filter(Boolean).join(" · ") || null,
-          }))}
-          value={currentCollabIds}
-          onChange={(next) => updateClientLinks.mutate(next)}
-          placeholder="Buscar por nome, cargo ou departamento…"
-          emptyMessage="Nenhum colaborador cadastrado."
-          noneSelectedMessage="Nenhum colaborador atribuído."
-        />
-      </div>
-    );
+    return <ClientAccountCompaniesLinker userId={userId} />;
   }
 
   return null;
