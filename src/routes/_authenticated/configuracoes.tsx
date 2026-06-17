@@ -22,7 +22,7 @@ import { useState } from "react";
 import { Plus, Trash2, Pencil, ShieldCheck } from "lucide-react";
 import {
   adminCreateUser, adminSetUserRole, adminDeleteUser, adminUpdateUser,
-  adminVerifyLinks, adminDiagnoseUser,
+  adminVerifyLinks, adminDiagnoseUser, adminLinkClientAccount,
 } from "@/lib/admin-users.functions";
 import { MultiSelect } from "@/components/sc/MultiSelect";
 
