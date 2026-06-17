@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/sc/StatusBadge";
 import { EmptyState } from "@/components/sc/EmptyState";
+import { AttachmentButton } from "@/components/sc/AttachmentButton";
 import { useState } from "react";
 import { DOC_TYPES, DOC_STATUSES, labelOf } from "@/lib/sc-types";
 import { FileText } from "lucide-react";
