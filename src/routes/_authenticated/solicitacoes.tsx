@@ -38,9 +38,14 @@ const STATUS_TONE: Record<string, string> = {
   "em análise": "bg-blue-100 text-blue-800",
   "aprovado": "bg-emerald-100 text-emerald-800",
   "recusado": "bg-rose-100 text-rose-800",
-  "reenviar": "bg-orange-100 text-orange-800",
+  "reenviar": "bg-amber-100 text-amber-800",
   "cancelado": "bg-zinc-200 text-zinc-700",
 };
+
+const STATUS_LABEL: Record<string, string> = {
+  "reenviar": "reenviar (pendente)",
+};
+
 
 function RequestsPage() {
   const { role, userId } = useCurrentUser();
