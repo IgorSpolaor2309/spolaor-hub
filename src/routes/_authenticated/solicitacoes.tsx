@@ -169,6 +169,15 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const remove = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("document_requests").delete().eq("id", item.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Solicitação excluída"); onChange(); },
+    onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Sem permissão para excluir." : (e.message ?? "Falha ao excluir.")),
+  });
+
   async function uploadAndAttach(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]; if (!file) return;
     try {
@@ -192,6 +201,7 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
   }
 
   const prazoVencido = !!item.prazo && isPastEndOfDay(item.prazo) && !["aprovado", "cancelado"].includes(item.status);
+  const clientPending = item.status === "pendente" || item.status === "reenviar";
 
   return (
     <li className="rounded-md border p-4">
@@ -199,7 +209,9 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-medium">{item.titulo}</span>
-            <Badge className={STATUS_TONE[item.status] ?? "bg-zinc-100 text-zinc-700"}>{item.status}</Badge>
+            <Badge className={STATUS_TONE[item.status] ?? "bg-zinc-100 text-zinc-700"}>
+              {STATUS_LABEL[item.status] ?? item.status}
+            </Badge>
             {item.categoria && <Badge variant="outline">{item.categoria}</Badge>}
             {prazoVencido && <Badge className="bg-orange-100 text-orange-800">prazo vencido</Badge>}
           </div>
@@ -222,15 +234,20 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
             <AttachmentButton storagePath={item.documents.storage_path} label="Abrir anexo" />
           )}
           {isStaff ? (
-            <Select value={item.status} onValueChange={(v) => updateStatus.mutate(v)}>
-              <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
-              <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-            </Select>
+            <>
+              <Select value={item.status} onValueChange={(v) => updateStatus.mutate(v)}>
+                <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+                <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+              <DeleteButton onConfirm={() => remove.mutate()} />
+            </>
           ) : (
-            !item.document_id && (
+            clientPending && (
               <label>
                 <input type="file" className="hidden" onChange={uploadAndAttach} />
-                <Button asChild size="sm"><span><Upload className="mr-2 h-4 w-4" /> Enviar documento</span></Button>
+                <Button asChild size="sm">
+                  <span><Upload className="mr-2 h-4 w-4" /> {item.status === "reenviar" ? "Reenviar documento" : "Enviar documento"}</span>
+                </Button>
               </label>
             )
           )}
@@ -239,6 +256,7 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
     </li>
   );
 }
+
 
 function NewRequestDialog({ clients, onDone }: { clients: any[]; onDone: () => void }) {
   const { userId } = useCurrentUser();
