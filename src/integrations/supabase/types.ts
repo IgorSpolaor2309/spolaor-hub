@@ -1155,6 +1155,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_create_client_with_user: {
+        Args: { _papel?: string; _payload: Json; _user_id: string }
+        Returns: string
+      }
+      admin_find_profile_by_email: {
+        Args: { _email: string }
+        Returns: {
+          email: string
+          full_name: string
+          id: string
+        }[]
+      }
       admin_set_user_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
