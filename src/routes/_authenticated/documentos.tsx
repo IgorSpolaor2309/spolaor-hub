@@ -9,7 +9,10 @@ import { StatusBadge } from "@/components/sc/StatusBadge";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { AttachmentButton } from "@/components/sc/AttachmentButton";
 import { DeleteButton } from "@/components/sc/DeleteButton";
-import { useState } from "react";
+import { DateRangeFilter, EMPTY_DATE_FILTER, type DateFilterValue } from "@/components/sc/DateRangeFilter";
+import { inRange, resolveRange } from "@/lib/date-ranges";
+import { Button } from "@/components/ui/button";
+import { useMemo, useState } from "react";
 import { DOC_TYPES, DOC_STATUSES, labelOf } from "@/lib/sc-types";
 import { FileText } from "lucide-react";
 import { toast } from "sonner";
@@ -25,6 +28,7 @@ function DocsPage() {
   const qc = useQueryClient();
   const isAdmin = role === "admin";
   const [q, setQ] = useState(""); const [tipo, setTipo] = useState("all"); const [status, setStatus] = useState("all");
+  const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const { data: list = [], isLoading } = useQuery({
     queryKey: ["all-docs"],
     queryFn: async () => (await supabase.from("documents").select("*, clients(razao_social)").order("created_at", { ascending: false })).data ?? [],
@@ -37,18 +41,21 @@ function DocsPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["all-docs"] }); toast.success("Documento excluído"); },
     onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Sem permissão para excluir." : (e.message ?? "Falha")),
   });
+  const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
   const filtered = list.filter((d: any) => {
     if (tipo !== "all" && d.tipo !== tipo) return false;
     if (status !== "all" && d.status !== status) return false;
     if (q && !`${d.nome} ${d.clients?.razao_social ?? ""}`.toLowerCase().includes(q.toLowerCase())) return false;
+    if (!inRange(d.created_at, range)) return false;
     return true;
   });
+  const clearFilters = () => { setQ(""); setTipo("all"); setStatus("all"); setDateF(EMPTY_DATE_FILTER); };
 
   return (
     <div>
       <PageHeader title="Documentos" description="Central de documentos de todos os clientes." />
       <Card className="p-4">
-        <div className="mb-4 flex flex-wrap gap-2">
+        <div className="mb-4 flex flex-wrap items-end gap-2">
           <Input placeholder="Buscar…" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-xs" />
           <Select value={tipo} onValueChange={setTipo}><SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
             <SelectContent><SelectItem value="all">Todos os tipos</SelectItem>{DOC_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
@@ -56,6 +63,8 @@ function DocsPage() {
           <Select value={status} onValueChange={setStatus}><SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
             <SelectContent><SelectItem value="all">Todos status</SelectItem>{DOC_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
           </Select>
+          <DateRangeFilter value={dateF} onChange={setDateF} label="Criado em" />
+          <Button variant="ghost" size="sm" onClick={clearFilters}>Limpar filtros</Button>
         </div>
         {isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p> :
          filtered.length === 0 ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Sem documentos" /> : (
