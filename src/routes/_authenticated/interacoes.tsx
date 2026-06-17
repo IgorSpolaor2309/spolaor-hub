@@ -19,12 +19,24 @@ import { applyTemplateVars, pendingVars, type TemplateVars } from "@/lib/templat
 import { TEMPLATE_CATEGORIES, labelOf } from "@/lib/sc-types";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
-import { zodValidator, fallback } from "@tanstack/zod-adapter";
+import { zodValidator } from "@tanstack/zod-adapter";
 
 const searchSchema = z.object({
-  client: fallback(z.string().optional(), undefined),
-  conversation: fallback(z.string().optional(), undefined),
+  client: z.string().optional(),
+  conversation: z.string().optional(),
 });
+
+function logChatError(action: string, error: unknown, extra?: Record<string, unknown>) {
+  const err = error as { code?: string; message?: string; details?: string; hint?: string } | null;
+  console.error("[chat] Falha na operação", {
+    action,
+    code: err?.code,
+    message: err?.message,
+    details: err?.details,
+    hint: err?.hint,
+    ...extra,
+  });
+}
 
 function ChatErrorBoundary({ error, reset }: { error: Error; reset: () => void }) {
   // Evita escalar para o boundary do layout (que mostra "Página indisponível").
@@ -89,7 +101,10 @@ function ChatPage() {
         .from("chat_conversations")
         .select("id, client_id, last_message_at, clients(razao_social, nome_fantasia)")
         .order("last_message_at", { ascending: false, nullsFirst: false });
-      if (error) throw error;
+      if (error) {
+        logChatError("chat_conversations.select", error, { table: "chat_conversations" });
+        throw error;
+      }
       return (data ?? []) as Conv[];
     },
   });
@@ -141,7 +156,7 @@ function ChatPage() {
           setActiveId(id);
           qc.invalidateQueries({ queryKey: ["chat-convs"] });
         } catch (e) {
-          console.warn("[chat] auto-create conversation:", e);
+          logChatError("clients.select/ensureConversation.autoCreate", e);
         }
       })();
     }
