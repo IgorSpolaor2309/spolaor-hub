@@ -65,6 +65,19 @@ function KanbanPage() {
     onError: (e: any) => toast.error(e.message ?? "Falha ao atualizar"),
   });
 
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("pending_tasks").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["kanban-tasks"] });
+      toast.success("Pendência excluída");
+    },
+    onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Sem permissão para excluir." : (e.message ?? "Falha")),
+  });
+
+
   const filtered = useMemo(() => {
     
     return tasks.filter((t: any) => {
