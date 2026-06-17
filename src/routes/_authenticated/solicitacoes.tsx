@@ -205,7 +205,7 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
           <div className="mt-1 text-xs text-muted-foreground">
             Cliente: {item.clients?.razao_social ?? "—"}
             {item.competencia ? ` · Competência: ${item.competencia}` : ""}
-            {item.prazo ? ` · Prazo: ${new Date(item.prazo).toLocaleDateString("pt-BR")}` : ""}
+            {item.prazo ? ` · Prazo: ${formatBR(item.prazo)}` : ""}
             {item.profiles?.full_name ? ` · Resp.: ${item.profiles.full_name}` : ""}
           </div>
           {isStaff && item.observacoes_internas && (
