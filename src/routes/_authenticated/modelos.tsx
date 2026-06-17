@@ -22,6 +22,7 @@ import { inRange, resolveRange } from "@/lib/date-ranges";
 
 export const Route = createFileRoute("/_authenticated/modelos")({
   component: TemplatesPage,
+  errorComponent: () => <EmptyState icon={<FileText className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />,
 });
 
 type Template = {
@@ -37,8 +38,9 @@ type Template = {
 };
 
 function TemplatesPage() {
-  const { role, userId } = useCurrentUser();
+  const { role, userId, loading } = useCurrentUser();
   const isAdmin = role === "admin";
+  const ready = !loading && !!userId && !!role;
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string>("all");
@@ -47,9 +49,15 @@ function TemplatesPage() {
   const [useDlg, setUseDlg] = useState<Template | null>(null);
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
 
-  const { data: list = [], isLoading } = useQuery({
-    queryKey: ["message-templates"],
-    queryFn: async () => (await supabase.from("message_templates").select("*").order("titulo")).data ?? [],
+  const { data: list = [], isLoading, error: listError } = useQuery({
+    queryKey: ["message-templates", userId, role],
+    enabled: ready && (role === "admin" || role === "collaborator"),
+    retry: 1,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("message_templates").select("*").order("titulo");
+      if (error) throw error;
+      return data ?? [];
+    },
   });
 
   const range = resolveRange(dateF.preset, dateF.from, dateF.to);
@@ -102,6 +110,7 @@ function TemplatesPage() {
     onError: (e: any) => toast.error(e.message ?? "Falha ao excluir"),
   });
 
+  if (!ready) return <p className="text-sm text-muted-foreground">Carregando…</p>;
   if (role && role !== "admin" && role !== "collaborator") {
     return <div className="p-6 text-sm text-muted-foreground">Acesso restrito.</div>;
   }
@@ -141,7 +150,8 @@ function TemplatesPage() {
         </div>
       </Card>
 
-      {isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p> :
+      {listError ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." /> :
+       isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p> :
        visible.length === 0 ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Nenhum modelo cadastrado" /> : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           {visible.map((t) => (
