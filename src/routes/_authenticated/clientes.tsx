@@ -614,6 +614,8 @@ function EditClientDialog({ client, onDone }: { client: any; onDone: () => void 
           <Label>Observações internas</Label>
           <Textarea rows={3} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
         </div>
+          </div>
+        </section>
       </div>
       <DialogFooter>
         <Button onClick={() => mut.mutate()} disabled={!form.razao_social.trim() || mut.isPending}>
