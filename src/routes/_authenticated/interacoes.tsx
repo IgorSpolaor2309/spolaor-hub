@@ -19,16 +19,32 @@ import { applyTemplateVars, pendingVars, type TemplateVars } from "@/lib/templat
 import { TEMPLATE_CATEGORIES, labelOf } from "@/lib/sc-types";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
-import { zodValidator, fallback } from "@tanstack/zod-adapter";
+import { zodValidator } from "@tanstack/zod-adapter";
 
 const searchSchema = z.object({
-  client: fallback(z.string().optional(), undefined),
-  conversation: fallback(z.string().optional(), undefined),
+  client: z.string().optional(),
+  conversation: z.string().optional(),
 });
+
+function logChatError(action: string, error: unknown, extra?: Record<string, unknown>) {
+  const err = error as { code?: string; message?: string; details?: string; hint?: string } | null;
+  console.error("[chat] Falha na operação", {
+    action,
+    code: err?.code,
+    message: err?.message,
+    details: err?.details,
+    hint: err?.hint,
+    ...extra,
+  });
+}
 
 function ChatErrorBoundary({ error, reset }: { error: Error; reset: () => void }) {
   // Evita escalar para o boundary do layout (que mostra "Página indisponível").
   // Renderiza um estado amigável e permite tentar novamente.
+  useEffect(() => {
+    logChatError("route.errorBoundary", error);
+  }, [error]);
+
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col">
       <PageHeader title="Interações" description="Chat interno com clientes da Spolaor Company." />
@@ -80,6 +96,10 @@ function ChatPage() {
   const [q, setQ] = useState("");
   const [activeId, setActiveId] = useState<string | null>(search.conversation ?? null);
 
+  useEffect(() => {
+    if (search.conversation) setActiveId(search.conversation);
+  }, [search.conversation]);
+
   // Lista de conversas (RLS já filtra por permissão)
   const { data: conversations = [], isLoading: loadingConvs, error: convsError } = useQuery({
     queryKey: ["chat-convs"],
@@ -89,7 +109,10 @@ function ChatPage() {
         .from("chat_conversations")
         .select("id, client_id, last_message_at, clients(razao_social, nome_fantasia)")
         .order("last_message_at", { ascending: false, nullsFirst: false });
-      if (error) throw error;
+      if (error) {
+        logChatError("chat_conversations.select", error, { table: "chat_conversations" });
+        throw error;
+      }
       return (data ?? []) as Conv[];
     },
   });
@@ -113,7 +136,7 @@ function ChatPage() {
         const id = await ensureConversation(search.client!);
         setActiveId(id);
         qc.invalidateQueries({ queryKey: ["chat-convs"] });
-        navigate({ search: { conversation: id }, replace: true });
+        navigate({ to: "/interacoes", search: { conversation: id }, replace: true });
       } catch (e: any) {
         toast.error(e?.message ?? "Não foi possível abrir a conversa");
       }
@@ -141,7 +164,7 @@ function ChatPage() {
           setActiveId(id);
           qc.invalidateQueries({ queryKey: ["chat-convs"] });
         } catch (e) {
-          console.warn("[chat] auto-create conversation:", e);
+          logChatError("clients.select/ensureConversation.autoCreate", e);
         }
       })();
     }
@@ -184,7 +207,7 @@ function ChatPage() {
             ) : filteredConvs.map((c) => (
               <button
                 key={c.id}
-                onClick={() => { setActiveId(c.id); navigate({ search: { conversation: c.id }, replace: true }); }}
+                onClick={() => { setActiveId(c.id); navigate({ to: "/interacoes", search: { conversation: c.id }, replace: true }); }}
                 className={cn(
                   "block w-full border-b px-3 py-3 text-left transition hover:bg-muted/50",
                   activeId === c.id && "bg-muted",
@@ -250,7 +273,10 @@ function ChatThread({
         .select("*")
         .eq("conversation_id", conv.id)
         .order("created_at", { ascending: true });
-      if (error) throw error;
+      if (error) {
+        logChatError("chat_messages.select", error, { table: "chat_messages", conversationId: conv.id });
+        throw error;
+      }
       return data as any[];
     },
   });
@@ -283,7 +309,10 @@ function ChatThread({
         sender_role: currentRole,
         body,
       });
-      if (error) throw error;
+      if (error) {
+        logChatError("chat_messages.insert.text", error, { table: "chat_messages", conversationId: conv.id, clientId: conv.client_id });
+        throw error;
+      }
     },
     onSuccess: () => { setText(""); },
     onError: (e: any) => toast.error(e?.message ?? "Falha ao enviar"),
@@ -298,7 +327,10 @@ function ChatThread({
         contentType: file.type || undefined,
         upsert: false,
       });
-      if (upErr) throw upErr;
+      if (upErr) {
+        logChatError("storage.documents.upload.chatAttachment", upErr, { bucket: "documents", path });
+        throw upErr;
+      }
       const { error } = await supabase.from("chat_messages").insert({
         conversation_id: conv.id,
         client_id: conv.client_id,
@@ -309,7 +341,10 @@ function ChatThread({
         attachment_name: file.name,
         attachment_size: file.size,
       });
-      if (error) throw error;
+      if (error) {
+        logChatError("chat_messages.insert.attachment", error, { table: "chat_messages", conversationId: conv.id, clientId: conv.client_id });
+        throw error;
+      }
     },
     onError: (e: any) => toast.error(e?.message ?? "Falha ao anexar"),
   });
@@ -509,6 +544,7 @@ function NewConversationButton() {
   const [open, setOpen] = useState(false);
   const [clientId, setClientId] = useState<string>("");
   const navigate = useNavigate({ from: "/_authenticated/interacoes" });
+  const qc = useQueryClient();
   const { data: clients = [] } = useQuery({
     queryKey: ["chat-new-clients"],
     queryFn: async () => (await supabase.from("clients").select("id, razao_social").eq("status", "active").order("razao_social")).data ?? [],
@@ -519,7 +555,8 @@ function NewConversationButton() {
     try {
       const id = await ensureConversation(clientId);
       setOpen(false);
-      navigate({ search: { conversation: id }, replace: false });
+      qc.invalidateQueries({ queryKey: ["chat-convs"] });
+      navigate({ to: "/interacoes", search: { conversation: id }, replace: false });
     } catch (e: any) {
       toast.error(e?.message ?? "Falha");
     }
