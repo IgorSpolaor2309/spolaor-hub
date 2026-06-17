@@ -53,21 +53,23 @@ export function AttachmentButton({
         .from("documents")
         .createSignedUrl(storagePath, 60);
       if (error || !data?.signedUrl) throw error ?? new Error("sem url");
-      const win = window.open(data.signedUrl, "_blank", "noopener,noreferrer");
-      if (!win) {
-        // Pop-up bloqueado: fallback via link temporário em nova aba.
-        const a = document.createElement("a");
-        a.href = data.signedUrl;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-        a.click();
-      }
+      // Único caminho de abertura: link com target=_blank.
+      // window.open + fallback simultâneo causava duas abas, pois
+      // window.open com "noopener" pode retornar null mesmo quando abre.
+      const a = document.createElement("a");
+      a.href = data.signedUrl;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
     } catch {
       toast.error("Não foi possível abrir o anexo. Tente novamente.");
     } finally {
       setLoading(false);
     }
   }
+
 
   return (
     <Button
