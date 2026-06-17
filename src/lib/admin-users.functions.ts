@@ -182,20 +182,44 @@ export const adminCreateUser = createServerFn({ method: "POST" })
           if (!cl.razao_social?.trim()) {
             throw new Error("Informe a Razão Social do cliente.");
           }
+          const capitalNum =
+            cl.capital_social == null || cl.capital_social === ""
+              ? null
+              : Number(String(cl.capital_social).replace(",", "."));
           const { data: inserted, error } = await supabaseAdmin
             .from("clients")
             .insert({
               owner_profile_id: userId,
               razao_social: cl.razao_social,
               nome_fantasia: cl.nome_fantasia ?? null,
-              documento: cl.documento ?? null,
+              documento: cl.documento ?? cl.cnpj ?? null,
               email,
               telefone: cl.telefone ?? data.phone ?? null,
               tipo: cl.tipo ?? null,
               data_entrada: cl.data_entrada || null,
               status: cl.status || "active",
               observacoes: cl.observacoes ?? null,
-              origem_cadastro: "manual",
+              origem_cadastro: cl.cnpj ? "receita" : "manual",
+              cnpj: cl.cnpj ?? null,
+              situacao_cadastral: cl.situacao_cadastral ?? null,
+              data_abertura: cl.data_abertura || null,
+              cnae_principal_codigo: cl.cnae_principal_codigo ?? null,
+              cnae_principal_descricao: cl.cnae_principal_descricao ?? null,
+              cep: cl.cep ?? null,
+              logradouro: cl.logradouro ?? null,
+              numero: cl.numero ?? null,
+              complemento: cl.complemento ?? null,
+              bairro: cl.bairro ?? null,
+              cidade: cl.cidade ?? null,
+              uf: cl.uf ?? null,
+              porte: cl.porte ?? null,
+              natureza_juridica: cl.natureza_juridica ?? null,
+              capital_social: Number.isFinite(capitalNum as number) ? capitalNum : null,
+              simples_nacional: cl.simples_nacional ?? null,
+              mei: cl.mei ?? null,
+              qsa_json: cl.qsa_json && cl.qsa_json.length ? cl.qsa_json : null,
+              dados_receita_json: cl.dados_receita_json ?? null,
+              ultima_consulta_receita: cl.ultima_consulta_receita ?? null,
             })
             .select("id")
             .single();
