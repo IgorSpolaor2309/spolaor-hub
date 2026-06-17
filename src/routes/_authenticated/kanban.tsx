@@ -7,13 +7,15 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PriorityBadge } from "@/components/sc/StatusBadge";
+import { DeleteButton } from "@/components/sc/DeleteButton";
 import { useState, useMemo } from "react";
 import { KANBAN_COLUMNS, DEPARTMENTS, TASK_PRIORITIES, labelOf } from "@/lib/sc-types";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { toast } from "sonner";
-import { AlertTriangle, GripVertical } from "lucide-react";
+import { AlertTriangle, GripVertical, Calendar, User, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatBR, isPastEndOfDay } from "@/lib/dates";
+
 
 export const Route = createFileRoute("/_authenticated/kanban")({
   component: KanbanPage,
