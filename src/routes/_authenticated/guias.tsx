@@ -150,6 +150,28 @@ function GuideRow({ item, isStaff, onChange }: any) {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const remove = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("tax_guides").delete().eq("id", item.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Guia excluída"); onChange(); },
+    onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Sem permissão para excluir." : (e.message ?? "Falha ao excluir.")),
+  });
+
+  const removeProof = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("tax_guides")
+        .update({ comprovante_path: null, comprovante_uploaded_at: null })
+        .eq("id", item.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Comprovante removido"); onChange(); },
+    onError: (e: any) => toast.error(e?.message ?? "Falha"),
+  });
+
+
+
 
   async function uploadProof(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]; if (!file) return;
