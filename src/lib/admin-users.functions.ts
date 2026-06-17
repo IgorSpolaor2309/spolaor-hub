@@ -33,6 +33,27 @@ type ClientData = {
   data_entrada?: string | null;
   status?: string | null;
   observacoes?: string | null;
+  // Dados públicos vindos da Minha Receita (opcionais)
+  cnpj?: string | null;
+  situacao_cadastral?: string | null;
+  data_abertura?: string | null;
+  cnae_principal_codigo?: string | null;
+  cnae_principal_descricao?: string | null;
+  cep?: string | null;
+  logradouro?: string | null;
+  numero?: string | null;
+  complemento?: string | null;
+  bairro?: string | null;
+  cidade?: string | null;
+  uf?: string | null;
+  porte?: string | null;
+  natureza_juridica?: string | null;
+  capital_social?: number | string | null;
+  simples_nacional?: boolean | null;
+  mei?: boolean | null;
+  qsa_json?: any[] | null;
+  dados_receita_json?: any;
+  ultima_consulta_receita?: string | null;
 };
 
 export const adminCreateUser = createServerFn({ method: "POST" })
