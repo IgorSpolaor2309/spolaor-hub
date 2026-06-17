@@ -836,7 +836,9 @@ function ClientUsersInlineManager({ clientId }: { clientId: string }) {
         </Button>
       </div>
 
-      {isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p> : (links as any[]).length === 0 ? (
+      {loadError ? (
+        <p className="text-sm text-destructive">Falha ao carregar vínculos: {(loadError as any)?.message}</p>
+      ) : isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p> : (links as any[]).length === 0 ? (
         <p className="text-sm text-muted-foreground">Nenhuma conta cliente vinculada.</p>
       ) : (
         <ul className="divide-y rounded-md border">
