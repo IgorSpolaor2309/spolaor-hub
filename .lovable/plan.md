@@ -1,61 +1,67 @@
-# SC Central — MVP da Spolaor Company
+# Multiempresa para contas de cliente — SC Central
 
-Plataforma interna corporativa para gestão de clientes, colaboradores, pendências, documentos, timeline e interações, com 3 perfis (admin, colaborador, cliente).
+Objetivo: permitir que uma mesma conta de cliente acesse várias empresas/CNPJs, sem misturar dados nem quebrar o que existe. Fazer a menor alteração possível.
 
-## Identidade visual
-- Paleta: azul institucional `#044C85`, turquesa `#0594C3`, laranja `#FCA229`, fundos brancos/cinza claro
-- Sidebar azul escuro, header branco, cards suaves com sombra discreta
-- Tipografia serifada nos títulos (alinhada à logo) + sans-serif limpa no corpo
-- Logo Spolaor Company em destaque no login e versão reduzida na sidebar
-- Estados: Concluída=verde, Aberta=azul, Em andamento=turquesa, Aguardando cliente=laranja, Vencida=vermelho, Cancelada=cinza
+## 1. Banco de dados (1 migração)
 
-## Backend (Lovable Cloud / Supabase)
-Vou ativar o Lovable Cloud e criar:
+**Nova tabela `public.client_users`**
+- `id uuid pk`
+- `client_id uuid → clients(id) on delete cascade`
+- `user_id uuid → auth.users(id) on delete cascade`
+- `papel text` (responsavel | financeiro | socio | operacional | outro), nullable
+- `ativo boolean default true`
+- `criado_por uuid`
+- `created_at`, `updated_at`
+- `unique(client_id, user_id)`
+- GRANTs padrão (`authenticated`, `service_role`); RLS habilitada
+- Políticas:
+  - SELECT: admin OR `user_id = auth.uid()` OR colaborador vinculado ao client
+  - INSERT/UPDATE/DELETE: somente admin (`has_role(auth.uid(),'admin')`)
+- Trigger `set_updated_at`
 
-**Tabelas**
-- `profiles` (id, full_name, email, phone, status, created_at, updated_at)
-- `user_roles` (user_id, role: admin | collaborator | client) — tabela separada + função `has_role` (security definer)
-- `collaborators` (profile_id, cargo, departamento, data_admissao, status)
-- `clients` (razao_social, nome_fantasia, documento, email, telefone, data_entrada, tipo, observacoes, status, **omie_id, origem_cadastro, data_ultima_sincronizacao**, owner_profile_id opcional para cliente-usuário)
-- `client_collaborators` (client_id, collaborator_profile_id)
-- `pending_tasks` (client_id, titulo, descricao, tipo, prazo, status, prioridade, collaborator_id, data_conclusao)
-- `documents` (client_id, nome, tipo, competencia, status, observacoes, storage_path, uploaded_by)
-- `document_requirements` (client_id, tipo_documento, periodicidade)
-- `timeline_events` (client_id, actor_profile_id, tipo, descricao, metadata)
-- `interactions` (client_id, actor_profile_id, tipo, descricao, anexos)
-- `notifications` (user_id, tipo, titulo, mensagem, lida, link)
+**Backfill (idempotente, na mesma migração)**
+```sql
+INSERT INTO public.client_users (client_id, user_id, ativo)
+SELECT id, owner_profile_id, true FROM public.clients
+WHERE owner_profile_id IS NOT NULL
+ON CONFLICT (client_id, user_id) DO NOTHING;
+```
+`clients.owner_profile_id` NÃO é removido (compatibilidade).
 
-**Segurança**
-- RLS em todas as tabelas
-- Admin vê tudo; colaborador vê apenas clientes vinculados via `client_collaborators`; cliente vê apenas onde `owner_profile_id = auth.uid()`
-- Triggers para alimentar `timeline_events` automaticamente (cliente criado, doc enviado, pendência criada/atualizada/concluída, interação)
-- Storage bucket privado `documents` com policies por perfil
+**Atualizar `user_has_client_access`** para considerar `client_users.ativo = true` além do `owner_profile_id` e do vínculo de colaborador. Mantém assinatura — todas as RLS existentes continuam válidas.
 
-## Frontend (TanStack Start)
+**Atualizar `client_staff_user_ids`**: continua devolvendo apenas equipe (admin + colaboradores). Sem mudança.
 
-**Rotas públicas**
-- `/auth` — login (logo grande, card limpo, e-mail + senha)
+**Atualizar `profiles_shares_client`**: incluir vínculo via `client_users` para que nomes apareçam corretamente no chat multiempresa.
 
-**Rotas autenticadas** (sob `_authenticated/`, sidebar + header)
-- `/` Dashboard (varia por perfil)
-- `/clientes` lista + `/clientes/$id` detalhe (abas: visão geral, pendências, documentos, timeline, interações, requisitos) — só admin/colab
-- `/colaboradores` + detalhe — só admin
-- `/pendencias` com filtros (cliente, colab, status, prazo, prioridade, competência)
-- `/documentos` com filtros e upload
-- `/timeline` agregada (admin)
-- `/interacoes`
-- `/notificacoes`
-- `/configuracoes` (admin)
-- Cliente: `/minha-area`, `/minhas-pendencias`, `/meus-documentos`, `/historico`, `/notificacoes`
+**Notificações com nome da empresa**: ajustar as funções `on_document_request_change`, `on_tax_guide_change`, `on_document_insert_notify`, `on_chat_message_insert` para concatenar nome fantasia/razão social no título/mensagem. Loop de destinatários do owner passa a iterar `client_users` ativos (em vez de single `owner_profile_id`).
 
-Menus renderizados conforme role.
+## 2. Helpers de frontend
 
-## Escopo do MVP
-Implementado: auth + roles, CRUD admin de clientes/colaboradores, vínculos, pendências, documentos com upload, requisitos por cliente, timeline automática, interações, notificações internas, dashboards por perfil, filtros, badges de status, estados vazios.
+- `src/lib/client-display.ts` — `clientLabel(c)` retorna Nome Fantasia ⟶ Razão Social ⟶ CNPJ; `clientShort(c)` para chips.
+- `src/hooks/use-my-clients.ts` — devolve `{ clients, selectedId, setSelectedId }` lendo `clients` aos quais o usuário tem acesso (RLS faz o filtro). Persiste seleção em `localStorage`. Inclui opção “Todas as empresas”.
+- `src/components/sc/CompanySelector.tsx` — `<Select>` reutilizável usado no dashboard, chat e Minha área.
 
-Fora do escopo (preparado mas não implementado): integração OMIE (campos prontos), IA, envio externo de e-mail/WhatsApp, pagamentos, indicadores de desempenho.
+## 3. Telas (alterações mínimas)
 
-## Entrega
-Devido ao tamanho do escopo, vou entregar em ordem: design system + auth/roles → schema + RLS → layout (sidebar/header) + dashboards → clientes/colaboradores → pendências/documentos → timeline/interações/notificações → área do cliente.
+- **Dashboard cliente** (`routes/_authenticated/index.tsx`): se >1 empresa, mostrar `CompanySelector`; agregados respeitam seleção. Cards/listas sempre mostram empresa.
+- **Minha área** (`minha-area.tsx`): listar todas as empresas vinculadas com nome, CNPJ, status e atalhos para solicitações/guias/documentos/chat daquela empresa.
+- **Listagens** (`solicitacoes`, `documentos`, `guias`, `validades`, `pendencias`, `minhas-pendencias`, `kanban`, `notificacoes`, `interacoes`): adicionar coluna/linha “Empresa” usando `clientLabel`. Já carregam `clients(...)` no select — adicionar onde faltar.
+- **Chat** (`interacoes.tsx`): a lista de conversas já é por `client_id`. Garantir título “Chat — {empresa}” no topo e nome da empresa em cada item da sidebar. Cliente com várias empresas vê várias conversas (já suportado pela query atual).
+- **Admin – edição de cliente** (`clientes.$id.tsx`): nova seção “Usuários com acesso a esta empresa” listando `client_users`, com botões adicionar (autocomplete por e-mail entre perfis existentes), desativar/reativar, remover. Impedir duplicados via unique.
+- **Admin – edição de usuário cliente** (onde existir gestão de contas, p.ex. `colaboradores.tsx`/configurações): se houver tela de contas de cliente, adicionar “Empresas vinculadas a esta conta” espelhando o mesmo CRUD a partir do outro lado. Caso não exista uma tela dedicada hoje, o CRUD pelo lado do cliente (item anterior) já cobre.
+- **Verificação de vínculos** (se houver tela em `configuracoes.tsx`): adicionar contagens — contas sem empresa, empresas sem usuário cliente, contas com múltiplas empresas, vínculos inativos.
 
-Confirma que posso começar?
+## 4. Compatibilidade
+
+- `owner_profile_id` preservado; queries antigas continuam funcionando.
+- Backfill garante que clientes atuais ganham linha em `client_users` automaticamente.
+- Nenhuma RLS é afrouxada — `user_has_client_access` só ganha mais um OR.
+
+## 5. Itens explicitamente fora do escopo
+
+OMIE, Consulta CNPJ, planos, pagamentos, marketplace, login público, cadastro público, refatoração ampla, remoção de `owner_profile_id`.
+
+## Entregáveis ao final
+
+Lista de tabelas alteradas, migração de dados, arquivos editados, telas com seletor/identificação, comportamento do chat, políticas RLS ajustadas e checklist de testes manuais (admin, colaborador, cliente com 1 e com N empresas; criação/remoção de vínculo; chat por empresa; notificações com nome de empresa).

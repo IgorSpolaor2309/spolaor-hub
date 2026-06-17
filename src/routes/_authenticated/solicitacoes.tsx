@@ -72,7 +72,7 @@ function RequestsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("document_requests")
-        .select("*, clients(razao_social), documents(nome, storage_path), profiles:responsavel_profile_id(full_name)")
+        .select("*, clients(razao_social, nome_fantasia), documents(nome, storage_path), profiles:responsavel_profile_id(full_name)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -230,7 +230,7 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
           </div>
           {item.descricao && <div className="mt-1 text-sm text-muted-foreground">{item.descricao}</div>}
           <div className="mt-1 text-xs text-muted-foreground">
-            Cliente: {item.clients?.razao_social ?? "—"}
+            Empresa: {item.clients?.nome_fantasia || item.clients?.razao_social || "—"}
             {item.competencia ? ` · Competência: ${item.competencia}` : ""}
             {item.prazo ? ` · Prazo: ${formatBR(item.prazo)}` : ""}
             {item.profiles?.full_name ? ` · Resp.: ${item.profiles.full_name}` : ""}

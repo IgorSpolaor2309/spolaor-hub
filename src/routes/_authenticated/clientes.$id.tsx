@@ -154,6 +154,7 @@ function ClientDetail() {
           <TabsTrigger value="requisitos">Requisitos</TabsTrigger>
           {role !== "client" && <TabsTrigger value="fiscal">Dados fiscais</TabsTrigger>}
           {role === "admin" && <TabsTrigger value="equipe">Equipe</TabsTrigger>}
+          {role === "admin" && <TabsTrigger value="acessos">Acessos</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="pendencias">
@@ -201,6 +202,12 @@ function ClientDetail() {
         {role === "admin" && (
           <TabsContent value="equipe">
             <TeamTab clientId={id} current={collabs} onChange={() => qc.invalidateQueries({ queryKey: ["client-collabs", id] })} />
+          </TabsContent>
+        )}
+
+        {role === "admin" && (
+          <TabsContent value="acessos">
+            <ClientUsersTab clientId={id} />
           </TabsContent>
         )}
       </Tabs>
@@ -538,6 +545,132 @@ function TeamTab({ clientId, current, onChange }: any) {
                 <div className="text-xs text-muted-foreground">{c.collaborators?.email ?? ""}</div>
               </div>
               <Button variant="ghost" size="sm" onClick={() => del.mutate(c.collaborator_id)}>Remover</Button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
+
+/* ---------- Acessos: usuários-cliente vinculados (multiempresa) ---------- */
+function ClientUsersTab({ clientId }: { clientId: string }) {
+  const qc = useQueryClient();
+
+  const { data: links = [], isLoading } = useQuery({
+    queryKey: ["client-users", clientId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("client_users")
+        .select("id, user_id, papel, ativo, created_at, profiles:user_id(full_name, email)")
+        .eq("client_id", clientId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const [email, setEmail] = useState("");
+  const [papel, setPapel] = useState("responsavel");
+
+  const add = useMutation({
+    mutationFn: async () => {
+      const e = email.trim().toLowerCase();
+      if (!e) throw new Error("Informe o e-mail.");
+      const { data: prof, error: pErr } = await supabase
+        .from("profiles").select("id, email").ilike("email", e).maybeSingle();
+      if (pErr) throw pErr;
+      if (!prof?.id) throw new Error("Nenhum usuário encontrado com este e-mail. Crie a conta primeiro em Configurações.");
+      const { error } = await supabase
+        .from("client_users")
+        .insert({ client_id: clientId, user_id: prof.id, papel: papel || null, ativo: true });
+      if (error) {
+        if (error.code === "23505") throw new Error("Este usuário já está vinculado a esta empresa.");
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Usuário vinculado à empresa.");
+      setEmail("");
+      qc.invalidateQueries({ queryKey: ["client-users", clientId] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Não foi possível vincular o usuário."),
+  });
+
+  const toggle = useMutation({
+    mutationFn: async (row: any) => {
+      const { error } = await supabase
+        .from("client_users").update({ ativo: !row.ativo }).eq("id", row.id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["client-users", clientId] }),
+    onError: (e: any) => toast.error(e?.message ?? "Falha ao atualizar vínculo."),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (row: any) => {
+      const { error } = await supabase.from("client_users").delete().eq("id", row.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Vínculo removido.");
+      qc.invalidateQueries({ queryKey: ["client-users", clientId] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Falha ao remover vínculo."),
+  });
+
+  return (
+    <Card className="p-5">
+      <div className="mb-2 text-sm text-muted-foreground">
+        Usuários cliente que podem acessar <b>esta empresa</b>. A mesma conta pode estar vinculada a várias empresas.
+      </div>
+
+      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-md border bg-muted/30 p-3">
+        <div className="flex-1 min-w-[220px]">
+          <Label className="text-xs">E-mail do usuário cliente</Label>
+          <Input type="email" placeholder="cliente@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+        </div>
+        <div>
+          <Label className="text-xs">Papel</Label>
+          <Select value={papel} onValueChange={setPapel}>
+            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="responsavel">Responsável</SelectItem>
+              <SelectItem value="financeiro">Financeiro</SelectItem>
+              <SelectItem value="socio">Sócio</SelectItem>
+              <SelectItem value="operacional">Operacional</SelectItem>
+              <SelectItem value="outro">Outro</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Button onClick={() => add.mutate()} disabled={!email.trim() || add.isPending}>
+          {add.isPending ? "Vinculando…" : "Vincular usuário"}
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Carregando…</p>
+      ) : links.length === 0 ? (
+        <EmptyState title="Nenhum usuário cliente vinculado." description="Adicione um e-mail acima para conceder acesso." />
+      ) : (
+        <ul className="divide-y">
+          {links.map((l: any) => (
+            <li key={l.id} className="flex items-center justify-between py-3">
+              <div className="min-w-0">
+                <div className="text-sm font-medium">{l.profiles?.full_name || l.profiles?.email || "—"}</div>
+                <div className="text-xs text-muted-foreground">
+                  {l.profiles?.email}{l.papel ? ` · ${l.papel}` : ""}{!l.ativo ? " · inativo" : ""}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => toggle.mutate(l)} disabled={toggle.isPending}>
+                  {l.ativo ? "Desativar" : "Reativar"}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => remove.mutate(l)} disabled={remove.isPending}>
+                  Remover
+                </Button>
+              </div>
             </li>
           ))}
         </ul>

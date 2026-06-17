@@ -33,7 +33,7 @@ function TasksPage() {
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ["all-tasks"],
-    queryFn: async () => (await supabase.from("pending_tasks").select("*, clients(razao_social)").order("prazo", { ascending: true, nullsFirst: false })).data ?? [],
+    queryFn: async () => (await supabase.from("pending_tasks").select("*, clients(razao_social, nome_fantasia)").order("prazo", { ascending: true, nullsFirst: false })).data ?? [],
   });
 
   const remove = useMutation({
@@ -90,7 +90,7 @@ function TasksPage() {
               {filtered.map((t: any) => (
                 <tr key={t.id} className="border-b">
                   <td className="py-3 pr-4 font-medium">{t.titulo}</td>
-                  <td><Link to="/clientes/$id" params={{ id: t.client_id }} className="text-secondary hover:underline">{t.clients?.razao_social}</Link></td>
+                  <td><Link to="/clientes/$id" params={{ id: t.client_id }} className="text-secondary hover:underline">{t.clients?.nome_fantasia || t.clients?.razao_social}</Link></td>
                   <td>{t.prazo ? formatBR(t.prazo) : "—"}</td>
                   <td><PriorityBadge value={t.prioridade} /></td>
                   <td><StatusBadge value={t.status} /></td>
