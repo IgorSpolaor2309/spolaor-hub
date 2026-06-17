@@ -469,6 +469,146 @@ function AccountLinksEditor({ userId, roles }: { userId: string; roles: string[]
   return null;
 }
 
+function ClientAccountCompaniesLinker({ userId }: { userId: string }) {
+  const qc = useQueryClient();
+  const { data: links = [], isLoading } = useQuery({
+    queryKey: ["client-account-companies", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("client_users")
+        .select("id, client_id, papel, ativo, clients:client_id(id, razao_social, nome_fantasia, documento, status)")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const { data: allClients = [] } = useQuery({
+    queryKey: ["all-clients-for-account-link"],
+    queryFn: async () =>
+      (await supabase.from("clients").select("id, razao_social, nome_fantasia, documento, status").order("razao_social")).data ?? [],
+  });
+
+  const [cid, setCid] = useState("");
+  const [papel, setPapel] = useState("responsavel");
+
+  const linkedIds = new Set((links as any[]).map((l) => l.client_id));
+  const available = (allClients as any[]).filter((c) => !linkedIds.has(c.id));
+
+  const add = useMutation({
+    mutationFn: async () => {
+      if (!cid) throw new Error("Selecione uma empresa.");
+      const { error } = await supabase
+        .from("client_users")
+        .insert({ client_id: cid, user_id: userId, papel, ativo: true });
+      if (error) {
+        if (error.code === "23505") throw new Error("Esta empresa já está vinculada a esta conta.");
+        throw error;
+      }
+    },
+    onSuccess: () => { toast.success("Empresa vinculada."); setCid(""); qc.invalidateQueries({ queryKey: ["client-account-companies", userId] }); qc.invalidateQueries({ queryKey: ["clients"] }); },
+    onError: (e: any) => toast.error(friendly(e)),
+  });
+  const toggle = useMutation({
+    mutationFn: async (row: any) => {
+      const { error } = await supabase.from("client_users").update({ ativo: !row.ativo }).eq("id", row.id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["client-account-companies", userId] }),
+  });
+  const remove = useMutation({
+    mutationFn: async (row: any) => {
+      const { error } = await supabase.from("client_users").delete().eq("id", row.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Vínculo removido."); qc.invalidateQueries({ queryKey: ["client-account-companies", userId] }); qc.invalidateQueries({ queryKey: ["clients"] }); },
+  });
+
+  return (
+    <div className="rounded-md border p-3 space-y-3">
+      <div>
+        <Label className="text-xs uppercase text-muted-foreground">Empresas acessíveis por esta conta cliente</Label>
+        <p className="mt-1 text-xs text-muted-foreground">
+          A conta cliente pode acessar várias empresas. Para criar uma nova empresa, vá em Clientes → Novo cliente e vincule esta conta no formulário.
+        </p>
+      </div>
+
+      <div className="flex flex-wrap items-end gap-2 rounded-md bg-muted/30 p-3">
+        <div className="flex-1 min-w-[240px]">
+          <Label className="text-xs">Empresa existente</Label>
+          <Select value={cid} onValueChange={setCid}>
+            <SelectTrigger><SelectValue placeholder={available.length === 0 ? "Nenhuma disponível" : "Selecione uma empresa"} /></SelectTrigger>
+            <SelectContent>
+              {available.map((c: any) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.razao_social}{c.documento ? ` — ${c.documento}` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs">Papel</Label>
+          <Select value={papel} onValueChange={setPapel}>
+            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="responsavel">Responsável</SelectItem>
+              <SelectItem value="financeiro">Financeiro</SelectItem>
+              <SelectItem value="socio">Sócio</SelectItem>
+              <SelectItem value="operacional">Operacional</SelectItem>
+              <SelectItem value="outro">Outro</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Button onClick={() => add.mutate()} disabled={!cid || add.isPending}>
+          {add.isPending ? "Vinculando…" : "Vincular empresa"}
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Carregando…</p>
+      ) : (links as any[]).length === 0 ? (
+        <p className="text-sm text-muted-foreground">Nenhuma empresa vinculada ainda.</p>
+      ) : (
+        <ul className="divide-y rounded-md border">
+          {(links as any[]).map((l) => (
+            <li key={l.id} className="flex items-center justify-between px-3 py-2">
+              <div className="min-w-0">
+                <div className="text-sm font-medium">{l.clients?.razao_social ?? "—"}</div>
+                <div className="text-xs text-muted-foreground">
+                  {l.clients?.documento ?? ""}{l.papel ? ` · ${l.papel}` : ""}{!l.ativo ? " · inativo" : ""}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => toggle.mutate(l)} disabled={toggle.isPending}>
+                  {l.ativo ? "Desativar" : "Reativar"}
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="sm">Remover</Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Remover vínculo?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        A conta deixará de acessar {l.clients?.razao_social ?? "esta empresa"}.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => remove.mutate(l)}>Remover</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function VerifyLinksButton() {
   const [open, setOpen] = useState(false);
   const verifyFn = useServerFn(adminVerifyLinks);
