@@ -185,9 +185,6 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
 
   const prazoVencido = !!item.prazo && isPastEndOfDay(item.prazo) && !["aprovado", "cancelado"].includes(item.status);
 
-
-  const prazoVencido = !!item.prazo && isPastEndOfDay(item.prazo) && !["aprovado", "cancelado"].includes(item.status);
-
   return (
     <li className="rounded-md border p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
