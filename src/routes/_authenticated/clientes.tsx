@@ -371,12 +371,17 @@ function ReceitaFields({
   );
 }
 
-async function ensureNoDuplicateCnpj(cnpjDigits: string, excludeId?: string): Promise<boolean> {
-  if (!cnpjDigits || cnpjDigits.length !== 14) return true;
+async function findDuplicateCnpj(cnpjDigits: string, excludeId?: string) {
+  if (!cnpjDigits || cnpjDigits.length !== 14) return null;
   let q = supabase.from("clients").select("id, razao_social, nome_fantasia").or(`cnpj.eq.${cnpjDigits},documento.eq.${cnpjDigits}`).limit(1);
   if (excludeId) q = q.neq("id", excludeId);
   const { data } = await q;
-  if (data && data.length > 0) {
+  return data && data.length > 0 ? data[0] : null;
+}
+
+async function ensureNoDuplicateCnpj(cnpjDigits: string, excludeId?: string): Promise<boolean> {
+  const dup = await findDuplicateCnpj(cnpjDigits, excludeId);
+  if (dup) {
     toast.error("Este CNPJ já está cadastrado.");
     return false;
   }
