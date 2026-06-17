@@ -371,12 +371,17 @@ function ReceitaFields({
   );
 }
 
-async function ensureNoDuplicateCnpj(cnpjDigits: string, excludeId?: string): Promise<boolean> {
-  if (!cnpjDigits || cnpjDigits.length !== 14) return true;
+async function findDuplicateCnpj(cnpjDigits: string, excludeId?: string) {
+  if (!cnpjDigits || cnpjDigits.length !== 14) return null;
   let q = supabase.from("clients").select("id, razao_social, nome_fantasia").or(`cnpj.eq.${cnpjDigits},documento.eq.${cnpjDigits}`).limit(1);
   if (excludeId) q = q.neq("id", excludeId);
   const { data } = await q;
-  if (data && data.length > 0) {
+  return data && data.length > 0 ? data[0] : null;
+}
+
+async function ensureNoDuplicateCnpj(cnpjDigits: string, excludeId?: string): Promise<boolean> {
+  const dup = await findDuplicateCnpj(cnpjDigits, excludeId);
+  if (dup) {
     toast.error("Este CNPJ já está cadastrado.");
     return false;
   }
@@ -437,37 +442,67 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
     onError: (e: any) => { if (e?.message !== "__dup__") toast.error(e.message); },
   });
 
+  const [existing, setExisting] = useState<{ id: string; razao_social: string | null; nome_fantasia: string | null } | null>(null);
+
   return (
     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-      <DialogHeader><DialogTitle>Novo cliente</DialogTitle></DialogHeader>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="sm:col-span-2">
+      <DialogHeader>
+        <DialogTitle>Novo cliente</DialogTitle>
+      </DialogHeader>
+
+      <div className="space-y-4">
+        <section className="space-y-2">
+          <h3 className="text-sm font-semibold">Preencher por CNPJ</h3>
           <CnpjLookup
             value={form.cnpj}
-            onChange={(v) => setForm({ ...form, cnpj: v })}
-            onResult={(r) => {
+            onChange={(v) => { setForm({ ...form, cnpj: v }); if (existing) setExisting(null); }}
+            onResult={async (r) => {
               const m = mapReceitaToForm(r);
               setForm({ ...form, ...m, ultima_consulta_receita: new Date().toISOString() });
+              const dup = await findDuplicateCnpj(form.cnpj);
+              setExisting(dup);
             }}
           />
-        </div>
-        <ReceitaFields form={form} setForm={setForm} />
-        <div className="space-y-1.5"><Label>E-mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-        <div className="space-y-1.5"><Label>Telefone / WhatsApp</Label><Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} /></div>
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label>Tipo</Label>
-          <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v })}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{CLIENT_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label>Observações internas</Label>
-          <Textarea rows={3} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
-        </div>
+          {existing && (
+            <div className="flex items-center justify-between gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              <span>Este CNPJ já está cadastrado{existing.razao_social ? ` como "${existing.razao_social}"` : ""}.</span>
+              <Link
+                to="/clientes/$id"
+                params={{ id: existing.id }}
+                className="font-medium text-primary hover:underline"
+              >
+                Abrir cadastro existente
+              </Link>
+            </div>
+          )}
+        </section>
+
+        <section className="space-y-3">
+          <h3 className="text-sm font-semibold">Demais informações</h3>
+          <p className="text-xs text-muted-foreground">
+            Revise os dados encontrados e complete o que faltar manualmente antes de salvar.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <ReceitaFields form={form} setForm={setForm} />
+            <div className="space-y-1.5"><Label>E-mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+            <div className="space-y-1.5"><Label>Telefone / WhatsApp</Label><Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} /></div>
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label>Tipo</Label>
+              <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{CLIENT_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label>Observações internas</Label>
+              <Textarea rows={3} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
+            </div>
+          </div>
+        </section>
       </div>
+
       <DialogFooter>
-        <Button onClick={() => mut.mutate()} disabled={!form.razao_social || mut.isPending}>
+        <Button onClick={() => mut.mutate()} disabled={!form.razao_social || mut.isPending || !!existing}>
           {mut.isPending ? "Salvando…" : "Criar cliente"}
         </Button>
       </DialogFooter>
@@ -533,17 +568,24 @@ function EditClientDialog({ client, onDone }: { client: any; onDone: () => void 
   return (
     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
       <DialogHeader><DialogTitle>Editar cliente</DialogTitle></DialogHeader>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="sm:col-span-2">
+      <div className="space-y-4">
+        <section className="space-y-2">
+          <h3 className="text-sm font-semibold">Atualizar dados por CNPJ</h3>
           <CnpjLookup
             value={form.cnpj}
             onChange={(v) => setForm({ ...form, cnpj: v })}
+            buttonLabel="Atualizar dados pelo CNPJ"
+            helperText="Consulte novamente a Minha Receita para atualizar os campos públicos. Nada é salvo até você clicar em Salvar alterações."
             onResult={(r) => {
               const m = mapReceitaToForm(r);
               setForm({ ...form, ...m, ultima_consulta_receita: new Date().toISOString() });
             }}
           />
-        </div>
+        </section>
+
+        <section className="space-y-3">
+          <h3 className="text-sm font-semibold">Dados do cliente</h3>
+          <div className="grid gap-4 sm:grid-cols-2">
         <ReceitaFields form={form} setForm={setForm} />
         <div className="space-y-1.5"><Label>E-mail principal</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
         <div className="space-y-1.5"><Label>Telefone / WhatsApp</Label><Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} /></div>
@@ -572,6 +614,8 @@ function EditClientDialog({ client, onDone }: { client: any; onDone: () => void 
           <Label>Observações internas</Label>
           <Textarea rows={3} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
         </div>
+          </div>
+        </section>
       </div>
       <DialogFooter>
         <Button onClick={() => mut.mutate()} disabled={!form.razao_social.trim() || mut.isPending}>

@@ -37,19 +37,24 @@ export function CnpjLookup({
   onResult,
   disabled,
   label = "CNPJ",
+  buttonLabel = "Buscar dados pelo CNPJ",
+  helperText = "Busque os dados públicos da empresa automaticamente. Depois você pode revisar e completar as informações manualmente.",
 }: {
   value: string;
   onChange: (v: string) => void;
   onResult: (data: ReceitaData) => void;
   disabled?: boolean;
   label?: string;
+  buttonLabel?: string;
+  helperText?: string | null;
 }) {
   const [loading, setLoading] = useState(false);
+  const digits = onlyDigits(value);
+  const canLookup = isValidCnpjLength(digits);
 
   async function handleLookup() {
-    const digits = onlyDigits(value);
-    if (!isValidCnpjLength(digits)) {
-      toast.error("CNPJ inválido. Verifique os números digitados.");
+    if (!canLookup) {
+      toast.error("Informe um CNPJ com 14 dígitos antes de buscar.");
       return;
     }
     setLoading(true);
@@ -58,7 +63,6 @@ export function CnpjLookup({
         body: { cnpj: digits },
       });
       if (error) {
-        // tenta extrair mensagem amigável vinda da função
         let msg = "Não foi possível consultar o CNPJ agora. Tente novamente em alguns instantes.";
         const ctx: any = (error as any).context;
         try {
@@ -78,7 +82,7 @@ export function CnpjLookup({
       onResult(result);
       const ativo = (result.descricao_situacao_cadastral ?? "").toUpperCase() === "ATIVA";
       if (ativo) {
-        toast.success("Dados do CNPJ encontrados. Revise antes de salvar.");
+        toast.success("Dados encontrados. Revise e complete as informações antes de salvar.");
       } else {
         toast.warning(
           `Atenção: este CNPJ está com situação cadastral "${result.descricao_situacao_cadastral ?? "desconhecida"}".`,
@@ -92,29 +96,40 @@ export function CnpjLookup({
   }
 
   return (
-    <div className="space-y-1.5">
-      <Label>{label}</Label>
-      <div className="flex gap-2">
+    <div className="space-y-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
+      <div>
+        <Label className="text-sm font-semibold">{label}</Label>
+        {helperText && (
+          <p className="mt-0.5 text-xs text-muted-foreground">{helperText}</p>
+        )}
+      </div>
+      <div className="flex flex-col gap-2 sm:flex-row">
         <Input
           inputMode="numeric"
           placeholder="00.000.000/0000-00"
           value={maskCNPJ(value)}
           onChange={(e) => onChange(onlyDigits(e.target.value))}
           disabled={disabled || loading}
+          className="bg-background"
         />
         <Button
           type="button"
-          variant="secondary"
           onClick={handleLookup}
-          disabled={disabled || loading || !isValidCnpjLength(value)}
+          disabled={disabled || loading || !canLookup}
+          className="sm:w-auto w-full whitespace-nowrap"
         >
           {loading ? (
-            <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Consultando…</>
+            <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Buscando…</>
           ) : (
-            <><Search className="mr-2 h-4 w-4" /> Consultar CNPJ</>
+            <><Search className="mr-2 h-4 w-4" /> {buttonLabel}</>
           )}
         </Button>
       </div>
+      {!canLookup && value.length > 0 && (
+        <p className="text-xs text-muted-foreground">
+          Digite os 14 números do CNPJ para habilitar a busca.
+        </p>
+      )}
     </div>
   );
 }
