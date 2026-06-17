@@ -221,10 +221,16 @@ function GuideRow({ item, isStaff, onChange }: any) {
             <AttachmentButton storagePath={item.comprovante_path} label="Abrir comprovante" variant="outline" />
           )}
           {isStaff ? (
-            <Select value={item.status} onValueChange={(v) => updateStatus.mutate(v)}>
-              <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
-              <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-            </Select>
+            <>
+              <Select value={item.status} onValueChange={(v) => updateStatus.mutate(v)}>
+                <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+                <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+              {item.comprovante_path && (
+                <DeleteButton onConfirm={() => removeProof.mutate()} label="Remover comprovante" description="Remover o comprovante anexado? A guia continuará registrada." />
+              )}
+              <DeleteButton onConfirm={() => remove.mutate()} label="Excluir guia" />
+            </>
           ) : (
             !item.comprovante_path && (
               <label>
@@ -233,6 +239,7 @@ function GuideRow({ item, isStaff, onChange }: any) {
               </label>
             )
           )}
+
         </div>
       </div>
     </li>
