@@ -57,7 +57,7 @@ function GuidesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tax_guides")
-        .select("*, clients(razao_social)")
+        .select("*, clients(razao_social, nome_fantasia)")
         .order("vencimento", { ascending: true });
       if (error) throw error;
       return data;

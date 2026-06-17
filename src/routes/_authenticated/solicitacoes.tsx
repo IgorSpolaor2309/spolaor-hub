@@ -72,7 +72,7 @@ function RequestsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("document_requests")
-        .select("*, clients(razao_social), documents(nome, storage_path), profiles:responsavel_profile_id(full_name)")
+        .select("*, clients(razao_social, nome_fantasia), documents(nome, storage_path), profiles:responsavel_profile_id(full_name)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;

@@ -33,7 +33,7 @@ function TasksPage() {
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ["all-tasks"],
-    queryFn: async () => (await supabase.from("pending_tasks").select("*, clients(razao_social)").order("prazo", { ascending: true, nullsFirst: false })).data ?? [],
+    queryFn: async () => (await supabase.from("pending_tasks").select("*, clients(razao_social, nome_fantasia)").order("prazo", { ascending: true, nullsFirst: false })).data ?? [],
   });
 
   const remove = useMutation({

@@ -58,7 +58,7 @@ function ValidadesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
-        .select("id, nome, client_id, data_validade, categoria_validade, storage_path, clients(razao_social)")
+        .select("id, nome, client_id, data_validade, categoria_validade, storage_path, clients(razao_social, nome_fantasia)")
         .not("data_validade", "is", null)
         .order("data_validade", { ascending: true });
       if (error) throw error;

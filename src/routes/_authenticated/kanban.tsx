@@ -82,10 +82,10 @@ function KanbanPage() {
     retry: 0,
     queryFn: async (): Promise<UnifiedItem[]> => {
       const [tasksRes, reqsRes, docsRes, guidesRes] = await Promise.all([
-        supabase.from("pending_tasks").select("*, clients(razao_social), collaborators(nome)"),
-        supabase.from("document_requests").select("id, client_id, titulo, categoria, status, prazo, competencia, responsavel_profile_id, document_id, clients(razao_social)"),
-        supabase.from("documents").select("id, client_id, nome, status, created_at, clients(razao_social)").in("status", ["recebido", "em_analise", "aprovado"]),
-        supabase.from("tax_guides").select("id, client_id, tipo, status, vencimento, competencia, comprovante_path, comprovante_uploaded_at, clients(razao_social)"),
+        supabase.from("pending_tasks").select("*, clients(razao_social, nome_fantasia), collaborators(nome)"),
+        supabase.from("document_requests").select("id, client_id, titulo, categoria, status, prazo, competencia, responsavel_profile_id, document_id, clients(razao_social, nome_fantasia)"),
+        supabase.from("documents").select("id, client_id, nome, status, created_at, clients(razao_social, nome_fantasia)").in("status", ["recebido", "em_analise", "aprovado"]),
+        supabase.from("tax_guides").select("id, client_id, tipo, status, vencimento, competencia, comprovante_path, comprovante_uploaded_at, clients(razao_social, nome_fantasia)"),
       ]);
       const out: UnifiedItem[] = [];
 

@@ -31,7 +31,7 @@ function DocsPage() {
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const { data: list = [], isLoading } = useQuery({
     queryKey: ["all-docs"],
-    queryFn: async () => (await supabase.from("documents").select("*, clients(razao_social)").order("created_at", { ascending: false })).data ?? [],
+    queryFn: async () => (await supabase.from("documents").select("*, clients(razao_social, nome_fantasia)").order("created_at", { ascending: false })).data ?? [],
   });
   const remove = useMutation({
     mutationFn: async (id: string) => {
