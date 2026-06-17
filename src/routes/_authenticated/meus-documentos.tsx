@@ -75,10 +75,14 @@ function MyDocsPage() {
       <Card className="p-5">
         <div className="mb-4 flex flex-wrap items-end gap-3 rounded-md border bg-muted/30 p-3">
           {clients.length > 1 && (
-            <div><Label className="text-xs">Cliente</Label>
+            <div><Label className="text-xs">Empresa</Label>
               <Select value={clientId || clients[0]?.id} onValueChange={setClientId}>
-                <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
-                <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.razao_social}</SelectItem>)}</SelectContent>
+                <SelectTrigger className="w-[260px]"><SelectValue /></SelectTrigger>
+                <SelectContent>{clients.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.nome_fantasia || c.razao_social}{c.documento ? ` · ${c.documento}` : ""}
+                  </SelectItem>
+                ))}</SelectContent>
               </Select>
             </div>
           )}
@@ -99,7 +103,12 @@ function MyDocsPage() {
               <li key={d.id} className="flex items-center justify-between py-3">
                 <div>
                   <div className="text-sm font-medium">{d.nome}</div>
-                  <div className="text-xs text-muted-foreground">{labelOf(DOC_TYPES, d.tipo)} {d.competencia ? `· ${d.competencia}` : ""}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {labelOf(DOC_TYPES, d.tipo)} {d.competencia ? `· ${d.competencia}` : ""}
+                    {clients.length > 1 && (d.clients?.nome_fantasia || d.clients?.razao_social) && (
+                      <> · Empresa: {d.clients?.nome_fantasia || d.clients?.razao_social}</>
+                    )}
+                  </div>
                 </div>
                 <StatusBadge value={d.status} />
               </li>
