@@ -323,57 +323,117 @@ export type Database = {
       }
       clients: {
         Row: {
+          bairro: string | null
+          capital_social: number | null
+          cep: string | null
+          cidade: string | null
+          cnae_principal_codigo: string | null
+          cnae_principal_descricao: string | null
+          cnpj: string | null
+          complemento: string | null
           created_at: string
+          dados_receita_json: Json | null
+          data_abertura: string | null
           data_entrada: string | null
           data_ultima_sincronizacao: string | null
           documento: string | null
           email: string | null
           id: string
+          logradouro: string | null
+          mei: boolean | null
+          natureza_juridica: string | null
           nome_fantasia: string | null
+          numero: string | null
           observacoes: string | null
           omie_id: string | null
           origem_cadastro: string
           owner_profile_id: string | null
+          porte: string | null
+          qsa_json: Json | null
           razao_social: string
+          simples_nacional: boolean | null
+          situacao_cadastral: string | null
           status: string
           telefone: string | null
           tipo: string | null
+          uf: string | null
+          ultima_consulta_receita: string | null
           updated_at: string
         }
         Insert: {
+          bairro?: string | null
+          capital_social?: number | null
+          cep?: string | null
+          cidade?: string | null
+          cnae_principal_codigo?: string | null
+          cnae_principal_descricao?: string | null
+          cnpj?: string | null
+          complemento?: string | null
           created_at?: string
+          dados_receita_json?: Json | null
+          data_abertura?: string | null
           data_entrada?: string | null
           data_ultima_sincronizacao?: string | null
           documento?: string | null
           email?: string | null
           id?: string
+          logradouro?: string | null
+          mei?: boolean | null
+          natureza_juridica?: string | null
           nome_fantasia?: string | null
+          numero?: string | null
           observacoes?: string | null
           omie_id?: string | null
           origem_cadastro?: string
           owner_profile_id?: string | null
+          porte?: string | null
+          qsa_json?: Json | null
           razao_social: string
+          simples_nacional?: boolean | null
+          situacao_cadastral?: string | null
           status?: string
           telefone?: string | null
           tipo?: string | null
+          uf?: string | null
+          ultima_consulta_receita?: string | null
           updated_at?: string
         }
         Update: {
+          bairro?: string | null
+          capital_social?: number | null
+          cep?: string | null
+          cidade?: string | null
+          cnae_principal_codigo?: string | null
+          cnae_principal_descricao?: string | null
+          cnpj?: string | null
+          complemento?: string | null
           created_at?: string
+          dados_receita_json?: Json | null
+          data_abertura?: string | null
           data_entrada?: string | null
           data_ultima_sincronizacao?: string | null
           documento?: string | null
           email?: string | null
           id?: string
+          logradouro?: string | null
+          mei?: boolean | null
+          natureza_juridica?: string | null
           nome_fantasia?: string | null
+          numero?: string | null
           observacoes?: string | null
           omie_id?: string | null
           origem_cadastro?: string
           owner_profile_id?: string | null
+          porte?: string | null
+          qsa_json?: Json | null
           razao_social?: string
+          simples_nacional?: boolean | null
+          situacao_cadastral?: string | null
           status?: string
           telefone?: string | null
           tipo?: string | null
+          uf?: string | null
+          ultima_consulta_receita?: string | null
           updated_at?: string
         }
         Relationships: [

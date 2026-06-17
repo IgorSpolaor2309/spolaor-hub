@@ -27,6 +27,8 @@ import { adminSetClientStatus } from "@/lib/admin-users.functions";
 
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { CLIENT_TYPES, labelOf } from "@/lib/sc-types";
+import { CnpjLookup } from "@/components/sc/CnpjLookup";
+import { mapReceitaToForm } from "@/lib/receita-map";
 
 export const Route = createFileRoute("/_authenticated/clientes")({
   component: ClientsPage,
@@ -259,30 +261,197 @@ function ClientsPage() {
   );
 }
 
+type ReceitaFormShape = {
+  cnpj: string;
+  razao_social: string;
+  nome_fantasia: string;
+  email: string;
+  telefone: string;
+  tipo: string;
+  data_entrada?: string;
+  status?: string;
+  observacoes: string;
+  situacao_cadastral: string;
+  data_abertura: string;
+  cnae_principal_codigo: string;
+  cnae_principal_descricao: string;
+  cep: string;
+  logradouro: string;
+  numero: string;
+  complemento: string;
+  bairro: string;
+  cidade: string;
+  uf: string;
+  porte: string;
+  natureza_juridica: string;
+  capital_social: string;
+  simples_nacional: boolean | null;
+  mei: boolean | null;
+  qsa_json: any[];
+  dados_receita_json: any;
+  ultima_consulta_receita: string | null;
+};
+
+function ReceitaFields({
+  form,
+  setForm,
+}: {
+  form: ReceitaFormShape;
+  setForm: (f: ReceitaFormShape) => void;
+}) {
+  const set = (patch: Partial<ReceitaFormShape>) => setForm({ ...form, ...patch });
+  const ativo = (form.situacao_cadastral ?? "").toUpperCase() === "ATIVA";
+  return (
+    <>
+      {form.situacao_cadastral && !ativo && (
+        <div className="sm:col-span-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          Atenção: este CNPJ está com situação cadastral diferente de ATIVA ({form.situacao_cadastral}).
+        </div>
+      )}
+      <div className="space-y-1.5 sm:col-span-2">
+        <Label>Razão social *</Label>
+        <Input value={form.razao_social} onChange={(e) => set({ razao_social: e.target.value })} required />
+      </div>
+      <div className="space-y-1.5"><Label>Nome fantasia</Label><Input value={form.nome_fantasia} onChange={(e) => set({ nome_fantasia: e.target.value })} /></div>
+      <div className="space-y-1.5"><Label>Situação cadastral</Label><Input value={form.situacao_cadastral} onChange={(e) => set({ situacao_cadastral: e.target.value })} /></div>
+      <div className="space-y-1.5"><Label>Data de abertura</Label><Input type="date" value={form.data_abertura ?? ""} onChange={(e) => set({ data_abertura: e.target.value })} /></div>
+      <div className="space-y-1.5"><Label>Porte</Label><Input value={form.porte} onChange={(e) => set({ porte: e.target.value })} /></div>
+      <div className="space-y-1.5"><Label>CNAE principal</Label><Input value={form.cnae_principal_codigo} onChange={(e) => set({ cnae_principal_codigo: e.target.value })} /></div>
+      <div className="space-y-1.5 sm:col-span-2"><Label>CNAE descrição</Label><Input value={form.cnae_principal_descricao} onChange={(e) => set({ cnae_principal_descricao: e.target.value })} /></div>
+      <div className="space-y-1.5 sm:col-span-2"><Label>Natureza jurídica</Label><Input value={form.natureza_juridica} onChange={(e) => set({ natureza_juridica: e.target.value })} /></div>
+      <div className="space-y-1.5"><Label>Capital social (R$)</Label><Input inputMode="decimal" value={form.capital_social} onChange={(e) => set({ capital_social: e.target.value })} /></div>
+      <div className="space-y-1.5"><Label>CEP</Label><Input value={form.cep} onChange={(e) => set({ cep: e.target.value })} /></div>
+      <div className="space-y-1.5 sm:col-span-2"><Label>Logradouro</Label><Input value={form.logradouro} onChange={(e) => set({ logradouro: e.target.value })} /></div>
+      <div className="space-y-1.5"><Label>Número</Label><Input value={form.numero} onChange={(e) => set({ numero: e.target.value })} /></div>
+      <div className="space-y-1.5"><Label>Complemento</Label><Input value={form.complemento} onChange={(e) => set({ complemento: e.target.value })} /></div>
+      <div className="space-y-1.5"><Label>Bairro</Label><Input value={form.bairro} onChange={(e) => set({ bairro: e.target.value })} /></div>
+      <div className="space-y-1.5"><Label>Cidade</Label><Input value={form.cidade} onChange={(e) => set({ cidade: e.target.value })} /></div>
+      <div className="space-y-1.5"><Label>UF</Label><Input maxLength={2} value={form.uf} onChange={(e) => set({ uf: e.target.value.toUpperCase() })} /></div>
+      <div className="space-y-1.5"><Label>Simples Nacional</Label>
+        <Select value={form.simples_nacional == null ? "null" : form.simples_nacional ? "true" : "false"} onValueChange={(v) => set({ simples_nacional: v === "null" ? null : v === "true" })}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="null">Não informado</SelectItem>
+            <SelectItem value="true">Optante</SelectItem>
+            <SelectItem value="false">Não optante</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1.5"><Label>MEI</Label>
+        <Select value={form.mei == null ? "null" : form.mei ? "true" : "false"} onValueChange={(v) => set({ mei: v === "null" ? null : v === "true" })}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="null">Não informado</SelectItem>
+            <SelectItem value="true">Sim</SelectItem>
+            <SelectItem value="false">Não</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      {Array.isArray(form.qsa_json) && form.qsa_json.length > 0 && (
+        <div className="sm:col-span-2 space-y-1.5">
+          <Label>Quadro societário</Label>
+          <div className="rounded-md border bg-muted/30 p-2 text-xs">
+            <ul className="space-y-1">
+              {form.qsa_json.map((s: any, i: number) => (
+                <li key={i}>
+                  <span className="font-medium">{s.nome_socio ?? s.nome ?? "Sócio"}</span>
+                  {s.qualificacao_socio ? ` — ${s.qualificacao_socio}` : ""}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+      {form.ultima_consulta_receita && (
+        <div className="sm:col-span-2 text-xs text-muted-foreground">
+          Última consulta à Receita: {new Date(form.ultima_consulta_receita).toLocaleString("pt-BR")}
+        </div>
+      )}
+    </>
+  );
+}
+
+async function ensureNoDuplicateCnpj(cnpjDigits: string, excludeId?: string): Promise<boolean> {
+  if (!cnpjDigits || cnpjDigits.length !== 14) return true;
+  let q = supabase.from("clients").select("id, razao_social, nome_fantasia").or(`cnpj.eq.${cnpjDigits},documento.eq.${cnpjDigits}`).limit(1);
+  if (excludeId) q = q.neq("id", excludeId);
+  const { data } = await q;
+  if (data && data.length > 0) {
+    toast.error("Este CNPJ já está cadastrado.");
+    return false;
+  }
+  return true;
+}
+
+function buildClientPayload(form: ReceitaFormShape, cnpjDigits: string) {
+  return {
+    razao_social: form.razao_social.trim(),
+    nome_fantasia: form.nome_fantasia || null,
+    cnpj: cnpjDigits || null,
+    documento: cnpjDigits || null,
+    email: form.email || null,
+    telefone: form.telefone || null,
+    tipo: form.tipo || null,
+    observacoes: form.observacoes || null,
+    situacao_cadastral: form.situacao_cadastral || null,
+    data_abertura: form.data_abertura || null,
+    cnae_principal_codigo: form.cnae_principal_codigo || null,
+    cnae_principal_descricao: form.cnae_principal_descricao || null,
+    cep: form.cep || null,
+    logradouro: form.logradouro || null,
+    numero: form.numero || null,
+    complemento: form.complemento || null,
+    bairro: form.bairro || null,
+    cidade: form.cidade || null,
+    uf: form.uf || null,
+    porte: form.porte || null,
+    natureza_juridica: form.natureza_juridica || null,
+    capital_social: form.capital_social ? Number(String(form.capital_social).replace(",", ".")) : null,
+    simples_nacional: form.simples_nacional,
+    mei: form.mei,
+    qsa_json: form.qsa_json && form.qsa_json.length ? form.qsa_json : null,
+    dados_receita_json: form.dados_receita_json || null,
+    ultima_consulta_receita: form.ultima_consulta_receita || null,
+  } as any;
+}
+
 function NewClientDialog({ onDone }: { onDone: () => void }) {
-  const [form, setForm] = useState({
-    razao_social: "", nome_fantasia: "", documento: "", email: "", telefone: "",
+  const [form, setForm] = useState<ReceitaFormShape>({
+    cnpj: "", razao_social: "", nome_fantasia: "", email: "", telefone: "",
     tipo: "comercio", observacoes: "",
+    situacao_cadastral: "", data_abertura: "",
+    cnae_principal_codigo: "", cnae_principal_descricao: "",
+    cep: "", logradouro: "", numero: "", complemento: "", bairro: "", cidade: "", uf: "",
+    porte: "", natureza_juridica: "", capital_social: "",
+    simples_nacional: null, mei: null, qsa_json: [], dados_receita_json: null,
+    ultima_consulta_receita: null,
   });
   const mut = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("clients").insert({ ...form, origem_cadastro: "manual" });
+      const ok = await ensureNoDuplicateCnpj(form.cnpj);
+      if (!ok) throw new Error("__dup__");
+      const { error } = await supabase.from("clients").insert({ ...buildClientPayload(form, form.cnpj), origem_cadastro: "manual" });
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Cliente criado"); onDone(); },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => { if (e?.message !== "__dup__") toast.error(e.message); },
   });
 
   return (
-    <DialogContent className="max-w-2xl">
+    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
       <DialogHeader><DialogTitle>Novo cliente</DialogTitle></DialogHeader>
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label>Razão social *</Label>
-          <Input value={form.razao_social} onChange={(e) => setForm({ ...form, razao_social: e.target.value })} required />
+        <div className="sm:col-span-2">
+          <CnpjLookup
+            value={form.cnpj}
+            onChange={(v) => setForm({ ...form, cnpj: v })}
+            onResult={(r) => {
+              const m = mapReceitaToForm(r);
+              setForm({ ...form, ...m, ultima_consulta_receita: new Date().toISOString() });
+            }}
+          />
         </div>
-        <div className="space-y-1.5"><Label>Nome fantasia</Label><Input value={form.nome_fantasia} onChange={(e) => setForm({ ...form, nome_fantasia: e.target.value })} /></div>
-        <div className="space-y-1.5"><Label>CNPJ / CPF</Label><Input value={form.documento} onChange={(e) => setForm({ ...form, documento: e.target.value })} /></div>
+        <ReceitaFields form={form} setForm={setForm} />
         <div className="space-y-1.5"><Label>E-mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
         <div className="space-y-1.5"><Label>Telefone / WhatsApp</Label><Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} /></div>
         <div className="space-y-1.5 sm:col-span-2">
@@ -307,53 +476,75 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
 }
 
 function EditClientDialog({ client, onDone }: { client: any; onDone: () => void }) {
-  const [form, setForm] = useState({
+  const initialCnpj = String(client.cnpj ?? client.documento ?? "").replace(/\D/g, "");
+  const [form, setForm] = useState<ReceitaFormShape>({
+    cnpj: initialCnpj,
     razao_social: client.razao_social ?? "",
     nome_fantasia: client.nome_fantasia ?? "",
-    documento: client.documento ?? "",
     email: client.email ?? "",
     telefone: client.telefone ?? "",
     tipo: client.tipo ?? "comercio",
     data_entrada: client.data_entrada ?? "",
     status: client.status ?? "active",
     observacoes: client.observacoes ?? "",
+    situacao_cadastral: client.situacao_cadastral ?? "",
+    data_abertura: client.data_abertura ?? "",
+    cnae_principal_codigo: client.cnae_principal_codigo ?? "",
+    cnae_principal_descricao: client.cnae_principal_descricao ?? "",
+    cep: client.cep ?? "",
+    logradouro: client.logradouro ?? "",
+    numero: client.numero ?? "",
+    complemento: client.complemento ?? "",
+    bairro: client.bairro ?? "",
+    cidade: client.cidade ?? "",
+    uf: client.uf ?? "",
+    porte: client.porte ?? "",
+    natureza_juridica: client.natureza_juridica ?? "",
+    capital_social: client.capital_social != null ? String(client.capital_social) : "",
+    simples_nacional: client.simples_nacional ?? null,
+    mei: client.mei ?? null,
+    qsa_json: Array.isArray(client.qsa_json) ? client.qsa_json : [],
+    dados_receita_json: client.dados_receita_json ?? null,
+    ultima_consulta_receita: client.ultima_consulta_receita ?? null,
   });
   const mut = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
-        .from("clients")
-        .update({
-          razao_social: form.razao_social.trim(),
-          nome_fantasia: form.nome_fantasia || null,
-          documento: form.documento || null,
-          email: form.email || null,
-          telefone: form.telefone || null,
-          tipo: form.tipo || null,
-          data_entrada: form.data_entrada || null,
-          status: form.status || "active",
-          observacoes: form.observacoes || null,
-        })
-        .eq("id", client.id);
+      const ok = await ensureNoDuplicateCnpj(form.cnpj, client.id);
+      if (!ok) throw new Error("__dup__");
+      const payload = {
+        ...buildClientPayload(form, form.cnpj),
+        data_entrada: form.data_entrada || null,
+        status: form.status || "active",
+      };
+      const { error } = await supabase.from("clients").update(payload).eq("id", client.id);
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Cliente atualizado com sucesso."); onDone(); },
-    onError: (e: any) => toast.error(
-      /row-level security|permission/i.test(e?.message ?? "")
-        ? "Você não tem permissão para realizar esta ação."
-        : (e?.message ?? "Não foi possível atualizar o cliente."),
-    ),
+    onError: (e: any) => {
+      if (e?.message === "__dup__") return;
+      toast.error(
+        /row-level security|permission/i.test(e?.message ?? "")
+          ? "Você não tem permissão para realizar esta ação."
+          : (e?.message ?? "Não foi possível atualizar o cliente."),
+      );
+    },
   });
 
   return (
-    <DialogContent className="max-w-2xl">
+    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
       <DialogHeader><DialogTitle>Editar cliente</DialogTitle></DialogHeader>
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label>Razão social / Nome *</Label>
-          <Input value={form.razao_social} onChange={(e) => setForm({ ...form, razao_social: e.target.value })} />
+        <div className="sm:col-span-2">
+          <CnpjLookup
+            value={form.cnpj}
+            onChange={(v) => setForm({ ...form, cnpj: v })}
+            onResult={(r) => {
+              const m = mapReceitaToForm(r);
+              setForm({ ...form, ...m, ultima_consulta_receita: new Date().toISOString() });
+            }}
+          />
         </div>
-        <div className="space-y-1.5"><Label>Nome fantasia</Label><Input value={form.nome_fantasia} onChange={(e) => setForm({ ...form, nome_fantasia: e.target.value })} /></div>
-        <div className="space-y-1.5"><Label>CNPJ / CPF</Label><Input value={form.documento} onChange={(e) => setForm({ ...form, documento: e.target.value })} /></div>
+        <ReceitaFields form={form} setForm={setForm} />
         <div className="space-y-1.5"><Label>E-mail principal</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
         <div className="space-y-1.5"><Label>Telefone / WhatsApp</Label><Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} /></div>
         <div className="space-y-1.5">
