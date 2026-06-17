@@ -677,6 +677,8 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
   });
   const [assignClientIds, setAssignClientIds] = useState<string[]>([]);
   const [assignCollabIds, setAssignCollabIds] = useState<string[]>([]);
+  const [receita, setReceita] = useState<ReturnType<typeof mapReceitaToForm> | null>(null);
+  const [receitaAt, setReceitaAt] = useState<string | null>(null);
   const [created, setCreated] = useState<{ email: string; password: string } | null>(null);
 
   const { data: clients = [] } = useQuery({
