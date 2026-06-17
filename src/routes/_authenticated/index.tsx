@@ -13,14 +13,15 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { formatBR, todayLocalYmd, localYmdInDays } from "@/lib/dates";
 
 export const Route = createFileRoute("/_authenticated/")({
   component: Dashboard,
 });
 
 /* ---------- helpers ---------- */
-const today = () => new Date().toISOString().slice(0, 10);
-const inDays = (n: number) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+const today = () => todayLocalYmd();
+const inDays = (n: number) => localYmdInDays(n);
 const currentCompetencia = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
