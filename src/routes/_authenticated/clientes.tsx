@@ -40,9 +40,10 @@ export const Route = createFileRoute("/_authenticated/clientes")({
 });
 
 function ClientsPage() {
-  const { role } = useCurrentUser();
+  const { role, userId, loading } = useCurrentUser();
   const qc = useQueryClient();
   const isAdmin = role === "admin";
+  const ready = !loading && !!userId && !!role;
   const [q, setQ] = useState("");
   const [fStatus, setFStatus] = useState<string>("active");
   const [fTipo, setFTipo] = useState<string>("all");
@@ -54,8 +55,10 @@ function ClientsPage() {
   const [editing, setEditing] = useState<any | null>(null);
 
 
-  const { data: clients = [], isLoading } = useQuery({
-    queryKey: ["clients"],
+  const { data: clients = [], isLoading, error: clientsError } = useQuery({
+    queryKey: ["clients", userId, role],
+    enabled: ready,
+    retry: 1,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("clients")
@@ -107,6 +110,8 @@ function ClientsPage() {
   const clearFilters = () => {
     setQ(""); setFStatus("active"); setFTipo("all"); setFRegime("all"); setFUf("all"); setFResp("all"); setDateF(EMPTY_DATE_FILTER);
   };
+
+  if (!ready) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
   return (
     <div>
@@ -199,7 +204,9 @@ function ClientsPage() {
       <Card className="p-4">
 
 
-        {isLoading ? (
+        {clientsError ? (
+          <EmptyState icon={<Building2 className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />
+        ) : isLoading ? (
           <p className="text-sm text-muted-foreground">Carregando…</p>
         ) : filtered.length === 0 ? (
           <EmptyState
