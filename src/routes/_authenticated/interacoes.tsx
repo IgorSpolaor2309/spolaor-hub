@@ -81,8 +81,9 @@ function ChatPage() {
   const [activeId, setActiveId] = useState<string | null>(search.conversation ?? null);
 
   // Lista de conversas (RLS já filtra por permissão)
-  const { data: conversations = [], isLoading: loadingConvs } = useQuery({
+  const { data: conversations = [], isLoading: loadingConvs, error: convsError } = useQuery({
     queryKey: ["chat-convs"],
+    retry: 0,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("chat_conversations")
