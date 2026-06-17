@@ -16,29 +16,35 @@ export function DateRangeFilter({
   onChange,
   label = "Período",
   className,
+  variant = "preset",
 }: {
   value: DateFilterValue;
   onChange: (v: DateFilterValue) => void;
   label?: string;
   className?: string;
+  variant?: "preset" | "range";
 }) {
-  const isCustom = value.preset === "custom";
+  const isRange = variant === "range";
+  const isCustom = isRange || value.preset === "custom";
+  const updateRange = (patch: Partial<DateFilterValue>) => onChange({ ...value, preset: "custom", ...patch });
   return (
     <div className={className}>
       <Label className="text-xs">{label}</Label>
       <div className="flex flex-wrap items-center gap-2">
-        <Select value={value.preset} onValueChange={(p) => onChange({ ...value, preset: p as DatePreset })}>
-          <SelectTrigger className="w-[170px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {DATE_PRESETS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        {!isRange && (
+          <Select value={value.preset} onValueChange={(p) => onChange({ ...value, preset: p as DatePreset })}>
+            <SelectTrigger className="w-[170px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {DATE_PRESETS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
         {isCustom && (
           <>
             <Input
               type="date"
               value={value.from}
-              onChange={(e) => onChange({ ...value, from: e.target.value })}
+              onChange={(e) => updateRange({ from: e.target.value })}
               className="w-[150px]"
               aria-label="Data inicial"
             />
@@ -46,7 +52,7 @@ export function DateRangeFilter({
             <Input
               type="date"
               value={value.to}
-              onChange={(e) => onChange({ ...value, to: e.target.value })}
+              onChange={(e) => updateRange({ to: e.target.value })}
               className="w-[150px]"
               aria-label="Data final"
             />
