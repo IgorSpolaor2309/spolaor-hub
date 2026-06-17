@@ -372,15 +372,14 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
     queryKey: ["dash-client-companies", userId],
     enabled: !!userId,
     retry: 1,
-    queryFn: async () =>
-      {
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("clients")
         .select("id, razao_social, nome_fantasia, documento")
         .order("razao_social");
       if (error) throw error;
       return data ?? [];
-      },
+    },
   });
 
   // "" = todas; senão um id específico.
