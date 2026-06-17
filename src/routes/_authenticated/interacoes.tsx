@@ -96,6 +96,10 @@ function ChatPage() {
   const [q, setQ] = useState("");
   const [activeId, setActiveId] = useState<string | null>(search.conversation ?? null);
 
+  useEffect(() => {
+    if (search.conversation) setActiveId(search.conversation);
+  }, [search.conversation]);
+
   // Lista de conversas (RLS já filtra por permissão)
   const { data: conversations = [], isLoading: loadingConvs, error: convsError } = useQuery({
     queryKey: ["chat-convs"],
@@ -540,6 +544,7 @@ function NewConversationButton() {
   const [open, setOpen] = useState(false);
   const [clientId, setClientId] = useState<string>("");
   const navigate = useNavigate({ from: "/_authenticated/interacoes" });
+  const qc = useQueryClient();
   const { data: clients = [] } = useQuery({
     queryKey: ["chat-new-clients"],
     queryFn: async () => (await supabase.from("clients").select("id, razao_social").eq("status", "active").order("razao_social")).data ?? [],
@@ -550,6 +555,7 @@ function NewConversationButton() {
     try {
       const id = await ensureConversation(clientId);
       setOpen(false);
+      qc.invalidateQueries({ queryKey: ["chat-convs"] });
       navigate({ search: { conversation: id }, replace: false });
     } catch (e: any) {
       toast.error(e?.message ?? "Falha");
