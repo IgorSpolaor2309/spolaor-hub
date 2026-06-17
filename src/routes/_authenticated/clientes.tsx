@@ -29,6 +29,8 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { CLIENT_TYPES, labelOf } from "@/lib/sc-types";
 import { CnpjLookup } from "@/components/sc/CnpjLookup";
 import { mapReceitaToForm } from "@/lib/receita-map";
+import { AccountLookup, type AccountMatch } from "@/components/sc/AccountLookup";
+import { AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/clientes")({
   component: ClientsPage,
@@ -54,7 +56,7 @@ function ClientsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("clients")
-        .select("*, client_fiscal_data(regime_tributario, uf, municipio), client_collaborators(collaborator_id, collaborators(id, nome))")
+        .select("*, client_fiscal_data(regime_tributario, uf, municipio), client_collaborators(collaborator_id, collaborators(id, nome)), client_users(id, ativo)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -222,6 +224,16 @@ function ClientsPage() {
                         {c.razao_social}
                       </Link>
                       {c.nome_fantasia && <div className="text-xs text-muted-foreground">{c.nome_fantasia}</div>}
+                      {role === "admin" && !((c.client_users ?? []) as any[]).some((u: any) => u.ativo) && (
+                        <Link
+                          to="/clientes/$id"
+                          params={{ id: c.id }}
+                          className="mt-1 inline-flex items-center gap-1 rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-900 hover:bg-amber-100"
+                          title="Vincule uma conta de acesso na aba Acessos"
+                        >
+                          <AlertTriangle className="h-3 w-3" /> Empresa sem conta vinculada
+                        </Link>
+                      )}
                     </td>
                     <td className="py-3 pr-4">{labelOf(CLIENT_TYPES, c.tipo)}</td>
                     <td className="py-3 pr-4 font-mono text-xs">{c.documento ?? "—"}</td>
@@ -431,18 +443,25 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
     simples_nacional: null, mei: null, qsa_json: [], dados_receita_json: null,
     ultima_consulta_receita: null,
   });
+  const [account, setAccount] = useState<AccountMatch | null>(null);
+  const [existing, setExisting] = useState<{ id: string; razao_social: string | null; nome_fantasia: string | null } | null>(null);
+
   const mut = useMutation({
     mutationFn: async () => {
+      if (!account) throw new Error("Vincule uma conta de acesso existente antes de salvar.");
       const ok = await ensureNoDuplicateCnpj(form.cnpj);
       if (!ok) throw new Error("__dup__");
-      const { error } = await supabase.from("clients").insert({ ...buildClientPayload(form, form.cnpj), origem_cadastro: "manual" });
+      const payload = { ...buildClientPayload(form, form.cnpj), origem_cadastro: "manual" };
+      const { error } = await supabase.rpc("admin_create_client_with_user", {
+        _payload: payload as any,
+        _user_id: account.id,
+        _papel: "responsavel",
+      });
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Cliente criado"); onDone(); },
+    onSuccess: () => { toast.success("Cliente criado e vinculado à conta"); onDone(); },
     onError: (e: any) => { if (e?.message !== "__dup__") toast.error(e.message); },
   });
-
-  const [existing, setExisting] = useState<{ id: string; razao_social: string | null; nome_fantasia: string | null } | null>(null);
 
   return (
     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -451,6 +470,8 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
       </DialogHeader>
 
       <div className="space-y-4">
+        <AccountLookup value={account} onChange={setAccount} />
+
         <section className="space-y-2">
           <h3 className="text-sm font-semibold">Preencher por CNPJ</h3>
           <CnpjLookup
@@ -502,8 +523,11 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
       </div>
 
       <DialogFooter>
-        <Button onClick={() => mut.mutate()} disabled={!form.razao_social || mut.isPending || !!existing}>
-          {mut.isPending ? "Salvando…" : "Criar cliente"}
+        <Button
+          onClick={() => mut.mutate()}
+          disabled={!form.razao_social || mut.isPending || !!existing || !account}
+        >
+          {mut.isPending ? "Salvando…" : !account ? "Vincule uma conta para salvar" : "Criar cliente"}
         </Button>
       </DialogFooter>
     </DialogContent>
