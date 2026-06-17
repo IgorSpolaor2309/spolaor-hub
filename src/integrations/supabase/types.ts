@@ -280,6 +280,47 @@ export type Database = {
           },
         ]
       }
+      client_users: {
+        Row: {
+          ativo: boolean
+          client_id: string
+          created_at: string
+          criado_por: string | null
+          id: string
+          papel: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          client_id: string
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          papel?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          client_id?: string
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          papel?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_users_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           created_at: string
@@ -1061,7 +1102,9 @@ export type Database = {
         }
         Returns: undefined
       }
+      client_label: { Args: { _client_id: string }; Returns: string }
       client_staff_user_ids: { Args: { _client_id: string }; Returns: string[] }
+      client_user_ids: { Args: { _client_id: string }; Returns: string[] }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
