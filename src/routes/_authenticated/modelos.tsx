@@ -14,8 +14,9 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { useState } from "react";
 import { toast } from "sonner";
 import { TEMPLATE_CATEGORIES, TEMPLATE_VARIABLES, labelOf } from "@/lib/sc-types";
-import { Copy, Pencil, Plus, Trash2, FileText } from "lucide-react";
+import { Copy, Pencil, Plus, FileText } from "lucide-react";
 import { EmptyState } from "@/components/sc/EmptyState";
+import { DeleteButton } from "@/components/sc/DeleteButton";
 
 export const Route = createFileRoute("/_authenticated/modelos")({
   component: TemplatesPage,
