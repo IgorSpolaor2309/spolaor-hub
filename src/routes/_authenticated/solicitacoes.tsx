@@ -13,6 +13,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { EmptyState } from "@/components/sc/EmptyState";
 import { AttachmentButton } from "@/components/sc/AttachmentButton";
 import { DeleteButton } from "@/components/sc/DeleteButton";
+import { DateRangeFilter, EMPTY_DATE_FILTER, type DateFilterValue } from "@/components/sc/DateRangeFilter";
+import { inRange, resolveRange } from "@/lib/date-ranges";
 import { useState, useMemo } from "react";
 import { Plus, Upload, FileText } from "lucide-react";
 import { toast } from "sonner";
@@ -57,6 +59,7 @@ function RequestsPage() {
   const [fStatus, setFStatus] = useState<string>("all");
   const [fCategoria, setFCategoria] = useState<string>("all");
   const [fComp, setFComp] = useState("");
+  const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const [open, setOpen] = useState(false);
 
   const { data: clients = [] } = useQuery({
@@ -76,14 +79,19 @@ function RequestsPage() {
     },
   });
 
+  const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
   const filtered = useMemo(() => {
     return (items as any[]).filter((r) =>
       (fClient === "all" || r.client_id === fClient) &&
       (fStatus === "all" || r.status === fStatus) &&
       (fCategoria === "all" || r.categoria === fCategoria) &&
-      (!fComp || (r.competencia ?? "").includes(fComp)),
+      (!fComp || (r.competencia ?? "").includes(fComp)) &&
+      inRange(r.created_at, range),
     );
-  }, [items, fClient, fStatus, fCategoria, fComp]);
+  }, [items, fClient, fStatus, fCategoria, fComp, range]);
+  const clearFilters = () => {
+    setFClient("all"); setFStatus("all"); setFCategoria("all"); setFComp(""); setDateF(EMPTY_DATE_FILTER);
+  };
 
   return (
     <div>
@@ -142,6 +150,10 @@ function RequestsPage() {
             <Label className="text-xs">Competência contém</Label>
             <Input placeholder="2026-06" value={fComp} onChange={(e) => setFComp(e.target.value)} />
           </div>
+          <DateRangeFilter value={dateF} onChange={setDateF} label="Criado em" />
+        </div>
+        <div className="mt-3">
+          <Button variant="ghost" size="sm" onClick={clearFilters}>Limpar filtros</Button>
         </div>
       </Card>
 
