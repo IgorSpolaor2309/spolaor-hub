@@ -25,6 +25,8 @@ import {
   adminVerifyLinks, adminDiagnoseUser, adminLinkClientAccount,
 } from "@/lib/admin-users.functions";
 import { MultiSelect } from "@/components/sc/MultiSelect";
+import { CnpjLookup, type ReceitaData } from "@/components/sc/CnpjLookup";
+import { mapReceitaToForm } from "@/lib/receita-map";
 
 
 export const Route = createFileRoute("/_authenticated/configuracoes")({
@@ -675,6 +677,8 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
   });
   const [assignClientIds, setAssignClientIds] = useState<string[]>([]);
   const [assignCollabIds, setAssignCollabIds] = useState<string[]>([]);
+  const [receita, setReceita] = useState<ReturnType<typeof mapReceitaToForm> | null>(null);
+  const [receitaAt, setReceitaAt] = useState<string | null>(null);
   const [created, setCreated] = useState<{ email: string; password: string } | null>(null);
 
   const { data: clients = [] } = useQuery({
@@ -721,12 +725,34 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
           client: form.role === "client" && form.link_mode === "create" ? {
             razao_social: form.razao_social,
             nome_fantasia: form.nome_fantasia || null,
-            documento: form.documento || null,
+            documento: form.documento || (receita?.cnpj || null),
             telefone: form.phone || null,
             tipo: form.tipo || null,
             data_entrada: form.data_entrada || null,
             status: form.client_status || "active",
             observacoes: form.observacoes || null,
+            ...(receita ? {
+              cnpj: receita.cnpj || null,
+              situacao_cadastral: receita.situacao_cadastral || null,
+              data_abertura: receita.data_abertura || null,
+              cnae_principal_codigo: receita.cnae_principal_codigo || null,
+              cnae_principal_descricao: receita.cnae_principal_descricao || null,
+              cep: receita.cep || null,
+              logradouro: receita.logradouro || null,
+              numero: receita.numero || null,
+              complemento: receita.complemento || null,
+              bairro: receita.bairro || null,
+              cidade: receita.cidade || null,
+              uf: receita.uf || null,
+              porte: receita.porte || null,
+              natureza_juridica: receita.natureza_juridica || null,
+              capital_social: receita.capital_social || null,
+              simples_nacional: receita.simples_nacional,
+              mei: receita.mei,
+              qsa_json: receita.qsa_json,
+              dados_receita_json: receita.dados_receita_json,
+              ultima_consulta_receita: receitaAt,
+            } : {}),
           } : null,
           assign_client_ids: form.role === "collaborator" ? assignClientIds : null,
           assign_collaborator_ids: form.role === "client" ? assignCollabIds : null,
@@ -932,11 +958,33 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
                 </Select>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2">
-                  <Label>Razão social / Nome *</Label>
-                  <Input value={form.razao_social} onChange={(e) => setForm({ ...form, razao_social: e.target.value })} />
-                </div>
+              <div className="space-y-3">
+                <CnpjLookup
+                  value={form.documento}
+                  onChange={(v) => setForm({ ...form, documento: v })}
+                  onResult={(r: ReceitaData) => {
+                    const m = mapReceitaToForm(r);
+                    setReceita(m);
+                    setReceitaAt(new Date().toISOString());
+                    setForm({
+                      ...form,
+                      documento: m.cnpj || form.documento,
+                      razao_social: m.razao_social || form.razao_social,
+                      nome_fantasia: m.nome_fantasia || form.nome_fantasia,
+                    });
+                  }}
+                />
+                {receita?.situacao_cadastral &&
+                  receita.situacao_cadastral.toUpperCase() !== "ATIVA" && (
+                  <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                    Atenção: este CNPJ está com situação cadastral diferente de ATIVA ({receita.situacao_cadastral}).
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2">
+                    <Label>Razão social / Nome *</Label>
+                    <Input value={form.razao_social} onChange={(e) => setForm({ ...form, razao_social: e.target.value })} />
+                  </div>
                 <div>
                   <Label>Nome fantasia</Label>
                   <Input value={form.nome_fantasia} onChange={(e) => setForm({ ...form, nome_fantasia: e.target.value })} />
@@ -966,6 +1014,7 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
                 <div className="col-span-2">
                   <Label>Observações internas</Label>
                   <Input value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
+                </div>
                 </div>
               </div>
             )}
