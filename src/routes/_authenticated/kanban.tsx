@@ -4,10 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/sc/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PriorityBadge } from "@/components/sc/StatusBadge";
 import { DeleteButton } from "@/components/sc/DeleteButton";
+import { DateRangeFilter, EMPTY_DATE_FILTER, type DateFilterValue } from "@/components/sc/DateRangeFilter";
+import { inRange, resolveRange } from "@/lib/date-ranges";
 import { useState, useMemo } from "react";
 import { KANBAN_COLUMNS, DEPARTMENTS, TASK_PRIORITIES, labelOf } from "@/lib/sc-types";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -30,6 +33,7 @@ function KanbanPage() {
   const [prio, setPrio] = useState<string>("all");
   const [onlyOverdue, setOnlyOverdue] = useState(false);
   const [q, setQ] = useState("");
+  const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const [draggingId, setDraggingId] = useState<string | null>(null);
 
   const { data: tasks = [], isLoading } = useQuery({
@@ -78,8 +82,8 @@ function KanbanPage() {
   });
 
 
+  const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
   const filtered = useMemo(() => {
-    
     return tasks.filter((t: any) => {
       if (dept !== "all" && t.departamento !== dept) return false;
       if (resp !== "all" && t.collaborator_id !== resp) return false;
@@ -88,9 +92,14 @@ function KanbanPage() {
       const overdue = t.prazo && isPastEndOfDay(t.prazo) && t.status !== "concluida" && t.status !== "cancelada";
       if (onlyOverdue && !overdue) return false;
       if (q && !`${t.titulo} ${t.clients?.razao_social ?? ""}`.toLowerCase().includes(q.toLowerCase())) return false;
+      if (!inRange(t.prazo, range)) return false;
       return true;
     });
-  }, [tasks, dept, resp, client, prio, onlyOverdue, q]);
+  }, [tasks, dept, resp, client, prio, onlyOverdue, q, range]);
+  const clearFilters = () => {
+    setDept("all"); setResp("all"); setClient("all"); setPrio("all");
+    setOnlyOverdue(false); setQ(""); setDateF(EMPTY_DATE_FILTER);
+  };
 
   if (role && role !== "admin" && role !== "collaborator") {
     return <div className="p-6 text-sm text-muted-foreground">Acesso restrito.</div>;
@@ -135,6 +144,8 @@ function KanbanPage() {
             <Checkbox checked={onlyOverdue} onCheckedChange={(v) => setOnlyOverdue(!!v)} />
             Apenas vencidas
           </label>
+          <DateRangeFilter value={dateF} onChange={setDateF} label="Prazo" />
+          <Button variant="ghost" size="sm" onClick={clearFilters}>Limpar filtros</Button>
         </div>
       </Card>
 
