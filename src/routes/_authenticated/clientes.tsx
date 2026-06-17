@@ -16,7 +16,7 @@ import { EmptyState } from "@/components/sc/EmptyState";
 import { DateRangeFilter, EMPTY_DATE_FILTER, type DateFilterValue } from "@/components/sc/DateRangeFilter";
 import { inRange, resolveRange } from "@/lib/date-ranges";
 import { useMemo, useState } from "react";
-import { Plus, Search, Users, Pencil, PowerOff, Power } from "lucide-react";
+import { Plus, Search, Building2, Pencil, PowerOff, Power, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -60,6 +60,7 @@ function ClientsPage() {
       const { data, error } = await supabase
         .from("clients")
         .select("*, client_fiscal_data(regime_tributario, uf, municipio), client_collaborators(collaborator_id, collaborators(id, nome)), client_users(id, ativo)")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -110,13 +111,13 @@ function ClientsPage() {
   return (
     <div>
       <PageHeader
-        title={role === "admin" ? "Clientes" : "Meus clientes"}
-        description={role === "admin" ? "Cadastro e gestão de todos os clientes." : "Clientes vinculados ao seu atendimento."}
+        title={role === "admin" ? "Empresas cadastradas" : "Minhas empresas"}
+        description={role === "admin" ? "Cadastro e gestão de todas as empresas." : "Empresas vinculadas ao seu atendimento."}
         action={
           role === "admin" && (
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
-                <Button><Plus className="mr-2 h-4 w-4" /> Novo cliente</Button>
+                <Button><Plus className="mr-2 h-4 w-4" /> Nova empresa</Button>
               </DialogTrigger>
               <NewClientDialog onDone={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["clients"] }); }} />
             </Dialog>
@@ -202,16 +203,16 @@ function ClientsPage() {
           <p className="text-sm text-muted-foreground">Carregando…</p>
         ) : filtered.length === 0 ? (
           <EmptyState
-            icon={<Users className="h-6 w-6" />}
-            title="Nenhum cliente encontrado"
-            description={role === "admin" ? "Crie o primeiro cliente para começar." : "Nenhum cliente vinculado a você."}
+            icon={<Building2 className="h-6 w-6" />}
+            title="Nenhuma empresa encontrada"
+            description={role === "admin" ? "Cadastre a primeira empresa para começar." : "Nenhuma empresa vinculada a você."}
           />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-left text-xs uppercase text-muted-foreground">
                 <tr className="border-b">
-                  <th className="py-2 pr-4">Cliente</th>
+                  <th className="py-2 pr-4">Empresa</th>
                   <th className="py-2 pr-4">Tipo</th>
                   <th className="py-2 pr-4">Documento</th>
                   <th className="py-2 pr-4">Entrada</th>
@@ -256,10 +257,11 @@ function ClientsPage() {
                     {role === "admin" && (
                       <td>
                         <div className="flex items-center justify-end gap-1">
-                          <Button variant="ghost" size="icon" aria-label="Editar" onClick={() => setEditing(c)}>
+                          <Button variant="ghost" size="icon" aria-label="Editar empresa" onClick={() => setEditing(c)}>
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <InactivateClientButton client={c} />
+                          <DeleteClientButton client={c} />
                         </div>
                       </td>
                     )}
@@ -482,14 +484,14 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
       } as any);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Cliente criado e vinculado à conta"); onDone(); },
+    onSuccess: () => { toast.success("Empresa cadastrada com sucesso."); onDone(); },
     onError: (e: any) => { if (e?.message !== "__dup__") toast.error(e.message); },
   });
 
   return (
     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle>Novo cliente</DialogTitle>
+        <DialogTitle>Nova empresa</DialogTitle>
       </DialogHeader>
 
       <div className="space-y-4">
@@ -576,7 +578,7 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
               ? "Vincule uma conta para salvar"
               : collabIds.length === 0
                 ? "Selecione ao menos um colaborador"
-                : "Criar cliente"}
+                : "Cadastrar empresa"}
         </Button>
       </DialogFooter>
     </DialogContent>
@@ -628,20 +630,20 @@ export function EditClientDialog({ client, onDone }: { client: any; onDone: () =
       const { error } = await supabase.from("clients").update(payload).eq("id", client.id);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Cliente atualizado com sucesso."); onDone(); },
+    onSuccess: () => { toast.success("Dados da empresa atualizados."); onDone(); },
     onError: (e: any) => {
       if (e?.message === "__dup__") return;
       toast.error(
         /row-level security|permission/i.test(e?.message ?? "")
           ? "Você não tem permissão para realizar esta ação."
-          : (e?.message ?? "Não foi possível atualizar o cliente."),
+          : (e?.message ?? "Não foi possível atualizar a empresa."),
       );
     },
   });
 
   return (
     <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-      <DialogHeader><DialogTitle>Editar cliente</DialogTitle></DialogHeader>
+      <DialogHeader><DialogTitle>Editar empresa</DialogTitle></DialogHeader>
       <Tabs defaultValue="dados">
         <TabsList>
           <TabsTrigger value="dados">Dados da empresa</TabsTrigger>
@@ -984,14 +986,14 @@ function InactivateClientButton({ client }: { client: any }) {
         data: { client_id: client.id, status: isInactive ? "active" : "inactive" },
       }),
     onSuccess: () => {
-      toast.success(isInactive ? "Cliente reativado." : "Cliente removido com sucesso.");
+      toast.success(isInactive ? "Empresa reativada." : "Empresa desativada com sucesso.");
       qc.invalidateQueries({ queryKey: ["clients"] });
     },
     onError: (e: any) =>
       toast.error(
         /row-level security|permission/i.test(e?.message ?? "")
           ? "Você não tem permissão para realizar esta ação."
-          : (e?.message ?? "Não foi possível atualizar o cliente."),
+          : (e?.message ?? "Não foi possível atualizar a empresa."),
       ),
   });
 
@@ -1000,7 +1002,7 @@ function InactivateClientButton({ client }: { client: any }) {
       <Button
         variant="ghost"
         size="icon"
-        aria-label="Reativar cliente"
+        aria-label="Reativar empresa"
         onClick={() => mut.mutate()}
         disabled={mut.isPending}
       >
@@ -1012,22 +1014,89 @@ function InactivateClientButton({ client }: { client: any }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Remover cliente">
-          <PowerOff className="h-4 w-4 text-destructive" />
+        <Button variant="ghost" size="icon" aria-label="Desativar empresa">
+          <PowerOff className="h-4 w-4 text-amber-600" />
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Remover cliente</AlertDialogTitle>
+          <AlertDialogTitle>Desativar empresa</AlertDialogTitle>
           <AlertDialogDescription>
-            Tem certeza que deseja remover este cliente? Ele será marcado como inativo
-            e deixará de aparecer para os colaboradores. O histórico, documentos,
-            pendências e vínculos serão preservados e poderão ser restaurados.
+            A empresa será marcada como inativa e deixará de aparecer para os colaboradores.
+            O histórico, documentos, pendências e vínculos serão preservados e poderão ser restaurados.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={() => mut.mutate()}>Remover cliente</AlertDialogAction>
+          <AlertDialogAction onClick={() => mut.mutate()}>Desativar empresa</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function DeleteClientButton({ client }: { client: any }) {
+  const qc = useQueryClient();
+  const expected = (client.razao_social ?? client.nome_fantasia ?? "").trim();
+  const [open, setOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+
+  const mut = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("admin_soft_delete_client" as any, { _client_id: client.id } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Empresa excluída. Histórico preservado para auditoria.");
+      setOpen(false);
+      setConfirmText("");
+      qc.invalidateQueries({ queryKey: ["clients"] });
+    },
+    onError: (e: any) =>
+      toast.error(
+        /row-level security|permission|administradores/i.test(e?.message ?? "")
+          ? "Apenas administradores podem excluir empresas."
+          : (e?.message ?? "Não foi possível excluir a empresa."),
+      ),
+  });
+
+  const canConfirm = confirmText.trim().toLowerCase() === expected.toLowerCase() && expected.length > 0;
+
+  return (
+    <AlertDialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setConfirmText(""); }}>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label="Excluir empresa">
+          <Trash2 className="h-4 w-4 text-destructive" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir empresa</AlertDialogTitle>
+          <AlertDialogDescription>
+            Tem certeza que deseja excluir esta empresa? Esta ação pode remover ou afetar
+            vínculos, documentos, solicitações, chats, pendências e histórico relacionados a ela.
+            O histórico não será apagado, mas a empresa deixará de aparecer para clientes e colaboradores.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="space-y-2 py-2">
+          <Label className="text-xs">
+            Para confirmar, digite o nome da empresa: <span className="font-semibold">{expected}</span>
+          </Label>
+          <Input
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            placeholder={expected}
+            autoComplete="off"
+          />
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={!canConfirm || mut.isPending}
+            onClick={(e) => { e.preventDefault(); if (canConfirm) mut.mutate(); }}
+          >
+            {mut.isPending ? "Excluindo…" : "Excluir empresa"}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

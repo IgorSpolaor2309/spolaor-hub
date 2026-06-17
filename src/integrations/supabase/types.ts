@@ -336,6 +336,8 @@ export type Database = {
           data_abertura: string | null
           data_entrada: string | null
           data_ultima_sincronizacao: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           documento: string | null
           email: string | null
           id: string
@@ -374,6 +376,8 @@ export type Database = {
           data_abertura?: string | null
           data_entrada?: string | null
           data_ultima_sincronizacao?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           documento?: string | null
           email?: string | null
           id?: string
@@ -412,6 +416,8 @@ export type Database = {
           data_abertura?: string | null
           data_entrada?: string | null
           data_ultima_sincronizacao?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           documento?: string | null
           email?: string | null
           id?: string
@@ -1177,11 +1183,16 @@ export type Database = {
           id: string
         }[]
       }
+      admin_restore_client: { Args: { _client_id: string }; Returns: undefined }
       admin_set_user_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: undefined
+      }
+      admin_soft_delete_client: {
+        Args: { _client_id: string }
         Returns: undefined
       }
       client_label: { Args: { _client_id: string }; Returns: string }

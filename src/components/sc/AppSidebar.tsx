@@ -18,8 +18,8 @@ type Item = { to: string; label: string; icon: React.ComponentType<{ className?:
 
 const ITEMS: Item[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "collaborator", "client"] },
-  { to: "/clientes", label: "Clientes", icon: Users, roles: ["admin"] },
-  { to: "/clientes", label: "Meus clientes", icon: Briefcase, roles: ["collaborator"] },
+  { to: "/clientes", label: "Empresas cadastradas", icon: Users, roles: ["admin"] },
+  { to: "/clientes", label: "Minhas empresas", icon: Briefcase, roles: ["collaborator"] },
   { to: "/colaboradores", label: "Colaboradores", icon: UserCog, roles: ["admin"] },
   { to: "/pendencias", label: "Pendências", icon: ClipboardList, roles: ["admin", "collaborator"] },
   { to: "/kanban", label: "Kanban", icon: KanbanSquare, roles: ["admin", "collaborator"] },
