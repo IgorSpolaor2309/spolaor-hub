@@ -45,18 +45,23 @@ function TasksPage() {
     onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Sem permissão para excluir." : (e.message ?? "Falha")),
   });
 
+  const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
   const filtered = tasks.filter((t: any) => {
     if (status !== "all" && t.status !== status) return false;
     if (priority !== "all" && t.prioridade !== priority) return false;
     if (q && !`${t.titulo} ${t.clients?.razao_social ?? ""}`.toLowerCase().includes(q.toLowerCase())) return false;
+    if (!inRange(t.prazo, range)) return false;
     return true;
   });
+  const clearFilters = () => {
+    setQ(""); setStatus("all"); setPriority("all"); setDateF(EMPTY_DATE_FILTER);
+  };
 
   return (
     <div>
       <PageHeader title="Pendências" description="Tudo o que precisa de atenção." />
       <Card className="p-4">
-        <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="mb-4 flex flex-wrap items-end gap-2">
           <Input placeholder="Buscar…" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-xs" />
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
@@ -72,6 +77,8 @@ function TasksPage() {
               {TASK_PRIORITIES.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
             </SelectContent>
           </Select>
+          <DateRangeFilter value={dateF} onChange={setDateF} label="Prazo" />
+          <Button variant="ghost" size="sm" onClick={clearFilters}>Limpar filtros</Button>
         </div>
         {isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p> :
          filtered.length === 0 ? <EmptyState icon={<ClipboardList className="h-6 w-6" />} title="Nada por aqui" /> : (
