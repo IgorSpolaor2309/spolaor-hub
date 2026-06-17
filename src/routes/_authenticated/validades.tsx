@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DOC_VALIDITY_CATEGORIES, labelOf } from "@/lib/sc-types";
+import { formatBR, daysUntilLocal } from "@/lib/dates";
 
 export const Route = createFileRoute("/_authenticated/validades")({
   component: ValidadesPage,
@@ -23,10 +24,7 @@ export const Route = createFileRoute("/_authenticated/validades")({
 const CATEGORIAS = DOC_VALIDITY_CATEGORIES;
 
 function daysUntil(date: string | null) {
-  if (!date) return null;
-  const d = new Date(date); d.setHours(0,0,0,0);
-  const today = new Date(); today.setHours(0,0,0,0);
-  return Math.round((d.getTime() - today.getTime()) / 86400000);
+  return daysUntilLocal(date);
 }
 
 function statusFromDays(d: number | null) {
