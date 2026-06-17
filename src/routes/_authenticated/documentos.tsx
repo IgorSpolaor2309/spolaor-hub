@@ -24,14 +24,24 @@ export const Route = createFileRoute("/_authenticated/documentos")({
 });
 
 function DocsPage() {
-  const { role } = useCurrentUser();
+  const { role, userId, loading } = useCurrentUser();
   const qc = useQueryClient();
   const isAdmin = role === "admin";
+  const ready = !loading && !!userId && !!role;
   const [q, setQ] = useState(""); const [tipo, setTipo] = useState("all"); const [status, setStatus] = useState("all");
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
-  const { data: list = [], isLoading } = useQuery({
-    queryKey: ["all-docs"],
-    queryFn: async () => (await supabase.from("documents").select("*, clients(razao_social, nome_fantasia)").order("created_at", { ascending: false })).data ?? [],
+  const { data: list = [], isLoading, error: listError } = useQuery({
+    queryKey: ["all-docs", userId, role],
+    enabled: ready,
+    retry: 1,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("documents")
+        .select("*, clients(razao_social, nome_fantasia)")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
   });
   const remove = useMutation({
     mutationFn: async (id: string) => {
@@ -51,6 +61,8 @@ function DocsPage() {
   });
   const clearFilters = () => { setQ(""); setTipo("all"); setStatus("all"); setDateF(EMPTY_DATE_FILTER); };
 
+  if (!ready) return <p className="text-sm text-muted-foreground">Carregando…</p>;
+
   return (
     <div>
       <PageHeader title="Documentos" description="Central de documentos de todos os clientes." />
@@ -66,7 +78,8 @@ function DocsPage() {
           <DateRangeFilter value={dateF} onChange={setDateF} label="Criado em" />
           <Button variant="ghost" size="sm" onClick={clearFilters}>Limpar filtros</Button>
         </div>
-        {isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p> :
+        {listError ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." /> :
+         isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p> :
          filtered.length === 0 ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Sem documentos" /> : (
           <table className="w-full text-sm">
             <thead className="text-left text-xs uppercase text-muted-foreground">

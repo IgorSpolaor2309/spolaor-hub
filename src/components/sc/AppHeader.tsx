@@ -6,14 +6,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
 export function AppHeader() {
-  const { profile, userId } = useCurrentUser();
+  const { profile, userId, loading } = useCurrentUser();
   const { data: unread = 0 } = useQuery({
     queryKey: ["notif-unread", userId],
-    enabled: !!userId,
+    enabled: !loading && !!userId,
+    retry: 1,
     queryFn: async () => {
-      const { count } = await supabase
+      const { count, error } = await supabase
         .from("notifications").select("id", { count: "exact", head: true })
         .eq("user_id", userId!).eq("lida", false);
+      if (error) {
+        console.warn("[notifications] unread:", error.message);
+        return 0;
+      }
       return count ?? 0;
     },
     refetchInterval: 30_000,

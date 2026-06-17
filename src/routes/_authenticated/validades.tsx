@@ -39,8 +39,9 @@ function statusFromDays(d: number | null) {
 }
 
 function ValidadesPage() {
-  const { role } = useCurrentUser();
+  const { role, userId, loading } = useCurrentUser();
   const isStaff = role === "admin" || role === "collaborator";
+  const ready = !loading && !!userId && !!role;
   const qc = useQueryClient();
   const [fClient, setFClient] = useState("all");
   const [fStatus, setFStatus] = useState("all");
@@ -48,13 +49,21 @@ function ValidadesPage() {
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const [editing, setEditing] = useState<any | null>(null);
 
-  const { data: clients = [] } = useQuery({
-    queryKey: ["val-clients"],
-    queryFn: async () => (await supabase.from("clients").select("id, razao_social").order("razao_social")).data ?? [],
+  const { data: clients = [], error: clientsError } = useQuery({
+    queryKey: ["val-clients", userId, role],
+    enabled: ready,
+    retry: 1,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("clients").select("id, razao_social, nome_fantasia, documento").order("razao_social");
+      if (error) throw error;
+      return data ?? [];
+    },
   });
 
-  const { data: docs = [], isLoading } = useQuery({
-    queryKey: ["docs-validity"],
+  const { data: docs = [], isLoading, error: docsError } = useQuery({
+    queryKey: ["docs-validity", userId, role],
+    enabled: ready,
+    retry: 1,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
@@ -65,6 +74,7 @@ function ValidadesPage() {
       return data;
     },
   });
+  const loadError = clientsError || docsError;
 
   const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
   const filtered = useMemo(() => (docs as any[]).filter((d) => {
@@ -82,6 +92,8 @@ function ValidadesPage() {
 
 
 
+  if (!ready) return <p className="text-sm text-muted-foreground">Carregando…</p>;
+
   return (
     <div>
       <PageHeader
@@ -97,7 +109,7 @@ function ValidadesPage() {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
-                {(clients as any[]).map((c) => <SelectItem key={c.id} value={c.id}>{c.razao_social}</SelectItem>)}
+                {(clients as any[]).map((c) => <SelectItem key={c.id} value={c.id}>{c.nome_fantasia || c.razao_social || c.documento || "Empresa"}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -132,7 +144,8 @@ function ValidadesPage() {
       </Card>
 
       <Card className="p-4">
-        {isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p>
+        {loadError ? <EmptyState icon={<CalendarClock className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />
+          : isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p>
           : filtered.length === 0 ? <EmptyState icon={<CalendarClock className="h-6 w-6" />} title="Nenhum documento com validade" description="Marque a data de validade de um documento para acompanhá-lo aqui." />
           : (
             <div className="overflow-x-auto">

@@ -21,8 +21,8 @@ export type MyClient = {
  * Inclui seleção persistente em localStorage e opção "Todas as empresas".
  */
 export function useMyClients() {
-  const { userId, role } = useCurrentUser();
-  const enabled = !!userId;
+  const { userId, role, loading } = useCurrentUser();
+  const enabled = !loading && !!userId;
 
   const query = useQuery({
     queryKey: ["my-clients-multi", userId, role],
@@ -32,7 +32,10 @@ export function useMyClients() {
         .from("clients")
         .select("id, razao_social, nome_fantasia, documento, status, owner_profile_id")
         .order("razao_social");
-      if (error) throw error;
+      if (error) {
+        console.warn("[useMyClients] clients:", error.message);
+        return [];
+      }
       const rows = (data ?? []) as Array<MyClient & { owner_profile_id: string | null }>;
       // Para o cliente, RLS já filtra; mas se for colaborador/admin estamos
       // em outra tela. Este hook é destinado ao perfil "client".

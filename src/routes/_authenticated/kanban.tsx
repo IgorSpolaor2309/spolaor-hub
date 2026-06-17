@@ -65,7 +65,8 @@ const KIND_OPTIONS: { value: ItemKind | "all"; label: string }[] = [
 ];
 
 function KanbanPage() {
-  const { role } = useCurrentUser();
+  const { role, userId, loading } = useCurrentUser();
+  const ready = !loading && !!userId && !!role;
   const qc = useQueryClient();
   const [dept, setDept] = useState<string>("all");
   const [resp, setResp] = useState<string>("all");
@@ -77,9 +78,10 @@ function KanbanPage() {
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const [draggingId, setDraggingId] = useState<string | null>(null);
 
-  const { data: items = [], isLoading } = useQuery({
-    queryKey: ["kanban-unified"],
-    retry: 0,
+  const { data: items = [], isLoading, error: itemsError } = useQuery({
+    queryKey: ["kanban-unified", userId, role],
+    enabled: ready && (role === "admin" || role === "collaborator"),
+    retry: 1,
     queryFn: async (): Promise<UnifiedItem[]> => {
       const [tasksRes, reqsRes, docsRes, guidesRes] = await Promise.all([
         supabase.from("pending_tasks").select("*, clients(razao_social, nome_fantasia), collaborators(nome)"),
@@ -88,6 +90,8 @@ function KanbanPage() {
         supabase.from("tax_guides").select("id, client_id, tipo, status, vencimento, competencia, comprovante_path, comprovante_uploaded_at, clients(razao_social, nome_fantasia)"),
       ]);
       const out: UnifiedItem[] = [];
+      const failures = [tasksRes, reqsRes, docsRes, guidesRes].filter((r) => r.error);
+      if (failures.length) console.warn("[kanban] consultas parciais falharam", failures.map((r) => r.error?.message));
 
       for (const t of (tasksRes.data ?? []) as any[]) {
         const col: ColKey = (KANBAN_COLUMNS.find((c) => c.value === t.status)?.value as ColKey) ?? "aberta";
@@ -163,11 +167,13 @@ function KanbanPage() {
   });
 
   const { data: clients = [] } = useQuery({
-    queryKey: ["kanban-clients"],
+    queryKey: ["kanban-clients", userId, role],
+    enabled: ready && (role === "admin" || role === "collaborator"),
     queryFn: async () => (await supabase.from("clients").select("id, razao_social").order("razao_social")).data ?? [],
   });
   const { data: collabs = [] } = useQuery({
     queryKey: ["kanban-collabs"],
+    enabled: ready && (role === "admin" || role === "collaborator"),
     queryFn: async () => (await supabase.from("collaborators").select("id, nome").order("nome")).data ?? [],
   });
 
@@ -215,6 +221,7 @@ function KanbanPage() {
     setOnlyOverdue(false); setQ(""); setDateF(EMPTY_DATE_FILTER);
   };
 
+  if (!ready) return <p className="text-sm text-muted-foreground">Carregando…</p>;
   if (role && role !== "admin" && role !== "collaborator") {
     return <div className="p-6 text-sm text-muted-foreground">Acesso restrito.</div>;
   }
@@ -269,7 +276,9 @@ function KanbanPage() {
         </div>
       </Card>
 
-      {isLoading ? (
+      {itemsError ? (
+        <Card className="p-5"><p className="text-sm text-muted-foreground">Não foi possível carregar os dados. Tente novamente.</p></Card>
+      ) : isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando…</p>
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">

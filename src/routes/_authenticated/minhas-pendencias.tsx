@@ -18,20 +18,24 @@ export const Route = createFileRoute("/_authenticated/minhas-pendencias")({
 });
 
 function MyTasksPage() {
-  const { userId } = useCurrentUser();
+  const { userId, loading } = useCurrentUser();
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
-  const { data = [] } = useQuery({
+  const { data = [], isLoading, error } = useQuery({
     queryKey: ["my-tasks", userId],
-    enabled: !!userId,
+    enabled: !loading && !!userId,
+    retry: 1,
     queryFn: async () => {
       // RLS já filtra por user_has_client_access (multiempresa).
-      const { data: cs } = await supabase.from("clients").select("id");
+      const { data: cs, error: cErr } = await supabase.from("clients").select("id");
+      if (cErr) throw cErr;
       const ids = (cs ?? []).map((c) => c.id); if (!ids.length) return [];
-      return (await supabase
+      const { data, error } = await supabase
         .from("pending_tasks")
         .select("*, clients(razao_social, nome_fantasia, documento)")
         .in("client_id", ids)
-        .order("prazo")).data ?? [];
+        .order("prazo");
+      if (error) throw error;
+      return data ?? [];
     },
   });
   const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
@@ -46,7 +50,9 @@ function MyTasksPage() {
         </div>
       </Card>
       <Card className="p-5">
-        {filtered.length === 0 ? <EmptyState icon={<ClipboardList className="h-6 w-6" />} title="Sem pendências" description="Você está em dia. 🎉" /> : (
+        {error ? <EmptyState icon={<ClipboardList className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />
+        : isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p>
+        : filtered.length === 0 ? <EmptyState icon={<ClipboardList className="h-6 w-6" />} title="Sem pendências" description="Você está em dia. 🎉" /> : (
           <ul className="space-y-2">
             {filtered.map((t: any) => (
               <li key={t.id} className="rounded-md border p-3">

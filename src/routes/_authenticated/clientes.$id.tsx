@@ -41,13 +41,16 @@ export const Route = createFileRoute("/_authenticated/clientes/$id")({
 
 function ClientDetail() {
   const { id } = useParams({ from: "/_authenticated/clientes/$id" });
-  const { role, userId } = useCurrentUser();
+  const { role, userId, loading } = useCurrentUser();
+  const ready = !loading && !!userId && !!role && !!id;
   const qc = useQueryClient();
   const [editOpen, setEditOpen] = useState(false);
 
 
-  const { data: client } = useQuery({
+  const { data: client, error: clientError } = useQuery({
     queryKey: ["client", id],
+    enabled: ready,
+    retry: 1,
     queryFn: async () => {
       const { data, error } = await supabase.from("clients").select("*").eq("id", id).maybeSingle();
       if (error) throw error;
@@ -57,26 +60,31 @@ function ClientDetail() {
 
   const { data: tasks = [] } = useQuery({
     queryKey: ["client-tasks", id],
+    enabled: ready,
     queryFn: async () => (await supabase.from("pending_tasks").select("*").eq("client_id", id).order("prazo")).data ?? [],
   });
 
   const { data: docs = [] } = useQuery({
     queryKey: ["client-docs", id],
+    enabled: ready,
     queryFn: async () => (await supabase.from("documents").select("*").eq("client_id", id).order("created_at", { ascending: false })).data ?? [],
   });
 
   const { data: events = [] } = useQuery({
     queryKey: ["client-events", id],
+    enabled: ready,
     queryFn: async () => (await supabase.from("timeline_events").select("*").eq("client_id", id).order("created_at", { ascending: false })).data ?? [],
   });
 
   const { data: inters = [] } = useQuery({
     queryKey: ["client-inter", id],
+    enabled: ready,
     queryFn: async () => (await supabase.from("interactions").select("*").eq("client_id", id).order("created_at", { ascending: false })).data ?? [],
   });
 
   const { data: reqs = [] } = useQuery({
     queryKey: ["client-reqs", id],
+    enabled: ready,
     queryFn: async () => (await supabase.from("document_requirements").select("*").eq("client_id", id)).data ?? [],
   });
 
@@ -86,6 +94,8 @@ function ClientDetail() {
     queryFn: async () => (await supabase.from("client_collaborators").select("collaborator_id, collaborators(nome, email)").eq("client_id", id)).data ?? [],
   });
 
+  if (!ready) return <div className="text-sm text-muted-foreground">Carregando…</div>;
+  if (clientError) return <EmptyState icon={<AlertTriangle className="h-6 w-6" />} title="Não foi possível carregar a empresa" description="Verifique se você tem acesso a esta empresa." />;
   if (!client) return <div className="text-sm text-muted-foreground">Carregando…</div>;
 
   return (

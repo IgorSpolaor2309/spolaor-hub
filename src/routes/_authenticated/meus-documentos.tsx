@@ -20,31 +20,39 @@ export const Route = createFileRoute("/_authenticated/meus-documentos")({
 });
 
 function MyDocsPage() {
-  const { userId } = useCurrentUser();
+  const { userId, loading } = useCurrentUser();
   const [tipo, setTipo] = useState("outro");
   const [competencia, setCompetencia] = useState("");
   const [uploading, setUploading] = useState(false);
 
-  const { data: clients = [] } = useQuery({
+  const { data: clients = [], error: clientsError } = useQuery({
     queryKey: ["my-clients-docs", userId],
-    enabled: !!userId,
+    enabled: !loading && !!userId,
+    retry: 1,
     // RLS multiempresa: cliente vê todas as empresas vinculadas.
-    queryFn: async () => (await supabase
-      .from("clients")
-      .select("id, razao_social, nome_fantasia, documento")
-      .order("razao_social")).data ?? [],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("id, razao_social, nome_fantasia, documento")
+        .order("razao_social");
+      if (error) throw error;
+      return data ?? [];
+    },
   });
 
-  const { data: docs = [], refetch } = useQuery({
+  const { data: docs = [], refetch, isLoading, error: docsError } = useQuery({
     queryKey: ["my-docs", clients.map((c) => c.id).join(",")],
     enabled: clients.length > 0,
+    retry: 1,
     queryFn: async () => {
       const ids = clients.map((c) => c.id);
-      return (await supabase
+      const { data, error } = await supabase
         .from("documents")
         .select("*, clients(razao_social, nome_fantasia)")
         .in("client_id", ids)
-        .order("created_at", { ascending: false })).data ?? [];
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
     },
   });
 
@@ -97,7 +105,9 @@ function MyDocsPage() {
             <Button asChild disabled={uploading || clients.length === 0}><span><Upload className="mr-2 h-4 w-4" />{uploading ? "Enviando…" : "Enviar"}</span></Button>
           </label>
         </div>
-        {docs.length === 0 ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Nenhum documento enviado" /> : (
+        {clientsError || docsError ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />
+        : loading || isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p>
+        : docs.length === 0 ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Nenhum documento enviado" /> : (
           <ul className="divide-y">
             {docs.map((d: any) => (
               <li key={d.id} className="flex items-center justify-between py-3">

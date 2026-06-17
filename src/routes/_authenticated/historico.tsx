@@ -14,27 +14,33 @@ export const Route = createFileRoute("/_authenticated/historico")({
 });
 
 function HistoryPage() {
-  const { userId } = useCurrentUser();
-  const { data = [] } = useQuery({
+  const { userId, loading } = useCurrentUser();
+  const { data = [], isLoading, error } = useQuery({
     queryKey: ["my-history", userId],
-    enabled: !!userId,
+    enabled: !loading && !!userId,
+    retry: 1,
     queryFn: async () => {
       // RLS multiempresa: lista todos os client_ids visíveis ao usuário.
-      const { data: cs } = await supabase.from("clients").select("id");
+      const { data: cs, error: cErr } = await supabase.from("clients").select("id");
+      if (cErr) throw cErr;
       const ids = (cs ?? []).map((c) => c.id); if (!ids.length) return [];
-      return (await supabase
+      const { data, error } = await supabase
         .from("timeline_events")
         .select("*, clients(razao_social, nome_fantasia)")
         .in("client_id", ids)
         .order("created_at", { ascending: false })
-        .limit(100)).data ?? [];
+        .limit(100);
+      if (error) throw error;
+      return data ?? [];
     },
   });
   return (
     <div>
       <PageHeader title="Histórico" description="Linha do tempo das suas movimentações na plataforma." />
       <Card className="p-5">
-        {data.length === 0 ? <EmptyState icon={<History className="h-6 w-6" />} title="Sem histórico" /> : (
+        {error ? <EmptyState icon={<History className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />
+        : isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p>
+        : data.length === 0 ? <EmptyState icon={<History className="h-6 w-6" />} title="Sem histórico" /> : (
           <ol className="space-y-4">
             {data.map((e: any) => (
               <li key={e.id} className="flex gap-3">
