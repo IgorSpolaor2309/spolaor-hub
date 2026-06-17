@@ -37,8 +37,9 @@ const STATUS_TONE: Record<string, string> = {
 };
 
 function GuidesPage() {
-  const { role, userId } = useCurrentUser();
+  const { role, userId, loading } = useCurrentUser();
   const isStaff = role === "admin" || role === "collaborator";
+  const ready = !loading && !!userId && !!role;
   const qc = useQueryClient();
   const [fClient, setFClient] = useState("all");
   const [fStatus, setFStatus] = useState("all");
@@ -47,13 +48,24 @@ function GuidesPage() {
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const [open, setOpen] = useState(false);
 
-  const { data: clients = [] } = useQuery({
-    queryKey: ["guides-clients"],
-    queryFn: async () => (await supabase.from("clients").select("id, razao_social").order("razao_social")).data ?? [],
+  const { data: clients = [], error: clientsError } = useQuery({
+    queryKey: ["guides-clients", userId, role],
+    enabled: ready,
+    retry: 1,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("id, razao_social, nome_fantasia, documento")
+        .order("razao_social");
+      if (error) throw error;
+      return data ?? [];
+    },
   });
 
-  const { data: items = [], isLoading } = useQuery({
-    queryKey: ["tax-guides"],
+  const { data: items = [], isLoading, error: itemsError } = useQuery({
+    queryKey: ["tax-guides", userId, role],
+    enabled: ready,
+    retry: 1,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tax_guides")
@@ -63,6 +75,8 @@ function GuidesPage() {
       return data;
     },
   });
+  const loadError = clientsError || itemsError;
+  if (!ready) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
   const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
   const filtered = useMemo(() => (items as any[]).filter((g) =>
@@ -102,7 +116,7 @@ function GuidesPage() {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
-                {(clients as any[]).map((c) => <SelectItem key={c.id} value={c.id}>{c.razao_social}</SelectItem>)}
+                {(clients as any[]).map((c) => <SelectItem key={c.id} value={c.id}>{c.nome_fantasia || c.razao_social || c.documento || "Empresa"}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -138,7 +152,8 @@ function GuidesPage() {
       </Card>
 
       <Card className="p-4">
-        {isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p>
+        {loadError ? <EmptyState icon={<Receipt className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />
+          : isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p>
           : filtered.length === 0 ? <EmptyState icon={<Receipt className="h-6 w-6" />} title="Nenhuma guia" />
           : (
             <ul className="space-y-3">
