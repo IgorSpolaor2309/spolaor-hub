@@ -722,16 +722,23 @@ export function EditClientDialog({ client, onDone }: { client: any; onDone: () =
 
 function ClientUsersInlineManager({ clientId }: { clientId: string }) {
   const qc = useQueryClient();
-  const { data: links = [], isLoading } = useQuery({
+  const { data: links = [], isLoading, error: loadError } = useQuery({
     queryKey: ["client-users", clientId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: rows, error } = await supabase
         .from("client_users")
-        .select("id, user_id, papel, ativo, created_at, profiles:user_id(full_name, email)")
+        .select("id, user_id, papel, ativo, created_at")
         .eq("client_id", clientId)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      const ids = Array.from(new Set((rows ?? []).map((r: any) => r.user_id).filter(Boolean)));
+      const profilesMap = new Map<string, { full_name: string | null; email: string | null }>();
+      if (ids.length) {
+        const { data: profs } = await supabase
+          .from("profiles").select("id, full_name, email").in("id", ids);
+        (profs ?? []).forEach((p: any) => profilesMap.set(p.id, { full_name: p.full_name, email: p.email }));
+      }
+      return (rows ?? []).map((r: any) => ({ ...r, profiles: profilesMap.get(r.user_id) ?? null }));
     },
   });
   const [email, setEmail] = useState("");
@@ -745,6 +752,20 @@ function ClientUsersInlineManager({ clientId }: { clientId: string }) {
         .from("profiles").select("id, email").ilike("email", e).maybeSingle();
       if (pErr) throw pErr;
       if (!prof?.id) throw new Error("Nenhum usuário encontrado com este e-mail. Crie a conta primeiro em Configurações.");
+      const { data: roles } = await supabase
+        .from("user_roles").select("role").eq("user_id", prof.id);
+      const hasClientRole = (roles ?? []).some((r: any) => r.role === "client");
+      if (!hasClientRole) throw new Error("Esta conta existe, mas não possui perfil de cliente.");
+      const { data: existing } = await supabase
+        .from("client_users").select("id, ativo")
+        .eq("client_id", clientId).eq("user_id", prof.id).maybeSingle();
+      if (existing) {
+        if (existing.ativo) throw new Error("Este usuário já está vinculado a esta empresa.");
+        const { error: uErr } = await supabase
+          .from("client_users").update({ ativo: true, papel }).eq("id", existing.id);
+        if (uErr) throw uErr;
+        return { reactivated: true };
+      }
       const { error } = await supabase
         .from("client_users")
         .insert({ client_id: clientId, user_id: prof.id, papel, ativo: true });
@@ -752,8 +773,14 @@ function ClientUsersInlineManager({ clientId }: { clientId: string }) {
         if (error.code === "23505") throw new Error("Este usuário já está vinculado a esta empresa.");
         throw error;
       }
+      return { reactivated: false };
     },
-    onSuccess: () => { toast.success("Usuário vinculado."); setEmail(""); qc.invalidateQueries({ queryKey: ["client-users", clientId] }); qc.invalidateQueries({ queryKey: ["clients"] }); },
+    onSuccess: (res: any) => {
+      toast.success(res?.reactivated ? "Este usuário já estava vinculado e foi reativado." : "Usuário vinculado.");
+      setEmail("");
+      qc.invalidateQueries({ queryKey: ["client-users", clientId] });
+      qc.invalidateQueries({ queryKey: ["clients"] });
+    },
     onError: (e: any) => toast.error(e?.message ?? "Falha ao vincular."),
   });
   const toggle = useMutation({
@@ -761,7 +788,8 @@ function ClientUsersInlineManager({ clientId }: { clientId: string }) {
       const { error } = await supabase.from("client_users").update({ ativo: !row.ativo }).eq("id", row.id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["client-users", clientId] }),
+    onSuccess: () => { toast.success("Status atualizado."); qc.invalidateQueries({ queryKey: ["client-users", clientId] }); qc.invalidateQueries({ queryKey: ["clients"] }); },
+    onError: (e: any) => toast.error(e?.message ?? "Falha ao atualizar."),
   });
   const remove = useMutation({
     mutationFn: async (row: any) => {
@@ -769,6 +797,7 @@ function ClientUsersInlineManager({ clientId }: { clientId: string }) {
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Vínculo removido."); qc.invalidateQueries({ queryKey: ["client-users", clientId] }); qc.invalidateQueries({ queryKey: ["clients"] }); },
+    onError: (e: any) => toast.error(e?.message ?? "Falha ao remover."),
   });
 
   const activeCount = (links as any[]).filter((l) => l.ativo).length;
