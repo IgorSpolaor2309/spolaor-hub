@@ -568,17 +568,24 @@ function EditClientDialog({ client, onDone }: { client: any; onDone: () => void 
   return (
     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
       <DialogHeader><DialogTitle>Editar cliente</DialogTitle></DialogHeader>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="sm:col-span-2">
+      <div className="space-y-4">
+        <section className="space-y-2">
+          <h3 className="text-sm font-semibold">Atualizar dados por CNPJ</h3>
           <CnpjLookup
             value={form.cnpj}
             onChange={(v) => setForm({ ...form, cnpj: v })}
+            buttonLabel="Atualizar dados pelo CNPJ"
+            helperText="Consulte novamente a Minha Receita para atualizar os campos públicos. Nada é salvo até você clicar em Salvar alterações."
             onResult={(r) => {
               const m = mapReceitaToForm(r);
               setForm({ ...form, ...m, ultima_consulta_receita: new Date().toISOString() });
             }}
           />
-        </div>
+        </section>
+
+        <section className="space-y-3">
+          <h3 className="text-sm font-semibold">Dados do cliente</h3>
+          <div className="grid gap-4 sm:grid-cols-2">
         <ReceitaFields form={form} setForm={setForm} />
         <div className="space-y-1.5"><Label>E-mail principal</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
         <div className="space-y-1.5"><Label>Telefone / WhatsApp</Label><Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} /></div>
