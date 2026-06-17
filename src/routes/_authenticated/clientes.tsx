@@ -484,7 +484,7 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
       } as any);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Cliente criado e vinculado à conta"); onDone(); },
+    onSuccess: () => { toast.success("Empresa cadastrada com sucesso."); onDone(); },
     onError: (e: any) => { if (e?.message !== "__dup__") toast.error(e.message); },
   });
 
