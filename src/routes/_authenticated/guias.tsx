@@ -130,6 +130,10 @@ function GuidesPage() {
             <Label className="text-xs">Competência contém</Label>
             <Input placeholder="2026-06" value={fComp} onChange={(e) => setFComp(e.target.value)} />
           </div>
+          <DateRangeFilter value={dateF} onChange={setDateF} label="Vencimento" />
+        </div>
+        <div className="mt-3">
+          <Button variant="ghost" size="sm" onClick={clearFilters}>Limpar filtros</Button>
         </div>
       </Card>
 
