@@ -196,7 +196,7 @@ function ClientsPage() {
               </Select>
             </div>
           )}
-          <DateRangeFilter value={dateF} onChange={setDateF} label="Data de entrada" />
+          <DateRangeFilter value={dateF} onChange={setDateF} label="Data de entrada" variant="range" />
           <Button variant="ghost" size="sm" onClick={clearFilters}>Limpar filtros</Button>
         </div>
       </Card>
