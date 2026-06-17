@@ -26,9 +26,30 @@ const searchSchema = z.object({
   conversation: fallback(z.string().optional(), undefined),
 });
 
+function ChatErrorBoundary({ error, reset }: { error: Error; reset: () => void }) {
+  // Evita escalar para o boundary do layout (que mostra "Página indisponível").
+  // Renderiza um estado amigável e permite tentar novamente.
+  return (
+    <div className="flex h-[calc(100vh-8rem)] flex-col">
+      <PageHeader title="Interações" description="Chat interno com clientes da Spolaor Company." />
+      <Card className="flex flex-1 items-center justify-center p-8">
+        <EmptyState
+          icon={<MessageSquare className="h-6 w-6" />}
+          title="Não foi possível carregar o chat"
+          description={error?.message?.includes("permission") || error?.message?.includes("row-level")
+            ? "Você não tem acesso a esta conversa."
+            : "Tente novamente em instantes. Se persistir, contate o administrador."}
+        />
+        <Button className="ml-4" variant="outline" onClick={() => reset()}>Tentar novamente</Button>
+      </Card>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/_authenticated/interacoes")({
   validateSearch: zodValidator(searchSchema),
   component: ChatPage,
+  errorComponent: ChatErrorBoundary,
 });
 
 type Conv = {
@@ -60,8 +81,9 @@ function ChatPage() {
   const [activeId, setActiveId] = useState<string | null>(search.conversation ?? null);
 
   // Lista de conversas (RLS já filtra por permissão)
-  const { data: conversations = [], isLoading: loadingConvs } = useQuery({
+  const { data: conversations = [], isLoading: loadingConvs, error: convsError } = useQuery({
     queryKey: ["chat-convs"],
+    retry: 0,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("chat_conversations")
@@ -99,12 +121,31 @@ function ChatPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search.client]);
 
-  // Auto-seleciona a primeira conversa
+  // Auto-seleciona a primeira conversa. Para clientes sem conversa, cria uma
+  // automaticamente para que a página não fique vazia/quebrada.
   useEffect(() => {
-    if (!activeId && conversations.length > 0) {
+    if (loadingConvs) return;
+    if (activeId) return;
+    if (conversations.length > 0) {
       setActiveId(conversations[0].id);
+      return;
     }
-  }, [activeId, conversations]);
+    if (role === "client" && userId) {
+      (async () => {
+        try {
+          const { data: cs } = await supabase
+            .from("clients").select("id").eq("owner_profile_id", userId).limit(1);
+          const clientId = cs?.[0]?.id;
+          if (!clientId) return;
+          const id = await ensureConversation(clientId);
+          setActiveId(id);
+          qc.invalidateQueries({ queryKey: ["chat-convs"] });
+        } catch (e) {
+          console.warn("[chat] auto-create conversation:", e);
+        }
+      })();
+    }
+  }, [activeId, conversations, loadingConvs, role, userId, qc]);
 
   const filteredConvs = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -134,7 +175,9 @@ function ChatPage() {
             </div>
           </div>
           <div className="flex-1 overflow-y-auto">
-            {loadingConvs ? (
+            {convsError ? (
+              <div className="p-4 text-xs text-destructive">Falha ao carregar conversas.</div>
+            ) : loadingConvs ? (
               <p className="p-4 text-sm text-muted-foreground">Carregando…</p>
             ) : filteredConvs.length === 0 ? (
               <div className="p-4 text-xs text-muted-foreground">Nenhuma conversa ainda.</div>
@@ -199,10 +242,12 @@ function ChatThread({
 
   const { data: messages = [] } = useQuery({
     queryKey: ["chat-msgs", conv.id],
+    retry: 0,
     queryFn: async () => {
+      // Sem embed de profiles (RLS pode bloquear leitura cruzada e quebrar a query).
       const { data, error } = await supabase
         .from("chat_messages")
-        .select("*, profiles:sender_profile_id(full_name)")
+        .select("*")
         .eq("conversation_id", conv.id)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -314,7 +359,7 @@ function ChatThread({
                   "mb-0.5 text-[10px] uppercase tracking-wide",
                   mine ? "text-primary-foreground/70" : "text-muted-foreground",
                 )}>
-                  {m.profiles?.full_name ?? (fromStaff ? "Equipe" : "Cliente")} · {m.sender_role}
+                  {(fromStaff ? "Equipe" : "Cliente")} · {m.sender_role}
                 </div>
                 {m.body && <div className="whitespace-pre-wrap break-words">{m.body}</div>}
                 {m.attachment_path && (
