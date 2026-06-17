@@ -215,9 +215,9 @@ function ChatPage() {
                   activeId === c.id && "bg-muted",
                 )}
               >
-                <div className="truncate text-sm font-medium">{c.clients?.razao_social ?? "Cliente"}</div>
-                {c.clients?.nome_fantasia && (
-                  <div className="truncate text-[11px] text-muted-foreground">{c.clients.nome_fantasia}</div>
+                <div className="truncate text-sm font-medium">{c.clients?.nome_fantasia || c.clients?.razao_social || "Empresa"}</div>
+                {c.clients?.nome_fantasia && c.clients?.razao_social && c.clients.nome_fantasia !== c.clients.razao_social && (
+                  <div className="truncate text-[11px] text-muted-foreground">{c.clients.razao_social}</div>
                 )}
                 <div className="mt-0.5 text-[10px] text-muted-foreground">
                   {c.last_message_at ? new Date(c.last_message_at).toLocaleString("pt-BR") : "Sem mensagens"}
