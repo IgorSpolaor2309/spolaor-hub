@@ -28,7 +28,7 @@ const ITEMS: Item[] = [
   { to: "/solicitacoes", label: "Solicitações", icon: Inbox, roles: ["admin", "collaborator", "client"] },
   { to: "/validades", label: "Validades", icon: CalendarClock, roles: ["admin", "collaborator"] },
   { to: "/guias", label: "Guias e impostos", icon: Receipt, roles: ["admin", "collaborator", "client"] },
-  { to: "/interacoes", label: "Interações", icon: MessageSquare, roles: ["admin", "collaborator"] },
+  { to: "/interacoes", label: "Interações", icon: MessageSquare, roles: ["admin", "collaborator", "client"] },
   { to: "/minha-area", label: "Minha área", icon: Briefcase, roles: ["client"] },
   { to: "/minhas-pendencias", label: "Minhas pendências", icon: ClipboardList, roles: ["client"] },
   { to: "/meus-documentos", label: "Meus documentos", icon: FileText, roles: ["client"] },
