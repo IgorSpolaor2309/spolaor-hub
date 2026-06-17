@@ -95,6 +95,13 @@ function ClientDetail() {
             {role !== "client" && userId && (
               <MonthStatusSelector clientId={client.id} userId={userId} />
             )}
+            {role !== "client" && (
+              <Button asChild variant="outline" size="sm">
+                <Link to="/interacoes" search={{ client: client.id }}>
+                  <MessageSquare className="mr-2 h-4 w-4" /> Abrir conversa
+                </Link>
+              </Button>
+            )}
             {role === "admin" && (
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
                 <Pencil className="mr-2 h-4 w-4" /> Editar cliente
