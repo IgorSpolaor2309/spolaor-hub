@@ -25,6 +25,8 @@ import {
   adminVerifyLinks, adminDiagnoseUser, adminLinkClientAccount,
 } from "@/lib/admin-users.functions";
 import { MultiSelect } from "@/components/sc/MultiSelect";
+import { CnpjLookup, type ReceitaData } from "@/components/sc/CnpjLookup";
+import { mapReceitaToForm } from "@/lib/receita-map";
 
 
 export const Route = createFileRoute("/_authenticated/configuracoes")({
