@@ -119,7 +119,7 @@ function ClientDetail() {
       />
       {role === "admin" && editOpen && (
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
-          <EditClientDialogInline
+          <EditClientDialog
             client={client}
             onDone={() => {
               setEditOpen(false);
