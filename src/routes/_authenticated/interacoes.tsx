@@ -41,6 +41,10 @@ function logChatError(action: string, error: unknown, extra?: Record<string, unk
 function ChatErrorBoundary({ error, reset }: { error: Error; reset: () => void }) {
   // Evita escalar para o boundary do layout (que mostra "Página indisponível").
   // Renderiza um estado amigável e permite tentar novamente.
+  useEffect(() => {
+    logChatError("route.errorBoundary", error);
+  }, [error]);
+
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col">
       <PageHeader title="Interações" description="Chat interno com clientes da Spolaor Company." />
