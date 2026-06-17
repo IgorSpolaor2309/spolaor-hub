@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { AttachmentButton } from "@/components/sc/AttachmentButton";
+import { DateRangeFilter, EMPTY_DATE_FILTER, type DateFilterValue } from "@/components/sc/DateRangeFilter";
+import { inRange, resolveRange } from "@/lib/date-ranges";
 import { useMemo, useState } from "react";
 import { CalendarClock, Pencil } from "lucide-react";
 import { toast } from "sonner";
@@ -43,6 +45,7 @@ function ValidadesPage() {
   const [fClient, setFClient] = useState("all");
   const [fStatus, setFStatus] = useState("all");
   const [fCat, setFCat] = useState("all");
+  const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const [editing, setEditing] = useState<any | null>(null);
 
   const { data: clients = [] } = useQuery({
@@ -63,13 +66,18 @@ function ValidadesPage() {
     },
   });
 
+  const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
   const filtered = useMemo(() => (docs as any[]).filter((d) => {
     const days = daysUntil(d.data_validade);
     const st = statusFromDays(days).label;
     return (fClient === "all" || d.client_id === fClient)
       && (fCat === "all" || d.categoria_validade === fCat)
-      && (fStatus === "all" || st === fStatus);
-  }), [docs, fClient, fCat, fStatus]);
+      && (fStatus === "all" || st === fStatus)
+      && inRange(d.data_validade, range);
+  }), [docs, fClient, fCat, fStatus, range]);
+  const clearFilters = () => {
+    setFClient("all"); setFStatus("all"); setFCat("all"); setDateF(EMPTY_DATE_FILTER);
+  };
 
 
 
@@ -116,6 +124,10 @@ function ValidadesPage() {
               </SelectContent>
             </Select>
           </div>
+          <DateRangeFilter value={dateF} onChange={setDateF} label="Validade" />
+        </div>
+        <div className="mt-3">
+          <Button variant="ghost" size="sm" onClick={clearFilters}>Limpar filtros</Button>
         </div>
       </Card>
 
