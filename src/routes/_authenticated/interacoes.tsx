@@ -156,8 +156,10 @@ function ChatPage() {
     if (role === "client" && userId) {
       (async () => {
         try {
+          // Multiempresa: pega a primeira empresa visível e cria a conversa dela.
+          // Para as demais, a equipe inicia (ou o cliente abre via Minha área).
           const { data: cs } = await supabase
-            .from("clients").select("id").eq("owner_profile_id", userId).limit(1);
+            .from("clients").select("id").limit(1);
           const clientId = cs?.[0]?.id;
           if (!clientId) return;
           const id = await ensureConversation(clientId);
@@ -366,9 +368,10 @@ function ChatThread({
     <div className="flex h-full min-h-0 flex-col">
       <header className="flex items-center justify-between border-b px-4 py-3">
         <div className="min-w-0">
-          <div className="truncate font-medium">{conv.clients?.razao_social ?? "Cliente"}</div>
-          {conv.clients?.nome_fantasia && (
-            <div className="truncate text-xs text-muted-foreground">{conv.clients.nome_fantasia}</div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Chat — Empresa</div>
+          <div className="truncate font-medium">{conv.clients?.nome_fantasia || conv.clients?.razao_social || "Cliente"}</div>
+          {conv.clients?.nome_fantasia && conv.clients?.razao_social && conv.clients.nome_fantasia !== conv.clients.razao_social && (
+            <div className="truncate text-xs text-muted-foreground">{conv.clients.razao_social}</div>
           )}
         </div>
       </header>
