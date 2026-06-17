@@ -204,15 +204,15 @@ function ClientsPage() {
         ) : filtered.length === 0 ? (
           <EmptyState
             icon={<Building2 className="h-6 w-6" />}
-            title="Nenhum cliente encontrado"
-            description={role === "admin" ? "Crie o primeiro cliente para começar." : "Nenhum cliente vinculado a você."}
+            title="Nenhuma empresa encontrada"
+            description={role === "admin" ? "Cadastre a primeira empresa para começar." : "Nenhuma empresa vinculada a você."}
           />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-left text-xs uppercase text-muted-foreground">
                 <tr className="border-b">
-                  <th className="py-2 pr-4">Cliente</th>
+                  <th className="py-2 pr-4">Empresa</th>
                   <th className="py-2 pr-4">Tipo</th>
                   <th className="py-2 pr-4">Documento</th>
                   <th className="py-2 pr-4">Entrada</th>
