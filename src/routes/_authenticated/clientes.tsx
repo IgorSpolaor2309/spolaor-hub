@@ -1014,17 +1014,16 @@ function InactivateClientButton({ client }: { client: any }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Remover cliente">
-          <PowerOff className="h-4 w-4 text-destructive" />
+        <Button variant="ghost" size="icon" aria-label="Desativar empresa">
+          <PowerOff className="h-4 w-4 text-amber-600" />
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Remover cliente</AlertDialogTitle>
+          <AlertDialogTitle>Desativar empresa</AlertDialogTitle>
           <AlertDialogDescription>
-            Tem certeza que deseja remover este cliente? Ele será marcado como inativo
-            e deixará de aparecer para os colaboradores. O histórico, documentos,
-            pendências e vínculos serão preservados e poderão ser restaurados.
+            A empresa será marcada como inativa e deixará de aparecer para os colaboradores.
+            O histórico, documentos, pendências e vínculos serão preservados e poderão ser restaurados.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
