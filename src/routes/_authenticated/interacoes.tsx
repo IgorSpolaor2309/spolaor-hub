@@ -265,7 +265,10 @@ function ChatThread({
         .select("*")
         .eq("conversation_id", conv.id)
         .order("created_at", { ascending: true });
-      if (error) throw error;
+      if (error) {
+        logChatError("chat_messages.select", error, { table: "chat_messages", conversationId: conv.id });
+        throw error;
+      }
       return data as any[];
     },
   });
@@ -298,7 +301,10 @@ function ChatThread({
         sender_role: currentRole,
         body,
       });
-      if (error) throw error;
+      if (error) {
+        logChatError("chat_messages.insert.text", error, { table: "chat_messages", conversationId: conv.id, clientId: conv.client_id });
+        throw error;
+      }
     },
     onSuccess: () => { setText(""); },
     onError: (e: any) => toast.error(e?.message ?? "Falha ao enviar"),
@@ -313,7 +319,10 @@ function ChatThread({
         contentType: file.type || undefined,
         upsert: false,
       });
-      if (upErr) throw upErr;
+      if (upErr) {
+        logChatError("storage.documents.upload.chatAttachment", upErr, { bucket: "documents", path });
+        throw upErr;
+      }
       const { error } = await supabase.from("chat_messages").insert({
         conversation_id: conv.id,
         client_id: conv.client_id,
@@ -324,7 +333,10 @@ function ChatThread({
         attachment_name: file.name,
         attachment_size: file.size,
       });
-      if (error) throw error;
+      if (error) {
+        logChatError("chat_messages.insert.attachment", error, { table: "chat_messages", conversationId: conv.id, clientId: conv.client_id });
+        throw error;
+      }
     },
     onError: (e: any) => toast.error(e?.message ?? "Falha ao anexar"),
   });
