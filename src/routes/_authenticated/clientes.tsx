@@ -491,7 +491,7 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
   return (
     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle>Novo cliente</DialogTitle>
+        <DialogTitle>Nova empresa</DialogTitle>
       </DialogHeader>
 
       <div className="space-y-4">
