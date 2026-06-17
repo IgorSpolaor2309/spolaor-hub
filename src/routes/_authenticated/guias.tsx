@@ -13,6 +13,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { EmptyState } from "@/components/sc/EmptyState";
 import { AttachmentButton } from "@/components/sc/AttachmentButton";
 import { DeleteButton } from "@/components/sc/DeleteButton";
+import { DateRangeFilter, EMPTY_DATE_FILTER, type DateFilterValue } from "@/components/sc/DateRangeFilter";
+import { inRange, resolveRange } from "@/lib/date-ranges";
 import { useMemo, useState } from "react";
 import { Plus, Upload, Receipt } from "lucide-react";
 import { toast } from "sonner";
@@ -42,6 +44,7 @@ function GuidesPage() {
   const [fStatus, setFStatus] = useState("all");
   const [fTipo, setFTipo] = useState("all");
   const [fComp, setFComp] = useState("");
+  const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const [open, setOpen] = useState(false);
 
   const { data: clients = [] } = useQuery({
@@ -61,12 +64,17 @@ function GuidesPage() {
     },
   });
 
+  const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
   const filtered = useMemo(() => (items as any[]).filter((g) =>
     (fClient === "all" || g.client_id === fClient) &&
     (fStatus === "all" || g.status === fStatus) &&
     (fTipo === "all" || g.tipo === fTipo) &&
-    (!fComp || (g.competencia ?? "").includes(fComp)),
-  ), [items, fClient, fStatus, fTipo, fComp]);
+    (!fComp || (g.competencia ?? "").includes(fComp)) &&
+    inRange(g.vencimento, range),
+  ), [items, fClient, fStatus, fTipo, fComp, range]);
+  const clearFilters = () => {
+    setFClient("all"); setFStatus("all"); setFTipo("all"); setFComp(""); setDateF(EMPTY_DATE_FILTER);
+  };
 
   return (
     <div>
@@ -122,6 +130,10 @@ function GuidesPage() {
             <Label className="text-xs">Competência contém</Label>
             <Input placeholder="2026-06" value={fComp} onChange={(e) => setFComp(e.target.value)} />
           </div>
+          <DateRangeFilter value={dateF} onChange={setDateF} label="Vencimento" />
+        </div>
+        <div className="mt-3">
+          <Button variant="ghost" size="sm" onClick={clearFilters}>Limpar filtros</Button>
         </div>
       </Card>
 

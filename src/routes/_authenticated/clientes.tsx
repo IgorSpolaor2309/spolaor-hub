@@ -12,7 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/sc/StatusBadge";
 import { EmptyState } from "@/components/sc/EmptyState";
-import { useState } from "react";
+import { DateRangeFilter, EMPTY_DATE_FILTER, type DateFilterValue } from "@/components/sc/DateRangeFilter";
+import { inRange, resolveRange } from "@/lib/date-ranges";
+import { useMemo, useState } from "react";
 import { Plus, Search, Users, Pencil, PowerOff, Power } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -33,7 +35,14 @@ export const Route = createFileRoute("/_authenticated/clientes")({
 function ClientsPage() {
   const { role } = useCurrentUser();
   const qc = useQueryClient();
+  const isAdmin = role === "admin";
   const [q, setQ] = useState("");
+  const [fStatus, setFStatus] = useState<string>("active");
+  const [fTipo, setFTipo] = useState<string>("all");
+  const [fRegime, setFRegime] = useState<string>("all");
+  const [fUf, setFUf] = useState<string>("all");
+  const [fResp, setFResp] = useState<string>("all");
+  const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
 
@@ -41,15 +50,55 @@ function ClientsPage() {
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ["clients"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("clients").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("clients")
+        .select("*, client_fiscal_data(regime_tributario, uf, municipio), client_collaborators(collaborator_id, collaborators(id, nome))")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
   });
 
-  const filtered = clients.filter((c) =>
-    [c.razao_social, c.nome_fantasia, c.documento, c.email].join(" ").toLowerCase().includes(q.toLowerCase()),
-  );
+  const { data: collaborators = [] } = useQuery({
+    queryKey: ["clients-collabs-options"],
+    enabled: isAdmin,
+    queryFn: async () => (await supabase.from("collaborators").select("id, nome").eq("status", "active").order("nome")).data ?? [],
+  });
+
+  const regimeOptions = useMemo(() => {
+    const s = new Set<string>();
+    for (const c of clients as any[]) {
+      const r = c.client_fiscal_data?.regime_tributario;
+      if (r) s.add(r);
+    }
+    return Array.from(s).sort();
+  }, [clients]);
+  const ufOptions = useMemo(() => {
+    const s = new Set<string>();
+    for (const c of clients as any[]) {
+      const u = c.client_fiscal_data?.uf;
+      if (u) s.add(u);
+    }
+    return Array.from(s).sort();
+  }, [clients]);
+
+  const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
+  const filtered = (clients as any[]).filter((c) => {
+    if (q && ![c.razao_social, c.nome_fantasia, c.documento, c.email].join(" ").toLowerCase().includes(q.toLowerCase())) return false;
+    if (fStatus !== "all" && c.status !== fStatus) return false;
+    if (fTipo !== "all" && c.tipo !== fTipo) return false;
+    if (fRegime !== "all" && (c.client_fiscal_data?.regime_tributario ?? "") !== fRegime) return false;
+    if (fUf !== "all" && (c.client_fiscal_data?.uf ?? "") !== fUf) return false;
+    if (fResp !== "all") {
+      const ids = (c.client_collaborators ?? []).map((cc: any) => cc.collaborator_id);
+      if (!ids.includes(fResp)) return false;
+    }
+    if (!inRange(c.data_entrada ?? c.created_at, range)) return false;
+    return true;
+  });
+  const clearFilters = () => {
+    setQ(""); setFStatus("active"); setFTipo("all"); setFRegime("all"); setFUf("all"); setFResp("all"); setDateF(EMPTY_DATE_FILTER);
+  };
 
   return (
     <div>
@@ -68,13 +117,79 @@ function ClientsPage() {
         }
       />
 
-      <Card className="p-4">
-        <div className="mb-4 flex items-center gap-2">
-          <div className="relative max-w-sm flex-1">
-            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Buscar por razão social, CNPJ, e-mail…" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
+      <Card className="mb-4 p-4">
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="relative min-w-[220px] flex-1">
+            <Label className="text-xs">Buscar</Label>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input placeholder="Razão social, CNPJ, e-mail…" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
+            </div>
           </div>
+          <div>
+            <Label className="text-xs">Status</Label>
+            <Select value={fStatus} onValueChange={setFStatus}>
+              <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="active">Ativos</SelectItem>
+                <SelectItem value="inactive">Inativos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Tipo</Label>
+            <Select value={fTipo} onValueChange={setFTipo}>
+              <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {CLIENT_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          {regimeOptions.length > 0 && (
+            <div>
+              <Label className="text-xs">Regime tributário</Label>
+              <Select value={fRegime} onValueChange={setFRegime}>
+                <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {regimeOptions.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          {ufOptions.length > 0 && (
+            <div>
+              <Label className="text-xs">UF</Label>
+              <Select value={fUf} onValueChange={setFUf}>
+                <SelectTrigger className="w-[100px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {ufOptions.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          {isAdmin && (collaborators as any[]).length > 0 && (
+            <div>
+              <Label className="text-xs">Responsável</Label>
+              <Select value={fResp} onValueChange={setFResp}>
+                <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {(collaborators as any[]).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <DateRangeFilter value={dateF} onChange={setDateF} label="Data de entrada" />
+          <Button variant="ghost" size="sm" onClick={clearFilters}>Limpar filtros</Button>
         </div>
+      </Card>
+
+      <Card className="p-4">
+
 
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Carregando…</p>
