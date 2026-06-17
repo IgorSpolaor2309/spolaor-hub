@@ -24,6 +24,13 @@ import {
   TASK_STATUSES, TASK_PRIORITIES, DOC_TYPES, DOC_STATUSES, INTERACTION_TYPES, CLIENT_TYPES,
   DEPARTMENTS, DOC_VALIDITY_CATEGORIES, labelOf,
 } from "@/lib/sc-types";
+import { EditClientDialog } from "@/routes/_authenticated/clientes";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { AlertTriangle } from "lucide-react";
 
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
