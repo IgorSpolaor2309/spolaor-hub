@@ -12,7 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/sc/StatusBadge";
 import { EmptyState } from "@/components/sc/EmptyState";
-import { useState } from "react";
+import { DateRangeFilter, EMPTY_DATE_FILTER, type DateFilterValue } from "@/components/sc/DateRangeFilter";
+import { inRange, resolveRange } from "@/lib/date-ranges";
+import { useMemo, useState } from "react";
 import { Plus, Search, Users, Pencil, PowerOff, Power } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -33,7 +35,14 @@ export const Route = createFileRoute("/_authenticated/clientes")({
 function ClientsPage() {
   const { role } = useCurrentUser();
   const qc = useQueryClient();
+  const isAdmin = role === "admin";
   const [q, setQ] = useState("");
+  const [fStatus, setFStatus] = useState<string>("active");
+  const [fTipo, setFTipo] = useState<string>("all");
+  const [fRegime, setFRegime] = useState<string>("all");
+  const [fUf, setFUf] = useState<string>("all");
+  const [fResp, setFResp] = useState<string>("all");
+  const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
 
@@ -41,15 +50,56 @@ function ClientsPage() {
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ["clients"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("clients").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("clients")
+        .select("*, client_fiscal_data(regime_tributario, uf, municipio), client_collaborators(collaborator_id, collaborators(id, nome))")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
   });
 
-  const filtered = clients.filter((c) =>
-    [c.razao_social, c.nome_fantasia, c.documento, c.email].join(" ").toLowerCase().includes(q.toLowerCase()),
-  );
+  const { data: collaborators = [] } = isAdmin
+    ? useQuery({
+        queryKey: ["clients-collabs-options"],
+        queryFn: async () => (await supabase.from("collaborators").select("id, nome").eq("status", "active").order("nome")).data ?? [],
+      })
+    : { data: [] as any[] } as any;
+
+  const regimeOptions = useMemo(() => {
+    const s = new Set<string>();
+    for (const c of clients as any[]) {
+      const r = c.client_fiscal_data?.regime_tributario;
+      if (r) s.add(r);
+    }
+    return Array.from(s).sort();
+  }, [clients]);
+  const ufOptions = useMemo(() => {
+    const s = new Set<string>();
+    for (const c of clients as any[]) {
+      const u = c.client_fiscal_data?.uf;
+      if (u) s.add(u);
+    }
+    return Array.from(s).sort();
+  }, [clients]);
+
+  const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
+  const filtered = (clients as any[]).filter((c) => {
+    if (q && ![c.razao_social, c.nome_fantasia, c.documento, c.email].join(" ").toLowerCase().includes(q.toLowerCase())) return false;
+    if (fStatus !== "all" && c.status !== fStatus) return false;
+    if (fTipo !== "all" && c.tipo !== fTipo) return false;
+    if (fRegime !== "all" && (c.client_fiscal_data?.regime_tributario ?? "") !== fRegime) return false;
+    if (fUf !== "all" && (c.client_fiscal_data?.uf ?? "") !== fUf) return false;
+    if (fResp !== "all") {
+      const ids = (c.client_collaborators ?? []).map((cc: any) => cc.collaborator_id);
+      if (!ids.includes(fResp)) return false;
+    }
+    if (!inRange(c.data_entrada ?? c.created_at, range)) return false;
+    return true;
+  });
+  const clearFilters = () => {
+    setQ(""); setFStatus("active"); setFTipo("all"); setFRegime("all"); setFUf("all"); setFResp("all"); setDateF(EMPTY_DATE_FILTER);
+  };
 
   return (
     <div>
