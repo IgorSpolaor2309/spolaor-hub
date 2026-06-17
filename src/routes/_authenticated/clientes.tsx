@@ -1002,7 +1002,7 @@ function InactivateClientButton({ client }: { client: any }) {
       <Button
         variant="ghost"
         size="icon"
-        aria-label="Reativar cliente"
+        aria-label="Reativar empresa"
         onClick={() => mut.mutate()}
         disabled={mut.isPending}
       >
