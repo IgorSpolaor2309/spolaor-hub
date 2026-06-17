@@ -583,7 +583,7 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
 }
 
 
-function EditClientDialog({ client, onDone }: { client: any; onDone: () => void }) {
+export function EditClientDialog({ client, onDone }: { client: any; onDone: () => void }) {
   const initialCnpj = String(client.cnpj ?? client.documento ?? "").replace(/\D/g, "");
   const [form, setForm] = useState<ReceitaFormShape>({
     cnpj: initialCnpj,
