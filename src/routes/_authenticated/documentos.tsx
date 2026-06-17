@@ -1,18 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/sc/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/sc/StatusBadge";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { AttachmentButton } from "@/components/sc/AttachmentButton";
+import { DeleteButton } from "@/components/sc/DeleteButton";
 import { useState } from "react";
 import { DOC_TYPES, DOC_STATUSES, labelOf } from "@/lib/sc-types";
 import { FileText } from "lucide-react";
 import { toast } from "sonner";
+import { useCurrentUser } from "@/hooks/use-current-user";
+
 
 export const Route = createFileRoute("/_authenticated/documentos")({
   component: DocsPage,
