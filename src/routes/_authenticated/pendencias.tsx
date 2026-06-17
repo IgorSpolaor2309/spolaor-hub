@@ -23,17 +23,27 @@ export const Route = createFileRoute("/_authenticated/pendencias")({
 });
 
 function TasksPage() {
-  const { role } = useCurrentUser();
+  const { role, userId, loading } = useCurrentUser();
   const isAdmin = role === "admin";
+  const ready = !loading && !!userId && !!role;
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<string>("all");
   const [priority, setPriority] = useState<string>("all");
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
 
-  const { data: tasks = [], isLoading } = useQuery({
-    queryKey: ["all-tasks"],
-    queryFn: async () => (await supabase.from("pending_tasks").select("*, clients(razao_social, nome_fantasia)").order("prazo", { ascending: true, nullsFirst: false })).data ?? [],
+  const { data: tasks = [], isLoading, error: tasksError } = useQuery({
+    queryKey: ["all-tasks", userId, role],
+    enabled: ready,
+    retry: 1,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pending_tasks")
+        .select("*, clients(razao_social, nome_fantasia)")
+        .order("prazo", { ascending: true, nullsFirst: false });
+      if (error) throw error;
+      return data ?? [];
+    },
   });
 
   const remove = useMutation({
@@ -56,6 +66,8 @@ function TasksPage() {
   const clearFilters = () => {
     setQ(""); setStatus("all"); setPriority("all"); setDateF(EMPTY_DATE_FILTER);
   };
+
+  if (!ready) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
   return (
     <div>
@@ -80,7 +92,8 @@ function TasksPage() {
           <DateRangeFilter value={dateF} onChange={setDateF} label="Prazo" />
           <Button variant="ghost" size="sm" onClick={clearFilters}>Limpar filtros</Button>
         </div>
-        {isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p> :
+        {tasksError ? <EmptyState icon={<ClipboardList className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." /> :
+         isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p> :
          filtered.length === 0 ? <EmptyState icon={<ClipboardList className="h-6 w-6" />} title="Nada por aqui" /> : (
           <table className="w-full text-sm">
             <thead className="text-left text-xs uppercase text-muted-foreground">
