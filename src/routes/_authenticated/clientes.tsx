@@ -630,20 +630,20 @@ export function EditClientDialog({ client, onDone }: { client: any; onDone: () =
       const { error } = await supabase.from("clients").update(payload).eq("id", client.id);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Cliente atualizado com sucesso."); onDone(); },
+    onSuccess: () => { toast.success("Dados da empresa atualizados."); onDone(); },
     onError: (e: any) => {
       if (e?.message === "__dup__") return;
       toast.error(
         /row-level security|permission/i.test(e?.message ?? "")
           ? "Você não tem permissão para realizar esta ação."
-          : (e?.message ?? "Não foi possível atualizar o cliente."),
+          : (e?.message ?? "Não foi possível atualizar a empresa."),
       );
     },
   });
 
   return (
     <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-      <DialogHeader><DialogTitle>Editar cliente</DialogTitle></DialogHeader>
+      <DialogHeader><DialogTitle>Editar empresa</DialogTitle></DialogHeader>
       <Tabs defaultValue="dados">
         <TabsList>
           <TabsTrigger value="dados">Dados da empresa</TabsTrigger>
