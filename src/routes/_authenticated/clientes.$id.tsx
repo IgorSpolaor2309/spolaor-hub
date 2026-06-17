@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { formatBR } from "@/lib/dates";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/sc/PageHeader";
@@ -120,7 +121,7 @@ function ClientDetail() {
         <Card className="p-4"><div className="text-xs uppercase text-muted-foreground">Documento</div><div className="mt-1 font-mono text-sm">{client.documento ?? "—"}</div></Card>
         <Card className="p-4"><div className="text-xs uppercase text-muted-foreground">E-mail</div><div className="mt-1 text-sm">{client.email ?? "—"}</div></Card>
         <Card className="p-4"><div className="text-xs uppercase text-muted-foreground">Telefone</div><div className="mt-1 text-sm">{client.telefone ?? "—"}</div></Card>
-        <Card className="p-4"><div className="text-xs uppercase text-muted-foreground">Entrada</div><div className="mt-1 text-sm">{client.data_entrada ? new Date(client.data_entrada).toLocaleDateString("pt-BR") : "—"}</div></Card>
+        <Card className="p-4"><div className="text-xs uppercase text-muted-foreground">Entrada</div><div className="mt-1 text-sm">{formatBR(client.data_entrada)}</div></Card>
       </div>
 
       {role !== "client" && (
@@ -278,7 +279,7 @@ function PendingTab({ clientId, tasks, canCreate, canUpdate, onChange }: any) {
                 </div>
                 {t.descricao && <div className="mt-0.5 text-sm text-muted-foreground">{t.descricao}</div>}
                 <div className="mt-1 text-xs text-muted-foreground">
-                  {t.prazo ? `Prazo: ${new Date(t.prazo).toLocaleDateString("pt-BR")}` : "Sem prazo"} {t.competencia ? ` · ${t.competencia}` : ""}
+                  {t.prazo ? `Prazo: ${formatBR(t.prazo)}` : "Sem prazo"} {t.competencia ? ` · ${t.competencia}` : ""}
                 </div>
               </div>
               <div className="flex items-center gap-2">
