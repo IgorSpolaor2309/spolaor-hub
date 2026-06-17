@@ -178,39 +178,54 @@ function KanbanPage() {
                         <div className="flex items-start gap-2">
                           <GripVertical className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                           <div className="min-w-0 flex-1">
-                            <div className="truncate text-sm font-medium text-foreground">{t.titulo}</div>
-                            {t.clients?.razao_social && (
-                              <Link to="/clientes/$id" params={{ id: t.client_id }} className="block truncate text-xs text-secondary hover:underline">
-                                {t.clients.razao_social}
-                              </Link>
+                            <div className="truncate text-sm font-medium text-foreground">{t.titulo || "(sem título)"}</div>
+                            <Link
+                              to="/clientes/$id"
+                              params={{ id: t.client_id }}
+                              className="mt-0.5 flex items-center gap-1 truncate text-xs text-secondary hover:underline"
+                            >
+                              <Building2 className="h-3 w-3 shrink-0" />
+                              <span className="truncate">{t.clients?.razao_social ?? "Cliente —"}</span>
+                            </Link>
+                            {t.descricao && (
+                              <div className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">{t.descricao}</div>
                             )}
-                            <div className="mt-1 flex flex-wrap items-center gap-1">
-                              {t.departamento && (
-                                <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-                                  {labelOf(DEPARTMENTS, t.departamento)}
-                                </span>
-                              )}
-                              <PriorityBadge value={t.prioridade} />
+                            <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                              <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                                {t.departamento ? labelOf(DEPARTMENTS, t.departamento) : "Sem depto."}
+                              </span>
+                              <PriorityBadge value={t.prioridade ?? "media"} />
                               {overdue && (
                                 <span className="inline-flex items-center gap-0.5 rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] font-medium text-destructive">
                                   <AlertTriangle className="h-3 w-3" /> Vencida
                                 </span>
                               )}
                             </div>
-                            <div className="mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
-                              <span>{t.collaborators?.nome ?? "Sem responsável"}</span>
-                              <span>{t.prazo ? formatBR(t.prazo) : "—"}</span>
+                            <div className="mt-2 grid gap-0.5 text-[11px] text-muted-foreground">
+                              <div className="flex items-center gap-1 truncate">
+                                <User className="h-3 w-3 shrink-0" />
+                                <span className="truncate">{t.collaborators?.nome ?? "Sem responsável"}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3 shrink-0" />
+                                <span>{t.prazo ? `Prazo ${formatBR(t.prazo)}` : "Sem prazo"}</span>
+                                {t.competencia && <span>· {t.competencia}</span>}
+                              </div>
                             </div>
-                            <div className="mt-2">
+                            <div className="mt-2 flex items-center gap-2">
                               <Select value={t.status} onValueChange={(v) => updateStatus.mutate({ id: t.id, status: v })}>
-                                <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                                <SelectTrigger className="h-7 flex-1 text-xs"><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                   {KANBAN_COLUMNS.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
                                 </SelectContent>
                               </Select>
+                              {role === "admin" && (
+                                <DeleteButton onConfirm={() => remove.mutate(t.id)} iconOnly />
+                              )}
                             </div>
                           </div>
                         </div>
+
                       </article>
                     );
                   })}
