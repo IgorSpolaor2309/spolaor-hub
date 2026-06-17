@@ -154,6 +154,7 @@ function ClientDetail() {
           <TabsTrigger value="requisitos">Requisitos</TabsTrigger>
           {role !== "client" && <TabsTrigger value="fiscal">Dados fiscais</TabsTrigger>}
           {role === "admin" && <TabsTrigger value="equipe">Equipe</TabsTrigger>}
+          {role === "admin" && <TabsTrigger value="acessos">Acessos</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="pendencias">
@@ -201,6 +202,12 @@ function ClientDetail() {
         {role === "admin" && (
           <TabsContent value="equipe">
             <TeamTab clientId={id} current={collabs} onChange={() => qc.invalidateQueries({ queryKey: ["client-collabs", id] })} />
+          </TabsContent>
+        )}
+
+        {role === "admin" && (
+          <TabsContent value="acessos">
+            <ClientUsersTab clientId={id} />
           </TabsContent>
         )}
       </Tabs>
