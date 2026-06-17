@@ -221,10 +221,12 @@ function ChatThread({
 
   const { data: messages = [] } = useQuery({
     queryKey: ["chat-msgs", conv.id],
+    retry: 0,
     queryFn: async () => {
+      // Sem embed de profiles (RLS pode bloquear leitura cruzada e quebrar a query).
       const { data, error } = await supabase
         .from("chat_messages")
-        .select("*, profiles:sender_profile_id(full_name)")
+        .select("*")
         .eq("conversation_id", conv.id)
         .order("created_at", { ascending: true });
       if (error) throw error;
