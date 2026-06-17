@@ -121,12 +121,31 @@ function ChatPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search.client]);
 
-  // Auto-seleciona a primeira conversa
+  // Auto-seleciona a primeira conversa. Para clientes sem conversa, cria uma
+  // automaticamente para que a página não fique vazia/quebrada.
   useEffect(() => {
-    if (!activeId && conversations.length > 0) {
+    if (loadingConvs) return;
+    if (activeId) return;
+    if (conversations.length > 0) {
       setActiveId(conversations[0].id);
+      return;
     }
-  }, [activeId, conversations]);
+    if (role === "client" && userId) {
+      (async () => {
+        try {
+          const { data: cs } = await supabase
+            .from("clients").select("id").eq("owner_profile_id", userId).limit(1);
+          const clientId = cs?.[0]?.id;
+          if (!clientId) return;
+          const id = await ensureConversation(clientId);
+          setActiveId(id);
+          qc.invalidateQueries({ queryKey: ["chat-convs"] });
+        } catch (e) {
+          console.warn("[chat] auto-create conversation:", e);
+        }
+      })();
+    }
+  }, [activeId, conversations, loadingConvs, role, userId, qc]);
 
   const filteredConvs = useMemo(() => {
     const term = q.trim().toLowerCase();
