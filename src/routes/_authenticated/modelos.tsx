@@ -141,9 +141,12 @@ function TemplatesPage() {
                     <Button size="sm" variant="outline" onClick={() => { setEditing(t); setCreating(false); }}>
                       <Pencil className="mr-1 h-3.5 w-3.5" /> Editar
                     </Button>
-                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => { if (confirm(`Excluir "${t.titulo}"?`)) remove.mutate(t.id); }}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                    <DeleteButton
+                      onConfirm={() => remove.mutate(t.id)}
+                      description={`Excluir o modelo "${t.titulo}"? Esta ação não pode ser desfeita.`}
+                      iconOnly
+                    />
+
                   </>
                 )}
               </div>
