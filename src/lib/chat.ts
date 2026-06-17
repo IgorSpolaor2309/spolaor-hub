@@ -28,6 +28,17 @@ export async function ensureConversation(clientId: string): Promise<string> {
     .insert({ client_id: clientId })
     .select("id")
     .single();
+  if (error?.code === "23505") {
+    // React StrictMode/realtime redirects podem chamar esta função em paralelo.
+    // Se outra chamada criou a conversa primeiro, buscamos novamente em vez de falhar.
+    const { data: createdByOther, error: retryError } = await supabase
+      .from("chat_conversations")
+      .select("id")
+      .eq("client_id", clientId)
+      .maybeSingle();
+    if (createdByOther?.id) return createdByOther.id;
+    if (retryError) throw retryError;
+  }
   if (error) {
     console.error("[chat] Falha ao criar conversa", {
       action: "chat_conversations.insert",
