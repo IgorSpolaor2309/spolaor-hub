@@ -59,12 +59,11 @@ function ClientsPage() {
     },
   });
 
-  const { data: collaborators = [] } = isAdmin
-    ? useQuery({
-        queryKey: ["clients-collabs-options"],
-        queryFn: async () => (await supabase.from("collaborators").select("id, nome").eq("status", "active").order("nome")).data ?? [],
-      })
-    : { data: [] as any[] } as any;
+  const { data: collaborators = [] } = useQuery({
+    queryKey: ["clients-collabs-options"],
+    enabled: isAdmin,
+    queryFn: async () => (await supabase.from("collaborators").select("id, nome").eq("status", "active").order("nome")).data ?? [],
+  });
 
   const regimeOptions = useMemo(() => {
     const s = new Set<string>();
