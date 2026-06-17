@@ -15,6 +15,7 @@ import { useMemo, useState } from "react";
 import { Plus, Upload, Receipt } from "lucide-react";
 import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { formatBR, isPastEndOfDay } from "@/lib/dates";
 
 export const Route = createFileRoute("/_authenticated/guias")({
   component: GuidesPage,
@@ -168,7 +169,7 @@ function GuideRow({ item, isStaff, onChange }: any) {
     } finally { e.target.value = ""; }
   }
 
-  const vencido = item.vencimento && new Date(item.vencimento) < new Date() && !["paga", "cancelada"].includes(item.status);
+  const vencido = item.vencimento && isPastEndOfDay(item.vencimento) && !["paga", "cancelada"].includes(item.status);
 
   return (
     <li className="rounded-md border p-4">
@@ -183,7 +184,7 @@ function GuideRow({ item, isStaff, onChange }: any) {
           <div className="mt-1 text-xs text-muted-foreground">
             Cliente: {item.clients?.razao_social ?? "—"}
             {item.competencia ? ` · Competência: ${item.competencia}` : ""}
-            {item.vencimento ? ` · Vence: ${new Date(item.vencimento).toLocaleDateString("pt-BR")}` : ""}
+            {item.vencimento ? ` · Vence: ${formatBR(item.vencimento)}` : ""}
           </div>
           {isStaff && item.observacoes_internas && (
             <div className="mt-2 rounded bg-muted/50 p-2 text-xs">

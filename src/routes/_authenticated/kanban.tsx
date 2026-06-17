@@ -13,6 +13,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { toast } from "sonner";
 import { AlertTriangle, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatBR, isPastEndOfDay } from "@/lib/dates";
 
 export const Route = createFileRoute("/_authenticated/kanban")({
   component: KanbanPage,
@@ -63,13 +64,13 @@ function KanbanPage() {
   });
 
   const filtered = useMemo(() => {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
+    
     return tasks.filter((t: any) => {
       if (dept !== "all" && t.departamento !== dept) return false;
       if (resp !== "all" && t.collaborator_id !== resp) return false;
       if (client !== "all" && t.client_id !== client) return false;
       if (prio !== "all" && t.prioridade !== prio) return false;
-      const overdue = t.prazo && new Date(t.prazo) < today && t.status !== "concluida" && t.status !== "cancelada";
+      const overdue = t.prazo && isPastEndOfDay(t.prazo) && t.status !== "concluida" && t.status !== "cancelada";
       if (onlyOverdue && !overdue) return false;
       if (q && !`${t.titulo} ${t.clients?.razao_social ?? ""}`.toLowerCase().includes(q.toLowerCase())) return false;
       return true;
@@ -146,8 +147,8 @@ function KanbanPage() {
                 </div>
                 <div className="flex-1 space-y-2">
                   {items.map((t: any) => {
-                    const today = new Date(); today.setHours(0, 0, 0, 0);
-                    const overdue = t.prazo && new Date(t.prazo) < today && t.status !== "concluida" && t.status !== "cancelada";
+                    
+                    const overdue = t.prazo && isPastEndOfDay(t.prazo) && t.status !== "concluida" && t.status !== "cancelada";
                     return (
                       <article
                         key={t.id}
@@ -183,7 +184,7 @@ function KanbanPage() {
                             </div>
                             <div className="mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
                               <span>{t.collaborators?.nome ?? "Sem responsável"}</span>
-                              <span>{t.prazo ? new Date(t.prazo).toLocaleDateString("pt-BR") : "—"}</span>
+                              <span>{t.prazo ? formatBR(t.prazo) : "—"}</span>
                             </div>
                             <div className="mt-2">
                               <Select value={t.status} onValueChange={(v) => updateStatus.mutate({ id: t.id, status: v })}>

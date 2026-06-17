@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DOC_VALIDITY_CATEGORIES, labelOf } from "@/lib/sc-types";
+import { formatBR, daysUntilLocal } from "@/lib/dates";
 
 export const Route = createFileRoute("/_authenticated/validades")({
   component: ValidadesPage,
@@ -23,10 +24,7 @@ export const Route = createFileRoute("/_authenticated/validades")({
 const CATEGORIAS = DOC_VALIDITY_CATEGORIES;
 
 function daysUntil(date: string | null) {
-  if (!date) return null;
-  const d = new Date(date); d.setHours(0,0,0,0);
-  const today = new Date(); today.setHours(0,0,0,0);
-  return Math.round((d.getTime() - today.getTime()) / 86400000);
+  return daysUntilLocal(date);
 }
 
 function statusFromDays(d: number | null) {
@@ -148,7 +146,7 @@ function ValidadesPage() {
                         <td className="py-2 pr-4 font-medium">{d.nome}</td>
                         <td className="py-2 pr-4">{d.clients?.razao_social ?? "—"}</td>
                         <td className="py-2 pr-4">{d.categoria_validade ? labelOf(CATEGORIAS, d.categoria_validade) : "—"}</td>
-                        <td className="py-2 pr-4">{new Date(d.data_validade).toLocaleDateString("pt-BR")}</td>
+                        <td className="py-2 pr-4">{formatBR(d.data_validade)}</td>
                         <td className="py-2 pr-4"><Badge className={st.tone}>{st.label}</Badge></td>
                         <td className="py-2 text-right">
                           <Button variant="ghost" size="sm" onClick={() => download(d.storage_path, d.nome)}>Baixar</Button>

@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { formatBR } from "@/lib/dates";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/sc/PageHeader";
@@ -64,7 +65,7 @@ function TasksPage() {
                 <tr key={t.id} className="border-b">
                   <td className="py-3 pr-4 font-medium">{t.titulo}</td>
                   <td><Link to="/clientes/$id" params={{ id: t.client_id }} className="text-secondary hover:underline">{t.clients?.razao_social}</Link></td>
-                  <td>{t.prazo ? new Date(t.prazo).toLocaleDateString("pt-BR") : "—"}</td>
+                  <td>{t.prazo ? formatBR(t.prazo) : "—"}</td>
                   <td><PriorityBadge value={t.prioridade} /></td>
                   <td><StatusBadge value={t.status} /></td>
                 </tr>

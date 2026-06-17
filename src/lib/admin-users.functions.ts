@@ -492,3 +492,33 @@ export const adminSetCollaboratorStatus = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const adminLinkClientAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { user_id: string; client_id: string }) => input)
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context.supabase, context.userId);
+    if (!data.user_id || !data.client_id) throw new Error("Selecione a conta e o cadastro.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Garante que o cadastro destino não tenha outro dono
+    const { data: target, error: tErr } = await supabaseAdmin
+      .from("clients").select("id, owner_profile_id").eq("id", data.client_id).maybeSingle();
+    if (tErr || !target) throw new Error("Cadastro de cliente não encontrado.");
+    if (target.owner_profile_id && target.owner_profile_id !== data.user_id) {
+      throw new Error("Este cadastro já está vinculado a outra conta.");
+    }
+
+    // Garante que esta conta não esteja vinculada a outro cadastro
+    const { data: existing } = await supabaseAdmin
+      .from("clients").select("id").eq("owner_profile_id", data.user_id).maybeSingle();
+    if (existing && existing.id !== data.client_id) {
+      throw new Error("Esta conta já está vinculada a outro cadastro de cliente.");
+    }
+
+    const { error } = await supabaseAdmin
+      .from("clients").update({ owner_profile_id: data.user_id }).eq("id", data.client_id);
+    if (error) throw new Error("Não foi possível vincular a conta ao cadastro.");
+    return { ok: true };
+  });
+
+

@@ -15,6 +15,7 @@ import { useState, useMemo } from "react";
 import { Plus, Upload, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { formatBR, isPastEndOfDay } from "@/lib/dates";
 
 export const Route = createFileRoute("/_authenticated/solicitacoes")({
   component: RequestsPage,
@@ -188,7 +189,7 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
     const a = document.createElement("a"); a.href = data.signedUrl; a.download = item.documents.nome ?? "documento"; a.click();
   }
 
-  const prazoVencido = item.prazo && new Date(item.prazo) < new Date() && !["aprovado", "cancelado"].includes(item.status);
+  const prazoVencido = !!item.prazo && isPastEndOfDay(item.prazo) && !["aprovado", "cancelado"].includes(item.status);
 
   return (
     <li className="rounded-md border p-4">
@@ -204,7 +205,7 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
           <div className="mt-1 text-xs text-muted-foreground">
             Cliente: {item.clients?.razao_social ?? "—"}
             {item.competencia ? ` · Competência: ${item.competencia}` : ""}
-            {item.prazo ? ` · Prazo: ${new Date(item.prazo).toLocaleDateString("pt-BR")}` : ""}
+            {item.prazo ? ` · Prazo: ${formatBR(item.prazo)}` : ""}
             {item.profiles?.full_name ? ` · Resp.: ${item.profiles.full_name}` : ""}
           </div>
           {isStaff && item.observacoes_internas && (

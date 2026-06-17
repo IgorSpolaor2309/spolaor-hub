@@ -13,14 +13,15 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { formatBR, todayLocalYmd, localYmdInDays } from "@/lib/dates";
 
 export const Route = createFileRoute("/_authenticated/")({
   component: Dashboard,
 });
 
 /* ---------- helpers ---------- */
-const today = () => new Date().toISOString().slice(0, 10);
-const inDays = (n: number) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+const today = () => todayLocalYmd();
+const inDays = (n: number) => localYmdInDays(n);
 const currentCompetencia = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -187,7 +188,7 @@ function AdminDashboard({ name }: { name: string }) {
                     <div className="truncate text-sm font-medium">{d.nome}</div>
                     <div className="truncate text-xs text-muted-foreground">{d.clients?.razao_social ?? "—"}</div>
                   </div>
-                  <Badge className="bg-orange-100 text-orange-800">{new Date(d.data_validade).toLocaleDateString("pt-BR")}</Badge>
+                  <Badge className="bg-orange-100 text-orange-800">{formatBR(d.data_validade)}</Badge>
                 </li>
               ))}
             </ul>
@@ -423,7 +424,7 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
                   <div>
                     <div className="text-sm font-medium">{g.tipo}</div>
                     <div className="text-xs text-muted-foreground">
-                      {g.vencimento ? `Vence ${new Date(g.vencimento).toLocaleDateString("pt-BR")}` : "—"}
+                      {g.vencimento ? `Vence ${formatBR(g.vencimento)}` : "—"}
                       {g.valor != null ? ` · R$ ${Number(g.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : ""}
                     </div>
                   </div>
@@ -441,7 +442,7 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
               {data.openTasks.map((t: any) => (
                 <li key={t.id} className="flex items-center justify-between py-2.5">
                   <div className="text-sm">{t.titulo}</div>
-                  <Badge variant="outline">{t.prazo ? new Date(t.prazo).toLocaleDateString("pt-BR") : "—"}</Badge>
+                  <Badge variant="outline">{t.prazo ? formatBR(t.prazo) : "—"}</Badge>
                 </li>
               ))}
             </ul>

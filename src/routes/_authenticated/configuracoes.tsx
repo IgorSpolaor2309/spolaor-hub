@@ -22,7 +22,7 @@ import { useState } from "react";
 import { Plus, Trash2, Pencil, ShieldCheck } from "lucide-react";
 import {
   adminCreateUser, adminSetUserRole, adminDeleteUser, adminUpdateUser,
-  adminVerifyLinks, adminDiagnoseUser,
+  adminVerifyLinks, adminDiagnoseUser, adminLinkClientAccount,
 } from "@/lib/admin-users.functions";
 import { MultiSelect } from "@/components/sc/MultiSelect";
 
@@ -552,10 +552,7 @@ function VerifyLinksResult({ report }: { report: any }) {
         <div className="space-y-2">
           <IssueList title="Clientes sem colaborador" items={issues.clients_without_collaborator.map((c: any) => c.name)} />
           <IssueList title="Colaboradores sem clientes" items={issues.collaborators_without_client.map((c: any) => c.name)} />
-          <IssueList
-            title="Contas de cliente sem cadastro vinculado"
-            items={issues.client_accounts_without_client.map((u: any) => u.email)}
-          />
+          <UnlinkedClientAccounts accounts={issues.client_accounts_without_client} />
           <IssueList
             title="Contas de colaborador sem cadastro vinculado"
             items={issues.collab_accounts_without_collaborator.map((u: any) => u.email)}
@@ -599,6 +596,54 @@ function IssueList({ title, items }: { title: string; items: string[] }) {
       <ul className="mt-1 list-disc pl-4 text-xs text-muted-foreground">
         {items.slice(0, 20).map((it, i) => <li key={i}>{it}</li>)}
         {items.length > 20 && <li>… e mais {items.length - 20}</li>}
+      </ul>
+    </div>
+  );
+}
+
+function UnlinkedClientAccounts({ accounts }: { accounts: { user_id: string; email: string }[] }) {
+  const qc = useQueryClient();
+  const linkFn = useServerFn(adminLinkClientAccount);
+  const { data: unlinkedClients = [] } = useQuery({
+    queryKey: ["link-unlinked-clients"],
+    queryFn: async () =>
+      (await supabase.from("clients").select("id, razao_social").is("owner_profile_id", null).order("razao_social")).data ?? [],
+  });
+  const [picks, setPicks] = useState<Record<string, string>>({});
+  const mut = useMutation({
+    mutationFn: (vars: { user_id: string; client_id: string }) =>
+      linkFn({ data: vars }),
+    onSuccess: () => {
+      toast.success("Conta vinculada ao cadastro.");
+      qc.invalidateQueries({ queryKey: ["verify-links"] });
+      qc.invalidateQueries({ queryKey: ["link-unlinked-clients"] });
+    },
+    onError: (e: any) => toast.error(friendly(e)),
+  });
+  if (!accounts.length) return null;
+  return (
+    <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3">
+      <div className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+        Contas de cliente sem cadastro vinculado ({accounts.length})
+      </div>
+      <ul className="mt-2 space-y-2">
+        {accounts.map((a) => (
+          <li key={a.user_id} className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="font-medium">{a.email}</span>
+            <Select value={picks[a.user_id] ?? ""} onValueChange={(v) => setPicks({ ...picks, [a.user_id]: v })}>
+              <SelectTrigger className="h-7 w-[220px] text-xs"><SelectValue placeholder="Vincular a um cadastro" /></SelectTrigger>
+              <SelectContent>
+                {(unlinkedClients as any[]).map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.razao_social}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              size="sm" className="h-7" disabled={!picks[a.user_id] || mut.isPending}
+              onClick={() => mut.mutate({ user_id: a.user_id, client_id: picks[a.user_id]! })}
+            >Vincular</Button>
+          </li>
+        ))}
       </ul>
     </div>
   );

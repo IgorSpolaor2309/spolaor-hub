@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { formatBR } from "@/lib/dates";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -36,7 +37,7 @@ function MyTasksPage() {
                   <div className="flex items-center gap-2"><PriorityBadge value={t.prioridade} /><StatusBadge value={t.status} /></div>
                 </div>
                 {t.descricao && <div className="mt-1 text-sm text-muted-foreground">{t.descricao}</div>}
-                {t.prazo && <div className="mt-1 text-xs text-muted-foreground">Prazo: {new Date(t.prazo).toLocaleDateString("pt-BR")}</div>}
+                {t.prazo && <div className="mt-1 text-xs text-muted-foreground">Prazo: {formatBR(t.prazo)}</div>}
               </li>
             ))}
           </ul>
