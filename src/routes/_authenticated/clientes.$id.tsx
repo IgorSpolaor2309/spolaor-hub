@@ -160,8 +160,8 @@ function ClientDetail() {
           <TabsTrigger value="interacoes">Interações</TabsTrigger>
           <TabsTrigger value="requisitos">Requisitos</TabsTrigger>
           {role !== "client" && <TabsTrigger value="fiscal">Dados fiscais</TabsTrigger>}
-          {role === "admin" && <TabsTrigger value="equipe">Equipe</TabsTrigger>}
-          {role === "admin" && <TabsTrigger value="acessos">Acessos</TabsTrigger>}
+          {role === "admin" && <TabsTrigger value="equipe">Colaboradores responsáveis</TabsTrigger>}
+          {role === "admin" && <TabsTrigger value="acessos">Acessos do cliente</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="pendencias">
