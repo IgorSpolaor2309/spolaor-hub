@@ -17,6 +17,8 @@ import { TEMPLATE_CATEGORIES, TEMPLATE_VARIABLES, labelOf } from "@/lib/sc-types
 import { Copy, Pencil, Plus, FileText } from "lucide-react";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { DeleteButton } from "@/components/sc/DeleteButton";
+import { DateRangeFilter, EMPTY_DATE_FILTER, type DateFilterValue } from "@/components/sc/DateRangeFilter";
+import { inRange, resolveRange } from "@/lib/date-ranges";
 
 export const Route = createFileRoute("/_authenticated/modelos")({
   component: TemplatesPage,
@@ -41,18 +43,22 @@ function TemplatesPage() {
   const [editing, setEditing] = useState<Template | null>(null);
   const [creating, setCreating] = useState(false);
   const [useDlg, setUseDlg] = useState<Template | null>(null);
+  const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
 
   const { data: list = [], isLoading } = useQuery({
     queryKey: ["message-templates"],
     queryFn: async () => (await supabase.from("message_templates").select("*").order("titulo")).data ?? [],
   });
 
+  const range = resolveRange(dateF.preset, dateF.from, dateF.to);
   const visible = (list as Template[]).filter((t) => {
     if (!isAdmin && !t.ativo) return false;
     if (cat !== "all" && t.categoria !== cat) return false;
     if (q && !`${t.titulo} ${t.assunto ?? ""} ${t.conteudo}`.toLowerCase().includes(q.toLowerCase())) return false;
+    if (!inRange(t.updated_at, range)) return false;
     return true;
   });
+  const clearFilters = () => { setQ(""); setCat("all"); setDateF(EMPTY_DATE_FILTER); };
 
   const save = useMutation({
     mutationFn: async (t: Partial<Template>) => {
@@ -106,7 +112,7 @@ function TemplatesPage() {
       />
 
       <Card className="mb-4 p-3">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-end gap-2">
           <Input placeholder="Buscar…" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-xs" />
           <Select value={cat} onValueChange={setCat}>
             <SelectTrigger className="w-[240px]"><SelectValue /></SelectTrigger>
@@ -115,6 +121,8 @@ function TemplatesPage() {
               {TEMPLATE_CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
             </SelectContent>
           </Select>
+          <DateRangeFilter value={dateF} onChange={setDateF} label="Atualizado em" />
+          <Button variant="ghost" size="sm" onClick={clearFilters}>Limpar filtros</Button>
         </div>
       </Card>
 

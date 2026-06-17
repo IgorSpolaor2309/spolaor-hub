@@ -6,9 +6,12 @@ import { PageHeader } from "@/components/sc/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/sc/EmptyState";
+import { DateRangeFilter, EMPTY_DATE_FILTER, type DateFilterValue } from "@/components/sc/DateRangeFilter";
+import { inRange, resolveRange } from "@/lib/date-ranges";
 import { Bell, Check } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/notificacoes")({
   component: NotificationsPage,
@@ -17,11 +20,14 @@ export const Route = createFileRoute("/_authenticated/notificacoes")({
 function NotificationsPage() {
   const { userId } = useCurrentUser();
   const qc = useQueryClient();
+  const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const { data = [] } = useQuery({
     queryKey: ["notif", userId],
     enabled: !!userId,
     queryFn: async () => (await supabase.from("notifications").select("*").eq("user_id", userId!).order("created_at", { ascending: false })).data ?? [],
   });
+  const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
+  const filtered = (data as any[]).filter((n) => inRange(n.created_at, range));
   const markAll = useMutation({
     mutationFn: async () => { const { error } = await supabase.from("notifications").update({ lida: true }).eq("user_id", userId!).eq("lida", false); if (error) throw error; },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["notif", userId] }); qc.invalidateQueries({ queryKey: ["notif-unread", userId] }); },
@@ -33,10 +39,16 @@ function NotificationsPage() {
         description="Alertas internos da plataforma."
         action={<Button variant="outline" onClick={() => markAll.mutate()}><Check className="mr-2 h-4 w-4" /> Marcar todas como lidas</Button>}
       />
+      <Card className="mb-4 p-3">
+        <div className="flex flex-wrap items-end gap-2">
+          <DateRangeFilter value={dateF} onChange={setDateF} label="Data" />
+          <Button variant="ghost" size="sm" onClick={() => setDateF(EMPTY_DATE_FILTER)}>Limpar filtros</Button>
+        </div>
+      </Card>
       <Card className="p-5">
-        {data.length === 0 ? <EmptyState icon={<Bell className="h-6 w-6" />} title="Sem notificações" description="Você está em dia." /> : (
+        {filtered.length === 0 ? <EmptyState icon={<Bell className="h-6 w-6" />} title="Sem notificações" description="Você está em dia." /> : (
           <ul className="divide-y">
-            {data.map((n: any) => (
+            {filtered.map((n: any) => (
               <li key={n.id} className="flex gap-3 py-3">
                 <div className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.lida ? "bg-muted" : "bg-warning"}`} />
                 <div className="flex-1">
