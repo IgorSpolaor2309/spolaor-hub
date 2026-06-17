@@ -30,7 +30,9 @@ import { CLIENT_TYPES, labelOf } from "@/lib/sc-types";
 import { CnpjLookup } from "@/components/sc/CnpjLookup";
 import { mapReceitaToForm } from "@/lib/receita-map";
 import { AccountLookup, type AccountMatch } from "@/components/sc/AccountLookup";
-import { AlertTriangle } from "lucide-react";
+import { MultiSelect } from "@/components/sc/MultiSelect";
+import { AlertTriangle, UserCog } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/clientes")({
   component: ClientsPage,
