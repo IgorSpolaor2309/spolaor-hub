@@ -733,6 +733,8 @@ function ClientUsersInlineManager({ clientId }: { clientId: string }) {
   const qc = useQueryClient();
   const { data: links = [], isLoading, error: loadError } = useQuery({
     queryKey: ["client-users", clientId],
+    enabled: !!clientId,
+    retry: 1,
     queryFn: async () => {
       const { data: rows, error } = await supabase
         .from("client_users")
@@ -890,13 +892,24 @@ function ClientUsersInlineManager({ clientId }: { clientId: string }) {
 
 function ClientCollabsInlineManager({ clientId }: { clientId: string }) {
   const qc = useQueryClient();
-  const { data: current = [] } = useQuery({
+  const { data: current = [], error: currentError, isLoading: loadingCurrent } = useQuery({
     queryKey: ["client-collabs", clientId],
-    queryFn: async () => (await supabase.from("client_collaborators").select("collaborator_id, collaborators(nome, email)").eq("client_id", clientId)).data ?? [],
+    enabled: !!clientId,
+    retry: 1,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("client_collaborators").select("collaborator_id, collaborators(nome, email)").eq("client_id", clientId);
+      if (error) throw error;
+      return data ?? [];
+    },
   });
   const { data: allCollabs = [] } = useQuery({
     queryKey: ["all-collabs-select"],
-    queryFn: async () => (await supabase.from("collaborators").select("id, nome, email").eq("status", "active").order("nome")).data ?? [],
+    retry: 1,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("collaborators").select("id, nome, email").eq("status", "active").order("nome");
+      if (error) throw error;
+      return data ?? [];
+    },
   });
   const [cid, setCid] = useState("");
   const [search, setSearch] = useState("");
@@ -927,7 +940,11 @@ function ClientCollabsInlineManager({ clientId }: { clientId: string }) {
   const isEmpty = (current as any[]).length === 0;
   return (
     <div className="space-y-3 py-2">
-      {isEmpty && (
+      {currentError ? (
+        <p className="text-sm text-destructive">Falha ao carregar colaboradores responsáveis.</p>
+      ) : loadingCurrent ? (
+        <p className="text-sm text-muted-foreground">Carregando…</p>
+      ) : isEmpty && (
         <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div>Empresa sem colaborador responsável. Vincule pelo menos um para liberar a comunicação interna.</div>
