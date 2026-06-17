@@ -23,6 +23,7 @@ import { formatBR, isPastEndOfDay } from "@/lib/dates";
 
 export const Route = createFileRoute("/_authenticated/guias")({
   component: GuidesPage,
+  errorComponent: () => <EmptyState icon={<Receipt className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />,
 });
 
 const TIPOS = ["DAS", "DARF", "GPS/INSS", "FGTS", "ISS", "IRRF", "pró-labore", "parcelamento", "outro"];
@@ -309,7 +310,7 @@ function NewGuideDialog({ clients, userId, onDone }: { clients: any[]; userId: s
       <div className="grid gap-3">
         <div className="space-y-1.5">
           <Label>Cliente *</Label>
-          <Select value={f.client_id || undefined} onValueChange={(v) => setF({ ...f, client_id: v })}>
+          <Select value={f.client_id} onValueChange={(v) => setF({ ...f, client_id: v })}>
             <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
             <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.razao_social}</SelectItem>)}</SelectContent>
           </Select>
@@ -317,7 +318,7 @@ function NewGuideDialog({ clients, userId, onDone }: { clients: any[]; userId: s
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label>Tipo *</Label>
-            <Select value={f.tipo || undefined} onValueChange={(v) => setF({ ...f, tipo: v })}>
+            <Select value={f.tipo} onValueChange={(v) => setF({ ...f, tipo: v })}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>{TIPOS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
             </Select>
