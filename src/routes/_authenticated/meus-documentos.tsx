@@ -28,7 +28,11 @@ function MyDocsPage() {
   const { data: clients = [] } = useQuery({
     queryKey: ["my-clients-docs", userId],
     enabled: !!userId,
-    queryFn: async () => (await supabase.from("clients").select("id, razao_social").eq("owner_profile_id", userId!)).data ?? [],
+    // RLS multiempresa: cliente vê todas as empresas vinculadas.
+    queryFn: async () => (await supabase
+      .from("clients")
+      .select("id, razao_social, nome_fantasia, documento")
+      .order("razao_social")).data ?? [],
   });
 
   const { data: docs = [], refetch } = useQuery({
@@ -36,7 +40,11 @@ function MyDocsPage() {
     enabled: clients.length > 0,
     queryFn: async () => {
       const ids = clients.map((c) => c.id);
-      return (await supabase.from("documents").select("*").in("client_id", ids).order("created_at", { ascending: false })).data ?? [];
+      return (await supabase
+        .from("documents")
+        .select("*, clients(razao_social, nome_fantasia)")
+        .in("client_id", ids)
+        .order("created_at", { ascending: false })).data ?? [];
     },
   });
 

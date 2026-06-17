@@ -19,9 +19,15 @@ function HistoryPage() {
     queryKey: ["my-history", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const { data: cs } = await supabase.from("clients").select("id").eq("owner_profile_id", userId!);
+      // RLS multiempresa: lista todos os client_ids visíveis ao usuário.
+      const { data: cs } = await supabase.from("clients").select("id");
       const ids = (cs ?? []).map((c) => c.id); if (!ids.length) return [];
-      return (await supabase.from("timeline_events").select("*").in("client_id", ids).order("created_at", { ascending: false }).limit(100)).data ?? [];
+      return (await supabase
+        .from("timeline_events")
+        .select("*, clients(razao_social, nome_fantasia)")
+        .in("client_id", ids)
+        .order("created_at", { ascending: false })
+        .limit(100)).data ?? [];
     },
   });
   return (
@@ -35,7 +41,12 @@ function HistoryPage() {
                 <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-secondary" />
                 <div>
                   <div className="text-sm">{e.descricao}</div>
-                  <div className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(e.created_at), { addSuffix: true, locale: ptBR })}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {(e.clients?.nome_fantasia || e.clients?.razao_social) && (
+                      <>Empresa: {e.clients?.nome_fantasia || e.clients?.razao_social} · </>
+                    )}
+                    {formatDistanceToNow(new Date(e.created_at), { addSuffix: true, locale: ptBR })}
+                  </div>
                 </div>
               </li>
             ))}

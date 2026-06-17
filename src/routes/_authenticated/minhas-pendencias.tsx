@@ -24,9 +24,14 @@ function MyTasksPage() {
     queryKey: ["my-tasks", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const { data: cs } = await supabase.from("clients").select("id").eq("owner_profile_id", userId!);
+      // RLS já filtra por user_has_client_access (multiempresa).
+      const { data: cs } = await supabase.from("clients").select("id");
       const ids = (cs ?? []).map((c) => c.id); if (!ids.length) return [];
-      return (await supabase.from("pending_tasks").select("*").in("client_id", ids).order("prazo")).data ?? [];
+      return (await supabase
+        .from("pending_tasks")
+        .select("*, clients(razao_social, nome_fantasia, documento)")
+        .in("client_id", ids)
+        .order("prazo")).data ?? [];
     },
   });
   const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
@@ -48,6 +53,9 @@ function MyTasksPage() {
                 <div className="flex items-center justify-between gap-2">
                   <div className="font-medium">{t.titulo}</div>
                   <div className="flex items-center gap-2"><PriorityBadge value={t.prioridade} /><StatusBadge value={t.status} /></div>
+                </div>
+                <div className="mt-0.5 text-xs text-muted-foreground">
+                  Empresa: {t.clients?.nome_fantasia || t.clients?.razao_social || "—"}
                 </div>
                 {t.descricao && <div className="mt-1 text-sm text-muted-foreground">{t.descricao}</div>}
                 {t.prazo && <div className="mt-1 text-xs text-muted-foreground">Prazo: {formatBR(t.prazo)}</div>}
