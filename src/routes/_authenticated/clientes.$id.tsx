@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
-import { Plus, Upload, ArrowLeft, Pencil, Inbox, Receipt, CalendarClock, KanbanSquare, MessagesSquare } from "lucide-react";
+import { Plus, Upload, ArrowLeft, Pencil, Inbox, Receipt, CalendarClock, KanbanSquare, MessagesSquare, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -94,6 +94,13 @@ function ClientDetail() {
             <StatusBadge value={client.status} />
             {role !== "client" && userId && (
               <MonthStatusSelector clientId={client.id} userId={userId} />
+            )}
+            {role !== "client" && (
+              <Button asChild variant="outline" size="sm">
+                <Link to="/interacoes" search={{ client: client.id }}>
+                  <MessageSquare className="mr-2 h-4 w-4" /> Abrir conversa
+                </Link>
+              </Button>
             )}
             {role === "admin" && (
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>

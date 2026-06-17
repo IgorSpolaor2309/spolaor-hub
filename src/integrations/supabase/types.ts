@@ -14,6 +14,99 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_conversations: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          last_message_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_conversations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          attachment_name: string | null
+          attachment_path: string | null
+          attachment_size: number | null
+          body: string | null
+          client_id: string
+          conversation_id: string
+          created_at: string
+          id: string
+          sender_profile_id: string | null
+          sender_role: string
+        }
+        Insert: {
+          attachment_name?: string | null
+          attachment_path?: string | null
+          attachment_size?: number | null
+          body?: string | null
+          client_id: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          sender_profile_id?: string | null
+          sender_role: string
+        }
+        Update: {
+          attachment_name?: string | null
+          attachment_path?: string | null
+          attachment_size?: number | null
+          body?: string | null
+          client_id?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          sender_profile_id?: string | null
+          sender_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_sender_profile_id_fkey"
+            columns: ["sender_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_collaborators: {
         Row: {
           client_id: string
@@ -544,6 +637,7 @@ export type Database = {
           conteudo: string
           created_at: string
           created_by: string | null
+          escopo: string
           id: string
           titulo: string
           updated_at: string
@@ -555,6 +649,7 @@ export type Database = {
           conteudo: string
           created_at?: string
           created_by?: string | null
+          escopo?: string
           id?: string
           titulo: string
           updated_at?: string
@@ -566,6 +661,7 @@ export type Database = {
           conteudo?: string
           created_at?: string
           created_by?: string | null
+          escopo?: string
           id?: string
           titulo?: string
           updated_at?: string
@@ -965,6 +1061,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      client_staff_user_ids: { Args: { _client_id: string }; Returns: string[] }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -974,6 +1071,16 @@ export type Database = {
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       mark_password_changed: { Args: never; Returns: undefined }
+      notify_user: {
+        Args: {
+          _link: string
+          _mensagem: string
+          _tipo: string
+          _titulo: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       user_has_client_access: {
         Args: { _client_id: string; _user_id: string }
         Returns: boolean
