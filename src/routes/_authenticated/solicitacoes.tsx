@@ -93,11 +93,14 @@ function RequestsPage() {
           isStaff && (
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild><Button><Plus className="mr-2 h-4 w-4" /> Nova solicitação</Button></DialogTrigger>
-              <NewRequestDialog
-                clients={clients as any[]}
-                onDone={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["doc-requests"] }); }}
-              />
+              {open && (
+                <NewRequestDialog
+                  clients={clients as any[]}
+                  onDone={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["doc-requests"] }); }}
+                />
+              )}
             </Dialog>
+
           )
         }
       />
