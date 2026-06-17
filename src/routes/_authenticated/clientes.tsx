@@ -1029,7 +1029,75 @@ function InactivateClientButton({ client }: { client: any }) {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={() => mut.mutate()}>Remover cliente</AlertDialogAction>
+          <AlertDialogAction onClick={() => mut.mutate()}>Desativar empresa</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function DeleteClientButton({ client }: { client: any }) {
+  const qc = useQueryClient();
+  const expected = (client.razao_social ?? client.nome_fantasia ?? "").trim();
+  const [open, setOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+
+  const mut = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("admin_soft_delete_client" as any, { _client_id: client.id } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Empresa excluída. Histórico preservado para auditoria.");
+      setOpen(false);
+      setConfirmText("");
+      qc.invalidateQueries({ queryKey: ["clients"] });
+    },
+    onError: (e: any) =>
+      toast.error(
+        /row-level security|permission|administradores/i.test(e?.message ?? "")
+          ? "Apenas administradores podem excluir empresas."
+          : (e?.message ?? "Não foi possível excluir a empresa."),
+      ),
+  });
+
+  const canConfirm = confirmText.trim().toLowerCase() === expected.toLowerCase() && expected.length > 0;
+
+  return (
+    <AlertDialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setConfirmText(""); }}>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label="Excluir empresa">
+          <Trash2 className="h-4 w-4 text-destructive" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir empresa</AlertDialogTitle>
+          <AlertDialogDescription>
+            Tem certeza que deseja excluir esta empresa? Esta ação pode remover ou afetar
+            vínculos, documentos, solicitações, chats, pendências e histórico relacionados a ela.
+            O histórico não será apagado, mas a empresa deixará de aparecer para clientes e colaboradores.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="space-y-2 py-2">
+          <Label className="text-xs">
+            Para confirmar, digite o nome da empresa: <span className="font-semibold">{expected}</span>
+          </Label>
+          <Input
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            placeholder={expected}
+            autoComplete="off"
+          />
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={!canConfirm || mut.isPending}
+            onClick={(e) => { e.preventDefault(); if (canConfirm) mut.mutate(); }}
+          >
+            {mut.isPending ? "Excluindo…" : "Excluir empresa"}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
