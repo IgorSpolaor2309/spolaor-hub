@@ -210,8 +210,8 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
         </div>
 
         <div className="flex shrink-0 flex-col items-end gap-2">
-          {item.document_id && (
-            <Button variant="ghost" size="sm" onClick={downloadAttached}>Baixar anexo</Button>
+          {item.documents?.storage_path && (
+            <AttachmentButton storagePath={item.documents.storage_path} label="Abrir anexo" />
           )}
           {isStaff ? (
             <Select value={item.status} onValueChange={(v) => updateStatus.mutate(v)}>
