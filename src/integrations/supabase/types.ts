@@ -1155,10 +1155,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      admin_create_client_with_user: {
-        Args: { _papel?: string; _payload: Json; _user_id: string }
-        Returns: string
-      }
+      admin_create_client_with_user:
+        | {
+            Args: { _papel?: string; _payload: Json; _user_id: string }
+            Returns: string
+          }
+        | {
+            Args: {
+              _collaborator_ids?: string[]
+              _papel?: string
+              _payload: Json
+              _user_id: string
+            }
+            Returns: string
+          }
       admin_find_profile_by_email: {
         Args: { _email: string }
         Returns: {
