@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/sc/EmptyState";
+import { AttachmentButton } from "@/components/sc/AttachmentButton";
 import { useState, useMemo } from "react";
 import { Plus, Upload, FileText } from "lucide-react";
 import { toast } from "sonner";
@@ -182,13 +183,6 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
     } finally { e.target.value = ""; }
   }
 
-  async function downloadAttached() {
-    if (!item.documents?.storage_path) return;
-    const { data, error } = await supabase.storage.from("documents").createSignedUrl(item.documents.storage_path, 60);
-    if (error) return toast.error(error.message);
-    const a = document.createElement("a"); a.href = data.signedUrl; a.download = item.documents.nome ?? "documento"; a.click();
-  }
-
   const prazoVencido = !!item.prazo && isPastEndOfDay(item.prazo) && !["aprovado", "cancelado"].includes(item.status);
 
   return (
@@ -216,8 +210,8 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
         </div>
 
         <div className="flex shrink-0 flex-col items-end gap-2">
-          {item.document_id && (
-            <Button variant="ghost" size="sm" onClick={downloadAttached}>Baixar anexo</Button>
+          {item.documents?.storage_path && (
+            <AttachmentButton storagePath={item.documents.storage_path} label="Abrir anexo" />
           )}
           {isStaff ? (
             <Select value={item.status} onValueChange={(v) => updateStatus.mutate(v)}>

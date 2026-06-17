@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/sc/EmptyState";
+import { AttachmentButton } from "@/components/sc/AttachmentButton";
 import { useMemo, useState } from "react";
 import { Plus, Upload, Receipt } from "lucide-react";
 import { toast } from "sonner";
@@ -145,12 +146,6 @@ function GuideRow({ item, isStaff, onChange }: any) {
     onError: (e: any) => toast.error(e.message),
   });
 
-  async function download(path: string | null, nome: string) {
-    if (!path) return;
-    const { data, error } = await supabase.storage.from("documents").createSignedUrl(path, 60);
-    if (error) return toast.error(error.message);
-    const a = document.createElement("a"); a.href = data.signedUrl; a.download = nome; a.click();
-  }
 
   async function uploadProof(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]; if (!file) return;
@@ -194,10 +189,10 @@ function GuideRow({ item, isStaff, onChange }: any) {
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
           {item.storage_path && (
-            <Button variant="ghost" size="sm" onClick={() => download(item.storage_path, item.nome_arquivo ?? "guia")}>Baixar guia</Button>
+            <AttachmentButton storagePath={item.storage_path} label="Abrir guia" />
           )}
           {item.comprovante_path && (
-            <Button variant="ghost" size="sm" onClick={() => download(item.comprovante_path, "comprovante")}>Baixar comprovante</Button>
+            <AttachmentButton storagePath={item.comprovante_path} label="Abrir comprovante" variant="outline" />
           )}
           {isStaff ? (
             <Select value={item.status} onValueChange={(v) => updateStatus.mutate(v)}>

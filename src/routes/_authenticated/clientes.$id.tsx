@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge, PriorityBadge } from "@/components/sc/StatusBadge";
 import { EmptyState } from "@/components/sc/EmptyState";
+import { AttachmentButton } from "@/components/sc/AttachmentButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -331,12 +332,8 @@ function DocsTab({ clientId, docs, userId, onChange }: any) {
     finally { setUploading(false); e.target.value = ""; }
   }
 
-  async function download(path: string, nome: string) {
-    const { data, error } = await supabase.storage.from("documents").createSignedUrl(path, 60);
-    if (error) return toast.error(error.message);
-    const a = document.createElement("a");
-    a.href = data.signedUrl; a.download = nome; a.click();
-  }
+
+
 
   return (
     <Card className="p-5">
@@ -390,7 +387,7 @@ function DocsTab({ clientId, docs, userId, onChange }: any) {
                 <td>{labelOf(DOC_TYPES, d.tipo)}</td>
                 <td>{d.competencia ?? "—"}</td>
                 <td><StatusBadge value={d.status} /></td>
-                <td className="text-right"><Button variant="ghost" size="sm" onClick={() => download(d.storage_path, d.nome)}>Baixar</Button></td>
+                <td className="text-right"><AttachmentButton storagePath={d.storage_path} label="Abrir" /></td>
               </tr>
             ))}
           </tbody>

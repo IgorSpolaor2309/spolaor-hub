@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmptyState } from "@/components/sc/EmptyState";
+import { AttachmentButton } from "@/components/sc/AttachmentButton";
 import { useMemo, useState } from "react";
 import { CalendarClock, Pencil } from "lucide-react";
 import { toast } from "sonner";
@@ -70,11 +71,8 @@ function ValidadesPage() {
       && (fStatus === "all" || st === fStatus);
   }), [docs, fClient, fCat, fStatus]);
 
-  async function download(path: string, nome: string) {
-    const { data, error } = await supabase.storage.from("documents").createSignedUrl(path, 60);
-    if (error) return toast.error(error.message);
-    const a = document.createElement("a"); a.href = data.signedUrl; a.download = nome; a.click();
-  }
+
+
 
   return (
     <div>
@@ -149,7 +147,7 @@ function ValidadesPage() {
                         <td className="py-2 pr-4">{formatBR(d.data_validade)}</td>
                         <td className="py-2 pr-4"><Badge className={st.tone}>{st.label}</Badge></td>
                         <td className="py-2 text-right">
-                          <Button variant="ghost" size="sm" onClick={() => download(d.storage_path, d.nome)}>Baixar</Button>
+                          <AttachmentButton storagePath={d.storage_path} label="Abrir" />
                           {isStaff && (
                             <Button variant="ghost" size="icon" onClick={() => setEditing(d)} aria-label="Editar validade"><Pencil className="h-4 w-4" /></Button>
                           )}
