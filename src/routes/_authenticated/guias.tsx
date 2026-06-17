@@ -146,12 +146,6 @@ function GuideRow({ item, isStaff, onChange }: any) {
     onError: (e: any) => toast.error(e.message),
   });
 
-  async function download(path: string | null, nome: string) {
-    if (!path) return;
-    const { data, error } = await supabase.storage.from("documents").createSignedUrl(path, 60);
-    if (error) return toast.error(error.message);
-    const a = document.createElement("a"); a.href = data.signedUrl; a.download = nome; a.click();
-  }
 
   async function uploadProof(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]; if (!file) return;
