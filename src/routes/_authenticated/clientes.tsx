@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { formatBR } from "@/lib/dates";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/sc/PageHeader";
@@ -107,7 +108,7 @@ function ClientsPage() {
                     </td>
                     <td className="py-3 pr-4">{labelOf(CLIENT_TYPES, c.tipo)}</td>
                     <td className="py-3 pr-4 font-mono text-xs">{c.documento ?? "—"}</td>
-                    <td className="py-3 pr-4">{c.data_entrada ? new Date(c.data_entrada).toLocaleDateString("pt-BR") : "—"}</td>
+                    <td className="py-3 pr-4">{formatBR(c.data_entrada)}</td>
                     <td className="py-3 pr-4"><StatusBadge value={c.status} /></td>
                     {role === "admin" && (
                       <td>
