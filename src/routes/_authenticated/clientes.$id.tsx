@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
-import { Plus, Upload, ArrowLeft, Pencil, Inbox, Receipt, CalendarClock, KanbanSquare, MessagesSquare } from "lucide-react";
+import { Plus, Upload, ArrowLeft, Pencil, Inbox, Receipt, CalendarClock, KanbanSquare, MessagesSquare, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 
 import { useCurrentUser } from "@/hooks/use-current-user";
