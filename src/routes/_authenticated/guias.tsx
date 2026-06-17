@@ -76,7 +76,6 @@ function GuidesPage() {
     },
   });
   const loadError = clientsError || itemsError;
-  if (!ready) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
   const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
   const filtered = useMemo(() => (items as any[]).filter((g) =>
@@ -89,6 +88,8 @@ function GuidesPage() {
   const clearFilters = () => {
     setFClient("all"); setFStatus("all"); setFTipo("all"); setFComp(""); setDateF(EMPTY_DATE_FILTER);
   };
+
+  if (!ready) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
   return (
     <div>
