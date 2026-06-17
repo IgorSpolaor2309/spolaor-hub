@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmptyState } from "@/components/sc/EmptyState";
+import { AttachmentButton } from "@/components/sc/AttachmentButton";
 import { useMemo, useState } from "react";
 import { CalendarClock, Pencil } from "lucide-react";
 import { toast } from "sonner";
