@@ -91,7 +91,6 @@ function RequestsPage() {
     },
   });
   const loadError = clientsError || itemsError;
-  if (!ready) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
   const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
   const filtered = useMemo(() => {
@@ -106,6 +105,8 @@ function RequestsPage() {
   const clearFilters = () => {
     setFClient("all"); setFStatus("all"); setFCategoria("all"); setFComp(""); setDateF(EMPTY_DATE_FILTER);
   };
+
+  if (!ready) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
   return (
     <div>
