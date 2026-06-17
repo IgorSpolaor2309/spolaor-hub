@@ -640,63 +640,306 @@ export function EditClientDialog({ client, onDone }: { client: any; onDone: () =
   });
 
   return (
-    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+    <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
       <DialogHeader><DialogTitle>Editar cliente</DialogTitle></DialogHeader>
-      <div className="space-y-4">
-        <section className="space-y-2">
-          <h3 className="text-sm font-semibold">Atualizar dados por CNPJ</h3>
-          <CnpjLookup
-            value={form.cnpj}
-            onChange={(v) => setForm({ ...form, cnpj: v })}
-            buttonLabel="Atualizar dados pelo CNPJ"
-            helperText="Consulte novamente a Minha Receita para atualizar os campos públicos. Nada é salvo até você clicar em Salvar alterações."
-            onResult={(r) => {
-              const m = mapReceitaToForm(r);
-              setForm({ ...form, ...m, ultima_consulta_receita: new Date().toISOString() });
-            }}
-          />
-        </section>
+      <Tabs defaultValue="dados">
+        <TabsList>
+          <TabsTrigger value="dados">Dados da empresa</TabsTrigger>
+          <TabsTrigger value="contas">Contas vinculadas</TabsTrigger>
+          <TabsTrigger value="colabs">Colaboradores encarregados</TabsTrigger>
+        </TabsList>
 
-        <section className="space-y-3">
-          <h3 className="text-sm font-semibold">Dados do cliente</h3>
-          <div className="grid gap-4 sm:grid-cols-2">
-        <ReceitaFields form={form} setForm={setForm} />
-        <div className="space-y-1.5"><Label>E-mail principal</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-        <div className="space-y-1.5"><Label>Telefone / WhatsApp</Label><Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} /></div>
-        <div className="space-y-1.5">
-          <Label>Tipo de cliente</Label>
-          <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v })}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{CLIENT_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
-          </Select>
+        <TabsContent value="dados">
+          <div className="space-y-4">
+            <section className="space-y-2">
+              <h3 className="text-sm font-semibold">Atualizar dados por CNPJ</h3>
+              <CnpjLookup
+                value={form.cnpj}
+                onChange={(v) => setForm({ ...form, cnpj: v })}
+                buttonLabel="Atualizar dados pelo CNPJ"
+                helperText="Consulte novamente a Minha Receita. Nada é salvo até você clicar em Salvar alterações."
+                onResult={(r) => {
+                  const m = mapReceitaToForm(r);
+                  setForm({ ...form, ...m, ultima_consulta_receita: new Date().toISOString() });
+                }}
+              />
+            </section>
+
+            <section className="space-y-3">
+              <h3 className="text-sm font-semibold">Dados do cliente</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <ReceitaFields form={form} setForm={setForm} />
+                <div className="space-y-1.5"><Label>E-mail principal</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+                <div className="space-y-1.5"><Label>Telefone / WhatsApp</Label><Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} /></div>
+                <div className="space-y-1.5">
+                  <Label>Tipo de cliente</Label>
+                  <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{CLIENT_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Data de entrada</Label>
+                  <Input type="date" value={form.data_entrada ?? ""} onChange={(e) => setForm({ ...form, data_entrada: e.target.value })} />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label>Status</Label>
+                  <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Ativo</SelectItem>
+                      <SelectItem value="inactive">Inativo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label>Observações internas</Label>
+                  <Textarea rows={3} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
+                </div>
+              </div>
+            </section>
+          </div>
+          <DialogFooter className="mt-4">
+            <Button onClick={() => mut.mutate()} disabled={!form.razao_social.trim() || mut.isPending}>
+              {mut.isPending ? "Salvando…" : "Salvar alterações"}
+            </Button>
+          </DialogFooter>
+        </TabsContent>
+
+        <TabsContent value="contas">
+          <ClientUsersInlineManager clientId={client.id} />
+        </TabsContent>
+
+        <TabsContent value="colabs">
+          <ClientCollabsInlineManager clientId={client.id} />
+        </TabsContent>
+      </Tabs>
+    </DialogContent>
+  );
+}
+
+/* ---------- Inline managers reused by EditClientDialog ---------- */
+
+function ClientUsersInlineManager({ clientId }: { clientId: string }) {
+  const qc = useQueryClient();
+  const { data: links = [], isLoading } = useQuery({
+    queryKey: ["client-users", clientId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("client_users")
+        .select("id, user_id, papel, ativo, created_at, profiles:user_id(full_name, email)")
+        .eq("client_id", clientId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const [email, setEmail] = useState("");
+  const [papel, setPapel] = useState("responsavel");
+
+  const add = useMutation({
+    mutationFn: async () => {
+      const e = email.trim().toLowerCase();
+      if (!e) throw new Error("Informe o e-mail.");
+      const { data: prof, error: pErr } = await supabase
+        .from("profiles").select("id, email").ilike("email", e).maybeSingle();
+      if (pErr) throw pErr;
+      if (!prof?.id) throw new Error("Nenhum usuário encontrado com este e-mail. Crie a conta primeiro em Configurações.");
+      const { error } = await supabase
+        .from("client_users")
+        .insert({ client_id: clientId, user_id: prof.id, papel, ativo: true });
+      if (error) {
+        if (error.code === "23505") throw new Error("Este usuário já está vinculado a esta empresa.");
+        throw error;
+      }
+    },
+    onSuccess: () => { toast.success("Usuário vinculado."); setEmail(""); qc.invalidateQueries({ queryKey: ["client-users", clientId] }); qc.invalidateQueries({ queryKey: ["clients"] }); },
+    onError: (e: any) => toast.error(e?.message ?? "Falha ao vincular."),
+  });
+  const toggle = useMutation({
+    mutationFn: async (row: any) => {
+      const { error } = await supabase.from("client_users").update({ ativo: !row.ativo }).eq("id", row.id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["client-users", clientId] }),
+  });
+  const remove = useMutation({
+    mutationFn: async (row: any) => {
+      const { error } = await supabase.from("client_users").delete().eq("id", row.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Vínculo removido."); qc.invalidateQueries({ queryKey: ["client-users", clientId] }); qc.invalidateQueries({ queryKey: ["clients"] }); },
+  });
+
+  const activeCount = (links as any[]).filter((l) => l.ativo).length;
+
+  return (
+    <div className="space-y-3 py-2">
+      {activeCount === 0 && (
+        <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <div>Empresa sem conta cliente ativa vinculada. Vincule pelo menos uma conta para liberar a comunicação.</div>
         </div>
-        <div className="space-y-1.5">
-          <Label>Data de entrada</Label>
-          <Input type="date" value={form.data_entrada ?? ""} onChange={(e) => setForm({ ...form, data_entrada: e.target.value })} />
+      )}
+      <p className="text-xs text-muted-foreground">
+        Uma mesma conta cliente pode estar vinculada a várias empresas. A conta precisa existir em Configurações antes de ser vinculada aqui.
+      </p>
+      <div className="flex flex-wrap items-end gap-3 rounded-md border bg-muted/30 p-3">
+        <div className="flex-1 min-w-[220px]">
+          <Label className="text-xs">E-mail da conta cliente</Label>
+          <Input type="email" placeholder="cliente@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label>Status</Label>
-          <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+        <div>
+          <Label className="text-xs">Papel</Label>
+          <Select value={papel} onValueChange={setPapel}>
+            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="active">Ativo</SelectItem>
-              <SelectItem value="inactive">Inativo</SelectItem>
+              <SelectItem value="responsavel">Responsável</SelectItem>
+              <SelectItem value="financeiro">Financeiro</SelectItem>
+              <SelectItem value="socio">Sócio</SelectItem>
+              <SelectItem value="operacional">Operacional</SelectItem>
+              <SelectItem value="outro">Outro</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label>Observações internas</Label>
-          <Textarea rows={3} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
-        </div>
-          </div>
-        </section>
-      </div>
-      <DialogFooter>
-        <Button onClick={() => mut.mutate()} disabled={!form.razao_social.trim() || mut.isPending}>
-          {mut.isPending ? "Salvando…" : "Salvar alterações"}
+        <Button onClick={() => add.mutate()} disabled={!email.trim() || add.isPending}>
+          {add.isPending ? "Vinculando…" : "Vincular"}
         </Button>
-      </DialogFooter>
-    </DialogContent>
+      </div>
+
+      {isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p> : (links as any[]).length === 0 ? (
+        <p className="text-sm text-muted-foreground">Nenhuma conta cliente vinculada.</p>
+      ) : (
+        <ul className="divide-y rounded-md border">
+          {(links as any[]).map((l) => (
+            <li key={l.id} className="flex items-center justify-between px-3 py-2">
+              <div className="min-w-0">
+                <div className="text-sm font-medium">{l.profiles?.full_name || l.profiles?.email || "—"}</div>
+                <div className="text-xs text-muted-foreground">{l.profiles?.email}{l.papel ? ` · ${l.papel}` : ""}{!l.ativo ? " · inativo" : ""}</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => toggle.mutate(l)} disabled={toggle.isPending}>
+                  {l.ativo ? "Desativar" : "Reativar"}
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="sm">Remover</Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Remover vínculo?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        A conta {l.profiles?.email ?? ""} deixará de acessar esta empresa.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => remove.mutate(l)}>Remover</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function ClientCollabsInlineManager({ clientId }: { clientId: string }) {
+  const qc = useQueryClient();
+  const { data: current = [] } = useQuery({
+    queryKey: ["client-collabs", clientId],
+    queryFn: async () => (await supabase.from("client_collaborators").select("collaborator_id, collaborators(nome, email)").eq("client_id", clientId)).data ?? [],
+  });
+  const { data: allCollabs = [] } = useQuery({
+    queryKey: ["all-collabs-select"],
+    queryFn: async () => (await supabase.from("collaborators").select("id, nome, email").eq("status", "active").order("nome")).data ?? [],
+  });
+  const [cid, setCid] = useState("");
+  const [search, setSearch] = useState("");
+  const linkedIds = new Set((current as any[]).map((c) => c.collaborator_id));
+  const available = (allCollabs as any[]).filter((c) => {
+    if (linkedIds.has(c.id)) return false;
+    if (!search.trim()) return true;
+    const s = search.trim().toLowerCase();
+    return (c.nome ?? "").toLowerCase().includes(s) || (c.email ?? "").toLowerCase().includes(s);
+  });
+
+  const add = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("client_collaborators").insert({ client_id: clientId, collaborator_id: cid });
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Colaborador vinculado."); setCid(""); setSearch(""); qc.invalidateQueries({ queryKey: ["client-collabs", clientId] }); qc.invalidateQueries({ queryKey: ["clients"] }); },
+    onError: (e: any) => { if (e?.code === "23505") return toast.error("Já vinculado."); toast.error(e?.message ?? "Falha"); },
+  });
+  const del = useMutation({
+    mutationFn: async (collaboratorId: string) => {
+      const { error } = await supabase.from("client_collaborators").delete().eq("client_id", clientId).eq("collaborator_id", collaboratorId);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Removido."); qc.invalidateQueries({ queryKey: ["client-collabs", clientId] }); qc.invalidateQueries({ queryKey: ["clients"] }); },
+  });
+
+  const isEmpty = (current as any[]).length === 0;
+  return (
+    <div className="space-y-3 py-2">
+      {isEmpty && (
+        <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <div>Empresa sem colaborador responsável. Vincule pelo menos um para liberar a comunicação interna.</div>
+        </div>
+      )}
+      <div className="grid gap-3 rounded-md border bg-muted/30 p-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+        <div>
+          <Label className="text-xs">Buscar colaborador</Label>
+          <Input placeholder="Nome ou e-mail…" value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+        <div>
+          <Label className="text-xs">Selecionar</Label>
+          <Select value={cid} onValueChange={setCid}>
+            <SelectTrigger><SelectValue placeholder={available.length === 0 ? "Nenhum disponível" : "Selecione"} /></SelectTrigger>
+            <SelectContent>
+              {available.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.nome}{c.email ? ` — ${c.email}` : ""}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button onClick={() => add.mutate()} disabled={!cid || add.isPending}>
+          {add.isPending ? "…" : "Vincular"}
+        </Button>
+      </div>
+      {isEmpty ? <p className="text-sm text-muted-foreground">Nenhum colaborador vinculado.</p> : (
+        <ul className="divide-y rounded-md border">
+          {(current as any[]).map((c) => (
+            <li key={c.collaborator_id} className="flex items-center justify-between px-3 py-2">
+              <div>
+                <div className="text-sm font-medium">{c.collaborators?.nome ?? "—"}</div>
+                <div className="text-xs text-muted-foreground">{c.collaborators?.email ?? ""}</div>
+              </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="sm">Remover</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Remover colaborador?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {c.collaborators?.nome ?? "Este colaborador"} deixará de acessar esta empresa.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => del.mutate(c.collaborator_id)}>Remover</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
