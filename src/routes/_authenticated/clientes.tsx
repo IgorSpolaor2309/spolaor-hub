@@ -986,14 +986,14 @@ function InactivateClientButton({ client }: { client: any }) {
         data: { client_id: client.id, status: isInactive ? "active" : "inactive" },
       }),
     onSuccess: () => {
-      toast.success(isInactive ? "Cliente reativado." : "Cliente removido com sucesso.");
+      toast.success(isInactive ? "Empresa reativada." : "Empresa desativada com sucesso.");
       qc.invalidateQueries({ queryKey: ["clients"] });
     },
     onError: (e: any) =>
       toast.error(
         /row-level security|permission/i.test(e?.message ?? "")
           ? "Você não tem permissão para realizar esta ação."
-          : (e?.message ?? "Não foi possível atualizar o cliente."),
+          : (e?.message ?? "Não foi possível atualizar a empresa."),
       ),
   });
 
