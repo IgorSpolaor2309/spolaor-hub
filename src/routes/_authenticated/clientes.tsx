@@ -202,7 +202,7 @@ function ClientsPage() {
           <p className="text-sm text-muted-foreground">Carregando…</p>
         ) : filtered.length === 0 ? (
           <EmptyState
-            icon={<Users className="h-6 w-6" />}
+            icon={<Building2 className="h-6 w-6" />}
             title="Nenhum cliente encontrado"
             description={role === "admin" ? "Crie o primeiro cliente para começar." : "Nenhum cliente vinculado a você."}
           />
