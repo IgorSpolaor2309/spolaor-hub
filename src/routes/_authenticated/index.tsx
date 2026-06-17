@@ -83,8 +83,9 @@ function Dashboard() {
    ADMIN
    ============================================================ */
 function AdminDashboard({ name }: { name: string }) {
-  const { data } = useQuery({
+  const { data, error } = useQuery({
     queryKey: ["dash-admin-v2"],
+    retry: 1,
     queryFn: async () => {
       const t = today();
       const in7 = inDays(7);
@@ -122,6 +123,8 @@ function AdminDashboard({ name }: { name: string }) {
         supabase.from("documents").select("client_id").gte("created_at", monthStart),
         supabase.from("client_month_status").select("client_id, status, competencia").eq("competencia", competencia),
       ]);
+      const failures = [clients, collabs, tasksOverdue, tasksToday, reqPending, docsAnalysis, guidesSoon, guidesOverdue, certsSoon, recentEvents, unassignedClients, collabTaskCounts, clientsActiveForMonth, docsThisMonth, monthStatuses].filter((r) => r.error);
+      if (failures.length) console.warn("[dashboard-admin] consultas parciais falharam", failures.map((r) => r.error?.message));
 
       const clientsNoCollab = (unassignedClients.data ?? []).filter((c: any) => !(c.client_collaborators ?? []).length).slice(0, 8);
 
@@ -166,6 +169,7 @@ function AdminDashboard({ name }: { name: string }) {
   return (
     <div>
       <PageHeader title={`Bem-vindo, ${name?.split(" ")[0] || "administrador"}`} description="Visão operacional da SC Central." />
+      {error && <Card className="mb-4 p-4 text-sm text-muted-foreground">Não foi possível carregar todos os dados. Tente novamente.</Card>}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={AlertTriangle} label="Pendências vencidas" value={data?.tasksOverdue ?? "—"} accent="bg-destructive/10 text-destructive" to="/pendencias" />
@@ -282,10 +286,13 @@ function AdminDashboard({ name }: { name: string }) {
    COLABORADOR
    ============================================================ */
 function CollabDashboard({ name, userId }: { name: string; userId: string }) {
-  const { data } = useQuery({
+  const { data, error } = useQuery({
     queryKey: ["dash-collab-v2", userId],
+    enabled: !!userId,
+    retry: 1,
     queryFn: async () => {
-      const { data: collab } = await supabase.from("collaborators").select("id").eq("user_id", userId).maybeSingle();
+      const { data: collab, error: collabErr } = await supabase.from("collaborators").select("id").eq("user_id", userId).maybeSingle();
+      if (collabErr) throw collabErr;
       const { data: links } = collab?.id
         ? await supabase.from("client_collaborators").select("client_id").eq("collaborator_id", collab.id)
         : { data: [] as { client_id: string }[] };
@@ -303,6 +310,8 @@ function CollabDashboard({ name, userId }: { name: string; userId: string }) {
         supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("client_id", ids).in("status", ["pendente", "reenviar"]),
         supabase.from("timeline_events").select("id, descricao, created_at, clients(razao_social)").in("client_id", ids).order("created_at", { ascending: false }).limit(6),
       ]);
+      const failures = [tasksOverdue, tasksToday, docsAnalysis, awaitingReturn, guidesSoon, reqPending, events].filter((r) => r.error);
+      if (failures.length) console.warn("[dashboard-collab] consultas parciais falharam", failures.map((r) => r.error?.message));
       return {
         clients: ids.length,
         tasksOverdue: tasksOverdue.count ?? 0, tasksToday: tasksToday.count ?? 0,
@@ -316,6 +325,7 @@ function CollabDashboard({ name, userId }: { name: string; userId: string }) {
   return (
     <div>
       <PageHeader title={`Olá, ${name?.split(" ")[0] || "colaborador"}`} description="Operação dos seus clientes vinculados." />
+      {error && <Card className="mb-4 p-4 text-sm text-muted-foreground">Não foi possível carregar todos os dados. Tente novamente.</Card>}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={AlertTriangle} label="Minhas vencidas" value={data?.tasksOverdue ?? "—"} accent="bg-destructive/10 text-destructive" to="/pendencias" />
         <StatCard icon={Clock} label="Pendências de hoje" value={data?.tasksToday ?? "—"} accent="bg-amber-100 text-amber-800" to="/pendencias" />
@@ -358,13 +368,19 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
   const competencia = currentCompetencia();
 
   // Lista as empresas/CNPJs do cliente (RLS filtra; suporta multiempresa).
-  const { data: myCompanies = [] } = useQuery({
+  const { data: myCompanies = [], error: companiesError } = useQuery({
     queryKey: ["dash-client-companies", userId],
+    enabled: !!userId,
+    retry: 1,
     queryFn: async () =>
-      (await supabase
+      {
+      const { data, error } = await supabase
         .from("clients")
         .select("id, razao_social, nome_fantasia, documento")
-        .order("razao_social")).data ?? [],
+        .order("razao_social");
+      if (error) throw error;
+      return data ?? [];
+      },
   });
 
   // "" = todas; senão um id específico.
@@ -380,9 +396,10 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
   const scopedIds = selected && allIds.includes(selected) ? [selected] : allIds;
   const isAll = !selected || scopedIds.length !== 1;
 
-  const { data } = useQuery({
+  const { data, error: dataError } = useQuery({
     queryKey: ["dash-client-v3", userId, competencia, scopedIds.join(",")],
     enabled: scopedIds.length > 0,
+    retry: 1,
     queryFn: async () => {
       const ids = scopedIds;
       const primary = myCompanies.find((c: any) => c.id === ids[0]) ?? myCompanies[0] ?? null;
@@ -396,6 +413,8 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
         !isAll && primary ? supabase.from("client_month_status").select("status").eq("client_id", primary.id).eq("competencia", competencia).maybeSingle() : Promise.resolve({ data: null }),
         supabase.from("interactions").select("id, tipo, descricao, created_at, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(5),
       ]);
+      const failures = [requested, sent, openTasks, guidesAvail, guidesSoon, monthStatus, events].filter((r: any) => r.error);
+      if (failures.length) console.warn("[dashboard-client] consultas parciais falharam", failures.map((r: any) => r.error?.message));
       const reqs = requested.data ?? [];
       const reqPending = reqs.filter((r: any) => ["pendente", "reenviar"].includes(r.status));
       const reqSent = reqs.filter((r: any) => ["enviado pelo cliente", "em análise", "aprovado"].includes(r.status));
@@ -412,6 +431,7 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
     },
   });
 
+  if (companiesError) return <div className="text-sm text-muted-foreground">Não foi possível carregar os dados. Tente novamente.</div>;
   if (myCompanies.length === 0) return <div className="text-sm text-muted-foreground">Sem cliente vinculado.</div>;
   if (!data) return <div className="text-sm text-muted-foreground">Carregando…</div>;
 
@@ -421,6 +441,7 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
   return (
     <div>
       <PageHeader title={`Olá, ${name?.split(" ")[0] || "cliente"}`} description={`Status do mês ${competencia}`} />
+      {dataError && <Card className="mb-4 p-4 text-sm text-muted-foreground">Não foi possível carregar todos os dados. Tente novamente.</Card>}
 
       {myCompanies.length > 1 && (
         <Card className="mb-4 flex flex-wrap items-center gap-3 p-4">
