@@ -111,13 +111,13 @@ function ClientsPage() {
   return (
     <div>
       <PageHeader
-        title={role === "admin" ? "Clientes" : "Meus clientes"}
-        description={role === "admin" ? "Cadastro e gestão de todos os clientes." : "Clientes vinculados ao seu atendimento."}
+        title={role === "admin" ? "Empresas cadastradas" : "Minhas empresas"}
+        description={role === "admin" ? "Cadastro e gestão de todas as empresas." : "Empresas vinculadas ao seu atendimento."}
         action={
           role === "admin" && (
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
-                <Button><Plus className="mr-2 h-4 w-4" /> Novo cliente</Button>
+                <Button><Plus className="mr-2 h-4 w-4" /> Nova empresa</Button>
               </DialogTrigger>
               <NewClientDialog onDone={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["clients"] }); }} />
             </Dialog>
