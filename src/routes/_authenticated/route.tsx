@@ -103,11 +103,9 @@ function AuthedLayout() {
           return { hasLink: !!data?.id };
         }
         if (role === "client") {
-          const { data } = await supabase
-            .from("clients")
-            .select("id")
-            .eq("owner_profile_id", userId!)
-            .limit(1);
+          // RLS já filtra por user_has_client_access (owner_profile_id legado
+          // OU client_users ativo). Basta haver pelo menos um cliente visível.
+          const { data } = await supabase.from("clients").select("id").limit(1);
           return { hasLink: !!(data && data.length > 0) };
         }
         return { hasLink: true };
