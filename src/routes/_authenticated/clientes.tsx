@@ -443,18 +443,25 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
     simples_nacional: null, mei: null, qsa_json: [], dados_receita_json: null,
     ultima_consulta_receita: null,
   });
+  const [account, setAccount] = useState<AccountMatch | null>(null);
+  const [existing, setExisting] = useState<{ id: string; razao_social: string | null; nome_fantasia: string | null } | null>(null);
+
   const mut = useMutation({
     mutationFn: async () => {
+      if (!account) throw new Error("Vincule uma conta de acesso existente antes de salvar.");
       const ok = await ensureNoDuplicateCnpj(form.cnpj);
       if (!ok) throw new Error("__dup__");
-      const { error } = await supabase.from("clients").insert({ ...buildClientPayload(form, form.cnpj), origem_cadastro: "manual" });
+      const payload = { ...buildClientPayload(form, form.cnpj), origem_cadastro: "manual" };
+      const { error } = await supabase.rpc("admin_create_client_with_user", {
+        _payload: payload as any,
+        _user_id: account.id,
+        _papel: "responsavel",
+      });
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Cliente criado"); onDone(); },
+    onSuccess: () => { toast.success("Cliente criado e vinculado à conta"); onDone(); },
     onError: (e: any) => { if (e?.message !== "__dup__") toast.error(e.message); },
   });
-
-  const [existing, setExisting] = useState<{ id: string; razao_social: string | null; nome_fantasia: string | null } | null>(null);
 
   return (
     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -463,6 +470,8 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
       </DialogHeader>
 
       <div className="space-y-4">
+        <AccountLookup value={account} onChange={setAccount} />
+
         <section className="space-y-2">
           <h3 className="text-sm font-semibold">Preencher por CNPJ</h3>
           <CnpjLookup
@@ -514,8 +523,11 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
       </div>
 
       <DialogFooter>
-        <Button onClick={() => mut.mutate()} disabled={!form.razao_social || mut.isPending || !!existing}>
-          {mut.isPending ? "Salvando…" : "Criar cliente"}
+        <Button
+          onClick={() => mut.mutate()}
+          disabled={!form.razao_social || mut.isPending || !!existing || !account}
+        >
+          {mut.isPending ? "Salvando…" : !account ? "Vincule uma conta para salvar" : "Criar cliente"}
         </Button>
       </DialogFooter>
     </DialogContent>
