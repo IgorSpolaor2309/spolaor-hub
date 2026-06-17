@@ -236,6 +236,17 @@ function ClientsPage() {
                           <AlertTriangle className="h-3 w-3" /> Empresa sem conta vinculada
                         </Link>
                       )}
+                      {role === "admin" && ((c.client_collaborators ?? []) as any[]).length === 0 && (
+                        <Link
+                          to="/clientes/$id"
+                          params={{ id: c.id }}
+                          className="mt-1 ml-1 inline-flex items-center gap-1 rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-900 hover:bg-amber-100"
+                          title="Vincule um colaborador encarregado na aba Equipe"
+                        >
+                          <UserCog className="h-3 w-3" /> Empresa sem colaborador encarregado
+                        </Link>
+                      )}
+
                     </td>
                     <td className="py-3 pr-4">{labelOf(CLIENT_TYPES, c.tipo)}</td>
                     <td className="py-3 pr-4 font-mono text-xs">{c.documento ?? "—"}</td>
