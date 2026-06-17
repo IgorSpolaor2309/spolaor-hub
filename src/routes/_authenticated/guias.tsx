@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { AttachmentButton } from "@/components/sc/AttachmentButton";
+import { DeleteButton } from "@/components/sc/DeleteButton";
 import { useMemo, useState } from "react";
 import { Plus, Upload, Receipt } from "lucide-react";
 import { toast } from "sonner";
@@ -76,8 +77,11 @@ function GuidesPage() {
           isStaff && (
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild><Button><Plus className="mr-2 h-4 w-4" /> Nova guia</Button></DialogTrigger>
-              <NewGuideDialog clients={clients as any[]} userId={userId} onDone={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["tax-guides"] }); }} />
+              {open && (
+                <NewGuideDialog clients={clients as any[]} userId={userId} onDone={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["tax-guides"] }); }} />
+              )}
             </Dialog>
+
           )
         }
       />
@@ -146,6 +150,28 @@ function GuideRow({ item, isStaff, onChange }: any) {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const remove = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("tax_guides").delete().eq("id", item.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Guia excluída"); onChange(); },
+    onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Sem permissão para excluir." : (e.message ?? "Falha ao excluir.")),
+  });
+
+  const removeProof = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("tax_guides")
+        .update({ comprovante_path: null, comprovante_uploaded_at: null })
+        .eq("id", item.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Comprovante removido"); onChange(); },
+    onError: (e: any) => toast.error(e?.message ?? "Falha"),
+  });
+
+
+
 
   async function uploadProof(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]; if (!file) return;
@@ -195,10 +221,16 @@ function GuideRow({ item, isStaff, onChange }: any) {
             <AttachmentButton storagePath={item.comprovante_path} label="Abrir comprovante" variant="outline" />
           )}
           {isStaff ? (
-            <Select value={item.status} onValueChange={(v) => updateStatus.mutate(v)}>
-              <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
-              <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-            </Select>
+            <>
+              <Select value={item.status} onValueChange={(v) => updateStatus.mutate(v)}>
+                <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+                <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+              {item.comprovante_path && (
+                <DeleteButton onConfirm={() => removeProof.mutate()} label="Remover comprovante" description="Remover o comprovante anexado? A guia continuará registrada." />
+              )}
+              <DeleteButton onConfirm={() => remove.mutate()} label="Excluir guia" />
+            </>
           ) : (
             !item.comprovante_path && (
               <label>
@@ -207,6 +239,7 @@ function GuideRow({ item, isStaff, onChange }: any) {
               </label>
             )
           )}
+
         </div>
       </div>
     </li>

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { formatBR } from "@/lib/dates";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/sc/PageHeader";
 import { Card } from "@/components/ui/card";
@@ -8,15 +8,21 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge, PriorityBadge } from "@/components/sc/StatusBadge";
 import { EmptyState } from "@/components/sc/EmptyState";
+import { DeleteButton } from "@/components/sc/DeleteButton";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { useState } from "react";
-import { TASK_STATUSES, TASK_PRIORITIES, labelOf } from "@/lib/sc-types";
+import { TASK_STATUSES, TASK_PRIORITIES } from "@/lib/sc-types";
 import { ClipboardList } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/pendencias")({
   component: TasksPage,
 });
 
 function TasksPage() {
+  const { role } = useCurrentUser();
+  const isAdmin = role === "admin";
+  const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<string>("all");
   const [priority, setPriority] = useState<string>("all");
@@ -24,6 +30,15 @@ function TasksPage() {
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ["all-tasks"],
     queryFn: async () => (await supabase.from("pending_tasks").select("*, clients(razao_social)").order("prazo", { ascending: true, nullsFirst: false })).data ?? [],
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("pending_tasks").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["all-tasks"] }); toast.success("Pendência excluída"); },
+    onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Sem permissão para excluir." : (e.message ?? "Falha")),
   });
 
   const filtered = tasks.filter((t: any) => {
@@ -58,7 +73,7 @@ function TasksPage() {
          filtered.length === 0 ? <EmptyState icon={<ClipboardList className="h-6 w-6" />} title="Nada por aqui" /> : (
           <table className="w-full text-sm">
             <thead className="text-left text-xs uppercase text-muted-foreground">
-              <tr className="border-b"><th className="py-2 pr-4">Pendência</th><th>Cliente</th><th>Prazo</th><th>Prioridade</th><th>Status</th></tr>
+              <tr className="border-b"><th className="py-2 pr-4">Pendência</th><th>Cliente</th><th>Prazo</th><th>Prioridade</th><th>Status</th><th></th></tr>
             </thead>
             <tbody>
               {filtered.map((t: any) => (
@@ -68,6 +83,7 @@ function TasksPage() {
                   <td>{t.prazo ? formatBR(t.prazo) : "—"}</td>
                   <td><PriorityBadge value={t.prioridade} /></td>
                   <td><StatusBadge value={t.status} /></td>
+                  <td className="text-right">{isAdmin && <DeleteButton onConfirm={() => remove.mutate(t.id)} iconOnly />}</td>
                 </tr>
               ))}
             </tbody>
@@ -77,3 +93,4 @@ function TasksPage() {
     </div>
   );
 }
+

@@ -1,28 +1,41 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/sc/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/sc/StatusBadge";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { AttachmentButton } from "@/components/sc/AttachmentButton";
+import { DeleteButton } from "@/components/sc/DeleteButton";
 import { useState } from "react";
 import { DOC_TYPES, DOC_STATUSES, labelOf } from "@/lib/sc-types";
 import { FileText } from "lucide-react";
 import { toast } from "sonner";
+import { useCurrentUser } from "@/hooks/use-current-user";
+
 
 export const Route = createFileRoute("/_authenticated/documentos")({
   component: DocsPage,
 });
 
 function DocsPage() {
+  const { role } = useCurrentUser();
+  const qc = useQueryClient();
+  const isAdmin = role === "admin";
   const [q, setQ] = useState(""); const [tipo, setTipo] = useState("all"); const [status, setStatus] = useState("all");
   const { data: list = [], isLoading } = useQuery({
     queryKey: ["all-docs"],
     queryFn: async () => (await supabase.from("documents").select("*, clients(razao_social)").order("created_at", { ascending: false })).data ?? [],
+  });
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("documents").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["all-docs"] }); toast.success("Documento excluído"); },
+    onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Sem permissão para excluir." : (e.message ?? "Falha")),
   });
   const filtered = list.filter((d: any) => {
     if (tipo !== "all" && d.tipo !== tipo) return false;
@@ -30,9 +43,6 @@ function DocsPage() {
     if (q && !`${d.nome} ${d.clients?.razao_social ?? ""}`.toLowerCase().includes(q.toLowerCase())) return false;
     return true;
   });
-
-
-
 
   return (
     <div>
@@ -61,7 +71,12 @@ function DocsPage() {
                   <td>{labelOf(DOC_TYPES, d.tipo)}</td>
                   <td>{d.competencia ?? "—"}</td>
                   <td><StatusBadge value={d.status} /></td>
-                  <td className="text-right"><AttachmentButton storagePath={d.storage_path} label="Abrir" /></td>
+                  <td className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <AttachmentButton storagePath={d.storage_path} label="Abrir" />
+                      {isAdmin && <DeleteButton onConfirm={() => remove.mutate(d.id)} iconOnly />}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -71,3 +86,4 @@ function DocsPage() {
     </div>
   );
 }
+
