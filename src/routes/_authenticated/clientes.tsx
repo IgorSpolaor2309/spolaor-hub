@@ -224,6 +224,16 @@ function ClientsPage() {
                         {c.razao_social}
                       </Link>
                       {c.nome_fantasia && <div className="text-xs text-muted-foreground">{c.nome_fantasia}</div>}
+                      {role === "admin" && !((c.client_users ?? []) as any[]).some((u: any) => u.ativo) && (
+                        <Link
+                          to="/clientes/$id"
+                          params={{ id: c.id }}
+                          className="mt-1 inline-flex items-center gap-1 rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-900 hover:bg-amber-100"
+                          title="Vincule uma conta de acesso na aba Acessos"
+                        >
+                          <AlertTriangle className="h-3 w-3" /> Empresa sem conta vinculada
+                        </Link>
+                      )}
                     </td>
                     <td className="py-3 pr-4">{labelOf(CLIENT_TYPES, c.tipo)}</td>
                     <td className="py-3 pr-4 font-mono text-xs">{c.documento ?? "—"}</td>
