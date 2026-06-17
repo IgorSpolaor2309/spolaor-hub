@@ -22,6 +22,7 @@ import { formatBR, daysUntilLocal } from "@/lib/dates";
 
 export const Route = createFileRoute("/_authenticated/validades")({
   component: ValidadesPage,
+  errorComponent: () => <EmptyState icon={<CalendarClock className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />,
 });
 
 const CATEGORIAS = DOC_VALIDITY_CATEGORIES;
