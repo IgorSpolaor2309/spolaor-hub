@@ -1,0 +1,2 @@
+REVOKE EXECUTE ON FUNCTION public.client_staff_user_ids(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.notify_user(uuid, text, text, text, text) FROM PUBLIC, anon, authenticated;
