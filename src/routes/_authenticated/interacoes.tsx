@@ -88,7 +88,7 @@ type Msg = {
 };
 
 function ChatPage() {
-  const { role, userId, profile } = useCurrentUser();
+  const { role, userId, profile, loading } = useCurrentUser();
   const qc = useQueryClient();
   const search = useSearch({ from: "/_authenticated/interacoes" });
   const navigate = useNavigate({ from: "/_authenticated/interacoes" });
@@ -102,8 +102,9 @@ function ChatPage() {
 
   // Lista de conversas (RLS já filtra por permissão)
   const { data: conversations = [], isLoading: loadingConvs, error: convsError } = useQuery({
-    queryKey: ["chat-convs"],
-    retry: 0,
+    queryKey: ["chat-convs", userId, role],
+    enabled: !loading && !!userId && !!role,
+    retry: 1,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("chat_conversations")
@@ -119,6 +120,7 @@ function ChatPage() {
 
   // Realtime: novas conversas
   useEffect(() => {
+    if (loading || !userId) return;
     const ch = supabase
       .channel("chat-conversations")
       .on("postgres_changes",
@@ -126,11 +128,11 @@ function ChatPage() {
         () => qc.invalidateQueries({ queryKey: ["chat-convs"] }))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [qc]);
+  }, [qc, loading, userId]);
 
   // Se veio ?client=ID, garante conversa
   useEffect(() => {
-    if (!search.client) return;
+    if (!search.client || loading || !userId) return;
     (async () => {
       try {
         const id = await ensureConversation(search.client!);
@@ -142,12 +144,12 @@ function ChatPage() {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search.client]);
+  }, [search.client, loading, userId]);
 
   // Auto-seleciona a primeira conversa. Para clientes sem conversa, cria uma
   // automaticamente para que a página não fique vazia/quebrada.
   useEffect(() => {
-    if (loadingConvs) return;
+    if (loading || !userId || loadingConvs) return;
     if (activeId) return;
     if (conversations.length > 0) {
       setActiveId(conversations[0].id);
@@ -170,7 +172,7 @@ function ChatPage() {
         }
       })();
     }
-  }, [activeId, conversations, loadingConvs, role, userId, qc]);
+  }, [activeId, conversations, loadingConvs, role, userId, qc, loading]);
 
   const filteredConvs = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -181,6 +183,8 @@ function ChatPage() {
   }, [conversations, q]);
 
   const activeConv = conversations.find((c) => c.id === activeId);
+
+  if (loading || !userId || !role) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col">
@@ -267,7 +271,8 @@ function ChatThread({
 
   const { data: messages = [] } = useQuery({
     queryKey: ["chat-msgs", conv.id],
-    retry: 0,
+    enabled: !!conv.id && !!currentUserId && !!currentRole,
+    retry: 1,
     queryFn: async () => {
       // Sem embed de profiles (RLS pode bloquear leitura cruzada e quebrar a query).
       const { data, error } = await supabase
@@ -550,7 +555,11 @@ function NewConversationButton() {
   const qc = useQueryClient();
   const { data: clients = [] } = useQuery({
     queryKey: ["chat-new-clients"],
-    queryFn: async () => (await supabase.from("clients").select("id, razao_social").eq("status", "active").order("razao_social")).data ?? [],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("clients").select("id, razao_social, nome_fantasia, documento").eq("status", "active").order("razao_social");
+      if (error) throw error;
+      return data ?? [];
+    },
     enabled: open,
   });
   const start = async () => {
@@ -573,7 +582,7 @@ function NewConversationButton() {
           <Select value={clientId} onValueChange={setClientId}>
             <SelectTrigger><SelectValue placeholder="Selecione um cliente" /></SelectTrigger>
             <SelectContent>
-              {(clients as any[]).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.razao_social}</SelectItem>)}
+              {(clients as any[]).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.nome_fantasia || c.razao_social || c.documento || "Empresa"}</SelectItem>)}
             </SelectContent>
           </Select>
           <Button onClick={start} disabled={!clientId}>Abrir conversa</Button>
