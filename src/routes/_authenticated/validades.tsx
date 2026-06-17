@@ -146,7 +146,7 @@ function ValidadesPage() {
                         <td className="py-2 pr-4 font-medium">{d.nome}</td>
                         <td className="py-2 pr-4">{d.clients?.razao_social ?? "—"}</td>
                         <td className="py-2 pr-4">{d.categoria_validade ? labelOf(CATEGORIAS, d.categoria_validade) : "—"}</td>
-                        <td className="py-2 pr-4">{new Date(d.data_validade).toLocaleDateString("pt-BR")}</td>
+                        <td className="py-2 pr-4">{formatBR(d.data_validade)}</td>
                         <td className="py-2 pr-4"><Badge className={st.tone}>{st.label}</Badge></td>
                         <td className="py-2 text-right">
                           <Button variant="ghost" size="sm" onClick={() => download(d.storage_path, d.nome)}>Baixar</Button>
