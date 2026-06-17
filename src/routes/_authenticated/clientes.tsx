@@ -27,6 +27,8 @@ import { adminSetClientStatus } from "@/lib/admin-users.functions";
 
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { CLIENT_TYPES, labelOf } from "@/lib/sc-types";
+import { CnpjLookup } from "@/components/sc/CnpjLookup";
+import { mapReceitaToForm } from "@/lib/receita-map";
 
 export const Route = createFileRoute("/_authenticated/clientes")({
   component: ClientsPage,
