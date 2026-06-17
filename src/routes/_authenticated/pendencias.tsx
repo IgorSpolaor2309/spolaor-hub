@@ -9,8 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { StatusBadge, PriorityBadge } from "@/components/sc/StatusBadge";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { DeleteButton } from "@/components/sc/DeleteButton";
+import { DateRangeFilter, EMPTY_DATE_FILTER, type DateFilterValue } from "@/components/sc/DateRangeFilter";
+import { inRange, resolveRange } from "@/lib/date-ranges";
+import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { TASK_STATUSES, TASK_PRIORITIES } from "@/lib/sc-types";
 import { ClipboardList } from "lucide-react";
 import { toast } from "sonner";
@@ -26,6 +29,7 @@ function TasksPage() {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<string>("all");
   const [priority, setPriority] = useState<string>("all");
+  const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ["all-tasks"],
