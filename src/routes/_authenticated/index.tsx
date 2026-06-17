@@ -469,6 +469,9 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
                   <div>
                     <div className="text-sm font-medium">{g.tipo}</div>
                     <div className="text-xs text-muted-foreground">
+                      {isAll && (g.clients?.nome_fantasia || g.clients?.razao_social) && (
+                        <>Empresa: {g.clients?.nome_fantasia || g.clients?.razao_social} · </>
+                      )}
                       {g.vencimento ? `Vence ${formatBR(g.vencimento)}` : "—"}
                       {g.valor != null ? ` · R$ ${Number(g.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : ""}
                     </div>
@@ -486,7 +489,12 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
             <ul className="divide-y">
               {data.openTasks.map((t: any) => (
                 <li key={t.id} className="flex items-center justify-between py-2.5">
-                  <div className="text-sm">{t.titulo}</div>
+                  <div>
+                    <div className="text-sm">{t.titulo}</div>
+                    {isAll && (t.clients?.nome_fantasia || t.clients?.razao_social) && (
+                      <div className="text-xs text-muted-foreground">Empresa: {t.clients?.nome_fantasia || t.clients?.razao_social}</div>
+                    )}
+                  </div>
                   <Badge variant="outline">{t.prazo ? formatBR(t.prazo) : "—"}</Badge>
                 </li>
               ))}
@@ -502,7 +510,12 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
                 <li key={r.id} className="flex items-center justify-between py-2.5">
                   <div>
                     <div className="text-sm font-medium">{r.titulo}</div>
-                    {r.categoria && <div className="text-xs text-muted-foreground">{r.categoria}</div>}
+                    <div className="text-xs text-muted-foreground">
+                      {r.categoria}
+                      {isAll && (r.clients?.nome_fantasia || r.clients?.razao_social) && (
+                        <>{r.categoria ? " · " : ""}Empresa: {r.clients?.nome_fantasia || r.clients?.razao_social}</>
+                      )}
+                    </div>
                   </div>
                   <Badge className="bg-orange-100 text-orange-800">{r.status}</Badge>
                 </li>
@@ -518,7 +531,12 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
               {data.events.map((e: any) => (
                 <li key={e.id}>
                   <div className="text-sm">{e.descricao}</div>
-                  <div className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(e.created_at), { addSuffix: true, locale: ptBR })}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {isAll && (e.clients?.nome_fantasia || e.clients?.razao_social) && (
+                      <>Empresa: {e.clients?.nome_fantasia || e.clients?.razao_social} · </>
+                    )}
+                    {formatDistanceToNow(new Date(e.created_at), { addSuffix: true, locale: ptBR })}
+                  </div>
                 </li>
               ))}
             </ul>
