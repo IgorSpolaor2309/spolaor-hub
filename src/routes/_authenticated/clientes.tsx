@@ -862,6 +862,7 @@ function ClientUsersInlineManager({ clientId }: { clientId: string }) {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Remover vínculo?</AlertDialogTitle>
                       <AlertDialogDescription>
+                        Tem certeza que deseja remover este vínculo? Para apenas suspender o acesso, use Desativar.
                         A conta {l.profiles?.email ?? ""} deixará de acessar esta empresa.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
