@@ -61,7 +61,7 @@ function DocsPage() {
                   <td>{labelOf(DOC_TYPES, d.tipo)}</td>
                   <td>{d.competencia ?? "—"}</td>
                   <td><StatusBadge value={d.status} /></td>
-                  <td className="text-right"><Button variant="ghost" size="sm" onClick={() => download(d.storage_path, d.nome)}>Baixar</Button></td>
+                  <td className="text-right"><AttachmentButton storagePath={d.storage_path} label="Abrir" /></td>
                 </tr>
               ))}
             </tbody>
