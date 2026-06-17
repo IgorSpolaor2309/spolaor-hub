@@ -183,12 +183,8 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
     } finally { e.target.value = ""; }
   }
 
-  async function downloadAttached() {
-    if (!item.documents?.storage_path) return;
-    const { data, error } = await supabase.storage.from("documents").createSignedUrl(item.documents.storage_path, 60);
-    if (error) return toast.error(error.message);
-    const a = document.createElement("a"); a.href = data.signedUrl; a.download = item.documents.nome ?? "documento"; a.click();
-  }
+  const prazoVencido = !!item.prazo && isPastEndOfDay(item.prazo) && !["aprovado", "cancelado"].includes(item.status);
+
 
   const prazoVencido = !!item.prazo && isPastEndOfDay(item.prazo) && !["aprovado", "cancelado"].includes(item.status);
 
