@@ -77,8 +77,11 @@ function GuidesPage() {
           isStaff && (
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild><Button><Plus className="mr-2 h-4 w-4" /> Nova guia</Button></DialogTrigger>
-              <NewGuideDialog clients={clients as any[]} userId={userId} onDone={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["tax-guides"] }); }} />
+              {open && (
+                <NewGuideDialog clients={clients as any[]} userId={userId} onDone={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["tax-guides"] }); }} />
+              )}
             </Dialog>
+
           )
         }
       />
