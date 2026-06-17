@@ -31,11 +31,8 @@ function DocsPage() {
     return true;
   });
 
-  async function download(path: string, nome: string) {
-    const { data, error } = await supabase.storage.from("documents").createSignedUrl(path, 60);
-    if (error) return toast.error(error.message);
-    const a = document.createElement("a"); a.href = data.signedUrl; a.download = nome; a.click();
-  }
+
+
 
   return (
     <div>
