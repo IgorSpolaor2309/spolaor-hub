@@ -91,7 +91,7 @@ function ClientDetail() {
   return (
     <div>
       <Link to="/clientes" className="mb-3 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="mr-1 h-4 w-4" /> Voltar para clientes
+        <ArrowLeft className="mr-1 h-4 w-4" /> Voltar para empresas
       </Link>
       <PageHeader
         title={client.razao_social}
