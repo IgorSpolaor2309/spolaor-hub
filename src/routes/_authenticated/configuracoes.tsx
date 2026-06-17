@@ -1015,6 +1015,7 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
                   <Label>Observações internas</Label>
                   <Input value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
                 </div>
+                </div>
               </div>
             )}
             <div className="border-t pt-3">
