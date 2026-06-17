@@ -189,7 +189,7 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
     const a = document.createElement("a"); a.href = data.signedUrl; a.download = item.documents.nome ?? "documento"; a.click();
   }
 
-  const prazoVencido = item.prazo && new Date(item.prazo) < new Date() && !["aprovado", "cancelado"].includes(item.status);
+  const prazoVencido = !!item.prazo && isPastEndOfDay(item.prazo) && !["aprovado", "cancelado"].includes(item.status);
 
   return (
     <li className="rounded-md border p-4">
