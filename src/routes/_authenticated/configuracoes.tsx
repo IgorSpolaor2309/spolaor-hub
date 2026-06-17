@@ -552,10 +552,7 @@ function VerifyLinksResult({ report }: { report: any }) {
         <div className="space-y-2">
           <IssueList title="Clientes sem colaborador" items={issues.clients_without_collaborator.map((c: any) => c.name)} />
           <IssueList title="Colaboradores sem clientes" items={issues.collaborators_without_client.map((c: any) => c.name)} />
-          <IssueList
-            title="Contas de cliente sem cadastro vinculado"
-            items={issues.client_accounts_without_client.map((u: any) => u.email)}
-          />
+          <UnlinkedClientAccounts accounts={issues.client_accounts_without_client} />
           <IssueList
             title="Contas de colaborador sem cadastro vinculado"
             items={issues.collab_accounts_without_collaborator.map((u: any) => u.email)}
