@@ -117,13 +117,79 @@ function ClientsPage() {
         }
       />
 
-      <Card className="p-4">
-        <div className="mb-4 flex items-center gap-2">
-          <div className="relative max-w-sm flex-1">
-            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Buscar por razão social, CNPJ, e-mail…" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
+      <Card className="mb-4 p-4">
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="relative min-w-[220px] flex-1">
+            <Label className="text-xs">Buscar</Label>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input placeholder="Razão social, CNPJ, e-mail…" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
+            </div>
           </div>
+          <div>
+            <Label className="text-xs">Status</Label>
+            <Select value={fStatus} onValueChange={setFStatus}>
+              <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="active">Ativos</SelectItem>
+                <SelectItem value="inactive">Inativos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Tipo</Label>
+            <Select value={fTipo} onValueChange={setFTipo}>
+              <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {CLIENT_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          {regimeOptions.length > 0 && (
+            <div>
+              <Label className="text-xs">Regime tributário</Label>
+              <Select value={fRegime} onValueChange={setFRegime}>
+                <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {regimeOptions.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          {ufOptions.length > 0 && (
+            <div>
+              <Label className="text-xs">UF</Label>
+              <Select value={fUf} onValueChange={setFUf}>
+                <SelectTrigger className="w-[100px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {ufOptions.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          {isAdmin && (collaborators as any[]).length > 0 && (
+            <div>
+              <Label className="text-xs">Responsável</Label>
+              <Select value={fResp} onValueChange={setFResp}>
+                <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {(collaborators as any[]).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <DateRangeFilter value={dateF} onChange={setDateF} label="Data de entrada" />
+          <Button variant="ghost" size="sm" onClick={clearFilters}>Limpar filtros</Button>
         </div>
+      </Card>
+
+      <Card className="p-4">
+
 
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Carregando…</p>
