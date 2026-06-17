@@ -215,7 +215,7 @@ function GuideRow({ item, isStaff, onChange }: any) {
             {item.valor != null && <span className="font-medium">R$ {Number(item.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>}
           </div>
           <div className="mt-1 text-xs text-muted-foreground">
-            Cliente: {item.clients?.razao_social ?? "—"}
+            Empresa: {item.clients?.nome_fantasia || item.clients?.razao_social || "—"}
             {item.competencia ? ` · Competência: ${item.competencia}` : ""}
             {item.vencimento ? ` · Vence: ${formatBR(item.vencimento)}` : ""}
           </div>

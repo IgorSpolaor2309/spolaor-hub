@@ -76,7 +76,7 @@ function DocsPage() {
               {filtered.map((d: any) => (
                 <tr key={d.id} className="border-b">
                   <td className="py-3 pr-4 font-medium">{d.nome}</td>
-                  <td><Link to="/clientes/$id" params={{ id: d.client_id }} className="text-secondary hover:underline">{d.clients?.razao_social}</Link></td>
+                  <td><Link to="/clientes/$id" params={{ id: d.client_id }} className="text-secondary hover:underline">{d.clients?.nome_fantasia || d.clients?.razao_social}</Link></td>
                   <td>{labelOf(DOC_TYPES, d.tipo)}</td>
                   <td>{d.competencia ?? "—"}</td>
                   <td><StatusBadge value={d.status} /></td>

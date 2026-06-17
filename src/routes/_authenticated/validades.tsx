@@ -154,7 +154,7 @@ function ValidadesPage() {
                     return (
                       <tr key={d.id} className="border-b hover:bg-muted/40">
                         <td className="py-2 pr-4 font-medium">{d.nome}</td>
-                        <td className="py-2 pr-4">{d.clients?.razao_social ?? "—"}</td>
+                        <td className="py-2 pr-4">{d.clients?.nome_fantasia || d.clients?.razao_social || "—"}</td>
                         <td className="py-2 pr-4">{d.categoria_validade ? labelOf(CATEGORIAS, d.categoria_validade) : "—"}</td>
                         <td className="py-2 pr-4">{formatBR(d.data_validade)}</td>
                         <td className="py-2 pr-4"><Badge className={st.tone}>{st.label}</Badge></td>

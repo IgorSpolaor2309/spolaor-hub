@@ -94,7 +94,7 @@ function KanbanPage() {
         out.push({
           id: `tarefa:${t.id}`, realId: t.id, kind: "tarefa", column: col,
           titulo: t.titulo, descricao: t.descricao, status: t.status,
-          client_id: t.client_id, client_name: t.clients?.razao_social,
+          client_id: t.client_id, client_name: t.clients?.nome_fantasia || t.clients?.razao_social,
           collaborator_id: t.collaborator_id, collaborator_name: t.collaborators?.nome,
           departamento: t.departamento, prioridade: t.prioridade,
           prazo: t.prazo, competencia: t.competencia, categoria: null,
@@ -115,7 +115,7 @@ function KanbanPage() {
           id: `solicitacao:${r.id}`, realId: r.id, kind: "solicitacao", column: col,
           titulo: r.titulo || r.categoria || "Documento solicitado",
           descricao: null, status: r.status,
-          client_id: r.client_id, client_name: r.clients?.razao_social,
+          client_id: r.client_id, client_name: r.clients?.nome_fantasia || r.clients?.razao_social,
           collaborator_id: r.responsavel_profile_id, collaborator_name: null,
           departamento: null, prioridade: null,
           prazo: r.prazo, competencia: r.competencia, categoria: r.categoria,
@@ -133,7 +133,7 @@ function KanbanPage() {
         out.push({
           id: `documento:${d.id}`, realId: d.id, kind: "documento", column: col,
           titulo: d.nome || "Documento", descricao: null, status: d.status,
-          client_id: d.client_id, client_name: d.clients?.razao_social,
+          client_id: d.client_id, client_name: d.clients?.nome_fantasia || d.clients?.razao_social,
           departamento: null, prioridade: null,
           prazo: null, competencia: null, categoria: null,
           overdue: false, href: "/documentos",
@@ -151,7 +151,7 @@ function KanbanPage() {
         out.push({
           id: `${kindG}:${g.id}`, realId: g.id, kind: kindG, column: col,
           titulo: g.tipo || "Guia", descricao: null, status: g.status,
-          client_id: g.client_id, client_name: g.clients?.razao_social,
+          client_id: g.client_id, client_name: g.clients?.nome_fantasia || g.clients?.razao_social,
           departamento: null, prioridade: null,
           prazo: g.vencimento, competencia: g.competencia, categoria: null,
           overdue: !!g.vencimento && isPastEndOfDay(g.vencimento) && !["paga","cancelada"].includes(g.status),
