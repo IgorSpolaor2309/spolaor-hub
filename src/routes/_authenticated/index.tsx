@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { PageHeader } from "@/components/sc/PageHeader";
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/sc/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -18,6 +19,7 @@ import { formatBR, todayLocalYmd, localYmdInDays } from "@/lib/dates";
 
 export const Route = createFileRoute("/_authenticated/")({
   component: Dashboard,
+  errorComponent: () => <EmptyState icon={<AlertTriangle className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />,
 });
 
 /* ---------- helpers ---------- */
