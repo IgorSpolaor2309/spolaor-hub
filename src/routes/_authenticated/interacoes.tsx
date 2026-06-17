@@ -175,7 +175,9 @@ function ChatPage() {
             </div>
           </div>
           <div className="flex-1 overflow-y-auto">
-            {loadingConvs ? (
+            {convsError ? (
+              <div className="p-4 text-xs text-destructive">Falha ao carregar conversas.</div>
+            ) : loadingConvs ? (
               <p className="p-4 text-sm text-muted-foreground">Carregando…</p>
             ) : filteredConvs.length === 0 ? (
               <div className="p-4 text-xs text-muted-foreground">Nenhuma conversa ainda.</div>
