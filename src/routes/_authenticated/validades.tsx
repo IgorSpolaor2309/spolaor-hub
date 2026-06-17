@@ -147,7 +147,7 @@ function ValidadesPage() {
                         <td className="py-2 pr-4">{formatBR(d.data_validade)}</td>
                         <td className="py-2 pr-4"><Badge className={st.tone}>{st.label}</Badge></td>
                         <td className="py-2 text-right">
-                          <Button variant="ghost" size="sm" onClick={() => download(d.storage_path, d.nome)}>Baixar</Button>
+                          <AttachmentButton storagePath={d.storage_path} label="Abrir" />
                           {isStaff && (
                             <Button variant="ghost" size="icon" onClick={() => setEditing(d)} aria-label="Editar validade"><Pencil className="h-4 w-4" /></Button>
                           )}
