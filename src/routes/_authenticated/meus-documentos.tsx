@@ -26,6 +26,9 @@ function MyDocsPage() {
   const [tipo, setTipo] = useState("outro");
   const [competencia, setCompetencia] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [fTipo, setFTipo] = useState<string>("all");
+  const [fStatus, setFStatus] = useState<string>("all");
+  const [fQ, setFQ] = useState("");
 
 
   const { data: clients = [], error: clientsError } = useQuery({
