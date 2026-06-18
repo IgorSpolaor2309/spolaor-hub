@@ -27,7 +27,6 @@ export const Route = createFileRoute("/_authenticated/documentos")({
 function DocsPage() {
   const { role, userId, loading } = useCurrentUser();
   const qc = useQueryClient();
-  const isAdmin = role === "admin";
   const ready = !loading && !!userId && !!role;
   const [q, setQ] = useState(""); const [tipo, setTipo] = useState("all"); const [status, setStatus] = useState("all");
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
@@ -39,6 +38,7 @@ function DocsPage() {
       const { data, error } = await supabase
         .from("documents")
         .select("*, clients(razao_social, nome_fantasia)")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -46,17 +46,22 @@ function DocsPage() {
   });
   const remove = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("documents").delete().eq("id", id);
+      // Soft delete: only the uploader can do this (enforced by RLS too).
+      const { error } = await supabase
+        .from("documents")
+        .update({ deleted_at: new Date().toISOString(), deleted_by: userId })
+        .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["all-docs"] }); toast.success("Documento excluído"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["all-docs"] }); toast.success("Arquivo removido pelo autor."); },
     onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Sem permissão para excluir." : (e.message ?? "Falha")),
   });
   const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
+  const qLower = q.trim().toLowerCase();
   const filtered = list.filter((d: any) => {
-    if (tipo !== "all" && d.tipo !== tipo) return false;
+    if (tipo !== "all" && normalizeDocTipo(d.tipo) !== normalizeDocTipo(tipo)) return false;
     if (status !== "all" && d.status !== status) return false;
-    if (q && !`${d.nome} ${d.clients?.razao_social ?? ""}`.toLowerCase().includes(q.toLowerCase())) return false;
+    if (qLower && !`${d.nome ?? ""} ${d.clients?.razao_social ?? ""} ${d.clients?.nome_fantasia ?? ""}`.toLowerCase().includes(qLower)) return false;
     if (!inRange(d.created_at, range)) return false;
     return true;
   });
