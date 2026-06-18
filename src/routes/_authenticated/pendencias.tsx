@@ -53,6 +53,15 @@ const TIPO_LABEL: Record<Tipo, string> = {
   validade: "Validade",
 };
 
+const STATUS_LABEL: Record<string, string> = {
+  pendente: "Pendente",
+  aguardando_analise: "Aguardando análise",
+  recebido: "Recebido",
+  recusado: "Recusado",
+  reenviar: "Reenviar",
+  cancelado: "Cancelado",
+};
+
 function statusTone(tipo: Tipo, status: string, prazo: string | null): string {
   const t = todayLocalYmd();
   if (prazo && prazo < t) return "bg-destructive/10 text-destructive";
