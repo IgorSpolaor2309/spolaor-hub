@@ -31,6 +31,8 @@ export function useMyClients() {
       const { data, error } = await supabase
         .from("clients")
         .select("id, razao_social, nome_fantasia, documento, status, owner_profile_id")
+        .is("deleted_at", null)
+        .neq("status", "inactive")
         .order("razao_social");
       if (error) {
         console.warn("[useMyClients] clients:", error.message);
