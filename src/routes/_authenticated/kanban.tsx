@@ -169,7 +169,7 @@ function KanbanPage() {
   const { data: clients = [] } = useQuery({
     queryKey: ["kanban-clients", userId, role],
     enabled: ready && (role === "admin" || role === "collaborator"),
-    queryFn: async () => (await supabase.from("clients").select("id, razao_social").order("razao_social")).data ?? [],
+    queryFn: async () => (await supabase.from("clients").select("id, razao_social").is("deleted_at", null).neq("status", "inactive").order("razao_social")).data ?? [],
   });
   const { data: collabs = [] } = useQuery({
     queryKey: ["kanban-collabs"],
@@ -254,9 +254,9 @@ function KanbanPage() {
             </SelectContent>
           </Select>
           <Select value={client} onValueChange={setClient}>
-            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Cliente" /></SelectTrigger>
+            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Empresa" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos clientes</SelectItem>
+              <SelectItem value="all">Todas empresas</SelectItem>
               {clients.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.razao_social}</SelectItem>)}
             </SelectContent>
           </Select>
