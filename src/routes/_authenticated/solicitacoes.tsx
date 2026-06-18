@@ -237,7 +237,7 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
     } finally { e.target.value = ""; }
   }
 
-  const prazoVencido = !!item.prazo && isPastEndOfDay(item.prazo) && !["aprovado", "cancelado"].includes(item.status);
+  const prazoVencido = !!item.prazo && isPastEndOfDay(item.prazo) && !["recebido", "cancelado"].includes(item.status);
   const clientPending = item.status === "pendente" || item.status === "reenviar";
 
   return (
