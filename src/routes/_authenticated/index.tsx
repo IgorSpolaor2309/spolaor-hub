@@ -429,22 +429,32 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
   const scopedIds = selected && allIds.includes(selected) ? [selected] : allIds;
   const isAll = !selected || scopedIds.length !== 1;
 
+  const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
+  const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
+
   const { data, error: dataError } = useQuery({
-    queryKey: ["dash-client-v3", userId, competencia, scopedIds.join(",")],
+    queryKey: ["dash-client-v3", userId, competencia, scopedIds.join(","), range.from, range.to],
     enabled: scopedIds.length > 0,
     retry: 1,
     queryFn: async () => {
       const ids = scopedIds;
       const primary = myCompanies.find((c: any) => c.id === ids[0]) ?? myCompanies[0] ?? null;
       const t = today(); const in7 = inDays(7);
+      const dFrom = range.from ? `${range.from}T00:00:00` : null;
+      const dTo = range.to ? `${range.to}T23:59:59` : null;
+      const scope = (q: any) => {
+        if (dFrom) q = q.gte("created_at", dFrom);
+        if (dTo) q = q.lte("created_at", dTo);
+        return q;
+      };
       const [requested, sent, openTasks, guidesAvail, guidesSoon, monthStatus, events] = await Promise.all([
-        supabase.from("document_requests").select("id, titulo, status, prazo, categoria, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(20),
-        supabase.from("documents").select("id, nome, status, created_at, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(5),
-        supabase.from("pending_tasks").select("id, titulo, prazo, status, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).not("status", "in", "(concluida,cancelada)").order("prazo", { ascending: true }).limit(8),
+        scope(supabase.from("document_requests").select("id, titulo, status, prazo, categoria, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(20)),
+        scope(supabase.from("documents").select("id, nome, status, created_at, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(5)),
+        scope(supabase.from("pending_tasks").select("id, titulo, prazo, status, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).not("status", "in", "(concluida,cancelada)").order("prazo", { ascending: true }).limit(8)),
         supabase.from("tax_guides").select("id, tipo, vencimento, valor, status, storage_path, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).not("status", "in", "(paga,cancelada)").order("vencimento", { ascending: true }).limit(8),
         supabase.from("tax_guides").select("id", { head: true, count: "exact" }).in("client_id", ids).gte("vencimento", t).lte("vencimento", in7).not("status", "in", "(paga,cancelada)"),
         !isAll && primary ? supabase.from("client_month_status").select("status").eq("client_id", primary.id).eq("competencia", competencia).maybeSingle() : Promise.resolve({ data: null }),
-        supabase.from("interactions").select("id, tipo, descricao, created_at, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(5),
+        scope(supabase.from("interactions").select("id, tipo, descricao, created_at, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(5)),
       ]);
       const failures = [requested, sent, openTasks, guidesAvail, guidesSoon, monthStatus, events].filter((r: any) => r.error);
       if (failures.length) console.warn("[dashboard-client] consultas parciais falharam", failures.map((r: any) => r.error?.message));
