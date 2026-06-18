@@ -13,7 +13,7 @@ import { DateRangeFilter, EMPTY_DATE_FILTER, type DateFilterValue } from "@/comp
 import { inRange, resolveRange } from "@/lib/date-ranges";
 import { Button } from "@/components/ui/button";
 import { useMemo, useState } from "react";
-import { DOC_TYPES, DOC_STATUSES, labelOf } from "@/lib/sc-types";
+import { DOC_TYPES, DOC_STATUSES, labelOf, normalizeDocTipo } from "@/lib/sc-types";
 import { FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
