@@ -161,7 +161,7 @@ function ChatPage() {
           // Multiempresa: pega a primeira empresa visível e cria a conversa dela.
           // Para as demais, a equipe inicia (ou o cliente abre via Minha área).
           const { data: cs } = await supabase
-            .from("clients").select("id").limit(1);
+            .from("clients").select("id").is("deleted_at", null).neq("status", "inactive").limit(1);
           const clientId = cs?.[0]?.id;
           if (!clientId) return;
           const id = await ensureConversation(clientId);
@@ -560,7 +560,7 @@ function NewConversationButton() {
   const { data: clients = [] } = useQuery({
     queryKey: ["chat-new-clients"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("clients").select("id, razao_social, nome_fantasia, documento").eq("status", "active").order("razao_social");
+      const { data, error } = await supabase.from("clients").select("id, razao_social, nome_fantasia, documento").eq("status", "active").is("deleted_at", null).order("razao_social");
       if (error) throw error;
       return data ?? [];
     },
