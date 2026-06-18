@@ -306,8 +306,10 @@ function AdminDashboard({ name }: { name: string }) {
    COLABORADOR
    ============================================================ */
 function CollabDashboard({ name, userId }: { name: string; userId: string }) {
+  const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
+  const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
   const { data, error } = useQuery({
-    queryKey: ["dash-collab-v2", userId],
+    queryKey: ["dash-collab-v2", userId, range.from, range.to],
     enabled: !!userId,
     retry: 1,
     queryFn: async () => {
@@ -321,14 +323,21 @@ function CollabDashboard({ name, userId }: { name: string; userId: string }) {
         return { clients: 0, tasksOverdue: 0, tasksToday: 0, docsAnalysis: 0, awaiting: 0, guidesSoon: 0, reqPending: 0, events: [] };
       }
       const t = today(); const in7 = inDays(7);
+      const dFrom = range.from ? `${range.from}T00:00:00` : null;
+      const dTo = range.to ? `${range.to}T23:59:59` : null;
+      const scope = (q: any) => {
+        if (dFrom) q = q.gte("created_at", dFrom);
+        if (dTo) q = q.lte("created_at", dTo);
+        return q;
+      };
       const [tasksOverdue, tasksToday, docsAnalysis, awaitingReturn, guidesSoon, reqPending, events] = await Promise.all([
-        supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).in("client_id", ids).lt("prazo", t).not("status", "in", "(concluida,cancelada)"),
-        supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).in("client_id", ids).eq("prazo", t).not("status", "in", "(concluida,cancelada)"),
-        supabase.from("documents").select("id", { head: true, count: "exact" }).in("client_id", ids).in("status", ["recebido", "em_analise"]),
-        supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("client_id", ids).eq("status", "aguardando_analise"),
-        supabase.from("tax_guides").select("id", { head: true, count: "exact" }).in("client_id", ids).gte("vencimento", t).lte("vencimento", in7).not("status", "in", "(paga,cancelada)"),
-        supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("client_id", ids).in("status", ["pendente", "reenviar"]),
-        supabase.from("timeline_events").select("id, descricao, created_at, clients(razao_social)").in("client_id", ids).order("created_at", { ascending: false }).limit(6),
+        scope(supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).in("client_id", ids).lt("prazo", t).not("status", "in", "(concluida,cancelada)")),
+        scope(supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).in("client_id", ids).eq("prazo", t).not("status", "in", "(concluida,cancelada)")),
+        scope(supabase.from("documents").select("id", { head: true, count: "exact" }).in("client_id", ids).in("status", ["recebido", "em_analise"])),
+        scope(supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("client_id", ids).eq("status", "aguardando_analise")),
+        scope(supabase.from("tax_guides").select("id", { head: true, count: "exact" }).in("client_id", ids).gte("vencimento", t).lte("vencimento", in7).not("status", "in", "(paga,cancelada)")),
+        scope(supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("client_id", ids).in("status", ["pendente", "reenviar"])),
+        scope(supabase.from("timeline_events").select("id, descricao, created_at, clients(razao_social)").in("client_id", ids).order("created_at", { ascending: false }).limit(6)),
       ]);
       const failures = [tasksOverdue, tasksToday, docsAnalysis, awaitingReturn, guidesSoon, reqPending, events].filter((r) => r.error);
       if (failures.length) console.warn("[dashboard-collab] consultas parciais falharam", failures.map((r) => r.error?.message));
