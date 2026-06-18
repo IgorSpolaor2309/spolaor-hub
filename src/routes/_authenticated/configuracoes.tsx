@@ -647,7 +647,6 @@ function VerifyLinksResult({ report }: { report: any }) {
   const { totals, issues } = report;
   const allOk =
     issues.clients_without_collaborator.length === 0 &&
-    issues.collaborators_without_client.length === 0 &&
     issues.client_accounts_without_client.length === 0 &&
     issues.collab_accounts_without_collaborator.length === 0 &&
     issues.users_without_role.length === 0 &&
@@ -662,6 +661,13 @@ function VerifyLinksResult({ report }: { report: any }) {
         <Stat label="Colaboradores ativos" value={totals.collaborators_active} />
         <Stat label="Vínculos ativos" value={totals.links_active} />
       </div>
+      {issues.collaborators_without_client.length > 0 && (
+        <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+          <strong className="text-foreground">Colaboradores ainda sem empresas vinculadas ({issues.collaborators_without_client.length}):</strong>{" "}
+          {issues.collaborators_without_client.slice(0, 10).map((c: any) => c.name).join(", ")}
+          {issues.collaborators_without_client.length > 10 ? "…" : ""}. Isso é permitido — vincule empresas em Colaboradores ou na aba "Colaboradores responsáveis" da empresa.
+        </div>
+      )}
       {allOk ? (
         <p className="rounded-md border border-green-500/30 bg-green-500/10 p-3 text-green-700 dark:text-green-400">
           Todos os vínculos estão funcionando corretamente.
@@ -669,7 +675,6 @@ function VerifyLinksResult({ report }: { report: any }) {
       ) : (
         <div className="space-y-2">
           <IssueList title="Clientes sem colaborador" items={issues.clients_without_collaborator.map((c: any) => c.name)} />
-          <IssueList title="Colaboradores sem clientes" items={issues.collaborators_without_client.map((c: any) => c.name)} />
           <UnlinkedClientAccounts accounts={issues.client_accounts_without_client} />
           <IssueList
             title="Contas de colaborador sem cadastro vinculado"
