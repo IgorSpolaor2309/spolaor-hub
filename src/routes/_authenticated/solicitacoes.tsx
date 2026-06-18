@@ -33,22 +33,27 @@ const CATEGORIAS = [
 ];
 
 const STATUSES = [
-  "pendente", "enviado pelo cliente", "em análise", "aprovado", "recusado", "reenviar", "cancelado",
+  "pendente", "aguardando_analise", "recebido", "recusado", "reenviar", "cancelado",
 ];
 
 const STATUS_TONE: Record<string, string> = {
   "pendente": "bg-amber-100 text-amber-800",
-  "enviado pelo cliente": "bg-sky-100 text-sky-800",
-  "em análise": "bg-blue-100 text-blue-800",
-  "aprovado": "bg-emerald-100 text-emerald-800",
+  "aguardando_analise": "bg-sky-100 text-sky-800",
+  "recebido": "bg-emerald-100 text-emerald-800",
   "recusado": "bg-rose-100 text-rose-800",
   "reenviar": "bg-amber-100 text-amber-800",
   "cancelado": "bg-zinc-200 text-zinc-700",
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  "reenviar": "reenviar (pendente)",
+  "pendente": "Pendente",
+  "aguardando_analise": "Aguardando análise",
+  "recebido": "Recebido",
+  "recusado": "Recusado",
+  "reenviar": "Reenviar",
+  "cancelado": "Cancelado",
 };
+
 
 
 function RequestsPage() {
