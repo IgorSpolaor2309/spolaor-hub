@@ -34,6 +34,8 @@ function MyDocsPage() {
       const { data, error } = await supabase
         .from("clients")
         .select("id, razao_social, nome_fantasia, documento")
+        .is("deleted_at", null)
+        .neq("status", "inactive")
         .order("razao_social");
       if (error) throw error;
       return data ?? [];
