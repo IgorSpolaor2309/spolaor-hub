@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { TEMPLATE_CATEGORIES, TEMPLATE_VARIABLES, labelOf } from "@/lib/sc-types";
 import { Copy, Pencil, Plus, FileText } from "lucide-react";
@@ -60,7 +60,7 @@ function TemplatesPage() {
     },
   });
 
-  const range = resolveRange(dateF.preset, dateF.from, dateF.to);
+  const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
   const visible = (list as Template[]).filter((t) => {
     if (!isAdmin && !t.ativo) return false;
     if (cat !== "all" && t.categoria !== cat) return false;
@@ -152,7 +152,7 @@ function TemplatesPage() {
 
       {listError ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." /> :
        isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p> :
-       visible.length === 0 ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Nenhum modelo cadastrado" /> : (
+        visible.length === 0 ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Nenhum registro encontrado." /> : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           {visible.map((t) => (
             <Card key={t.id} className="flex flex-col p-4">
