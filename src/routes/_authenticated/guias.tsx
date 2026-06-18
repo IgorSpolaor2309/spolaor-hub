@@ -98,7 +98,7 @@ function GuidesPage() {
     <div>
       <PageHeader
         title="Guias e impostos"
-        description={isStaff ? "Registre guias enviadas ao cliente e acompanhe pagamentos." : "Guias enviadas pela equipe."}
+        description={isStaff ? "Registre guias enviadas às empresas e acompanhe pagamentos." : "Guias enviadas pela equipe."}
         action={
           isStaff && (
             <Dialog open={open} onOpenChange={setOpen}>
