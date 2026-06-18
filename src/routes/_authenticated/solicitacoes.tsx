@@ -33,22 +33,27 @@ const CATEGORIAS = [
 ];
 
 const STATUSES = [
-  "pendente", "enviado pelo cliente", "em análise", "aprovado", "recusado", "reenviar", "cancelado",
+  "pendente", "aguardando_analise", "recebido", "recusado", "reenviar", "cancelado",
 ];
 
 const STATUS_TONE: Record<string, string> = {
   "pendente": "bg-amber-100 text-amber-800",
-  "enviado pelo cliente": "bg-sky-100 text-sky-800",
-  "em análise": "bg-blue-100 text-blue-800",
-  "aprovado": "bg-emerald-100 text-emerald-800",
+  "aguardando_analise": "bg-sky-100 text-sky-800",
+  "recebido": "bg-emerald-100 text-emerald-800",
   "recusado": "bg-rose-100 text-rose-800",
   "reenviar": "bg-amber-100 text-amber-800",
   "cancelado": "bg-zinc-200 text-zinc-700",
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  "reenviar": "reenviar (pendente)",
+  "pendente": "Pendente",
+  "aguardando_analise": "Aguardando análise",
+  "recebido": "Recebido",
+  "recusado": "Recusado",
+  "reenviar": "Reenviar",
+  "cancelado": "Cancelado",
 };
+
 
 
 function RequestsPage() {
@@ -150,7 +155,7 @@ function RequestsPage() {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
-                {STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                {STATUSES.map((s) => <SelectItem key={s} value={s}>{STATUS_LABEL[s] ?? s}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -222,7 +227,7 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
       }).select("id").maybeSingle();
       if (dErr) throw dErr;
       const { error: rErr } = await supabase.from("document_requests")
-        .update({ status: "enviado pelo cliente", document_id: doc?.id ?? null })
+        .update({ status: "aguardando_analise", document_id: doc?.id ?? null })
         .eq("id", item.id);
       if (rErr) throw rErr;
       toast.success("Documento enviado");
@@ -232,7 +237,7 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
     } finally { e.target.value = ""; }
   }
 
-  const prazoVencido = !!item.prazo && isPastEndOfDay(item.prazo) && !["aprovado", "cancelado"].includes(item.status);
+  const prazoVencido = !!item.prazo && isPastEndOfDay(item.prazo) && !["recebido", "cancelado"].includes(item.status);
   const clientPending = item.status === "pendente" || item.status === "reenviar";
 
   return (
@@ -269,7 +274,7 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
             <>
               <Select value={item.status} onValueChange={(v) => updateStatus.mutate(v)}>
                 <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
-                <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{STATUS_LABEL[s] ?? s}</SelectItem>)}</SelectContent>
               </Select>
               <DeleteButton onConfirm={() => remove.mutate()} />
             </>

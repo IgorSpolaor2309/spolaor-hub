@@ -53,6 +53,15 @@ const TIPO_LABEL: Record<Tipo, string> = {
   validade: "Validade",
 };
 
+const STATUS_LABEL: Record<string, string> = {
+  pendente: "Pendente",
+  aguardando_analise: "Aguardando análise",
+  recebido: "Recebido",
+  recusado: "Recusado",
+  reenviar: "Reenviar",
+  cancelado: "Cancelado",
+};
+
 function statusTone(tipo: Tipo, status: string, prazo: string | null): string {
   const t = todayLocalYmd();
   if (prazo && prazo < t) return "bg-destructive/10 text-destructive";
@@ -94,7 +103,7 @@ function TasksPage() {
         supabase
           .from("document_requests")
           .select("id, titulo, categoria, prazo, status, client_id, clients(razao_social, nome_fantasia, documento)")
-          .in("status", ["pendente", "reenviar", "enviado pelo cliente", "em análise"]),
+          .in("status", role === "client" ? ["pendente", "reenviar"] : ["pendente", "reenviar", "aguardando_analise"]),
         supabase
           .from("tax_guides")
           .select("id, tipo, vencimento, status, comprovante_path, client_id, clients(razao_social, nome_fantasia, documento)")
@@ -295,7 +304,7 @@ function TasksPage() {
                       ) : <span>{i.empresa}</span>}
                     </td>
                     <td className="pr-4">{i.prazoLabel}</td>
-                    <td className="pr-4"><Badge className={i.statusTone}>{i.status}</Badge></td>
+                    <td className="pr-4"><Badge className={i.statusTone}>{STATUS_LABEL[i.status] ?? i.status}</Badge></td>
                     <td className="text-right">
                       <div className="flex justify-end gap-1">
                         <Button asChild size="sm" variant="ghost">

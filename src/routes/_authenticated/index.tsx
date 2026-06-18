@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -7,7 +7,10 @@ import { PageHeader } from "@/components/sc/PageHeader";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DateRangeFilter, EMPTY_DATE_FILTER, type DateFilterValue } from "@/components/sc/DateRangeFilter";
+import { resolveRange } from "@/lib/date-ranges";
 import {
   Users, UserCog, ClipboardList, AlertTriangle, FileText, Clock,
   Inbox, Receipt, ShieldCheck, MessageSquare,
@@ -85,8 +88,10 @@ function Dashboard() {
    ADMIN
    ============================================================ */
 function AdminDashboard({ name }: { name: string }) {
+  const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
+  const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
   const { data, error } = useQuery({
-    queryKey: ["dash-admin-v2"],
+    queryKey: ["dash-admin-v2", range.from, range.to],
     retry: 1,
     queryFn: async () => {
       const t = today();
@@ -94,6 +99,13 @@ function AdminDashboard({ name }: { name: string }) {
       const in30 = inDays(30);
       const { start: monthStart } = monthRange();
       const competencia = currentCompetencia();
+      const dFrom = range.from ? `${range.from}T00:00:00` : null;
+      const dTo = range.to ? `${range.to}T23:59:59` : null;
+      const scope = (q: any) => {
+        if (dFrom) q = q.gte("created_at", dFrom);
+        if (dTo) q = q.lte("created_at", dTo);
+        return q;
+      };
 
       const [
         clients, collabs,
@@ -108,17 +120,17 @@ function AdminDashboard({ name }: { name: string }) {
       ] = await Promise.all([
         supabase.from("clients").select("id", { head: true, count: "exact" }).eq("status", "active").is("deleted_at", null),
         supabase.from("collaborators").select("id", { head: true, count: "exact" }).eq("status", "active"),
-        supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).lt("prazo", t).not("status", "in", "(concluida,cancelada)"),
-        supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).eq("prazo", t).not("status", "in", "(concluida,cancelada)"),
-        supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("status", ["pendente", "reenviar"]),
-        supabase.from("documents").select("id", { head: true, count: "exact" }).in("status", ["recebido", "em_analise"]),
-        supabase.from("tax_guides").select("id", { head: true, count: "exact" }).gte("vencimento", t).lte("vencimento", in7).not("status", "in", "(paga,cancelada)"),
-        supabase.from("tax_guides").select("id", { head: true, count: "exact" }).lt("vencimento", t).not("status", "in", "(paga,cancelada)"),
+        scope(supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).lt("prazo", t).not("status", "in", "(concluida,cancelada)")),
+        scope(supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).eq("prazo", t).not("status", "in", "(concluida,cancelada)")),
+        scope(supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("status", ["pendente", "reenviar"])),
+        scope(supabase.from("documents").select("id", { head: true, count: "exact" }).in("status", ["recebido", "em_analise"])),
+        scope(supabase.from("tax_guides").select("id", { head: true, count: "exact" }).gte("vencimento", t).lte("vencimento", in7).not("status", "in", "(paga,cancelada)")),
+        scope(supabase.from("tax_guides").select("id", { head: true, count: "exact" }).lt("vencimento", t).not("status", "in", "(paga,cancelada)")),
         supabase.from("documents").select("id, nome, data_validade, client_id, clients(razao_social)")
           .not("data_validade", "is", null).gte("data_validade", t).lte("data_validade", in30)
           .order("data_validade", { ascending: true }).limit(10),
-        supabase.from("timeline_events").select("id, tipo, descricao, created_at, clients(razao_social)")
-          .order("created_at", { ascending: false }).limit(6),
+        scope(supabase.from("timeline_events").select("id, tipo, descricao, created_at, clients(razao_social)")
+          .order("created_at", { ascending: false }).limit(6)),
         supabase.from("clients").select("id, razao_social, client_collaborators(collaborator_id)").eq("status", "active").is("deleted_at", null),
         supabase.from("pending_tasks").select("collaborator_id").not("status", "in", "(concluida,cancelada)").not("collaborator_id", "is", null),
         supabase.from("clients").select("id, razao_social").eq("status", "active").is("deleted_at", null),
@@ -172,6 +184,12 @@ function AdminDashboard({ name }: { name: string }) {
     <div>
       <PageHeader title={`Bem-vindo, ${name?.split(" ")[0] || "administrador"}`} description="Visão operacional da SC Central." />
       {error && <Card className="mb-4 p-4 text-sm text-muted-foreground">Não foi possível carregar todos os dados. Tente novamente.</Card>}
+
+      <Card className="mb-4 flex flex-wrap items-end gap-3 p-4">
+        <DateRangeFilter value={dateF} onChange={setDateF} label="Período" />
+        <Button variant="ghost" size="sm" onClick={() => setDateF(EMPTY_DATE_FILTER)}>Limpar</Button>
+      </Card>
+
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={AlertTriangle} label="Pendências vencidas" value={data?.tasksOverdue ?? "—"} accent="bg-destructive/10 text-destructive" to="/pendencias" />
@@ -288,8 +306,10 @@ function AdminDashboard({ name }: { name: string }) {
    COLABORADOR
    ============================================================ */
 function CollabDashboard({ name, userId }: { name: string; userId: string }) {
+  const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
+  const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
   const { data, error } = useQuery({
-    queryKey: ["dash-collab-v2", userId],
+    queryKey: ["dash-collab-v2", userId, range.from, range.to],
     enabled: !!userId,
     retry: 1,
     queryFn: async () => {
@@ -303,14 +323,21 @@ function CollabDashboard({ name, userId }: { name: string; userId: string }) {
         return { clients: 0, tasksOverdue: 0, tasksToday: 0, docsAnalysis: 0, awaiting: 0, guidesSoon: 0, reqPending: 0, events: [] };
       }
       const t = today(); const in7 = inDays(7);
+      const dFrom = range.from ? `${range.from}T00:00:00` : null;
+      const dTo = range.to ? `${range.to}T23:59:59` : null;
+      const scope = (q: any) => {
+        if (dFrom) q = q.gte("created_at", dFrom);
+        if (dTo) q = q.lte("created_at", dTo);
+        return q;
+      };
       const [tasksOverdue, tasksToday, docsAnalysis, awaitingReturn, guidesSoon, reqPending, events] = await Promise.all([
-        supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).in("client_id", ids).lt("prazo", t).not("status", "in", "(concluida,cancelada)"),
-        supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).in("client_id", ids).eq("prazo", t).not("status", "in", "(concluida,cancelada)"),
-        supabase.from("documents").select("id", { head: true, count: "exact" }).in("client_id", ids).in("status", ["recebido", "em_analise"]),
-        supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("client_id", ids).eq("status", "enviado pelo cliente"),
-        supabase.from("tax_guides").select("id", { head: true, count: "exact" }).in("client_id", ids).gte("vencimento", t).lte("vencimento", in7).not("status", "in", "(paga,cancelada)"),
-        supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("client_id", ids).in("status", ["pendente", "reenviar"]),
-        supabase.from("timeline_events").select("id, descricao, created_at, clients(razao_social)").in("client_id", ids).order("created_at", { ascending: false }).limit(6),
+        scope(supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).in("client_id", ids).lt("prazo", t).not("status", "in", "(concluida,cancelada)")),
+        scope(supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).in("client_id", ids).eq("prazo", t).not("status", "in", "(concluida,cancelada)")),
+        scope(supabase.from("documents").select("id", { head: true, count: "exact" }).in("client_id", ids).in("status", ["recebido", "em_analise"])),
+        scope(supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("client_id", ids).eq("status", "aguardando_analise")),
+        scope(supabase.from("tax_guides").select("id", { head: true, count: "exact" }).in("client_id", ids).gte("vencimento", t).lte("vencimento", in7).not("status", "in", "(paga,cancelada)")),
+        scope(supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("client_id", ids).in("status", ["pendente", "reenviar"])),
+        scope(supabase.from("timeline_events").select("id, descricao, created_at, clients(razao_social)").in("client_id", ids).order("created_at", { ascending: false }).limit(6)),
       ]);
       const failures = [tasksOverdue, tasksToday, docsAnalysis, awaitingReturn, guidesSoon, reqPending, events].filter((r) => r.error);
       if (failures.length) console.warn("[dashboard-collab] consultas parciais falharam", failures.map((r) => r.error?.message));
@@ -328,7 +355,12 @@ function CollabDashboard({ name, userId }: { name: string; userId: string }) {
     <div>
       <PageHeader title={`Olá, ${name?.split(" ")[0] || "colaborador"}`} description="Operação das empresas vinculadas a você." />
       {error && <Card className="mb-4 p-4 text-sm text-muted-foreground">Não foi possível carregar todos os dados. Tente novamente.</Card>}
+      <Card className="mb-4 flex flex-wrap items-end gap-3 p-4">
+        <DateRangeFilter value={dateF} onChange={setDateF} label="Período" />
+        <Button variant="ghost" size="sm" onClick={() => setDateF(EMPTY_DATE_FILTER)}>Limpar</Button>
+      </Card>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+
         <StatCard icon={AlertTriangle} label="Minhas vencidas" value={data?.tasksOverdue ?? "—"} accent="bg-destructive/10 text-destructive" to="/pendencias" />
         <StatCard icon={Clock} label="Pendências de hoje" value={data?.tasksToday ?? "—"} accent="bg-amber-100 text-amber-800" to="/pendencias" />
         <StatCard icon={FileText} label="Docs para analisar" value={data?.docsAnalysis ?? "—"} accent="bg-blue-100 text-blue-800" to="/documentos" />
@@ -397,28 +429,38 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
   const scopedIds = selected && allIds.includes(selected) ? [selected] : allIds;
   const isAll = !selected || scopedIds.length !== 1;
 
+  const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
+  const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
+
   const { data, error: dataError } = useQuery({
-    queryKey: ["dash-client-v3", userId, competencia, scopedIds.join(",")],
+    queryKey: ["dash-client-v3", userId, competencia, scopedIds.join(","), range.from, range.to],
     enabled: scopedIds.length > 0,
     retry: 1,
     queryFn: async () => {
       const ids = scopedIds;
       const primary = myCompanies.find((c: any) => c.id === ids[0]) ?? myCompanies[0] ?? null;
       const t = today(); const in7 = inDays(7);
+      const dFrom = range.from ? `${range.from}T00:00:00` : null;
+      const dTo = range.to ? `${range.to}T23:59:59` : null;
+      const scope = (q: any) => {
+        if (dFrom) q = q.gte("created_at", dFrom);
+        if (dTo) q = q.lte("created_at", dTo);
+        return q;
+      };
       const [requested, sent, openTasks, guidesAvail, guidesSoon, monthStatus, events] = await Promise.all([
-        supabase.from("document_requests").select("id, titulo, status, prazo, categoria, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(20),
-        supabase.from("documents").select("id, nome, status, created_at, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(5),
-        supabase.from("pending_tasks").select("id, titulo, prazo, status, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).not("status", "in", "(concluida,cancelada)").order("prazo", { ascending: true }).limit(8),
+        scope(supabase.from("document_requests").select("id, titulo, status, prazo, categoria, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(20)),
+        scope(supabase.from("documents").select("id, nome, status, created_at, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(5)),
+        scope(supabase.from("pending_tasks").select("id, titulo, prazo, status, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).not("status", "in", "(concluida,cancelada)").order("prazo", { ascending: true }).limit(8)),
         supabase.from("tax_guides").select("id, tipo, vencimento, valor, status, storage_path, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).not("status", "in", "(paga,cancelada)").order("vencimento", { ascending: true }).limit(8),
         supabase.from("tax_guides").select("id", { head: true, count: "exact" }).in("client_id", ids).gte("vencimento", t).lte("vencimento", in7).not("status", "in", "(paga,cancelada)"),
         !isAll && primary ? supabase.from("client_month_status").select("status").eq("client_id", primary.id).eq("competencia", competencia).maybeSingle() : Promise.resolve({ data: null }),
-        supabase.from("interactions").select("id, tipo, descricao, created_at, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(5),
+        scope(supabase.from("interactions").select("id, tipo, descricao, created_at, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(5)),
       ]);
       const failures = [requested, sent, openTasks, guidesAvail, guidesSoon, monthStatus, events].filter((r: any) => r.error);
       if (failures.length) console.warn("[dashboard-client] consultas parciais falharam", failures.map((r: any) => r.error?.message));
       const reqs = requested.data ?? [];
       const reqPending = reqs.filter((r: any) => ["pendente", "reenviar"].includes(r.status));
-      const reqSent = reqs.filter((r: any) => ["enviado pelo cliente", "em análise", "aprovado"].includes(r.status));
+      const reqSent = reqs.filter((r: any) => ["aguardando_analise", "recebido"].includes(r.status));
       return {
         primary,
         status: (monthStatus as any)?.data?.status ?? null,
@@ -460,6 +502,12 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
           </Select>
         </Card>
       )}
+
+      <Card className="mb-4 flex flex-wrap items-end gap-3 p-4">
+        <DateRangeFilter value={dateF} onChange={setDateF} label="Período" />
+        <Button variant="ghost" size="sm" onClick={() => setDateF(EMPTY_DATE_FILTER)}>Limpar</Button>
+      </Card>
+
 
       {!isAll && (
         <Card className="mb-4 border-l-4 border-primary p-5">
