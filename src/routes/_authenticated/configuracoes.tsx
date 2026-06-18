@@ -1041,8 +1041,8 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
                 }))}
                 value={assignClientIds}
                 onChange={setAssignClientIds}
-                placeholder="Buscar cliente…"
-                emptyMessage="Nenhum cliente cadastrado."
+                placeholder="Buscar empresa…"
+                emptyMessage="Nenhuma empresa cadastrada."
                 noneSelectedMessage="Nenhuma empresa selecionada."
               />
             </div>
