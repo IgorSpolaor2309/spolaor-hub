@@ -455,8 +455,8 @@ function AccountLinksEditor({ userId, roles }: { userId: string; roles: string[]
           value={currentClientIds}
           onChange={(next) => updateCollabLinks.mutate(next)}
           placeholder="Buscar por nome, razão social ou CNPJ/CPF…"
-          emptyMessage="Nenhum cliente cadastrado."
-          noneSelectedMessage="Nenhum cliente atribuído."
+          emptyMessage="Nenhuma empresa cadastrada."
+          noneSelectedMessage="Nenhuma empresa atribuída."
         />
       </div>
     );
