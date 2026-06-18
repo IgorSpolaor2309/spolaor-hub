@@ -55,7 +55,6 @@ const TIPO_LABEL: Record<Tipo, string> = {
 
 const STATUS_LABEL: Record<string, string> = {
   pendente: "Pendente",
-  aguardando_analise: "Aguardando análise",
   recebido: "Recebido",
   recusado: "Recusado",
   reenviar: "Reenviar",
@@ -103,7 +102,7 @@ function TasksPage() {
         supabase
           .from("document_requests")
           .select("id, titulo, categoria, prazo, status, client_id, clients(razao_social, nome_fantasia, documento)")
-          .in("status", role === "client" ? ["pendente", "reenviar"] : ["pendente", "reenviar", "aguardando_analise"]),
+          .in("status", ["pendente", "reenviar"]),
         supabase
           .from("tax_guides")
           .select("id, tipo, vencimento, status, comprovante_path, client_id, clients(razao_social, nome_fantasia, documento)")

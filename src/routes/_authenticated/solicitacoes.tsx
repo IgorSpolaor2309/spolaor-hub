@@ -34,12 +34,11 @@ const CATEGORIAS = [
 ];
 
 const STATUSES = [
-  "pendente", "aguardando_analise", "recebido", "recusado", "reenviar", "cancelado",
+  "pendente", "recebido", "recusado", "reenviar", "cancelado",
 ];
 
 const STATUS_TONE: Record<string, string> = {
   "pendente": "bg-amber-100 text-amber-800",
-  "aguardando_analise": "bg-sky-100 text-sky-800",
   "recebido": "bg-emerald-100 text-emerald-800",
   "recusado": "bg-rose-100 text-rose-800",
   "reenviar": "bg-amber-100 text-amber-800",
@@ -48,7 +47,6 @@ const STATUS_TONE: Record<string, string> = {
 
 const STATUS_LABEL: Record<string, string> = {
   "pendente": "Pendente",
-  "aguardando_analise": "Aguardando análise",
   "recebido": "Recebido",
   "recusado": "Recusado",
   "reenviar": "Reenviar",
@@ -228,7 +226,7 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
       }).select("id").maybeSingle();
       if (dErr) throw dErr;
       const { error: rErr } = await supabase.from("document_requests")
-        .update({ status: "aguardando_analise", document_id: doc?.id ?? null })
+        .update({ status: "recebido", document_id: doc?.id ?? null })
         .eq("id", item.id);
       if (rErr) throw rErr;
       toast.success("Documento enviado");

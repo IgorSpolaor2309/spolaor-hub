@@ -111,7 +111,7 @@ function KanbanPage() {
         if (["recusado","cancelado"].includes(r.status)) continue;
         let col: ColKey;
         if (r.status === "pendente" || r.status === "reenviar") col = "aguardando_cliente";
-        else if (r.status === "aguardando_analise") col = "em_andamento";
+        else if (r.status === "recebido") col = "em_revisao";
         else if (r.status === "aprovado") col = "concluida";
         else col = "aguardando_cliente";
         out.push({
