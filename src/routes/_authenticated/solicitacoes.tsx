@@ -20,7 +20,7 @@ import { Plus, Upload, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { formatBR, isPastEndOfDay } from "@/lib/dates";
-import { normalizeDocTipo } from "@/lib/sc-types";
+import { normalizeDocTipo, normalizeSlug } from "@/lib/sc-types";
 
 export const Route = createFileRoute("/_authenticated/solicitacoes")({
   component: RequestsPage,
@@ -104,7 +104,7 @@ function RequestsPage() {
     return (items as any[]).filter((r) =>
       (fClient === "all" || r.client_id === fClient) &&
       (fStatus === "all" || r.status === fStatus) &&
-      (fCategoria === "all" || r.categoria === fCategoria) &&
+      (fCategoria === "all" || normalizeSlug(r.categoria) === normalizeSlug(fCategoria)) &&
       (!fComp || (r.competencia ?? "").includes(fComp)) &&
       inRange(r.created_at, range),
     );
