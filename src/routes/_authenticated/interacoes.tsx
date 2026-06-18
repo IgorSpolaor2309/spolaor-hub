@@ -554,7 +554,7 @@ function QuickTemplatesDialog({
 
 function NewConversationButton() {
   const [open, setOpen] = useState(false);
-  const [clientId, setClientId] = useState<string>("");
+  const [clientId, setClientId] = useState<string | undefined>(undefined);
   const navigate = useNavigate({ from: "/_authenticated/interacoes" });
   const qc = useQueryClient();
   const { data: clients = [] } = useQuery({
@@ -580,7 +580,7 @@ function NewConversationButton() {
   return (
     <>
       <Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" /> Nova conversa</Button>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setClientId(undefined); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Iniciar conversa</DialogTitle></DialogHeader>
           <Select value={clientId} onValueChange={setClientId}>
