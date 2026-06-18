@@ -269,7 +269,7 @@ function ChatThread({
   const scrollerRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const { data: messages = [] } = useQuery({
+  const { data: messages = [], isLoading: loadingMessages, error: messagesError } = useQuery({
     queryKey: ["chat-msgs", conv.id],
     enabled: !!conv.id && !!currentUserId && !!currentRole,
     retry: 1,
@@ -284,7 +284,7 @@ function ChatThread({
         logChatError("chat_messages.select", error, { table: "chat_messages", conversationId: conv.id });
         throw error;
       }
-      return data as any[];
+      return (data ?? []) as any[];
     },
   });
 
@@ -382,7 +382,11 @@ function ChatThread({
       </header>
 
       <div ref={scrollerRef} className="flex-1 space-y-3 overflow-y-auto bg-muted/30 p-4">
-        {messages.length === 0 && (
+        {messagesError ? (
+          <div className="mt-12 text-center text-xs text-destructive">Falha ao carregar mensagens.</div>
+        ) : loadingMessages ? (
+          <div className="mt-12 text-center text-xs text-muted-foreground">Carregando mensagens…</div>
+        ) : messages.length === 0 && (
           <div className="mt-12 text-center text-xs text-muted-foreground">
             Nenhuma mensagem ainda. Diga olá! 👋
           </div>
