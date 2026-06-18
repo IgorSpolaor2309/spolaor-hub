@@ -87,6 +87,18 @@ function MyDocsPage() {
     finally { setUploading(false); e.target.value = ""; }
   }
 
+  const removeDoc = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("documents")
+        .update({ deleted_at: new Date().toISOString(), deleted_by: userId })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["my-docs"] }); refetch(); toast.success("Arquivo removido pelo autor."); },
+    onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Sem permissão para excluir." : (e?.message ?? "Falha")),
+  });
+
   return (
     <div>
       <PageHeader title="Meus documentos" description="Envie e acompanhe seus documentos." />
