@@ -161,7 +161,7 @@ function ChatPage() {
           // Multiempresa: pega a primeira empresa visível e cria a conversa dela.
           // Para as demais, a equipe inicia (ou o cliente abre via Minha área).
           const { data: cs } = await supabase
-            .from("clients").select("id").limit(1);
+            .from("clients").select("id").is("deleted_at", null).neq("status", "inactive").limit(1);
           const clientId = cs?.[0]?.id;
           if (!clientId) return;
           const id = await ensureConversation(clientId);
@@ -269,7 +269,7 @@ function ChatThread({
   const scrollerRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const { data: messages = [] } = useQuery({
+  const { data: messages = [], isLoading: loadingMessages, error: messagesError } = useQuery({
     queryKey: ["chat-msgs", conv.id],
     enabled: !!conv.id && !!currentUserId && !!currentRole,
     retry: 1,
@@ -284,7 +284,7 @@ function ChatThread({
         logChatError("chat_messages.select", error, { table: "chat_messages", conversationId: conv.id });
         throw error;
       }
-      return data as any[];
+      return (data ?? []) as any[];
     },
   });
 
@@ -382,7 +382,11 @@ function ChatThread({
       </header>
 
       <div ref={scrollerRef} className="flex-1 space-y-3 overflow-y-auto bg-muted/30 p-4">
-        {messages.length === 0 && (
+        {messagesError ? (
+          <div className="mt-12 text-center text-xs text-destructive">Falha ao carregar mensagens.</div>
+        ) : loadingMessages ? (
+          <div className="mt-12 text-center text-xs text-muted-foreground">Carregando mensagens…</div>
+        ) : messages.length === 0 && (
           <div className="mt-12 text-center text-xs text-muted-foreground">
             Nenhuma mensagem ainda. Diga olá! 👋
           </div>
@@ -550,13 +554,13 @@ function QuickTemplatesDialog({
 
 function NewConversationButton() {
   const [open, setOpen] = useState(false);
-  const [clientId, setClientId] = useState<string>("");
+  const [clientId, setClientId] = useState<string | undefined>(undefined);
   const navigate = useNavigate({ from: "/_authenticated/interacoes" });
   const qc = useQueryClient();
   const { data: clients = [] } = useQuery({
     queryKey: ["chat-new-clients"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("clients").select("id, razao_social, nome_fantasia, documento").eq("status", "active").order("razao_social");
+      const { data, error } = await supabase.from("clients").select("id, razao_social, nome_fantasia, documento").eq("status", "active").is("deleted_at", null).order("razao_social");
       if (error) throw error;
       return data ?? [];
     },
@@ -576,7 +580,7 @@ function NewConversationButton() {
   return (
     <>
       <Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" /> Nova conversa</Button>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setClientId(undefined); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Iniciar conversa</DialogTitle></DialogHeader>
           <Select value={clientId} onValueChange={setClientId}>

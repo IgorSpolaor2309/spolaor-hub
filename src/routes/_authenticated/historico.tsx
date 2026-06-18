@@ -21,7 +21,7 @@ function HistoryPage() {
     retry: 1,
     queryFn: async () => {
       // RLS multiempresa: lista todos os client_ids visíveis ao usuário.
-      const { data: cs, error: cErr } = await supabase.from("clients").select("id");
+      const { data: cs, error: cErr } = await supabase.from("clients").select("id").is("deleted_at", null).neq("status", "inactive");
       if (cErr) throw cErr;
       const ids = (cs ?? []).map((c) => c.id); if (!ids.length) return [];
       const { data, error } = await supabase

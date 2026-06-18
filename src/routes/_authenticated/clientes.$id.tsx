@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Upload, ArrowLeft, Pencil, Inbox, Receipt, CalendarClock, KanbanSquare, MessagesSquare, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 
@@ -523,11 +523,13 @@ function RequirementsTab({ clientId, list, canManage, onChange }: any) {
 function TeamTab({ clientId, current, onChange }: any) {
   const { data: allCollabs = [] } = useQuery({
     queryKey: ["all-collabs-select"],
+    enabled: !!clientId,
     queryFn: async () => (await supabase.from("collaborators").select("id, nome, email").eq("status", "active").order("nome")).data ?? [],
   });
   // Conta cliente vinculada? Usado para alerta quando não há colaborador responsável.
   const { data: clientUsersCount = 0 } = useQuery({
     queryKey: ["client-users-count", clientId],
+    enabled: !!clientId,
     queryFn: async () => {
       const { count } = await supabase
         .from("client_users")
@@ -538,7 +540,7 @@ function TeamTab({ clientId, current, onChange }: any) {
     },
   });
 
-  const [cid, setCid] = useState("");
+  const [cid, setCid] = useState<string | undefined>(undefined);
   const [search, setSearch] = useState("");
 
   const linkedIds = new Set((current ?? []).map((c: any) => c.collaborator_id));
@@ -551,10 +553,11 @@ function TeamTab({ clientId, current, onChange }: any) {
 
   const add = useMutation({
     mutationFn: async () => {
+      if (!cid) throw new Error("Selecione um colaborador.");
       const { error } = await supabase.from("client_collaborators").insert({ client_id: clientId, collaborator_id: cid });
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Colaborador vinculado com sucesso."); setCid(""); setSearch(""); onChange(); },
+    onSuccess: () => { toast.success("Colaborador vinculado com sucesso."); setCid(undefined); setSearch(""); onChange(); },
     onError: (e: any) => {
       if (e?.code === "23505") { toast.error("Este colaborador já está vinculado a esta empresa."); return; }
       toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Você não tem permissão para realizar esta ação." : (e?.message ?? "Não foi possível vincular o colaborador."));
@@ -910,12 +913,11 @@ function FiscalTab({ clientId, canEdit, isAdmin }: { clientId: string; canEdit: 
     omie_cliente_id: "", omie_sync_status: "", omie_sync_error: "",
   };
   const [form, setForm] = useState<any>(empty);
-  const [hydrated, setHydrated] = useState(false);
-
-  if (data && !hydrated) {
+  useEffect(() => {
+    if (!data) return;
     setForm({ ...empty, ...Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v ?? (typeof empty[k as keyof typeof empty] === "boolean" ? null : "")])) });
-    setHydrated(true);
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
 
   const save = useMutation({
     mutationFn: async () => {

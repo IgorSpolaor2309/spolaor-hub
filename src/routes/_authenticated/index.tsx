@@ -106,7 +106,7 @@ function AdminDashboard({ name }: { name: string }) {
         collabTaskCounts,
         clientsActiveForMonth, docsThisMonth, monthStatuses,
       ] = await Promise.all([
-        supabase.from("clients").select("id", { head: true, count: "exact" }).eq("status", "active"),
+        supabase.from("clients").select("id", { head: true, count: "exact" }).eq("status", "active").is("deleted_at", null),
         supabase.from("collaborators").select("id", { head: true, count: "exact" }).eq("status", "active"),
         supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).lt("prazo", t).not("status", "in", "(concluida,cancelada)"),
         supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).eq("prazo", t).not("status", "in", "(concluida,cancelada)"),
@@ -119,9 +119,9 @@ function AdminDashboard({ name }: { name: string }) {
           .order("data_validade", { ascending: true }).limit(10),
         supabase.from("timeline_events").select("id, tipo, descricao, created_at, clients(razao_social)")
           .order("created_at", { ascending: false }).limit(6),
-        supabase.from("clients").select("id, razao_social, client_collaborators(collaborator_id)").eq("status", "active"),
+        supabase.from("clients").select("id, razao_social, client_collaborators(collaborator_id)").eq("status", "active").is("deleted_at", null),
         supabase.from("pending_tasks").select("collaborator_id").not("status", "in", "(concluida,cancelada)").not("collaborator_id", "is", null),
-        supabase.from("clients").select("id, razao_social").eq("status", "active"),
+        supabase.from("clients").select("id, razao_social").eq("status", "active").is("deleted_at", null),
         supabase.from("documents").select("client_id").gte("created_at", monthStart),
         supabase.from("client_month_status").select("client_id, status, competencia").eq("competencia", competencia),
       ]);
@@ -180,7 +180,7 @@ function AdminDashboard({ name }: { name: string }) {
         <StatCard icon={FileText} label="Docs aguardando análise" value={data?.docsAnalysis ?? "—"} accent="bg-blue-100 text-blue-800" to="/documentos" />
         <StatCard icon={Receipt} label="Guias vencendo (7 dias)" value={data?.guidesSoon ?? "—"} accent="bg-orange-100 text-orange-800" to="/guias" />
         <StatCard icon={Receipt} label="Guias vencidas" value={data?.guidesOverdue ?? "—"} accent="bg-destructive/10 text-destructive" to="/guias" />
-        <StatCard icon={Users} label="Clientes ativos" value={data?.clients ?? "—"} to="/clientes" />
+        <StatCard icon={Users} label="Empresas ativas" value={data?.clients ?? "—"} to="/clientes" />
         <StatCard icon={UserCog} label="Colaboradores ativos" value={data?.collabs ?? "—"} accent="bg-secondary/10 text-secondary" to="/colaboradores" />
       </div>
 
@@ -203,8 +203,8 @@ function AdminDashboard({ name }: { name: string }) {
         </Card>
 
         <Card className="p-5">
-          <h3 className="mb-3 font-display text-lg">Clientes sem colaborador atribuído</h3>
-          {!(data?.clientsNoCollab?.length) ? <p className="text-sm text-muted-foreground">Todos os clientes têm colaborador.</p> : (
+          <h3 className="mb-3 font-display text-lg">Empresas sem colaborador atribuído</h3>
+          {!(data?.clientsNoCollab?.length) ? <p className="text-sm text-muted-foreground">Todas as empresas têm colaborador.</p> : (
             <ul className="divide-y">
               {data!.clientsNoCollab.map((c: any) => (
                 <li key={c.id} className="flex items-center justify-between py-2.5">
@@ -217,7 +217,7 @@ function AdminDashboard({ name }: { name: string }) {
         </Card>
 
         <Card className="p-5">
-          <h3 className="mb-3 font-display text-lg">Clientes sem documentos do mês</h3>
+          <h3 className="mb-3 font-display text-lg">Empresas sem documentos do mês</h3>
           {!(data?.clientsNoDocs?.length) ? <p className="text-sm text-muted-foreground">Todos receberam documentos este mês.</p> : (
             <ul className="divide-y">
               {data!.clientsNoDocs.map((c: any) => (
@@ -326,21 +326,21 @@ function CollabDashboard({ name, userId }: { name: string; userId: string }) {
 
   return (
     <div>
-      <PageHeader title={`Olá, ${name?.split(" ")[0] || "colaborador"}`} description="Operação dos seus clientes vinculados." />
+      <PageHeader title={`Olá, ${name?.split(" ")[0] || "colaborador"}`} description="Operação das empresas vinculadas a você." />
       {error && <Card className="mb-4 p-4 text-sm text-muted-foreground">Não foi possível carregar todos os dados. Tente novamente.</Card>}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={AlertTriangle} label="Minhas vencidas" value={data?.tasksOverdue ?? "—"} accent="bg-destructive/10 text-destructive" to="/pendencias" />
         <StatCard icon={Clock} label="Pendências de hoje" value={data?.tasksToday ?? "—"} accent="bg-amber-100 text-amber-800" to="/pendencias" />
         <StatCard icon={FileText} label="Docs para analisar" value={data?.docsAnalysis ?? "—"} accent="bg-blue-100 text-blue-800" to="/documentos" />
-        <StatCard icon={Inbox} label="Clientes aguardando retorno" value={data?.awaiting ?? "—"} accent="bg-sky-100 text-sky-800" to="/solicitacoes" />
+        <StatCard icon={Inbox} label="Empresas aguardando retorno" value={data?.awaiting ?? "—"} accent="bg-sky-100 text-sky-800" to="/solicitacoes" />
         <StatCard icon={Receipt} label="Guias vencendo (7 dias)" value={data?.guidesSoon ?? "—"} accent="bg-orange-100 text-orange-800" to="/guias" />
         <StatCard icon={Inbox} label="Solicitações pendentes" value={data?.reqPending ?? "—"} accent="bg-secondary/10 text-secondary" to="/solicitacoes" />
-        <StatCard icon={Users} label="Clientes vinculados" value={data?.clients ?? "—"} to="/clientes" />
+        <StatCard icon={Users} label="Empresas vinculadas" value={data?.clients ?? "—"} to="/clientes" />
       </div>
 
       <div className="mt-6">
         <Card className="p-5">
-          <h3 className="mb-3 font-display text-lg flex items-center gap-2"><MessageSquare className="h-4 w-4 text-primary" /> Atividades recentes dos meus clientes</h3>
+          <h3 className="mb-3 font-display text-lg flex items-center gap-2"><MessageSquare className="h-4 w-4 text-primary" /> Atividades recentes das minhas empresas</h3>
           {!(data?.events?.length) ? <p className="text-sm text-muted-foreground">Sem atividade.</p> : (
             <ul className="space-y-3">
               {data!.events.map((e: any) => (
@@ -433,7 +433,7 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
   });
 
   if (companiesError) return <div className="text-sm text-muted-foreground">Não foi possível carregar os dados. Tente novamente.</div>;
-  if (myCompanies.length === 0) return <div className="text-sm text-muted-foreground">Sem cliente vinculado.</div>;
+  if (myCompanies.length === 0) return <div className="text-sm text-muted-foreground">Sem empresa vinculada.</div>;
   if (!data) return <div className="text-sm text-muted-foreground">Carregando…</div>;
 
   const m = monthLabel(data.status);

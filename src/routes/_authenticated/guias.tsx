@@ -57,6 +57,8 @@ function GuidesPage() {
       const { data, error } = await supabase
         .from("clients")
         .select("id, razao_social, nome_fantasia, documento")
+        .is("deleted_at", null)
+        .neq("status", "inactive")
         .order("razao_social");
       if (error) throw error;
       return data ?? [];
@@ -73,7 +75,7 @@ function GuidesPage() {
         .select("*, clients(razao_social, nome_fantasia)")
         .order("vencimento", { ascending: true });
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
   });
   const loadError = clientsError || itemsError;
@@ -96,7 +98,7 @@ function GuidesPage() {
     <div>
       <PageHeader
         title="Guias e impostos"
-        description={isStaff ? "Registre guias enviadas ao cliente e acompanhe pagamentos." : "Guias enviadas pela equipe."}
+        description={isStaff ? "Registre guias enviadas às empresas e acompanhe pagamentos." : "Guias enviadas pela equipe."}
         action={
           isStaff && (
             <Dialog open={open} onOpenChange={setOpen}>
@@ -113,7 +115,7 @@ function GuidesPage() {
       <Card className="mb-4 p-4">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <Label className="text-xs">Cliente</Label>
+            <Label className="text-xs">Empresa</Label>
             <Select value={fClient} onValueChange={setFClient}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -156,7 +158,7 @@ function GuidesPage() {
       <Card className="p-4">
         {loadError ? <EmptyState icon={<Receipt className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />
           : isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p>
-          : filtered.length === 0 ? <EmptyState icon={<Receipt className="h-6 w-6" />} title="Nenhuma guia" />
+          : filtered.length === 0 ? <EmptyState icon={<Receipt className="h-6 w-6" />} title="Nenhum registro encontrado." />
           : (
             <ul className="space-y-3">
               {filtered.map((g: any) => (
@@ -302,14 +304,14 @@ function NewGuideDialog({ clients, userId, onDone }: { clients: any[]; userId: s
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Guia registrada."); onDone(); },
-    onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Sem permissão para este cliente." : (e?.message ?? "Falha ao salvar.")),
+    onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Sem permissão para esta empresa." : (e?.message ?? "Falha ao salvar.")),
   });
   return (
     <DialogContent className="max-w-xl">
       <DialogHeader><DialogTitle>Nova guia / imposto</DialogTitle></DialogHeader>
       <div className="grid gap-3">
         <div className="space-y-1.5">
-          <Label>Cliente *</Label>
+          <Label>Empresa *</Label>
           <Select value={f.client_id} onValueChange={(v) => setF({ ...f, client_id: v })}>
             <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
             <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.razao_social}</SelectItem>)}</SelectContent>

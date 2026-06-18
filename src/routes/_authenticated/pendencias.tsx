@@ -94,16 +94,24 @@ function TasksPage() {
         </div>
         {tasksError ? <EmptyState icon={<ClipboardList className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." /> :
          isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p> :
-         filtered.length === 0 ? <EmptyState icon={<ClipboardList className="h-6 w-6" />} title="Nada por aqui" /> : (
+         filtered.length === 0 ? <EmptyState icon={<ClipboardList className="h-6 w-6" />} title="Nenhum registro encontrado." /> : (
           <table className="w-full text-sm">
             <thead className="text-left text-xs uppercase text-muted-foreground">
-              <tr className="border-b"><th className="py-2 pr-4">Pendência</th><th>Cliente</th><th>Prazo</th><th>Prioridade</th><th>Status</th><th></th></tr>
+              <tr className="border-b"><th className="py-2 pr-4">Pendência</th><th>Empresa</th><th>Prazo</th><th>Prioridade</th><th>Status</th><th></th></tr>
             </thead>
             <tbody>
               {filtered.map((t: any) => (
                 <tr key={t.id} className="border-b">
                   <td className="py-3 pr-4 font-medium">{t.titulo}</td>
-                  <td><Link to="/clientes/$id" params={{ id: t.client_id }} className="text-secondary hover:underline">{t.clients?.nome_fantasia || t.clients?.razao_social}</Link></td>
+                  <td>
+                    {t.client_id ? (
+                      <Link to="/clientes/$id" params={{ id: t.client_id }} className="text-secondary hover:underline">
+                        {t.clients?.nome_fantasia || t.clients?.razao_social || "Empresa"}
+                      </Link>
+                    ) : (
+                      <span>{t.clients?.nome_fantasia || t.clients?.razao_social || "—"}</span>
+                    )}
+                  </td>
                   <td>{t.prazo ? formatBR(t.prazo) : "—"}</td>
                   <td><PriorityBadge value={t.prioridade} /></td>
                   <td><StatusBadge value={t.status} /></td>

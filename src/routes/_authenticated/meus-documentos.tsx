@@ -12,7 +12,7 @@ import { StatusBadge } from "@/components/sc/StatusBadge";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { FileText, Upload } from "lucide-react";
 import { DOC_TYPES, labelOf } from "@/lib/sc-types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/meus-documentos")({
@@ -34,6 +34,8 @@ function MyDocsPage() {
       const { data, error } = await supabase
         .from("clients")
         .select("id, razao_social, nome_fantasia, documento")
+        .is("deleted_at", null)
+        .neq("status", "inactive")
         .order("razao_social");
       if (error) throw error;
       return data ?? [];
@@ -58,9 +60,13 @@ function MyDocsPage() {
 
   const [clientId, setClientId] = useState<string>("");
 
+  useEffect(() => {
+    if (clients.length > 0 && !clientId) setClientId(clients[0].id);
+  }, [clients, clientId]);
+
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]; const cid = clientId || clients[0]?.id;
-    if (!file || !cid) { toast.error("Selecione cliente e arquivo"); return; }
+    if (!file || !cid) { toast.error("Selecione empresa e arquivo"); return; }
     setUploading(true);
     try {
       const path = `${cid}/${Date.now()}-${file.name}`;
@@ -84,7 +90,7 @@ function MyDocsPage() {
         <div className="mb-4 flex flex-wrap items-end gap-3 rounded-md border bg-muted/30 p-3">
           {clients.length > 1 && (
             <div><Label className="text-xs">Empresa</Label>
-              <Select value={clientId || clients[0]?.id} onValueChange={setClientId}>
+              <Select value={clientId || undefined} onValueChange={setClientId}>
                 <SelectTrigger className="w-[260px]"><SelectValue /></SelectTrigger>
                 <SelectContent>{clients.map((c) => (
                   <SelectItem key={c.id} value={c.id}>

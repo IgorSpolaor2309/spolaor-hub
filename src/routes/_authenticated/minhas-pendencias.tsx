@@ -26,7 +26,7 @@ function MyTasksPage() {
     retry: 1,
     queryFn: async () => {
       // RLS já filtra por user_has_client_access (multiempresa).
-      const { data: cs, error: cErr } = await supabase.from("clients").select("id");
+      const { data: cs, error: cErr } = await supabase.from("clients").select("id").is("deleted_at", null).neq("status", "inactive");
       if (cErr) throw cErr;
       const ids = (cs ?? []).map((c) => c.id); if (!ids.length) return [];
       const { data, error } = await supabase
