@@ -185,6 +185,12 @@ function AdminDashboard({ name }: { name: string }) {
       <PageHeader title={`Bem-vindo, ${name?.split(" ")[0] || "administrador"}`} description="Visão operacional da SC Central." />
       {error && <Card className="mb-4 p-4 text-sm text-muted-foreground">Não foi possível carregar todos os dados. Tente novamente.</Card>}
 
+      <Card className="mb-4 flex flex-wrap items-end gap-3 p-4">
+        <DateRangeFilter value={dateF} onChange={setDateF} label="Período" />
+        <Button variant="ghost" size="sm" onClick={() => setDateF(EMPTY_DATE_FILTER)}>Limpar</Button>
+      </Card>
+
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={AlertTriangle} label="Pendências vencidas" value={data?.tasksOverdue ?? "—"} accent="bg-destructive/10 text-destructive" to="/pendencias" />
         <StatCard icon={Clock} label="Pendências de hoje" value={data?.tasksToday ?? "—"} accent="bg-amber-100 text-amber-800" to="/pendencias" />
