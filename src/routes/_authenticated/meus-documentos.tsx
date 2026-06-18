@@ -130,9 +130,44 @@ function MyDocsPage() {
             <Button asChild disabled={uploading || clients.length === 0}><span><Upload className="mr-2 h-4 w-4" />{uploading ? "Enviando…" : "Enviar"}</span></Button>
           </label>
         </div>
-        {clientsError || docsError ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />
+
+        <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 rounded-md border p-3">
+          <div><Label className="text-xs">Filtrar por tipo</Label>
+            <Select value={fTipo} onValueChange={setFTipo}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os tipos</SelectItem>
+                {DOC_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div><Label className="text-xs">Status</Label>
+            <Select value={fStatus} onValueChange={setFStatus}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {DOC_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div><Label className="text-xs">Buscar</Label>
+            <Input placeholder="Nome do arquivo" value={fQ} onChange={(e) => setFQ(e.target.value)} />
+          </div>
+          <div className="flex items-end">
+            <Button variant="ghost" size="sm" onClick={() => { setFTipo("all"); setFStatus("all"); setFQ(""); }}>Limpar filtros</Button>
+          </div>
+        </div>
+
+        {(() => {
+          const filtered = (docs as any[]).filter((d) => {
+            if (fTipo !== "all" && normalizeDocTipo(d.tipo) !== normalizeDocTipo(fTipo)) return false;
+            if (fStatus !== "all" && d.status !== fStatus) return false;
+            if (fQ && !(d.nome ?? "").toLowerCase().includes(fQ.toLowerCase())) return false;
+            return true;
+          });
+          return clientsError || docsError ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />
         : loading || isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p>
-        : docs.length === 0 ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Nenhum documento enviado" /> : (
+        : filtered.length === 0 ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Nenhum documento encontrado." /> : (
           <ul className="divide-y">
             {docs.map((d: any) => (
               <li key={d.id} className="flex items-center justify-between py-3">
