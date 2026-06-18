@@ -903,6 +903,7 @@ function ClientCollabsInlineManager({ clientId }: { clientId: string }) {
   });
   const { data: allCollabs = [] } = useQuery({
     queryKey: ["all-collabs-select"],
+    enabled: !!clientId,
     retry: 1,
     queryFn: async () => {
       const { data, error } = await supabase.from("collaborators").select("id, nome, email").eq("status", "active").order("nome");
@@ -910,7 +911,7 @@ function ClientCollabsInlineManager({ clientId }: { clientId: string }) {
       return data ?? [];
     },
   });
-  const [cid, setCid] = useState("");
+  const [cid, setCid] = useState<string | undefined>(undefined);
   const [search, setSearch] = useState("");
   const linkedIds = new Set((current as any[]).map((c) => c.collaborator_id));
   const available = (allCollabs as any[]).filter((c) => {
@@ -922,10 +923,11 @@ function ClientCollabsInlineManager({ clientId }: { clientId: string }) {
 
   const add = useMutation({
     mutationFn: async () => {
+      if (!cid) throw new Error("Selecione um colaborador.");
       const { error } = await supabase.from("client_collaborators").insert({ client_id: clientId, collaborator_id: cid });
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Colaborador vinculado."); setCid(""); setSearch(""); qc.invalidateQueries({ queryKey: ["client-collabs", clientId] }); qc.invalidateQueries({ queryKey: ["clients"] }); },
+    onSuccess: () => { toast.success("Colaborador vinculado."); setCid(undefined); setSearch(""); qc.invalidateQueries({ queryKey: ["client-collabs", clientId] }); qc.invalidateQueries({ queryKey: ["clients"] }); },
     onError: (e: any) => { if (e?.code === "23505") return toast.error("Já vinculado."); toast.error(e?.message ?? "Falha"); },
   });
   const del = useMutation({
