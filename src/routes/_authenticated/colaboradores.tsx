@@ -360,7 +360,7 @@ function CollaboratorClientsSection({ collaboratorId }: { collaboratorId: string
 
   return (
     <div className="rounded-md border p-3">
-      <Label className="text-xs uppercase text-muted-foreground">Clientes atribuídos a este colaborador</Label>
+      <Label className="text-xs uppercase text-muted-foreground">EMPRESAS ATRIBUÍDAS A ESTE COLABORADOR</Label>
       <p className="mb-2 text-xs text-muted-foreground">Adicione ou remova clientes vinculados.</p>
       <MultiSelect
         options={allClients.map((c: any) => ({
@@ -372,7 +372,7 @@ function CollaboratorClientsSection({ collaboratorId }: { collaboratorId: string
         onChange={(next) => setAssignments.mutate(next)}
         placeholder="Buscar cliente…"
         emptyMessage="Nenhum cliente cadastrado."
-        noneSelectedMessage="Nenhum cliente selecionado."
+        noneSelectedMessage="Nenhuma empresa selecionada."
       />
     </div>
   );
