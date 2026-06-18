@@ -99,6 +99,13 @@ function AdminDashboard({ name }: { name: string }) {
       const in30 = inDays(30);
       const { start: monthStart } = monthRange();
       const competencia = currentCompetencia();
+      const dFrom = range.from ? `${range.from}T00:00:00` : null;
+      const dTo = range.to ? `${range.to}T23:59:59` : null;
+      const scope = (q: any) => {
+        if (dFrom) q = q.gte("created_at", dFrom);
+        if (dTo) q = q.lte("created_at", dTo);
+        return q;
+      };
 
       const [
         clients, collabs,
@@ -113,17 +120,17 @@ function AdminDashboard({ name }: { name: string }) {
       ] = await Promise.all([
         supabase.from("clients").select("id", { head: true, count: "exact" }).eq("status", "active").is("deleted_at", null),
         supabase.from("collaborators").select("id", { head: true, count: "exact" }).eq("status", "active"),
-        supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).lt("prazo", t).not("status", "in", "(concluida,cancelada)"),
-        supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).eq("prazo", t).not("status", "in", "(concluida,cancelada)"),
-        supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("status", ["pendente", "reenviar"]),
-        supabase.from("documents").select("id", { head: true, count: "exact" }).in("status", ["recebido", "em_analise"]),
-        supabase.from("tax_guides").select("id", { head: true, count: "exact" }).gte("vencimento", t).lte("vencimento", in7).not("status", "in", "(paga,cancelada)"),
-        supabase.from("tax_guides").select("id", { head: true, count: "exact" }).lt("vencimento", t).not("status", "in", "(paga,cancelada)"),
+        scope(supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).lt("prazo", t).not("status", "in", "(concluida,cancelada)")),
+        scope(supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).eq("prazo", t).not("status", "in", "(concluida,cancelada)")),
+        scope(supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("status", ["pendente", "reenviar"])),
+        scope(supabase.from("documents").select("id", { head: true, count: "exact" }).in("status", ["recebido", "em_analise"])),
+        scope(supabase.from("tax_guides").select("id", { head: true, count: "exact" }).gte("vencimento", t).lte("vencimento", in7).not("status", "in", "(paga,cancelada)")),
+        scope(supabase.from("tax_guides").select("id", { head: true, count: "exact" }).lt("vencimento", t).not("status", "in", "(paga,cancelada)")),
         supabase.from("documents").select("id, nome, data_validade, client_id, clients(razao_social)")
           .not("data_validade", "is", null).gte("data_validade", t).lte("data_validade", in30)
           .order("data_validade", { ascending: true }).limit(10),
-        supabase.from("timeline_events").select("id, tipo, descricao, created_at, clients(razao_social)")
-          .order("created_at", { ascending: false }).limit(6),
+        scope(supabase.from("timeline_events").select("id, tipo, descricao, created_at, clients(razao_social)")
+          .order("created_at", { ascending: false }).limit(6)),
         supabase.from("clients").select("id, razao_social, client_collaborators(collaborator_id)").eq("status", "active").is("deleted_at", null),
         supabase.from("pending_tasks").select("collaborator_id").not("status", "in", "(concluida,cancelada)").not("collaborator_id", "is", null),
         supabase.from("clients").select("id, razao_social").eq("status", "active").is("deleted_at", null),
