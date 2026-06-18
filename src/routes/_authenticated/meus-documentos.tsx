@@ -22,9 +22,11 @@ export const Route = createFileRoute("/_authenticated/meus-documentos")({
 
 function MyDocsPage() {
   const { userId, loading } = useCurrentUser();
+  const qc = useQueryClient();
   const [tipo, setTipo] = useState("outro");
   const [competencia, setCompetencia] = useState("");
   const [uploading, setUploading] = useState(false);
+
 
   const { data: clients = [], error: clientsError } = useQuery({
     queryKey: ["my-clients-docs", userId],
