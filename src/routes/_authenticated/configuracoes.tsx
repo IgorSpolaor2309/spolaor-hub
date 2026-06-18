@@ -1052,7 +1052,7 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
 
         {form.role === "client" && (
           <section className="space-y-3 rounded-md border p-4">
-            <h4 className="text-sm font-semibold">Cadastro de cliente</h4>
+            <h4 className="text-sm font-semibold">Cadastro de Empresa</h4>
             <div>
               <Label className="text-xs">Modo</Label>
               <Select value={form.link_mode} onValueChange={(v) => setForm({ ...form, link_mode: v as any })}>
