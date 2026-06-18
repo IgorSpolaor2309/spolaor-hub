@@ -259,18 +259,25 @@ function GuideRow({ item, isStaff, userId, onChange }: any) {
                 <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
                 <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
               </Select>
-              {item.comprovante_path && (
-                <DeleteButton onConfirm={() => removeProof.mutate()} label="Remover comprovante" description="Remover o comprovante anexado? A guia continuará registrada." />
+              {canDeleteProof && (
+                <DeleteButton onConfirm={() => removeProof.mutate()} label="Remover comprovante" description="Tem certeza que deseja apagar este item enviado por você?" />
               )}
-              <DeleteButton onConfirm={() => remove.mutate()} label="Excluir guia" />
+              {canDeleteGuide && (
+                <DeleteButton onConfirm={() => remove.mutate()} label="Excluir guia" description="Tem certeza que deseja apagar esta guia cadastrada por você?" />
+              )}
             </>
           ) : (
-            !item.comprovante_path && (
-              <label>
-                <input type="file" className="hidden" onChange={uploadProof} />
-                <Button asChild size="sm"><span><Upload className="mr-2 h-4 w-4" /> Enviar comprovante</span></Button>
-              </label>
-            )
+            <>
+              {!item.comprovante_path && (
+                <label>
+                  <input type="file" className="hidden" onChange={uploadProof} />
+                  <Button asChild size="sm"><span><Upload className="mr-2 h-4 w-4" /> Enviar comprovante</span></Button>
+                </label>
+              )}
+              {canDeleteProof && (
+                <DeleteButton onConfirm={() => removeProof.mutate()} label="Apagar envio" description="Tem certeza que deseja apagar este item enviado por você?" />
+              )}
+            </>
           )}
 
         </div>
