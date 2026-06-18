@@ -1118,7 +1118,7 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
                   <Input value={form.documento} onChange={(e) => setForm({ ...form, documento: e.target.value })} />
                 </div>
                 <div>
-                  <Label>Tipo de cliente</Label>
+                  <Label>Tipo de empresa</Label>
                   <Input value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })} placeholder="PJ, PF, MEI…" />
                 </div>
                 <div>
