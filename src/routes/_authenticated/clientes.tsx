@@ -66,13 +66,13 @@ function ClientsPage() {
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
   });
 
   const { data: collaborators = [] } = useQuery({
     queryKey: ["clients-collabs-options"],
-    enabled: isAdmin,
+    enabled: ready && isAdmin,
     queryFn: async () => (await supabase.from("collaborators").select("id, nome").eq("status", "active").order("nome")).data ?? [],
   });
 
@@ -211,8 +211,7 @@ function ClientsPage() {
         ) : filtered.length === 0 ? (
           <EmptyState
             icon={<Building2 className="h-6 w-6" />}
-            title="Nenhuma empresa encontrada"
-            description={role === "admin" ? "Cadastre a primeira empresa para começar." : "Nenhuma empresa vinculada a você."}
+            title="Nenhum registro encontrado."
           />
         ) : (
           <div className="overflow-x-auto">
