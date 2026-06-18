@@ -455,8 +455,8 @@ function AccountLinksEditor({ userId, roles }: { userId: string; roles: string[]
           value={currentClientIds}
           onChange={(next) => updateCollabLinks.mutate(next)}
           placeholder="Buscar por nome, razão social ou CNPJ/CPF…"
-          emptyMessage="Nenhum cliente cadastrado."
-          noneSelectedMessage="Nenhum cliente atribuído."
+          emptyMessage="Nenhuma empresa cadastrada."
+          noneSelectedMessage="Nenhuma empresa atribuída."
         />
       </div>
     );
@@ -1041,8 +1041,8 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
                 }))}
                 value={assignClientIds}
                 onChange={setAssignClientIds}
-                placeholder="Buscar cliente…"
-                emptyMessage="Nenhum cliente cadastrado."
+                placeholder="Buscar empresa…"
+                emptyMessage="Nenhuma empresa cadastrada."
                 noneSelectedMessage="Nenhuma empresa selecionada."
               />
             </div>
@@ -1052,25 +1052,28 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
 
         {form.role === "client" && (
           <section className="space-y-3 rounded-md border p-4">
-            <h4 className="text-sm font-semibold">Cadastro de Empresa</h4>
+            <h4 className="text-sm font-semibold">Empresa vinculada à conta cliente</h4>
+            <p className="text-xs text-muted-foreground">
+              Vincule uma ou mais empresas a esta conta cliente. O usuário poderá acessar apenas as empresas vinculadas à sua conta.
+            </p>
             <div>
               <Label className="text-xs">Modo</Label>
               <Select value={form.link_mode} onValueChange={(v) => setForm({ ...form, link_mode: v as any })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="create">Criar novo cliente automaticamente</SelectItem>
-                  <SelectItem value="existing">Vincular a cliente existente</SelectItem>
+                  <SelectItem value="create">Criar nova empresa automaticamente</SelectItem>
+                  <SelectItem value="existing">Vincular a empresa existente</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {form.link_mode === "existing" ? (
               <div>
-                <Label>Cliente existente *</Label>
+                <Label>Empresa existente *</Label>
                 <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Selecione a empresa" /></SelectTrigger>
                   <SelectContent>
                     {clients.length === 0 && (
-                      <div className="px-2 py-1.5 text-sm text-muted-foreground">Nenhum cliente sem acesso disponível.</div>
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">Nenhuma empresa sem acesso disponível.</div>
                     )}
                     {clients.map((c: any) => (
                       <SelectItem key={c.id} value={c.id}>{c.razao_social}</SelectItem>
@@ -1115,7 +1118,7 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
                   <Input value={form.documento} onChange={(e) => setForm({ ...form, documento: e.target.value })} />
                 </div>
                 <div>
-                  <Label>Tipo de cliente</Label>
+                  <Label>Tipo de empresa</Label>
                   <Input value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })} placeholder="PJ, PF, MEI…" />
                 </div>
                 <div>
