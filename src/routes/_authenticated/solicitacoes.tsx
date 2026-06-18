@@ -223,7 +223,7 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
       const { error: upErr } = await supabase.storage.from("documents").upload(path, file);
       if (upErr) throw upErr;
       const { data: doc, error: dErr } = await supabase.from("documents").insert({
-        client_id: item.client_id, nome: file.name, tipo: item.categoria ?? "outro",
+        client_id: item.client_id, nome: file.name, tipo: normalizeDocTipo(item.categoria ?? "outro"),
         competencia: item.competencia ?? null, storage_path: path, uploaded_by: userId, status: "recebido",
       }).select("id").maybeSingle();
       if (dErr) throw dErr;
