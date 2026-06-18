@@ -29,7 +29,25 @@ function DocsPage() {
   const qc = useQueryClient();
   const ready = !loading && !!userId && !!role;
   const [q, setQ] = useState(""); const [tipo, setTipo] = useState("all"); const [status, setStatus] = useState("all");
+  const [fClient, setFClient] = useState<string>("all");
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ["docs-clients", userId, role],
+    enabled: ready,
+    retry: 1,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("id, razao_social, nome_fantasia, documento")
+        .is("deleted_at", null)
+        .neq("status", "inactive")
+        .order("razao_social");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const { data: list = [], isLoading, error: listError } = useQuery({
     queryKey: ["all-docs", userId, role],
     enabled: ready,
@@ -59,13 +77,14 @@ function DocsPage() {
   const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
   const qLower = q.trim().toLowerCase();
   const filtered = list.filter((d: any) => {
+    if (fClient !== "all" && d.client_id !== fClient) return false;
     if (tipo !== "all" && normalizeDocTipo(d.tipo) !== normalizeDocTipo(tipo)) return false;
     if (status !== "all" && d.status !== status) return false;
     if (qLower && !`${d.nome ?? ""} ${d.clients?.razao_social ?? ""} ${d.clients?.nome_fantasia ?? ""}`.toLowerCase().includes(qLower)) return false;
     if (!inRange(d.created_at, range)) return false;
     return true;
   });
-  const clearFilters = () => { setQ(""); setTipo("all"); setStatus("all"); setDateF(EMPTY_DATE_FILTER); };
+  const clearFilters = () => { setQ(""); setTipo("all"); setStatus("all"); setFClient("all"); setDateF(EMPTY_DATE_FILTER); };
 
   if (!ready) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
@@ -75,6 +94,15 @@ function DocsPage() {
       <Card className="p-4">
         <div className="mb-4 flex flex-wrap items-end gap-2">
           <Input placeholder="Buscar…" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-xs" />
+          <Select value={fClient} onValueChange={setFClient}>
+            <SelectTrigger className="w-[220px]"><SelectValue placeholder="Empresa" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as empresas</SelectItem>
+              {(clients as any[]).map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.nome_fantasia || c.razao_social || c.documento || "Empresa"}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={tipo} onValueChange={setTipo}><SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
             <SelectContent><SelectItem value="all">Todos os tipos</SelectItem>{DOC_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
           </Select>
