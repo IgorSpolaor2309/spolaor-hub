@@ -227,7 +227,7 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
       }).select("id").maybeSingle();
       if (dErr) throw dErr;
       const { error: rErr } = await supabase.from("document_requests")
-        .update({ status: "enviado pelo cliente", document_id: doc?.id ?? null })
+        .update({ status: "aguardando_analise", document_id: doc?.id ?? null })
         .eq("id", item.id);
       if (rErr) throw rErr;
       toast.success("Documento enviado");
