@@ -503,6 +503,12 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
         </Card>
       )}
 
+      <Card className="mb-4 flex flex-wrap items-end gap-3 p-4">
+        <DateRangeFilter value={dateF} onChange={setDateF} label="Período" />
+        <Button variant="ghost" size="sm" onClick={() => setDateF(EMPTY_DATE_FILTER)}>Limpar</Button>
+      </Card>
+
+
       {!isAll && (
         <Card className="mb-4 border-l-4 border-primary p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
