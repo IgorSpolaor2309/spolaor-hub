@@ -391,9 +391,18 @@ function ChatThread({
             Nenhuma mensagem ainda. Diga olá! 👋
           </div>
         )}
-        {(messages as any[]).map((m: any) => {
+        {(messages as any[]).filter((m: any) => !m.deleted_at).map((m: any) => {
           const mine = m.sender_profile_id === currentUserId;
           const fromStaff = m.sender_role === "admin" || m.sender_role === "collaborator";
+          const removeMsg = async () => {
+            if (!confirm("Tem certeza que deseja apagar este item enviado por você?")) return;
+            const { error } = await supabase
+              .from("chat_messages")
+              .update({ deleted_at: new Date().toISOString(), deleted_by: currentUserId, body: null, attachment_path: null, attachment_name: null })
+              .eq("id", m.id);
+            if (error) toast.error(/row-level security|permission/i.test(error.message) ? "Sem permissão para excluir." : error.message);
+            else qc.invalidateQueries({ queryKey: ["chat-msgs", conv.id] });
+          };
           return (
             <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
               <div
@@ -415,10 +424,15 @@ function ChatThread({
                   </div>
                 )}
                 <div className={cn(
-                  "mt-1 text-right text-[10px]",
+                  "mt-1 flex items-center justify-end gap-2 text-[10px]",
                   mine ? "text-primary-foreground/70" : "text-muted-foreground",
                 )}>
                   {new Date(m.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                  {mine && (
+                    <button type="button" onClick={removeMsg} className="underline opacity-70 hover:opacity-100">
+                      apagar
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
