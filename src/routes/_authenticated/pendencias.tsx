@@ -94,10 +94,10 @@ function TasksPage() {
         </div>
         {tasksError ? <EmptyState icon={<ClipboardList className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." /> :
          isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p> :
-         filtered.length === 0 ? <EmptyState icon={<ClipboardList className="h-6 w-6" />} title="Nada por aqui" /> : (
+         filtered.length === 0 ? <EmptyState icon={<ClipboardList className="h-6 w-6" />} title="Nenhum registro encontrado." /> : (
           <table className="w-full text-sm">
             <thead className="text-left text-xs uppercase text-muted-foreground">
-              <tr className="border-b"><th className="py-2 pr-4">Pendência</th><th>Cliente</th><th>Prazo</th><th>Prioridade</th><th>Status</th><th></th></tr>
+              <tr className="border-b"><th className="py-2 pr-4">Pendência</th><th>Empresa</th><th>Prazo</th><th>Prioridade</th><th>Status</th><th></th></tr>
             </thead>
             <tbody>
               {filtered.map((t: any) => (
