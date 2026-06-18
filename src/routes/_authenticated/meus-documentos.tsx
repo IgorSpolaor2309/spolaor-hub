@@ -142,7 +142,16 @@ function MyDocsPage() {
                     )}
                   </div>
                 </div>
-                <StatusBadge value={d.status} />
+                <div className="flex items-center gap-2">
+                  <StatusBadge value={d.status} />
+                  {d.uploaded_by === userId && (
+                    <DeleteButton
+                      onConfirm={() => removeDoc.mutate(d.id)}
+                      iconOnly
+                      description="Tem certeza que deseja apagar este item enviado por você?"
+                    />
+                  )}
+                </div>
               </li>
             ))}
           </ul>
