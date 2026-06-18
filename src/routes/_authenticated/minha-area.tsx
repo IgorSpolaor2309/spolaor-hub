@@ -23,6 +23,8 @@ function MyAreaPage() {
     queryFn: async () => (await supabase
       .from("clients")
       .select("id, razao_social, nome_fantasia, documento, status")
+      .is("deleted_at", null)
+      .neq("status", "inactive")
       .order("razao_social")).data ?? [],
   });
 
