@@ -103,7 +103,15 @@ function TasksPage() {
               {filtered.map((t: any) => (
                 <tr key={t.id} className="border-b">
                   <td className="py-3 pr-4 font-medium">{t.titulo}</td>
-                  <td><Link to="/clientes/$id" params={{ id: t.client_id }} className="text-secondary hover:underline">{t.clients?.nome_fantasia || t.clients?.razao_social}</Link></td>
+                  <td>
+                    {t.client_id ? (
+                      <Link to="/clientes/$id" params={{ id: t.client_id }} className="text-secondary hover:underline">
+                        {t.clients?.nome_fantasia || t.clients?.razao_social || "Empresa"}
+                      </Link>
+                    ) : (
+                      <span>{t.clients?.nome_fantasia || t.clients?.razao_social || "—"}</span>
+                    )}
+                  </td>
                   <td>{t.prazo ? formatBR(t.prazo) : "—"}</td>
                   <td><PriorityBadge value={t.prioridade} /></td>
                   <td><StatusBadge value={t.status} /></td>
