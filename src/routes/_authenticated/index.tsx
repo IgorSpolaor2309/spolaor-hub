@@ -307,7 +307,7 @@ function CollabDashboard({ name, userId }: { name: string; userId: string }) {
         supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).in("client_id", ids).lt("prazo", t).not("status", "in", "(concluida,cancelada)"),
         supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).in("client_id", ids).eq("prazo", t).not("status", "in", "(concluida,cancelada)"),
         supabase.from("documents").select("id", { head: true, count: "exact" }).in("client_id", ids).in("status", ["recebido", "em_analise"]),
-        supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("client_id", ids).eq("status", "enviado pelo cliente"),
+        supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("client_id", ids).eq("status", "aguardando_analise"),
         supabase.from("tax_guides").select("id", { head: true, count: "exact" }).in("client_id", ids).gte("vencimento", t).lte("vencimento", in7).not("status", "in", "(paga,cancelada)"),
         supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("client_id", ids).in("status", ["pendente", "reenviar"]),
         supabase.from("timeline_events").select("id, descricao, created_at, clients(razao_social)").in("client_id", ids).order("created_at", { ascending: false }).limit(6),
