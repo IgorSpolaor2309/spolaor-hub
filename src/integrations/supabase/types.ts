@@ -55,6 +55,8 @@ export type Database = {
           client_id: string
           conversation_id: string
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           sender_profile_id: string | null
           sender_role: string
@@ -67,6 +69,8 @@ export type Database = {
           client_id: string
           conversation_id: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           sender_profile_id?: string | null
           sender_role: string
@@ -79,6 +83,8 @@ export type Database = {
           client_id?: string
           conversation_id?: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           sender_profile_id?: string | null
           sender_role?: string
@@ -96,6 +102,13 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -632,6 +645,8 @@ export type Database = {
           competencia: string | null
           created_at: string
           data_validade: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           nome: string
           observacoes: string | null
@@ -647,6 +662,8 @@ export type Database = {
           competencia?: string | null
           created_at?: string
           data_validade?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           nome: string
           observacoes?: string | null
@@ -662,6 +679,8 @@ export type Database = {
           competencia?: string | null
           created_at?: string
           data_validade?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           nome?: string
           observacoes?: string | null
@@ -677,6 +696,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1015,6 +1041,7 @@ export type Database = {
           competencia: string | null
           comprovante_path: string | null
           comprovante_uploaded_at: string | null
+          comprovante_uploaded_by: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -1036,6 +1063,7 @@ export type Database = {
           competencia?: string | null
           comprovante_path?: string | null
           comprovante_uploaded_at?: string | null
+          comprovante_uploaded_by?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -1057,6 +1085,7 @@ export type Database = {
           competencia?: string | null
           comprovante_path?: string | null
           comprovante_uploaded_at?: string | null
+          comprovante_uploaded_by?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -1079,6 +1108,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tax_guides_comprovante_uploaded_by_fkey"
+            columns: ["comprovante_uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
