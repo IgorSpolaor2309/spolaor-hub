@@ -418,7 +418,7 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
       if (failures.length) console.warn("[dashboard-client] consultas parciais falharam", failures.map((r: any) => r.error?.message));
       const reqs = requested.data ?? [];
       const reqPending = reqs.filter((r: any) => ["pendente", "reenviar"].includes(r.status));
-      const reqSent = reqs.filter((r: any) => ["enviado pelo cliente", "em análise", "aprovado"].includes(r.status));
+      const reqSent = reqs.filter((r: any) => ["aguardando_analise", "recebido"].includes(r.status));
       return {
         primary,
         status: (monthStatus as any)?.data?.status ?? null,
