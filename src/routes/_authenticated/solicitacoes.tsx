@@ -274,7 +274,7 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
             <>
               <Select value={item.status} onValueChange={(v) => updateStatus.mutate(v)}>
                 <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
-                <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{STATUS_LABEL[s] ?? s}</SelectItem>)}</SelectContent>
               </Select>
               <DeleteButton onConfirm={() => remove.mutate()} />
             </>
