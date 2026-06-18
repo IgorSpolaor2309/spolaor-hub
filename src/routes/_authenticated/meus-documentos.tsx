@@ -12,7 +12,7 @@ import { StatusBadge } from "@/components/sc/StatusBadge";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { DeleteButton } from "@/components/sc/DeleteButton";
 import { FileText, Upload } from "lucide-react";
-import { DOC_TYPES, labelOf } from "@/lib/sc-types";
+import { DOC_TYPES, DOC_STATUSES, labelOf, normalizeDocTipo } from "@/lib/sc-types";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
