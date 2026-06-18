@@ -114,7 +114,7 @@ function DocsPage() {
                         <DeleteButton
                           onConfirm={() => remove.mutate(d.id)}
                           iconOnly
-                          confirmText="Tem certeza que deseja apagar este item enviado por você?"
+                          description="Tem certeza que deseja apagar este item enviado por você?"
                         />
                       )}
                     </div>
