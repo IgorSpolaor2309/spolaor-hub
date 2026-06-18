@@ -104,7 +104,7 @@ function RequestsPage() {
     return (items as any[]).filter((r) =>
       (fClient === "all" || r.client_id === fClient) &&
       (fStatus === "all" || r.status === fStatus) &&
-      (fCategoria === "all" || r.categoria === fCategoria) &&
+      (fCategoria === "all" || normalizeSlug(r.categoria) === normalizeSlug(fCategoria)) &&
       (!fComp || (r.competencia ?? "").includes(fComp)) &&
       inRange(r.created_at, range),
     );
