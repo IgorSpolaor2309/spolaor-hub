@@ -94,7 +94,7 @@ function TasksPage() {
         supabase
           .from("document_requests")
           .select("id, titulo, categoria, prazo, status, client_id, clients(razao_social, nome_fantasia, documento)")
-          .in("status", ["pendente", "reenviar", "enviado pelo cliente", "em análise"]),
+          .in("status", role === "client" ? ["pendente", "reenviar"] : ["pendente", "reenviar", "aguardando_analise"]),
         supabase
           .from("tax_guides")
           .select("id, tipo, vencimento, status, comprovante_path, client_id, clients(razao_social, nome_fantasia, documento)")
