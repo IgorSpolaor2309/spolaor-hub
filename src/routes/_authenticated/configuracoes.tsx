@@ -1140,7 +1140,7 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
               </div>
             )}
             <div className="border-t pt-3">
-              <Label className="text-xs uppercase text-muted-foreground">Colaboradores atribuídos a este cliente</Label>
+              <Label className="text-xs uppercase text-muted-foreground">COLABORADORES ATRIBUÍDOS A ESTA EMPRESA</Label>
               <p className="mb-2 text-xs text-muted-foreground">Você poderá alterar esses vínculos depois.</p>
               <MultiSelect
                 options={allCollabs.map((c: any) => ({
