@@ -52,6 +52,7 @@ function MyDocsPage() {
         .from("documents")
         .select("*, clients(razao_social, nome_fantasia)")
         .in("client_id", ids)
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
