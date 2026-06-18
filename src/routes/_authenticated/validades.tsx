@@ -55,7 +55,7 @@ function ValidadesPage() {
     enabled: ready,
     retry: 1,
     queryFn: async () => {
-      const { data, error } = await supabase.from("clients").select("id, razao_social, nome_fantasia, documento").order("razao_social");
+      const { data, error } = await supabase.from("clients").select("id, razao_social, nome_fantasia, documento").is("deleted_at", null).neq("status", "inactive").order("razao_social");
       if (error) throw error;
       return data ?? [];
     },
@@ -72,7 +72,7 @@ function ValidadesPage() {
         .not("data_validade", "is", null)
         .order("data_validade", { ascending: true });
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
   });
   const loadError = clientsError || docsError;
@@ -105,7 +105,7 @@ function ValidadesPage() {
       <Card className="mb-4 p-4">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <div>
-            <Label className="text-xs">Cliente</Label>
+            <Label className="text-xs">Empresa</Label>
             <Select value={fClient} onValueChange={setFClient}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -147,7 +147,7 @@ function ValidadesPage() {
       <Card className="p-4">
         {loadError ? <EmptyState icon={<CalendarClock className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />
           : isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p>
-          : filtered.length === 0 ? <EmptyState icon={<CalendarClock className="h-6 w-6" />} title="Nenhum documento com validade" description="Marque a data de validade de um documento para acompanhá-lo aqui." />
+          : filtered.length === 0 ? <EmptyState icon={<CalendarClock className="h-6 w-6" />} title="Nenhum registro encontrado." />
           : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
