@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Upload, ArrowLeft, Pencil, Inbox, Receipt, CalendarClock, KanbanSquare, MessagesSquare, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 
@@ -523,11 +523,13 @@ function RequirementsTab({ clientId, list, canManage, onChange }: any) {
 function TeamTab({ clientId, current, onChange }: any) {
   const { data: allCollabs = [] } = useQuery({
     queryKey: ["all-collabs-select"],
+    enabled: !!clientId,
     queryFn: async () => (await supabase.from("collaborators").select("id, nome, email").eq("status", "active").order("nome")).data ?? [],
   });
   // Conta cliente vinculada? Usado para alerta quando não há colaborador responsável.
   const { data: clientUsersCount = 0 } = useQuery({
     queryKey: ["client-users-count", clientId],
+    enabled: !!clientId,
     queryFn: async () => {
       const { count } = await supabase
         .from("client_users")
@@ -538,7 +540,7 @@ function TeamTab({ clientId, current, onChange }: any) {
     },
   });
 
-  const [cid, setCid] = useState("");
+  const [cid, setCid] = useState<string | undefined>(undefined);
   const [search, setSearch] = useState("");
 
   const linkedIds = new Set((current ?? []).map((c: any) => c.collaborator_id));
@@ -554,7 +556,7 @@ function TeamTab({ clientId, current, onChange }: any) {
       const { error } = await supabase.from("client_collaborators").insert({ client_id: clientId, collaborator_id: cid });
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Colaborador vinculado com sucesso."); setCid(""); setSearch(""); onChange(); },
+    onSuccess: () => { toast.success("Colaborador vinculado com sucesso."); setCid(undefined); setSearch(""); onChange(); },
     onError: (e: any) => {
       if (e?.code === "23505") { toast.error("Este colaborador já está vinculado a esta empresa."); return; }
       toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Você não tem permissão para realizar esta ação." : (e?.message ?? "Não foi possível vincular o colaborador."));
