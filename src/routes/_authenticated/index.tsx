@@ -477,7 +477,7 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={Inbox} label="Documentos solicitados" value={data.reqAll.length} to="/solicitacoes" />
         <StatCard icon={FileText} label="Enviados" value={data.reqSent.length} accent="bg-emerald-100 text-emerald-800" to="/meus-documentos" />
-        <StatCard icon={AlertTriangle} label="Pendentes" value={data.reqPending.length} accent="bg-orange-100 text-orange-800" to="/solicitacoes" />
+        <StatCard icon={AlertTriangle} label="Pendências" value={data.reqPending.length + data.openTasks.length} accent="bg-orange-100 text-orange-800" to="/pendencias" />
         <StatCard icon={Receipt} label="Guias próximas (7d)" value={data.guidesSoon} accent="bg-amber-100 text-amber-800" to="/guias" />
       </div>
 
