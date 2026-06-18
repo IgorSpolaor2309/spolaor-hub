@@ -169,7 +169,7 @@ function MyDocsPage() {
         : loading || isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p>
         : filtered.length === 0 ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Nenhum documento encontrado." /> : (
           <ul className="divide-y">
-            {docs.map((d: any) => (
+            {filtered.map((d: any) => (
               <li key={d.id} className="flex items-center justify-between py-3">
                 <div>
                   <div className="text-sm font-medium">{d.nome}</div>
@@ -193,7 +193,8 @@ function MyDocsPage() {
               </li>
             ))}
           </ul>
-        )}
+        );
+        })()}
       </Card>
     </div>
   );
