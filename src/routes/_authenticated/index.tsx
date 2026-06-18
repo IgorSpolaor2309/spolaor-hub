@@ -326,21 +326,21 @@ function CollabDashboard({ name, userId }: { name: string; userId: string }) {
 
   return (
     <div>
-      <PageHeader title={`Olá, ${name?.split(" ")[0] || "colaborador"}`} description="Operação dos seus clientes vinculados." />
+      <PageHeader title={`Olá, ${name?.split(" ")[0] || "colaborador"}`} description="Operação das empresas vinculadas a você." />
       {error && <Card className="mb-4 p-4 text-sm text-muted-foreground">Não foi possível carregar todos os dados. Tente novamente.</Card>}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={AlertTriangle} label="Minhas vencidas" value={data?.tasksOverdue ?? "—"} accent="bg-destructive/10 text-destructive" to="/pendencias" />
         <StatCard icon={Clock} label="Pendências de hoje" value={data?.tasksToday ?? "—"} accent="bg-amber-100 text-amber-800" to="/pendencias" />
         <StatCard icon={FileText} label="Docs para analisar" value={data?.docsAnalysis ?? "—"} accent="bg-blue-100 text-blue-800" to="/documentos" />
-        <StatCard icon={Inbox} label="Clientes aguardando retorno" value={data?.awaiting ?? "—"} accent="bg-sky-100 text-sky-800" to="/solicitacoes" />
+        <StatCard icon={Inbox} label="Empresas aguardando retorno" value={data?.awaiting ?? "—"} accent="bg-sky-100 text-sky-800" to="/solicitacoes" />
         <StatCard icon={Receipt} label="Guias vencendo (7 dias)" value={data?.guidesSoon ?? "—"} accent="bg-orange-100 text-orange-800" to="/guias" />
         <StatCard icon={Inbox} label="Solicitações pendentes" value={data?.reqPending ?? "—"} accent="bg-secondary/10 text-secondary" to="/solicitacoes" />
-        <StatCard icon={Users} label="Clientes vinculados" value={data?.clients ?? "—"} to="/clientes" />
+        <StatCard icon={Users} label="Empresas vinculadas" value={data?.clients ?? "—"} to="/clientes" />
       </div>
 
       <div className="mt-6">
         <Card className="p-5">
-          <h3 className="mb-3 font-display text-lg flex items-center gap-2"><MessageSquare className="h-4 w-4 text-primary" /> Atividades recentes dos meus clientes</h3>
+          <h3 className="mb-3 font-display text-lg flex items-center gap-2"><MessageSquare className="h-4 w-4 text-primary" /> Atividades recentes das minhas empresas</h3>
           {!(data?.events?.length) ? <p className="text-sm text-muted-foreground">Sem atividade.</p> : (
             <ul className="space-y-3">
               {data!.events.map((e: any) => (
@@ -433,7 +433,7 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
   });
 
   if (companiesError) return <div className="text-sm text-muted-foreground">Não foi possível carregar os dados. Tente novamente.</div>;
-  if (myCompanies.length === 0) return <div className="text-sm text-muted-foreground">Sem cliente vinculado.</div>;
+  if (myCompanies.length === 0) return <div className="text-sm text-muted-foreground">Sem empresa vinculada.</div>;
   if (!data) return <div className="text-sm text-muted-foreground">Carregando…</div>;
 
   const m = monthLabel(data.status);
