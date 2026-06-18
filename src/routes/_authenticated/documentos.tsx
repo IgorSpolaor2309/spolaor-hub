@@ -66,7 +66,7 @@ function DocsPage() {
 
   return (
     <div>
-      <PageHeader title="Documentos" description="Central de documentos de todos os clientes." />
+      <PageHeader title="Documentos" description="Central de documentos das empresas cadastradas." />
       <Card className="p-4">
         <div className="mb-4 flex flex-wrap items-end gap-2">
           <Input placeholder="Buscar…" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-xs" />
@@ -81,10 +81,10 @@ function DocsPage() {
         </div>
         {listError ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." /> :
          isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p> :
-         filtered.length === 0 ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Sem documentos" /> : (
+         filtered.length === 0 ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Nenhum registro encontrado." /> : (
           <table className="w-full text-sm">
             <thead className="text-left text-xs uppercase text-muted-foreground">
-              <tr className="border-b"><th className="py-2 pr-4">Arquivo</th><th>Cliente</th><th>Tipo</th><th>Competência</th><th>Status</th><th></th></tr>
+              <tr className="border-b"><th className="py-2 pr-4">Arquivo</th><th>Empresa</th><th>Tipo</th><th>Competência</th><th>Status</th><th></th></tr>
             </thead>
             <tbody>
               {filtered.map((d: any) => (
