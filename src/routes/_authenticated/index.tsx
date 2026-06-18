@@ -88,8 +88,10 @@ function Dashboard() {
    ADMIN
    ============================================================ */
 function AdminDashboard({ name }: { name: string }) {
+  const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
+  const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
   const { data, error } = useQuery({
-    queryKey: ["dash-admin-v2"],
+    queryKey: ["dash-admin-v2", range.from, range.to],
     retry: 1,
     queryFn: async () => {
       const t = today();
