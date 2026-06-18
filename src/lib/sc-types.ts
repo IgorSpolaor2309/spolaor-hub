@@ -92,7 +92,46 @@ export function labelOf<T extends { value: string; label: string }>(
   v: string | null | undefined,
 ): string {
   if (!v) return "—";
-  return arr.find((x) => x.value === v)?.label ?? v;
+  const direct = arr.find((x) => x.value === v);
+  if (direct) return direct.label;
+  const n = normalizeSlug(v);
+  return arr.find((x) => normalizeSlug(x.value) === n || normalizeSlug(x.label) === n)?.label ?? v;
+}
+
+/** Lower, strip accents, collapse non-alphanum to underscore. */
+export function normalizeSlug(s: string | null | undefined): string {
+  if (!s) return "";
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+/** Map any label/legacy value to a canonical DOC_TYPES slug; falls back to slugified input. */
+export function normalizeDocTipo(s: string | null | undefined): string {
+  const n = normalizeSlug(s);
+  if (!n) return "outro";
+  const aliases: Record<string, string> = {
+    extrato_bancario: "extrato_bancario",
+    extrato: "extrato_bancario",
+    notas_fiscais: "nota_fiscal",
+    nota_fiscal: "nota_fiscal",
+    nota: "nota_fiscal",
+    folha_de_pagamento: "folha_pagamento",
+    folha_pagamento: "folha_pagamento",
+    pro_labore: "comprovante",
+    comprovante_de_pagamento: "comprovante",
+    comprovante: "comprovante",
+    contrato: "contrato",
+    contratos: "contrato",
+    outro: "outro",
+    outros: "outro",
+  };
+  if (aliases[n]) return aliases[n];
+  const known = DOC_TYPES.find((t) => t.value === n);
+  return known ? known.value : n;
 }
 
 export const DOC_VALIDITY_CATEGORIES = [

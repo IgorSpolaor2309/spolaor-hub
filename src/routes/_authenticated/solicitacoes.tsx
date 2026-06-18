@@ -20,6 +20,7 @@ import { Plus, Upload, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { formatBR, isPastEndOfDay } from "@/lib/dates";
+import { normalizeDocTipo } from "@/lib/sc-types";
 
 export const Route = createFileRoute("/_authenticated/solicitacoes")({
   component: RequestsPage,
@@ -222,7 +223,7 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
       const { error: upErr } = await supabase.storage.from("documents").upload(path, file);
       if (upErr) throw upErr;
       const { data: doc, error: dErr } = await supabase.from("documents").insert({
-        client_id: item.client_id, nome: file.name, tipo: item.categoria ?? "outro",
+        client_id: item.client_id, nome: file.name, tipo: normalizeDocTipo(item.categoria ?? "outro"),
         competencia: item.competencia ?? null, storage_path: path, uploaded_by: userId, status: "recebido",
       }).select("id").maybeSingle();
       if (dErr) throw dErr;

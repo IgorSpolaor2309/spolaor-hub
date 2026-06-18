@@ -162,7 +162,7 @@ function GuidesPage() {
           : (
             <ul className="space-y-3">
               {filtered.map((g: any) => (
-                <GuideRow key={g.id} item={g} isStaff={isStaff} onChange={() => qc.invalidateQueries({ queryKey: ["tax-guides"] })} />
+                <GuideRow key={g.id} item={g} isStaff={isStaff} userId={userId} onChange={() => qc.invalidateQueries({ queryKey: ["tax-guides"] })} />
               ))}
             </ul>
           )}
@@ -171,7 +171,7 @@ function GuidesPage() {
   );
 }
 
-function GuideRow({ item, isStaff, onChange }: any) {
+function GuideRow({ item, isStaff, userId, onChange }: any) {
   const updateStatus = useMutation({
     mutationFn: async (status: string) => {
       const { error } = await supabase.from("tax_guides").update({ status }).eq("id", item.id);
@@ -193,16 +193,13 @@ function GuideRow({ item, isStaff, onChange }: any) {
   const removeProof = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("tax_guides")
-        .update({ comprovante_path: null, comprovante_uploaded_at: null })
+        .update({ comprovante_path: null, comprovante_uploaded_at: null, comprovante_uploaded_by: null })
         .eq("id", item.id);
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Comprovante removido"); onChange(); },
-    onError: (e: any) => toast.error(e?.message ?? "Falha"),
+    onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Sem permissão para remover." : (e?.message ?? "Falha")),
   });
-
-
-
 
   async function uploadProof(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]; if (!file) return;
@@ -211,7 +208,10 @@ function GuideRow({ item, isStaff, onChange }: any) {
       const { error: upErr } = await supabase.storage.from("documents").upload(path, file);
       if (upErr) throw upErr;
       const { error } = await supabase.from("tax_guides").update({
-        comprovante_path: path, comprovante_uploaded_at: new Date().toISOString(), status: "paga",
+        comprovante_path: path,
+        comprovante_uploaded_at: new Date().toISOString(),
+        comprovante_uploaded_by: userId ?? null,
+        status: "paga",
       }).eq("id", item.id);
       if (error) throw error;
       toast.success("Comprovante enviado");
@@ -222,6 +222,8 @@ function GuideRow({ item, isStaff, onChange }: any) {
   }
 
   const vencido = item.vencimento && isPastEndOfDay(item.vencimento) && !["paga", "cancelada"].includes(item.status);
+  const canDeleteProof = !!item.comprovante_path && item.comprovante_uploaded_by === userId;
+  const canDeleteGuide = item.created_by === userId;
 
   return (
     <li className="rounded-md border p-4">
@@ -257,18 +259,25 @@ function GuideRow({ item, isStaff, onChange }: any) {
                 <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
                 <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
               </Select>
-              {item.comprovante_path && (
-                <DeleteButton onConfirm={() => removeProof.mutate()} label="Remover comprovante" description="Remover o comprovante anexado? A guia continuará registrada." />
+              {canDeleteProof && (
+                <DeleteButton onConfirm={() => removeProof.mutate()} label="Remover comprovante" description="Tem certeza que deseja apagar este item enviado por você?" />
               )}
-              <DeleteButton onConfirm={() => remove.mutate()} label="Excluir guia" />
+              {canDeleteGuide && (
+                <DeleteButton onConfirm={() => remove.mutate()} label="Excluir guia" description="Tem certeza que deseja apagar esta guia cadastrada por você?" />
+              )}
             </>
           ) : (
-            !item.comprovante_path && (
-              <label>
-                <input type="file" className="hidden" onChange={uploadProof} />
-                <Button asChild size="sm"><span><Upload className="mr-2 h-4 w-4" /> Enviar comprovante</span></Button>
-              </label>
-            )
+            <>
+              {!item.comprovante_path && (
+                <label>
+                  <input type="file" className="hidden" onChange={uploadProof} />
+                  <Button asChild size="sm"><span><Upload className="mr-2 h-4 w-4" /> Enviar comprovante</span></Button>
+                </label>
+              )}
+              {canDeleteProof && (
+                <DeleteButton onConfirm={() => removeProof.mutate()} label="Apagar envio" description="Tem certeza que deseja apagar este item enviado por você?" />
+              )}
+            </>
           )}
 
         </div>

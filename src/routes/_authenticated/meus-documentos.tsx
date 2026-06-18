@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { PageHeader } from "@/components/sc/PageHeader";
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/sc/StatusBadge";
 import { EmptyState } from "@/components/sc/EmptyState";
+import { DeleteButton } from "@/components/sc/DeleteButton";
 import { FileText, Upload } from "lucide-react";
 import { DOC_TYPES, labelOf } from "@/lib/sc-types";
 import { useEffect, useState } from "react";
@@ -21,9 +22,11 @@ export const Route = createFileRoute("/_authenticated/meus-documentos")({
 
 function MyDocsPage() {
   const { userId, loading } = useCurrentUser();
+  const qc = useQueryClient();
   const [tipo, setTipo] = useState("outro");
   const [competencia, setCompetencia] = useState("");
   const [uploading, setUploading] = useState(false);
+
 
   const { data: clients = [], error: clientsError } = useQuery({
     queryKey: ["my-clients-docs", userId],
@@ -52,6 +55,7 @@ function MyDocsPage() {
         .from("documents")
         .select("*, clients(razao_social, nome_fantasia)")
         .in("client_id", ids)
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -82,6 +86,18 @@ function MyDocsPage() {
     } catch (err: any) { toast.error(err.message); }
     finally { setUploading(false); e.target.value = ""; }
   }
+
+  const removeDoc = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("documents")
+        .update({ deleted_at: new Date().toISOString(), deleted_by: userId })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["my-docs"] }); refetch(); toast.success("Arquivo removido pelo autor."); },
+    onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Sem permissão para excluir." : (e?.message ?? "Falha")),
+  });
 
   return (
     <div>
@@ -126,7 +142,16 @@ function MyDocsPage() {
                     )}
                   </div>
                 </div>
-                <StatusBadge value={d.status} />
+                <div className="flex items-center gap-2">
+                  <StatusBadge value={d.status} />
+                  {d.uploaded_by === userId && (
+                    <DeleteButton
+                      onConfirm={() => removeDoc.mutate(d.id)}
+                      iconOnly
+                      description="Tem certeza que deseja apagar este item enviado por você?"
+                    />
+                  )}
+                </div>
               </li>
             ))}
           </ul>
