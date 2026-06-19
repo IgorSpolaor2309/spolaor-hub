@@ -138,11 +138,13 @@ function DocsPage() {
                   <td className="text-right">
                     <div className="flex justify-end gap-2">
                       <AttachmentButton storagePath={d.storage_path} label="Abrir" />
-                      {d.uploaded_by === userId && (
+                      {(d.uploaded_by === userId || role === "admin") && (
                         <DeleteButton
                           onConfirm={() => remove.mutate(d.id)}
                           iconOnly
-                          description="Tem certeza que deseja apagar este item enviado por você?"
+                          description={d.uploaded_by === userId
+                            ? "Tem certeza que deseja apagar este item enviado por você? Esta ação ficará registrada no histórico."
+                            : "Exclusão administrativa: este arquivo foi enviado por outro usuário. Esta ação ficará registrada no histórico."}
                         />
                       )}
                     </div>
