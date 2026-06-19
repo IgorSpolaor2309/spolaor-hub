@@ -27,11 +27,30 @@ export const Route = createFileRoute("/_authenticated/solicitacoes")({
   errorComponent: () => <EmptyState icon={<FileText className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />,
 });
 
-const CATEGORIAS = [
-  "notas fiscais", "extrato bancário", "folha de pagamento", "pró-labore",
-  "contrato", "certificado digital", "documento societário", "guia/imposto",
-  "comprovante de pagamento", "outros",
+const CATEGORIAS: { value: string; label: string }[] = [
+  { value: "notas fiscais", label: "notas fiscais" },
+  { value: "extrato bancário", label: "extrato bancário" },
+  { value: "folha de pagamento", label: "folha de pagamento" },
+  { value: "pró-labore", label: "pró-labore" },
+  { value: "contrato social", label: "Contrato Social" },
+  { value: "certificado digital", label: "certificado digital" },
+  { value: "documento societário", label: "documento societário" },
+  { value: "guia/imposto", label: "guia/imposto" },
+  { value: "comprovante de pagamento", label: "comprovante de pagamento" },
+  { value: "outros", label: "outros" },
 ];
+
+// Tipos equivalentes — registros legados podem estar como "contrato", "contrato_social" ou "Contrato Social".
+const CATEGORIA_ALIASES: Record<string, string> = {
+  contrato: "contrato_social",
+  contratos: "contrato_social",
+  contrato_social: "contrato_social",
+};
+
+function normCategoria(v: string | null | undefined): string {
+  const n = normalizeSlug(v);
+  return CATEGORIA_ALIASES[n] ?? n;
+}
 
 const STATUSES = [
   "pendente", "recebido", "recusado", "reenviar", "cancelado",
@@ -104,7 +123,7 @@ function RequestsPage() {
     return (items as any[]).filter((r) =>
       (fClient === "all" || r.client_id === fClient) &&
       (fStatus === "all" || r.status === fStatus) &&
-      (fCategoria === "all" || normalizeSlug(r.categoria) === normalizeSlug(fCategoria)) &&
+      (fCategoria === "all" || normCategoria(r.categoria) === normCategoria(fCategoria)) &&
       (!fComp || (r.competencia ?? "").includes(fComp)) &&
       inRange(r.created_at, range),
     );
@@ -118,20 +137,27 @@ function RequestsPage() {
   return (
     <div>
       <PageHeader
-        title="Solicitações de documentos"
-        description={isStaff ? "Solicite documentos às empresas cadastradas e acompanhe o envio." : "Documentos solicitados pela equipe."}
+        title={isStaff ? "Solicitações de documentos" : "Minhas solicitações"}
+        description={isStaff
+          ? "Solicite documentos às empresas cadastradas e acompanhe o envio."
+          : "Documentos solicitados pela equipe e solicitações que você enviou."}
         action={
-          isStaff && (
+          (clients as any[]).length > 0 && (
             <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild><Button><Plus className="mr-2 h-4 w-4" /> Nova solicitação</Button></DialogTrigger>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  {isStaff ? "Nova solicitação" : "Solicitar documento"}
+                </Button>
+              </DialogTrigger>
               {open && (
                 <NewRequestDialog
                   clients={clients as any[]}
+                  isStaff={isStaff}
                   onDone={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["doc-requests"] }); }}
                 />
               )}
             </Dialog>
-
           )
         }
       />
@@ -164,7 +190,7 @@ function RequestsPage() {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
-                {CATEGORIAS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                {CATEGORIAS.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -294,10 +320,11 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
 }
 
 
-function NewRequestDialog({ clients, onDone }: { clients: any[]; onDone: () => void }) {
+function NewRequestDialog({ clients, isStaff, onDone }: { clients: any[]; isStaff: boolean; onDone: () => void }) {
   const { userId } = useCurrentUser();
+  const autoClient = !isStaff && clients.length === 1 ? clients[0].id : "";
   const [f, setF] = useState({
-    client_id: "", titulo: "", descricao: "", categoria: "", competencia: "", prazo: "",
+    client_id: autoClient, titulo: "", descricao: "", categoria: "", competencia: "", prazo: "",
     observacoes_internas: "",
   });
   const save = useMutation({
@@ -306,24 +333,24 @@ function NewRequestDialog({ clients, onDone }: { clients: any[]; onDone: () => v
         client_id: f.client_id, titulo: f.titulo.trim(),
         descricao: f.descricao || null, categoria: f.categoria || null,
         competencia: f.competencia || null, prazo: f.prazo || null,
-        observacoes_internas: f.observacoes_internas || null,
-        responsavel_profile_id: userId ?? null,
+        observacoes_internas: isStaff ? (f.observacoes_internas || null) : null,
+        responsavel_profile_id: isStaff ? (userId ?? null) : null,
         status: "pendente",
       });
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Solicitação criada."); onDone(); },
+    onSuccess: () => { toast.success(isStaff ? "Solicitação criada." : "Solicitação enviada para a equipe."); onDone(); },
     onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Sem permissão para esta empresa." : (e?.message ?? "Falha ao criar.")),
   });
   return (
     <DialogContent className="max-w-xl">
-      <DialogHeader><DialogTitle>Nova solicitação de documento</DialogTitle></DialogHeader>
+      <DialogHeader><DialogTitle>{isStaff ? "Nova solicitação de documento" : "Solicitar documento à equipe"}</DialogTitle></DialogHeader>
       <div className="grid gap-3">
         <div className="space-y-1.5">
           <Label>Empresa *</Label>
-          <Select value={f.client_id} onValueChange={(v) => setF({ ...f, client_id: v })}>
+          <Select value={f.client_id} onValueChange={(v) => setF({ ...f, client_id: v })} disabled={!isStaff && clients.length === 1}>
             <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-            <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.razao_social}</SelectItem>)}</SelectContent>
+            <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome_fantasia || c.razao_social}</SelectItem>)}</SelectContent>
           </Select>
         </div>
         <div className="space-y-1.5"><Label>Título *</Label><Input value={f.titulo} onChange={(e) => setF({ ...f, titulo: e.target.value })} /></div>
@@ -333,17 +360,17 @@ function NewRequestDialog({ clients, onDone }: { clients: any[]; onDone: () => v
             <Label>Categoria</Label>
             <Select value={f.categoria} onValueChange={(v) => setF({ ...f, categoria: v })}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-              <SelectContent>{CATEGORIAS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+              <SelectContent>{CATEGORIAS.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5"><Label>Competência</Label><Input placeholder="2026-06" value={f.competencia} onChange={(e) => setF({ ...f, competencia: e.target.value })} /></div>
         </div>
-        <div className="space-y-1.5"><Label>Prazo de envio</Label><Input type="date" value={f.prazo} onChange={(e) => setF({ ...f, prazo: e.target.value })} /></div>
-        <div className="space-y-1.5"><Label>Observações internas</Label><Textarea rows={2} value={f.observacoes_internas} onChange={(e) => setF({ ...f, observacoes_internas: e.target.value })} /></div>
+        {isStaff && <div className="space-y-1.5"><Label>Prazo de envio</Label><Input type="date" value={f.prazo} onChange={(e) => setF({ ...f, prazo: e.target.value })} /></div>}
+        {isStaff && <div className="space-y-1.5"><Label>Observações internas</Label><Textarea rows={2} value={f.observacoes_internas} onChange={(e) => setF({ ...f, observacoes_internas: e.target.value })} /></div>}
       </div>
       <DialogFooter>
         <Button onClick={() => save.mutate()} disabled={!f.client_id || !f.titulo.trim() || save.isPending}>
-          {save.isPending ? "Salvando…" : "Criar solicitação"}
+          {save.isPending ? "Salvando…" : (isStaff ? "Criar solicitação" : "Enviar solicitação")}
         </Button>
       </DialogFooter>
     </DialogContent>

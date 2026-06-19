@@ -83,10 +83,10 @@ function AuthedErrorBoundary({ error, reset }: { error: Error; reset: () => void
 function AuthedLayout() {
   const { ready, loading, hasRole, role, userId, mustChangePassword, refetch } = useCurrentUser();
 
-  const needsLink = role === "client" || role === "collaborator";
+  // Apenas a conta CLIENTE precisa de vínculo ativo com empresa para acessar.
+  // Admin e colaborador acessam normalmente — colaborador sem empresa vê estados vazios.
+  const needsLink = role === "client";
 
-  // Verifica vínculo apenas para client/collaborator. Admin nunca precisa.
-  // Erros de RLS / rede não bloqueiam o acesso.
   const linkQuery = useQuery({
     queryKey: ["user-link", userId, role],
     enabled: !!userId && needsLink,
@@ -94,21 +94,15 @@ function AuthedLayout() {
     staleTime: 60_000,
     queryFn: async () => {
       try {
-        if (role === "collaborator") {
-          const { data } = await supabase
-            .from("collaborators")
-            .select("id")
-            .eq("user_id", userId!)
-            .maybeSingle();
-          return { hasLink: !!data?.id };
-        }
-        if (role === "client") {
-          // RLS já filtra por user_has_client_access (owner_profile_id legado
-          // OU client_users ativo). Basta haver pelo menos um cliente visível.
-          const { data } = await supabase.from("clients").select("id").limit(1);
-          return { hasLink: !!(data && data.length > 0) };
-        }
-        return { hasLink: true };
+        // RLS já filtra por user_has_client_access (owner_profile_id legado
+        // OU client_users ativo). Basta haver pelo menos uma empresa visível.
+        const { data } = await supabase
+          .from("clients")
+          .select("id")
+          .is("deleted_at", null)
+          .neq("status", "inactive")
+          .limit(1);
+        return { hasLink: !!(data && data.length > 0) };
       } catch (err) {
         console.warn("[AuthedLayout] verificação de vínculo falhou:", err);
         return { hasLink: true };
