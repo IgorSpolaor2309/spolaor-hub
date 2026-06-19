@@ -320,10 +320,11 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
 }
 
 
-function NewRequestDialog({ clients, onDone }: { clients: any[]; onDone: () => void }) {
+function NewRequestDialog({ clients, isStaff, onDone }: { clients: any[]; isStaff: boolean; onDone: () => void }) {
   const { userId } = useCurrentUser();
+  const autoClient = !isStaff && clients.length === 1 ? clients[0].id : "";
   const [f, setF] = useState({
-    client_id: "", titulo: "", descricao: "", categoria: "", competencia: "", prazo: "",
+    client_id: autoClient, titulo: "", descricao: "", categoria: "", competencia: "", prazo: "",
     observacoes_internas: "",
   });
   const save = useMutation({
