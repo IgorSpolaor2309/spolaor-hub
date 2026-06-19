@@ -73,6 +73,7 @@ function GuidesPage() {
       const { data, error } = await supabase
         .from("tax_guides")
         .select("*, clients(razao_social, nome_fantasia)")
+        .is("deleted_at", null)
         .order("vencimento", { ascending: true });
       if (error) throw error;
       return data ?? [];
