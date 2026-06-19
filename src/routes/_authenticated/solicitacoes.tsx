@@ -137,20 +137,27 @@ function RequestsPage() {
   return (
     <div>
       <PageHeader
-        title="Solicitações de documentos"
-        description={isStaff ? "Solicite documentos às empresas cadastradas e acompanhe o envio." : "Documentos solicitados pela equipe."}
+        title={isStaff ? "Solicitações de documentos" : "Minhas solicitações"}
+        description={isStaff
+          ? "Solicite documentos às empresas cadastradas e acompanhe o envio."
+          : "Documentos solicitados pela equipe e solicitações que você enviou."}
         action={
-          isStaff && (
+          (clients as any[]).length > 0 && (
             <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild><Button><Plus className="mr-2 h-4 w-4" /> Nova solicitação</Button></DialogTrigger>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  {isStaff ? "Nova solicitação" : "Solicitar documento"}
+                </Button>
+              </DialogTrigger>
               {open && (
                 <NewRequestDialog
                   clients={clients as any[]}
+                  isStaff={isStaff}
                   onDone={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["doc-requests"] }); }}
                 />
               )}
             </Dialog>
-
           )
         }
       />
