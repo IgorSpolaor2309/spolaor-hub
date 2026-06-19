@@ -27,11 +27,30 @@ export const Route = createFileRoute("/_authenticated/solicitacoes")({
   errorComponent: () => <EmptyState icon={<FileText className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />,
 });
 
-const CATEGORIAS = [
-  "notas fiscais", "extrato bancário", "folha de pagamento", "pró-labore",
-  "contrato", "certificado digital", "documento societário", "guia/imposto",
-  "comprovante de pagamento", "outros",
+const CATEGORIAS: { value: string; label: string }[] = [
+  { value: "notas fiscais", label: "notas fiscais" },
+  { value: "extrato bancário", label: "extrato bancário" },
+  { value: "folha de pagamento", label: "folha de pagamento" },
+  { value: "pró-labore", label: "pró-labore" },
+  { value: "contrato social", label: "Contrato Social" },
+  { value: "certificado digital", label: "certificado digital" },
+  { value: "documento societário", label: "documento societário" },
+  { value: "guia/imposto", label: "guia/imposto" },
+  { value: "comprovante de pagamento", label: "comprovante de pagamento" },
+  { value: "outros", label: "outros" },
 ];
+
+// Tipos equivalentes — registros legados podem estar como "contrato", "contrato_social" ou "Contrato Social".
+const CATEGORIA_ALIASES: Record<string, string> = {
+  contrato: "contrato_social",
+  contratos: "contrato_social",
+  contrato_social: "contrato_social",
+};
+
+function normCategoria(v: string | null | undefined): string {
+  const n = normalizeSlug(v);
+  return CATEGORIA_ALIASES[n] ?? n;
+}
 
 const STATUSES = [
   "pendente", "recebido", "recusado", "reenviar", "cancelado",
