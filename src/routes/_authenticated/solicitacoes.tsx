@@ -333,13 +333,13 @@ function NewRequestDialog({ clients, isStaff, onDone }: { clients: any[]; isStaf
         client_id: f.client_id, titulo: f.titulo.trim(),
         descricao: f.descricao || null, categoria: f.categoria || null,
         competencia: f.competencia || null, prazo: f.prazo || null,
-        observacoes_internas: f.observacoes_internas || null,
-        responsavel_profile_id: userId ?? null,
+        observacoes_internas: isStaff ? (f.observacoes_internas || null) : null,
+        responsavel_profile_id: isStaff ? (userId ?? null) : null,
         status: "pendente",
       });
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Solicitação criada."); onDone(); },
+    onSuccess: () => { toast.success(isStaff ? "Solicitação criada." : "Solicitação enviada para a equipe."); onDone(); },
     onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Sem permissão para esta empresa." : (e?.message ?? "Falha ao criar.")),
   });
   return (
