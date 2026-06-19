@@ -163,7 +163,7 @@ function GuidesPage() {
           : (
             <ul className="space-y-3">
               {filtered.map((g: any) => (
-                <GuideRow key={g.id} item={g} isStaff={isStaff} userId={userId} onChange={() => qc.invalidateQueries({ queryKey: ["tax-guides"] })} />
+                <GuideRow key={g.id} item={g} isStaff={isStaff} role={role} userId={userId} onChange={() => qc.invalidateQueries({ queryKey: ["tax-guides"] })} />
               ))}
             </ul>
           )}
