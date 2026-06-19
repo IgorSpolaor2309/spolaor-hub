@@ -267,7 +267,7 @@ function GuideRow({ item, isStaff, role, userId, onChange }: any) {
                 <DeleteButton onConfirm={() => removeProof.mutate()} label="Remover comprovante" description="Tem certeza que deseja apagar este item enviado por você?" />
               )}
               {canDeleteGuide && (
-                <DeleteButton onConfirm={() => remove.mutate()} label="Excluir guia" description="Tem certeza que deseja apagar esta guia cadastrada por você?" />
+                <DeleteButton onConfirm={() => remove.mutate()} label="Excluir guia" description={item.created_by === userId ? "Tem certeza que deseja apagar esta guia cadastrada por você? Esta ação ficará registrada no histórico." : "Exclusão administrativa: esta guia foi criada por outro usuário. Esta ação ficará registrada no histórico."} />
               )}
             </>
           ) : (
