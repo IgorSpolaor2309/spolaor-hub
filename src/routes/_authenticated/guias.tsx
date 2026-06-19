@@ -172,7 +172,7 @@ function GuidesPage() {
   );
 }
 
-function GuideRow({ item, isStaff, userId, onChange }: any) {
+function GuideRow({ item, isStaff, role, userId, onChange }: any) {
   const updateStatus = useMutation({
     mutationFn: async (status: string) => {
       const { error } = await supabase.from("tax_guides").update({ status }).eq("id", item.id);
