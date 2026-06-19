@@ -227,7 +227,7 @@ function GuideRow({ item, isStaff, role, userId, onChange }: any) {
 
   const vencido = item.vencimento && isPastEndOfDay(item.vencimento) && !["paga", "cancelada"].includes(item.status);
   const canDeleteProof = !!item.comprovante_path && item.comprovante_uploaded_by === userId;
-  const canDeleteGuide = item.created_by === userId;
+  const canDeleteGuide = item.created_by === userId || role === "admin";
 
   return (
     <li className="rounded-md border p-4">
