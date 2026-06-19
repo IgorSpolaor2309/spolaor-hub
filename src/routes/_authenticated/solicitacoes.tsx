@@ -344,13 +344,13 @@ function NewRequestDialog({ clients, isStaff, onDone }: { clients: any[]; isStaf
   });
   return (
     <DialogContent className="max-w-xl">
-      <DialogHeader><DialogTitle>Nova solicitação de documento</DialogTitle></DialogHeader>
+      <DialogHeader><DialogTitle>{isStaff ? "Nova solicitação de documento" : "Solicitar documento à equipe"}</DialogTitle></DialogHeader>
       <div className="grid gap-3">
         <div className="space-y-1.5">
           <Label>Empresa *</Label>
-          <Select value={f.client_id} onValueChange={(v) => setF({ ...f, client_id: v })}>
+          <Select value={f.client_id} onValueChange={(v) => setF({ ...f, client_id: v })} disabled={!isStaff && clients.length === 1}>
             <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-            <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.razao_social}</SelectItem>)}</SelectContent>
+            <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome_fantasia || c.razao_social}</SelectItem>)}</SelectContent>
           </Select>
         </div>
         <div className="space-y-1.5"><Label>Título *</Label><Input value={f.titulo} onChange={(e) => setF({ ...f, titulo: e.target.value })} /></div>
@@ -365,12 +365,12 @@ function NewRequestDialog({ clients, isStaff, onDone }: { clients: any[]; isStaf
           </div>
           <div className="space-y-1.5"><Label>Competência</Label><Input placeholder="2026-06" value={f.competencia} onChange={(e) => setF({ ...f, competencia: e.target.value })} /></div>
         </div>
-        <div className="space-y-1.5"><Label>Prazo de envio</Label><Input type="date" value={f.prazo} onChange={(e) => setF({ ...f, prazo: e.target.value })} /></div>
-        <div className="space-y-1.5"><Label>Observações internas</Label><Textarea rows={2} value={f.observacoes_internas} onChange={(e) => setF({ ...f, observacoes_internas: e.target.value })} /></div>
+        {isStaff && <div className="space-y-1.5"><Label>Prazo de envio</Label><Input type="date" value={f.prazo} onChange={(e) => setF({ ...f, prazo: e.target.value })} /></div>}
+        {isStaff && <div className="space-y-1.5"><Label>Observações internas</Label><Textarea rows={2} value={f.observacoes_internas} onChange={(e) => setF({ ...f, observacoes_internas: e.target.value })} /></div>}
       </div>
       <DialogFooter>
         <Button onClick={() => save.mutate()} disabled={!f.client_id || !f.titulo.trim() || save.isPending}>
-          {save.isPending ? "Salvando…" : "Criar solicitação"}
+          {save.isPending ? "Salvando…" : (isStaff ? "Criar solicitação" : "Enviar solicitação")}
         </Button>
       </DialogFooter>
     </DialogContent>
