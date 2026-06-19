@@ -111,12 +111,14 @@ function RequestsPage() {
       const { data, error } = await supabase
         .from("document_requests")
         .select("*, clients(razao_social, nome_fantasia), documents(nome, storage_path), profiles:responsavel_profile_id(full_name)")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
   });
   const loadError = clientsError || itemsError;
+
 
   const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
   const filtered = useMemo(() => {
@@ -233,10 +235,13 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
 
   const remove = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("document_requests").delete().eq("id", item.id);
+      const { error } = await supabase
+        .from("document_requests")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", item.id);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Solicitação excluída"); onChange(); },
+    onSuccess: () => { toast.success("Solicitação excluída (registrada no histórico)."); onChange(); },
     onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Sem permissão para excluir." : (e.message ?? "Falha ao excluir.")),
   });
 

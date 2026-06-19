@@ -57,6 +57,8 @@ export type Database = {
           created_at: string
           deleted_at: string | null
           deleted_by: string | null
+          deleted_by_role: string | null
+          deletion_reason: string | null
           id: string
           sender_profile_id: string | null
           sender_role: string
@@ -71,6 +73,8 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
+          deleted_by_role?: string | null
+          deletion_reason?: string | null
           id?: string
           sender_profile_id?: string | null
           sender_role: string
@@ -85,6 +89,8 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
+          deleted_by_role?: string | null
+          deletion_reason?: string | null
           id?: string
           sender_profile_id?: string | null
           sender_role?: string
@@ -524,6 +530,10 @@ export type Database = {
           client_id: string
           competencia: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_by_role: string | null
+          deletion_reason: string | null
           descricao: string | null
           document_id: string | null
           id: string
@@ -543,6 +553,10 @@ export type Database = {
           client_id: string
           competencia?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_by_role?: string | null
+          deletion_reason?: string | null
           descricao?: string | null
           document_id?: string | null
           id?: string
@@ -562,6 +576,10 @@ export type Database = {
           client_id?: string
           competencia?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_by_role?: string | null
+          deletion_reason?: string | null
           descricao?: string | null
           document_id?: string | null
           id?: string
@@ -647,6 +665,8 @@ export type Database = {
           data_validade: string | null
           deleted_at: string | null
           deleted_by: string | null
+          deleted_by_role: string | null
+          deletion_reason: string | null
           id: string
           nome: string
           observacoes: string | null
@@ -664,6 +684,8 @@ export type Database = {
           data_validade?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          deleted_by_role?: string | null
+          deletion_reason?: string | null
           id?: string
           nome: string
           observacoes?: string | null
@@ -681,6 +703,8 @@ export type Database = {
           data_validade?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          deleted_by_role?: string | null
+          deletion_reason?: string | null
           id?: string
           nome?: string
           observacoes?: string | null
@@ -1044,6 +1068,10 @@ export type Database = {
           comprovante_uploaded_by: string | null
           created_at: string
           created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_by_role: string | null
+          deletion_reason: string | null
           id: string
           nome_arquivo: string | null
           observacoes_internas: string | null
@@ -1066,6 +1094,10 @@ export type Database = {
           comprovante_uploaded_by?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_by_role?: string | null
+          deletion_reason?: string | null
           id?: string
           nome_arquivo?: string | null
           observacoes_internas?: string | null
@@ -1088,6 +1120,10 @@ export type Database = {
           comprovante_uploaded_by?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_by_role?: string | null
+          deletion_reason?: string | null
           id?: string
           nome_arquivo?: string | null
           observacoes_internas?: string | null

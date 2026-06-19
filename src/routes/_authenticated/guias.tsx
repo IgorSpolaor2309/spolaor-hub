@@ -73,6 +73,7 @@ function GuidesPage() {
       const { data, error } = await supabase
         .from("tax_guides")
         .select("*, clients(razao_social, nome_fantasia)")
+        .is("deleted_at", null)
         .order("vencimento", { ascending: true });
       if (error) throw error;
       return data ?? [];
@@ -162,7 +163,7 @@ function GuidesPage() {
           : (
             <ul className="space-y-3">
               {filtered.map((g: any) => (
-                <GuideRow key={g.id} item={g} isStaff={isStaff} userId={userId} onChange={() => qc.invalidateQueries({ queryKey: ["tax-guides"] })} />
+                <GuideRow key={g.id} item={g} isStaff={isStaff} role={role} userId={userId} onChange={() => qc.invalidateQueries({ queryKey: ["tax-guides"] })} />
               ))}
             </ul>
           )}
@@ -171,7 +172,7 @@ function GuidesPage() {
   );
 }
 
-function GuideRow({ item, isStaff, userId, onChange }: any) {
+function GuideRow({ item, isStaff, role, userId, onChange }: any) {
   const updateStatus = useMutation({
     mutationFn: async (status: string) => {
       const { error } = await supabase.from("tax_guides").update({ status }).eq("id", item.id);
@@ -183,10 +184,13 @@ function GuideRow({ item, isStaff, userId, onChange }: any) {
 
   const remove = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("tax_guides").delete().eq("id", item.id);
+      const { error } = await supabase
+        .from("tax_guides")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", item.id);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Guia excluída"); onChange(); },
+    onSuccess: () => { toast.success("Guia excluída (registrada no histórico)."); onChange(); },
     onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Sem permissão para excluir." : (e.message ?? "Falha ao excluir.")),
   });
 
@@ -223,7 +227,7 @@ function GuideRow({ item, isStaff, userId, onChange }: any) {
 
   const vencido = item.vencimento && isPastEndOfDay(item.vencimento) && !["paga", "cancelada"].includes(item.status);
   const canDeleteProof = !!item.comprovante_path && item.comprovante_uploaded_by === userId;
-  const canDeleteGuide = item.created_by === userId;
+  const canDeleteGuide = item.created_by === userId || role === "admin";
 
   return (
     <li className="rounded-md border p-4">
@@ -263,7 +267,7 @@ function GuideRow({ item, isStaff, userId, onChange }: any) {
                 <DeleteButton onConfirm={() => removeProof.mutate()} label="Remover comprovante" description="Tem certeza que deseja apagar este item enviado por você?" />
               )}
               {canDeleteGuide && (
-                <DeleteButton onConfirm={() => remove.mutate()} label="Excluir guia" description="Tem certeza que deseja apagar esta guia cadastrada por você?" />
+                <DeleteButton onConfirm={() => remove.mutate()} label="Excluir guia" description={item.created_by === userId ? "Tem certeza que deseja apagar esta guia cadastrada por você? Esta ação ficará registrada no histórico." : "Exclusão administrativa: esta guia foi criada por outro usuário. Esta ação ficará registrada no histórico."} />
               )}
             </>
           ) : (
