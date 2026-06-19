@@ -184,10 +184,13 @@ function GuideRow({ item, isStaff, userId, onChange }: any) {
 
   const remove = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("tax_guides").delete().eq("id", item.id);
+      const { error } = await supabase
+        .from("tax_guides")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", item.id);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Guia excluída"); onChange(); },
+    onSuccess: () => { toast.success("Guia excluída (registrada no histórico)."); onChange(); },
     onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Sem permissão para excluir." : (e.message ?? "Falha ao excluir.")),
   });
 
