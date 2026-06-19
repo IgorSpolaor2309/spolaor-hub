@@ -123,7 +123,7 @@ function RequestsPage() {
     return (items as any[]).filter((r) =>
       (fClient === "all" || r.client_id === fClient) &&
       (fStatus === "all" || r.status === fStatus) &&
-      (fCategoria === "all" || normalizeSlug(r.categoria) === normalizeSlug(fCategoria)) &&
+      (fCategoria === "all" || normCategoria(r.categoria) === normCategoria(fCategoria)) &&
       (!fComp || (r.competencia ?? "").includes(fComp)) &&
       inRange(r.created_at, range),
     );
