@@ -455,6 +455,11 @@ function ChecklistPage() {
               onChange={() => qc.invalidateQueries({ queryKey: ["checklist-items"] })} />
           )}
       </Card>
+    </div>
+  );
+}
+
+
 
 function StatCard({ label, value, tone }: { label: string; value: number; tone?: string }) {
   return (
