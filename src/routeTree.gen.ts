@@ -29,6 +29,7 @@ import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authentic
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedColaboradoresRouteImport } from './routes/_authenticated/colaboradores'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
+import { Route as AuthenticatedChecklistRouteImport } from './routes/_authenticated/checklist'
 import { Route as AuthenticatedIntegracoesOmieRouteImport } from './routes/_authenticated/integracoes.omie'
 import { Route as AuthenticatedClientesIdRouteImport } from './routes/_authenticated/clientes.$id'
 
@@ -137,6 +138,11 @@ const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
   path: '/clientes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedChecklistRoute = AuthenticatedChecklistRouteImport.update({
+  id: '/checklist',
+  path: '/checklist',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedIntegracoesOmieRoute =
   AuthenticatedIntegracoesOmieRouteImport.update({
     id: '/integracoes/omie',
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
   '/seguranca': typeof SegurancaRoute
+  '/checklist': typeof AuthenticatedChecklistRoute
   '/clientes': typeof AuthenticatedClientesRouteWithChildren
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -175,6 +182,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/seguranca': typeof SegurancaRoute
+  '/checklist': typeof AuthenticatedChecklistRoute
   '/clientes': typeof AuthenticatedClientesRouteWithChildren
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -200,6 +208,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/seguranca': typeof SegurancaRoute
+  '/_authenticated/checklist': typeof AuthenticatedChecklistRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRouteWithChildren
   '/_authenticated/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -226,6 +235,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/seguranca'
+    | '/checklist'
     | '/clientes'
     | '/colaboradores'
     | '/configuracoes'
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
   to:
     | '/auth'
     | '/seguranca'
+    | '/checklist'
     | '/clientes'
     | '/colaboradores'
     | '/configuracoes'
@@ -272,6 +283,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/seguranca'
+    | '/_authenticated/checklist'
     | '/_authenticated/clientes'
     | '/_authenticated/colaboradores'
     | '/_authenticated/configuracoes'
@@ -441,6 +453,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClientesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/checklist': {
+      id: '/_authenticated/checklist'
+      path: '/checklist'
+      fullPath: '/checklist'
+      preLoaderRoute: typeof AuthenticatedChecklistRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/integracoes/omie': {
       id: '/_authenticated/integracoes/omie'
       path: '/integracoes/omie'
@@ -472,6 +491,7 @@ const AuthenticatedClientesRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedChecklistRoute: typeof AuthenticatedChecklistRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRouteWithChildren
   AuthenticatedColaboradoresRoute: typeof AuthenticatedColaboradoresRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
@@ -493,6 +513,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedChecklistRoute: AuthenticatedChecklistRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRouteWithChildren,
   AuthenticatedColaboradoresRoute: AuthenticatedColaboradoresRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
