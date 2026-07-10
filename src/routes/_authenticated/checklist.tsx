@@ -661,7 +661,7 @@ function StatCard({ label, value, tone }: { label: string; value: number; tone?:
   );
 }
 
-function GroupedView({ items, planByClient, isAdmin, singleComp, onEdit, onChange }: any) {
+function GroupedView({ items, planByClient, isAdmin, singleComp, forceExpandKey, onEdit, onChange }: any) {
   type Group = { key: string; clientId: string; competencia: string; empresa: string; plano: string; resp: string; items: any[] };
   const groups: Group[] = useMemo(() => {
     const map = new Map<string, Group>();
