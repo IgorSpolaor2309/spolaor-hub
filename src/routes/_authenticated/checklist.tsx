@@ -682,7 +682,14 @@ function GroupedView({ items, planByClient, isAdmin, singleComp, forceExpandKey,
   }, [items, planByClient]);
 
   const prefs = useMemo(loadPrefs, []);
-  const [collapsed, setCollapsedState] = useState<Record<string, boolean>>(prefs.collapsed ?? {});
+  const [collapsed, setCollapsedState] = useState<Record<string, boolean>>(() => {
+    const init = { ...(prefs.collapsed ?? {}) };
+    if (forceExpandKey) init[forceExpandKey] = false;
+    return init;
+  });
+  useEffect(() => {
+    if (forceExpandKey) setCollapsedState((c) => ({ ...c, [forceExpandKey]: false }));
+  }, [forceExpandKey]);
   const setCollapsed = (updater: (c: Record<string, boolean>) => Record<string, boolean>) => {
     setCollapsedState((c) => {
       const next = updater(c);
