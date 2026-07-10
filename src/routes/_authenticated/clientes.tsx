@@ -292,7 +292,11 @@ function ClientsPage() {
                   <th className="py-2 pr-4">Tipo</th>
                   <th className="py-2 pr-4">Documento</th>
                   <th className="py-2 pr-4">Entrada</th>
+                  <th className="py-2 pr-4">Tipo cliente</th>
+                  <th className="py-2 pr-4">Plano</th>
+                  <th className="py-2 pr-4">Status comercial</th>
                   <th className="py-2 pr-4">Status</th>
+
                   {role === "admin" && <th className="w-10"></th>}
                 </tr>
               </thead>
