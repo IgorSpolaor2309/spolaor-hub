@@ -24,6 +24,66 @@ function defaultCompetencia() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
+function shiftComp(comp: string, delta: number) {
+  const [y, m] = comp.split("-").map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function formatCompLabel(comp: string) {
+  if (!comp || comp === "all") return "Todas as competências";
+  const [y, m] = comp.split("-");
+  const nomes = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+  const idx = Number(m) - 1;
+  if (idx < 0 || idx > 11) return comp;
+  return `${nomes[idx]}/${y}`;
+}
+
+// Ordenação padrão: Atrasados → Vencem hoje → Próximos → Pendentes s/ prazo →
+// Recebidos → Concluídos → Cancelados.
+function itemPriority(item: any): number {
+  const s = item.status;
+  if (s === "cancelado") return 90;
+  if (s === "concluido") return 80;
+  if (s === "recebido") return 70;
+  // pendente
+  const p = prazoTone(item.prazo, s);
+  if (p === "vencido") return 10;
+  if (p === "hoje") return 20;
+  if (p === "3dias") return 30;
+  if (p === "ok") return 40;
+  return 50; // pendente sem prazo
+}
+
+function sortDefault(a: any, b: any): number {
+  const pa = itemPriority(a);
+  const pb = itemPriority(b);
+  if (pa !== pb) return pa - pb;
+  // dentro do mesmo grupo, ordena por prazo ascendente (nulls por último)
+  const ap = a.prazo ?? "9999-12-31";
+  const bp = b.prazo ?? "9999-12-31";
+  if (ap !== bp) return ap.localeCompare(bp);
+  return (a.titulo ?? "").localeCompare(b.titulo ?? "");
+}
+
+const PREFS_KEY = "checklist.prefs.v1";
+function loadPrefs(): { viewMode?: "list" | "grouped" | "historic"; selectedComp?: string; collapsed?: Record<string, boolean> } {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(PREFS_KEY);
+    if (!raw) return {};
+    const p = JSON.parse(raw);
+    return typeof p === "object" && p ? p : {};
+  } catch { return {}; }
+}
+function savePrefs(patch: Record<string, any>) {
+  if (typeof window === "undefined") return;
+  try {
+    const cur = loadPrefs();
+    window.localStorage.setItem(PREFS_KEY, JSON.stringify({ ...cur, ...patch }));
+  } catch { /* ignore */ }
+}
+
 function GenerateChecklistButton({ onDone }: { onDone: () => void }) {
   const [open, setOpen] = useState(false);
   const [comp, setComp] = useState(defaultCompetencia());
