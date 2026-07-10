@@ -244,22 +244,67 @@ function ChecklistPage() {
   });
 
   const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
     const arr = (itemsQ.data ?? []).filter((r: any) => {
       if (fClient !== "all" && r.client_id !== fClient) return false;
       if (fResp !== "all" && r.responsavel_profile_id !== fResp) return false;
       if (fCat !== "all" && r.categoria !== fCat) return false;
       if (fStatus === "open" && (r.status === "concluido" || r.status === "cancelado")) return false;
       if (fStatus !== "all" && fStatus !== "open" && r.status !== fStatus) return false;
+      if (fOrigem !== "all" && (r.origem ?? "manual") !== fOrigem) return false;
+      if (fVisivel === "yes" && !r.visivel_cliente) return false;
+      if (fVisivel === "no" && r.visivel_cliente) return false;
       if (fQuick !== "all") {
         const p = prazoTone(r.prazo, r.status);
         if (fQuick === "atrasado" && p !== "vencido") return false;
         if (fQuick === "hoje" && p !== "hoje") return false;
         if (fQuick === "3dias" && !(p === "hoje" || p === "3dias")) return false;
       }
+      if (q) {
+        const empresa = (r.clients?.nome_fantasia || r.clients?.razao_social || "").toLowerCase();
+        const titulo = (r.titulo ?? "").toLowerCase();
+        const cat = (CAT_LABEL[r.categoria] ?? r.categoria ?? "").toLowerCase();
+        const obs = (r.observacao ?? "").toLowerCase();
+        if (!empresa.includes(q) && !titulo.includes(q) && !cat.includes(q) && !obs.includes(q)) return false;
+      }
       return true;
     });
+    if (viewMode === "list") {
+      const dir = sortDir === "asc" ? 1 : -1;
+      const key = sortKey;
+      arr.sort((a: any, b: any) => {
+        const cmp = (() => {
+          if (key === "prazo") return (a.prazo ?? "9999-12-31").localeCompare(b.prazo ?? "9999-12-31");
+          if (key === "empresa") return ((a.clients?.nome_fantasia || a.clients?.razao_social || "")).localeCompare(b.clients?.nome_fantasia || b.clients?.razao_social || "");
+          if (key === "status") return itemPriority(a) - itemPriority(b);
+          if (key === "categoria") return (CAT_LABEL[a.categoria] ?? "").localeCompare(CAT_LABEL[b.categoria] ?? "");
+          if (key === "responsavel") return (a.profiles?.full_name ?? "~").localeCompare(b.profiles?.full_name ?? "~");
+          if (key === "ordem") return (a.plan_items?.ordem ?? 9e9) - (b.plan_items?.ordem ?? 9e9);
+          return 0;
+        })();
+        return cmp * dir;
+      });
+      return arr;
+    }
     return arr.sort(sortDefault);
-  }, [itemsQ.data, fClient, fResp, fCat, fStatus, fQuick]);
+  }, [itemsQ.data, fClient, fResp, fCat, fStatus, fOrigem, fVisivel, fQuick, search, viewMode, sortKey, sortDir]);
+
+  const activeFiltersCount = useMemo(() => {
+    let n = 0;
+    if (fClient !== "all") n++;
+    if (fResp !== "all") n++;
+    if (fCat !== "all") n++;
+    if (fStatus !== "open") n++;
+    if (fOrigem !== "all") n++;
+    if (fVisivel !== "all") n++;
+    if (fQuick !== "all") n++;
+    if (search.trim()) n++;
+    return n;
+  }, [fClient, fResp, fCat, fStatus, fOrigem, fVisivel, fQuick, search]);
+  const clearFilters = () => {
+    setFClient("all"); setFResp("all"); setFCat("all"); setFStatus("open");
+    setFOrigem("all"); setFVisivel("all"); setFQuick("all"); setSearchInput("");
+  };
 
   const stats = useMemo(() => {
     const s = { total: 0, pendente: 0, recebido: 0, concluido: 0, cancelado: 0, atrasado: 0, empresas: 0 };
