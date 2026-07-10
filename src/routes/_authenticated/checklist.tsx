@@ -24,6 +24,66 @@ function defaultCompetencia() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
+function shiftComp(comp: string, delta: number) {
+  const [y, m] = comp.split("-").map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function formatCompLabel(comp: string) {
+  if (!comp || comp === "all") return "Todas as competências";
+  const [y, m] = comp.split("-");
+  const nomes = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+  const idx = Number(m) - 1;
+  if (idx < 0 || idx > 11) return comp;
+  return `${nomes[idx]}/${y}`;
+}
+
+// Ordenação padrão: Atrasados → Vencem hoje → Próximos → Pendentes s/ prazo →
+// Recebidos → Concluídos → Cancelados.
+function itemPriority(item: any): number {
+  const s = item.status;
+  if (s === "cancelado") return 90;
+  if (s === "concluido") return 80;
+  if (s === "recebido") return 70;
+  // pendente
+  const p = prazoTone(item.prazo, s);
+  if (p === "vencido") return 10;
+  if (p === "hoje") return 20;
+  if (p === "3dias") return 30;
+  if (p === "ok") return 40;
+  return 50; // pendente sem prazo
+}
+
+function sortDefault(a: any, b: any): number {
+  const pa = itemPriority(a);
+  const pb = itemPriority(b);
+  if (pa !== pb) return pa - pb;
+  // dentro do mesmo grupo, ordena por prazo ascendente (nulls por último)
+  const ap = a.prazo ?? "9999-12-31";
+  const bp = b.prazo ?? "9999-12-31";
+  if (ap !== bp) return ap.localeCompare(bp);
+  return (a.titulo ?? "").localeCompare(b.titulo ?? "");
+}
+
+const PREFS_KEY = "checklist.prefs.v1";
+function loadPrefs(): { viewMode?: "list" | "grouped" | "historic"; selectedComp?: string; collapsed?: Record<string, boolean> } {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(PREFS_KEY);
+    if (!raw) return {};
+    const p = JSON.parse(raw);
+    return typeof p === "object" && p ? p : {};
+  } catch { return {}; }
+}
+function savePrefs(patch: Record<string, any>) {
+  if (typeof window === "undefined") return;
+  try {
+    const cur = loadPrefs();
+    window.localStorage.setItem(PREFS_KEY, JSON.stringify({ ...cur, ...patch }));
+  } catch { /* ignore */ }
+}
+
 function GenerateChecklistButton({ onDone }: { onDone: () => void }) {
   const [open, setOpen] = useState(false);
   const [comp, setComp] = useState(defaultCompetencia());
@@ -116,13 +176,16 @@ function ChecklistPage() {
   const qc = useQueryClient();
   const ready = !loading && !!userId && (role === "admin" || role === "collaborator");
 
+  const prefs = useMemo(loadPrefs, []);
   const [fClient, setFClient] = useState("all");
   const [fResp, setFResp] = useState("all");
   const [fCat, setFCat] = useState("all");
   const [fStatus, setFStatus] = useState<string>("open");
-  const [fComp, setFComp] = useState("");
+  const [selectedComp, setSelectedComp] = useState<string>(prefs.selectedComp ?? defaultCompetencia());
   const [fQuick, setFQuick] = useState<"all" | "atrasado" | "hoje" | "3dias">("all");
-  const [viewMode, setViewMode] = useState<"list" | "grouped">("list");
+  const [viewMode, setViewModeState] = useState<"list" | "grouped" | "historic">(prefs.viewMode ?? "grouped");
+  const setViewMode = (v: "list" | "grouped" | "historic") => { setViewModeState(v); savePrefs({ viewMode: v }); };
+  const changeSelectedComp = (v: string) => { setSelectedComp(v); savePrefs({ selectedComp: v }); };
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
 
@@ -150,27 +213,27 @@ function ChecklistPage() {
   });
 
   const itemsQ = useQuery({
-    queryKey: ["checklist-items"],
+    queryKey: ["checklist-items", selectedComp],
     enabled: ready,
     queryFn: async () => {
-      const { data, error } = await supabase.from("client_checklist_items")
+      let q = supabase.from("client_checklist_items")
         .select("*, clients(razao_social, nome_fantasia), profiles:responsavel_profile_id(full_name), documents:document_id(id, nome, storage_path)")
-        .is("deleted_at", null)
-        .order("prazo", { ascending: true, nullsFirst: false })
-        .order("created_at", { ascending: false });
+        .is("deleted_at", null);
+      if (selectedComp && selectedComp !== "all") q = q.eq("competencia", selectedComp);
+      q = q.order("prazo", { ascending: true, nullsFirst: false }).order("created_at", { ascending: false });
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
   });
 
   const filtered = useMemo(() => {
-    return (itemsQ.data ?? []).filter((r: any) => {
+    const arr = (itemsQ.data ?? []).filter((r: any) => {
       if (fClient !== "all" && r.client_id !== fClient) return false;
       if (fResp !== "all" && r.responsavel_profile_id !== fResp) return false;
       if (fCat !== "all" && r.categoria !== fCat) return false;
       if (fStatus === "open" && (r.status === "concluido" || r.status === "cancelado")) return false;
       if (fStatus !== "all" && fStatus !== "open" && r.status !== fStatus) return false;
-      if (fComp && !(r.competencia ?? "").includes(fComp)) return false;
       if (fQuick !== "all") {
         const p = prazoTone(r.prazo, r.status);
         if (fQuick === "atrasado" && p !== "vencido") return false;
@@ -179,20 +242,27 @@ function ChecklistPage() {
       }
       return true;
     });
-  }, [itemsQ.data, fClient, fResp, fCat, fStatus, fComp, fQuick]);
+    return arr.sort(sortDefault);
+  }, [itemsQ.data, fClient, fResp, fCat, fStatus, fQuick]);
 
   const stats = useMemo(() => {
-    const s = { total: 0, pendente: 0, recebido: 0, concluido: 0, cancelado: 0, atrasado: 0 };
+    const s = { total: 0, pendente: 0, recebido: 0, concluido: 0, cancelado: 0, atrasado: 0, empresas: 0 };
+    const empresas = new Set<string>();
     for (const r of filtered as any[]) {
       s.total++;
+      empresas.add(r.client_id);
       if (r.status === "pendente") s.pendente++;
       else if (r.status === "recebido") s.recebido++;
       else if (r.status === "concluido") s.concluido++;
       else if (r.status === "cancelado") s.cancelado++;
       if (prazoTone(r.prazo, r.status) === "vencido") s.atrasado++;
     }
+    s.empresas = empresas.size;
     return s;
   }, [filtered]);
+
+  const validos = stats.pendente + stats.recebido + stats.concluido;
+  const pctGeral = validos ? Math.round((stats.concluido / validos) * 100) : 0;
 
   if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
   if (role !== "admin" && role !== "collaborator") {
@@ -243,19 +313,53 @@ function ChecklistPage() {
         }
       />
 
-      {/* Indicadores */}
-      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+      {/* Seletor de competência */}
+      <Card className="mb-4 p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <Label className="text-xs shrink-0">Competência</Label>
+          <Button size="sm" variant="outline" title="Mês anterior"
+            onClick={() => changeSelectedComp(shiftComp(selectedComp === "all" ? compAtual : selectedComp, -1))}>
+            ‹
+          </Button>
+          <Select value={selectedComp} onValueChange={changeSelectedComp}>
+            <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={compAtual}>{formatCompLabel(compAtual)} (atual)</SelectItem>
+              {Array.from({ length: 12 }, (_, i) => shiftComp(compAtual, -(i + 1))).map((c) => (
+                <SelectItem key={c} value={c}>{formatCompLabel(c)}</SelectItem>
+              ))}
+              <SelectItem value={shiftComp(compAtual, 1)}>{formatCompLabel(shiftComp(compAtual, 1))} (futura)</SelectItem>
+              <SelectItem value="all">Todas as competências</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button size="sm" variant="outline" title="Próximo mês"
+            onClick={() => changeSelectedComp(shiftComp(selectedComp === "all" ? compAtual : selectedComp, 1))}>
+            ›
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => changeSelectedComp(compAtual)}>Hoje</Button>
+          {selectedComp !== "all" && (
+            <Badge variant="outline" className="ml-1">
+              {selectedComp === compAtual ? "Atual"
+                : selectedComp > compAtual ? "Futura" : "Encerrada"}
+            </Badge>
+          )}
+        </div>
+      </Card>
+
+      {/* Resumo da competência */}
+      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+        <StatCard label="Empresas" value={stats.empresas} />
         <StatCard label="Total" value={stats.total} />
         <StatCard label="Pendentes" value={stats.pendente} tone="bg-amber-50 text-amber-800" />
         <StatCard label="Recebidos" value={stats.recebido} tone="bg-emerald-50 text-emerald-800" />
         <StatCard label="Concluídos" value={stats.concluido} tone="bg-green-50 text-green-900" />
         <StatCard label="Atrasados" value={stats.atrasado} tone="bg-red-50 text-red-800" />
-        <StatCard label="Empresas sem plano" value={clientsSemPlano} tone="bg-zinc-50 text-zinc-700" />
-        <StatCard label={`Sem checklist (${compAtual})`} value={empresasSemChecklistMes} tone="bg-zinc-50 text-zinc-700" />
+        <StatCard label="% concluído" value={pctGeral} tone="bg-zinc-50 text-zinc-700" />
+        <StatCard label="Sem plano" value={clientsSemPlano} tone="bg-zinc-50 text-zinc-700" />
       </div>
 
       <Card className="mb-4 p-4">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <div>
             <Label className="text-xs">Empresa</Label>
             <Select value={fClient} onValueChange={setFClient}>
@@ -302,10 +406,6 @@ function ChecklistPage() {
             </Select>
           </div>
           <div>
-            <Label className="text-xs">Competência contém</Label>
-            <Input placeholder="2026-06" value={fComp} onChange={(e) => setFComp(e.target.value)} />
-          </div>
-          <div>
             <Label className="text-xs">Prazo</Label>
             <Select value={fQuick} onValueChange={(v: any) => setFQuick(v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -318,20 +418,30 @@ function ChecklistPage() {
             </Select>
           </div>
         </div>
-        <div className="mt-3 flex items-center justify-between">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
           <Button variant="ghost" size="sm" onClick={() => {
-            setFClient("all"); setFResp("all"); setFCat("all"); setFStatus("open"); setFComp(""); setFQuick("all");
+            setFClient("all"); setFResp("all"); setFCat("all"); setFStatus("open"); setFQuick("all");
           }}>Limpar filtros</Button>
           <div className="flex items-center gap-1 rounded-md border p-0.5">
-            <Button size="sm" variant={viewMode === "list" ? "default" : "ghost"} onClick={() => setViewMode("list")}>Lista</Button>
             <Button size="sm" variant={viewMode === "grouped" ? "default" : "ghost"} onClick={() => setViewMode("grouped")}>Agrupado</Button>
+            <Button size="sm" variant={viewMode === "list" ? "default" : "ghost"} onClick={() => setViewMode("list")}>Lista</Button>
+            <Button size="sm" variant={viewMode === "historic" ? "default" : "ghost"} onClick={() => setViewMode("historic")}>Histórico</Button>
           </div>
         </div>
       </Card>
 
       <Card className="p-2">
         {itemsQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
-          : filtered.length === 0 ? <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Nenhum item no checklist" description="Crie o primeiro item para começar." />
+          : viewMode === "historic" ? (
+            <HistoricView clients={clients} selectedClientId={fClient} onOpenComp={(clientId, comp) => {
+              setFClient(clientId); changeSelectedComp(comp); setViewMode("grouped");
+            }} />
+          )
+          : filtered.length === 0 ? (
+            selectedComp !== "all" && (itemsQ.data ?? []).length === 0
+              ? <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Nenhum checklist foi gerado para esta competência." description="Gere o checklist mensal ou crie um item manual." />
+              : <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Nenhum item corresponde aos filtros selecionados." description="Ajuste ou limpe os filtros." />
+          )
           : viewMode === "list" ? (
             <ul className="divide-y">
               {filtered.map((r: any) => (
@@ -340,6 +450,7 @@ function ChecklistPage() {
             </ul>
           ) : (
             <GroupedView items={filtered} planByClient={planByClient} isAdmin={role === "admin"}
+              singleComp={selectedComp !== "all"}
               onEdit={(it: any) => { setEditing(it); setOpen(true); }}
               onChange={() => qc.invalidateQueries({ queryKey: ["checklist-items"] })} />
           )}
@@ -347,6 +458,8 @@ function ChecklistPage() {
     </div>
   );
 }
+
+
 
 function StatCard({ label, value, tone }: { label: string; value: number; tone?: string }) {
   return (
@@ -357,8 +470,8 @@ function StatCard({ label, value, tone }: { label: string; value: number; tone?:
   );
 }
 
-function GroupedView({ items, planByClient, isAdmin, onEdit, onChange }: any) {
-  type Group = { key: string; clientId: string; competencia: string; empresa: string; plano: string; items: any[] };
+function GroupedView({ items, planByClient, isAdmin, singleComp, onEdit, onChange }: any) {
+  type Group = { key: string; clientId: string; competencia: string; empresa: string; plano: string; resp: string; items: any[] };
   const groups: Group[] = useMemo(() => {
     const map = new Map<string, Group>();
     for (const it of items) {
@@ -366,14 +479,26 @@ function GroupedView({ items, planByClient, isAdmin, onEdit, onChange }: any) {
       const key = `${it.client_id}::${comp}`;
       const empresa = it.clients?.nome_fantasia || it.clients?.razao_social || "—";
       const plano = planByClient[it.client_id] ?? "—";
-      if (!map.has(key)) map.set(key, { key, clientId: it.client_id, competencia: comp, empresa, plano, items: [] });
-      map.get(key)!.items.push(it);
+      const resp = it.profiles?.full_name ?? "";
+      if (!map.has(key)) map.set(key, { key, clientId: it.client_id, competencia: comp, empresa, plano, resp, items: [] });
+      const g = map.get(key)!;
+      if (!g.resp && resp) g.resp = resp;
+      g.items.push(it);
     }
+    for (const g of map.values()) g.items.sort(sortDefault);
     return Array.from(map.values()).sort((a, b) =>
       a.empresa.localeCompare(b.empresa) || b.competencia.localeCompare(a.competencia));
   }, [items, planByClient]);
 
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const prefs = useMemo(loadPrefs, []);
+  const [collapsed, setCollapsedState] = useState<Record<string, boolean>>(prefs.collapsed ?? {});
+  const setCollapsed = (updater: (c: Record<string, boolean>) => Record<string, boolean>) => {
+    setCollapsedState((c) => {
+      const next = updater(c);
+      savePrefs({ collapsed: next });
+      return next;
+    });
+  };
 
   return (
     <div className="space-y-2">
@@ -387,7 +512,9 @@ function GroupedView({ items, planByClient, isAdmin, onEdit, onChange }: any) {
           else if (i.status === "cancelado") canc++;
           if (prazoTone(i.prazo, i.status) === "vencido") atr++;
         }
-        const pct = total ? Math.round((conc / total) * 100) : 0;
+        const validos = pend + rec + conc;
+        const pct = validos ? Math.round((conc / validos) * 100) : 0;
+        const encerrada = validos > 0 && pend === 0 && rec === 0;
         const isOpen = !collapsed[g.key];
         return (
           <div key={g.key} className="rounded-md border">
@@ -401,12 +528,18 @@ function GroupedView({ items, planByClient, isAdmin, onEdit, onChange }: any) {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-medium">{g.empresa}</span>
                   <Badge variant="outline">Plano: {g.plano}</Badge>
-                  <Badge variant="outline">Comp. {g.competencia}</Badge>
+                  {!singleComp && <Badge variant="outline">{formatCompLabel(g.competencia)}</Badge>}
+                  {g.resp && <Badge variant="outline">Resp.: {g.resp}</Badge>}
+                  {atr > 0 && <Badge className="bg-red-100 text-red-800">{atr} atrasado{atr > 1 ? "s" : ""}</Badge>}
+                  {encerrada && <Badge variant="outline" className="text-muted-foreground">Competência encerrada</Badge>}
                 </div>
                 <div className="mt-0.5 text-xs text-muted-foreground">
-                  {total} itens · {conc} concluídos · {rec} recebidos · {pend} pendentes · {canc} cancelados
-                  {atr > 0 ? ` · ${atr} atrasados` : ""} · {pct}% concluído
+                  {validos > 0 ? `${conc} de ${validos} concluídos` : "Sem itens"} · {rec} recebidos · {pend} pendentes
+                  {canc > 0 ? ` · ${canc} cancelados` : ""} · {total} no total
                 </div>
+              </div>
+              <div className="shrink-0 text-right">
+                <div className="text-lg font-semibold">{validos ? `${pct}%` : "—"}</div>
               </div>
             </button>
             {isOpen && (
@@ -414,6 +547,106 @@ function GroupedView({ items, planByClient, isAdmin, onEdit, onChange }: any) {
                 {g.items.map((r: any) => (
                   <ItemRow key={r.id} item={r} isAdmin={isAdmin} onEdit={() => onEdit(r)} onChange={onChange} />
                 ))}
+              </ul>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// =====================================================================
+// HISTÓRICO POR EMPRESA
+// =====================================================================
+function HistoricView({ clients, selectedClientId, onOpenComp }: {
+  clients: any[];
+  selectedClientId: string;
+  onOpenComp: (clientId: string, comp: string) => void;
+}) {
+  const targetClients = useMemo(() => {
+    if (selectedClientId !== "all") {
+      const c = clients.find((x) => x.id === selectedClientId);
+      return c ? [c] : [];
+    }
+    return clients;
+  }, [clients, selectedClientId]);
+
+  const clientIds = targetClients.map((c) => c.id);
+
+  const histQ = useQuery({
+    queryKey: ["checklist-history", clientIds.sort().join(",")],
+    enabled: clientIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("client_checklist_items")
+        .select("client_id, competencia, status")
+        .in("client_id", clientIds)
+        .is("deleted_at", null)
+        .not("competencia", "is", null);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const byClient = useMemo(() => {
+    const map = new Map<string, Map<string, { pend: number; rec: number; conc: number; canc: number }>>();
+    for (const it of (histQ.data ?? []) as any[]) {
+      if (!map.has(it.client_id)) map.set(it.client_id, new Map());
+      const inner = map.get(it.client_id)!;
+      const comp = it.competencia as string;
+      if (!inner.has(comp)) inner.set(comp, { pend: 0, rec: 0, conc: 0, canc: 0 });
+      const b = inner.get(comp)!;
+      if (it.status === "pendente") b.pend++;
+      else if (it.status === "recebido") b.rec++;
+      else if (it.status === "concluido") b.conc++;
+      else if (it.status === "cancelado") b.canc++;
+    }
+    return map;
+  }, [histQ.data]);
+
+  if (histQ.isLoading) return <p className="p-3 text-sm text-muted-foreground">Carregando histórico…</p>;
+  if (targetClients.length === 0) return <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Sem empresas" description="Ajuste o filtro de empresa." />;
+
+  return (
+    <div className="space-y-4 p-2">
+      {targetClients.map((c) => {
+        const compMap = byClient.get(c.id);
+        const comps = compMap ? Array.from(compMap.keys()).sort().reverse() : [];
+        const empresa = c.nome_fantasia || c.razao_social;
+        return (
+          <div key={c.id} className="rounded-md border">
+            <div className="border-b bg-muted/30 px-3 py-2 font-medium">{empresa}</div>
+            {comps.length === 0 ? (
+              <p className="p-3 text-sm text-muted-foreground">Sem checklists registrados.</p>
+            ) : (
+              <ul className="divide-y">
+                {comps.map((comp) => {
+                  const b = compMap!.get(comp)!;
+                  const validos = b.pend + b.rec + b.conc;
+                  const pct = validos ? Math.round((b.conc / validos) * 100) : 0;
+                  const total = validos + b.canc;
+                  return (
+                    <li key={comp}>
+                      <button type="button"
+                        onClick={() => onOpenComp(c.id, comp)}
+                        className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left hover:bg-muted/40">
+                        <div className="min-w-0">
+                          <div className="font-medium">{formatCompLabel(comp)}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {validos > 0 ? `${b.conc} de ${validos} concluídos` : "Sem itens válidos"}
+                            {b.rec > 0 ? ` · ${b.rec} recebidos` : ""}
+                            {b.pend > 0 ? ` · ${b.pend} pendentes` : ""}
+                            {b.canc > 0 ? ` · ${b.canc} cancelados` : ""}
+                            {` · ${total} no total`}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-semibold">{validos ? `${pct}%` : "—"}</div>
+                        </div>
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
