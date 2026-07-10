@@ -705,7 +705,7 @@ function ClientChecklistView({ userId: _userId }: { userId: string }) {
 
   return (
     <div>
-      <PageHeader icon={<ListChecks className="h-5 w-5" />} title="Meu checklist"
+      <PageHeader title="Meu checklist"
         description="Envie os documentos solicitados para a contabilidade." />
 
       <Card className="mb-4 p-3">
