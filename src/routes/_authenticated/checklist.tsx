@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/sc/PageHeader";
@@ -12,12 +12,22 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/sc/EmptyState";
-import { DeleteButton } from "@/components/sc/DeleteButton";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { formatBR, todayLocalYmd } from "@/lib/dates";
 import { toast } from "sonner";
-import { ListChecks, Plus, Check, Inbox as InboxIcon, X, Pencil, Send, Sparkles, ChevronDown, ChevronRight } from "lucide-react";
+import { ListChecks, Plus, Check, Inbox as InboxIcon, Send, Sparkles, ChevronDown, ChevronRight, MoreHorizontal, Search, ArrowUp, ArrowDown, ArrowUpDown, RotateCw, Trash2, Pencil, X } from "lucide-react";
 import { AttachmentButton } from "@/components/sc/AttachmentButton";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+function useDebounced<T>(value: T, delay = 300): T {
+  const [v, setV] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setV(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return v;
+}
 
 function defaultCompetencia() {
   const d = new Date();
@@ -181,8 +191,14 @@ function ChecklistPage() {
   const [fResp, setFResp] = useState("all");
   const [fCat, setFCat] = useState("all");
   const [fStatus, setFStatus] = useState<string>("open");
+  const [fOrigem, setFOrigem] = useState<"all" | "automatico" | "manual">("all");
+  const [fVisivel, setFVisivel] = useState<"all" | "yes" | "no">("all");
   const [selectedComp, setSelectedComp] = useState<string>(prefs.selectedComp ?? defaultCompetencia());
   const [fQuick, setFQuick] = useState<"all" | "atrasado" | "hoje" | "3dias">("all");
+  const [searchInput, setSearchInput] = useState("");
+  const search = useDebounced(searchInput, 300);
+  const [sortKey, setSortKey] = useState<"prazo" | "empresa" | "status" | "categoria" | "responsavel" | "ordem">("prazo");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [viewMode, setViewModeState] = useState<"list" | "grouped" | "historic">(prefs.viewMode ?? "grouped");
   const setViewMode = (v: "list" | "grouped" | "historic") => { setViewModeState(v); savePrefs({ viewMode: v }); };
   const changeSelectedComp = (v: string) => { setSelectedComp(v); savePrefs({ selectedComp: v }); };
@@ -217,7 +233,7 @@ function ChecklistPage() {
     enabled: ready,
     queryFn: async () => {
       let q = supabase.from("client_checklist_items")
-        .select("*, clients(razao_social, nome_fantasia), profiles:responsavel_profile_id(full_name), documents:document_id(id, nome, storage_path)")
+        .select("*, clients(razao_social, nome_fantasia), profiles:responsavel_profile_id(full_name), documents:document_id(id, nome, storage_path), plan_items:plan_item_id(ordem)")
         .is("deleted_at", null);
       if (selectedComp && selectedComp !== "all") q = q.eq("competencia", selectedComp);
       q = q.order("prazo", { ascending: true, nullsFirst: false }).order("created_at", { ascending: false });
@@ -228,22 +244,67 @@ function ChecklistPage() {
   });
 
   const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
     const arr = (itemsQ.data ?? []).filter((r: any) => {
       if (fClient !== "all" && r.client_id !== fClient) return false;
       if (fResp !== "all" && r.responsavel_profile_id !== fResp) return false;
       if (fCat !== "all" && r.categoria !== fCat) return false;
       if (fStatus === "open" && (r.status === "concluido" || r.status === "cancelado")) return false;
       if (fStatus !== "all" && fStatus !== "open" && r.status !== fStatus) return false;
+      if (fOrigem !== "all" && (r.origem ?? "manual") !== fOrigem) return false;
+      if (fVisivel === "yes" && !r.visivel_cliente) return false;
+      if (fVisivel === "no" && r.visivel_cliente) return false;
       if (fQuick !== "all") {
         const p = prazoTone(r.prazo, r.status);
         if (fQuick === "atrasado" && p !== "vencido") return false;
         if (fQuick === "hoje" && p !== "hoje") return false;
         if (fQuick === "3dias" && !(p === "hoje" || p === "3dias")) return false;
       }
+      if (q) {
+        const empresa = (r.clients?.nome_fantasia || r.clients?.razao_social || "").toLowerCase();
+        const titulo = (r.titulo ?? "").toLowerCase();
+        const cat = (CAT_LABEL[r.categoria] ?? r.categoria ?? "").toLowerCase();
+        const obs = (r.observacao ?? "").toLowerCase();
+        if (!empresa.includes(q) && !titulo.includes(q) && !cat.includes(q) && !obs.includes(q)) return false;
+      }
       return true;
     });
+    if (viewMode === "list") {
+      const dir = sortDir === "asc" ? 1 : -1;
+      const key = sortKey;
+      arr.sort((a: any, b: any) => {
+        const cmp = (() => {
+          if (key === "prazo") return (a.prazo ?? "9999-12-31").localeCompare(b.prazo ?? "9999-12-31");
+          if (key === "empresa") return ((a.clients?.nome_fantasia || a.clients?.razao_social || "")).localeCompare(b.clients?.nome_fantasia || b.clients?.razao_social || "");
+          if (key === "status") return itemPriority(a) - itemPriority(b);
+          if (key === "categoria") return (CAT_LABEL[a.categoria] ?? "").localeCompare(CAT_LABEL[b.categoria] ?? "");
+          if (key === "responsavel") return (a.profiles?.full_name ?? "~").localeCompare(b.profiles?.full_name ?? "~");
+          if (key === "ordem") return (a.plan_items?.ordem ?? 9e9) - (b.plan_items?.ordem ?? 9e9);
+          return 0;
+        })();
+        return cmp * dir;
+      });
+      return arr;
+    }
     return arr.sort(sortDefault);
-  }, [itemsQ.data, fClient, fResp, fCat, fStatus, fQuick]);
+  }, [itemsQ.data, fClient, fResp, fCat, fStatus, fOrigem, fVisivel, fQuick, search, viewMode, sortKey, sortDir]);
+
+  const activeFiltersCount = useMemo(() => {
+    let n = 0;
+    if (fClient !== "all") n++;
+    if (fResp !== "all") n++;
+    if (fCat !== "all") n++;
+    if (fStatus !== "open") n++;
+    if (fOrigem !== "all") n++;
+    if (fVisivel !== "all") n++;
+    if (fQuick !== "all") n++;
+    if (search.trim()) n++;
+    return n;
+  }, [fClient, fResp, fCat, fStatus, fOrigem, fVisivel, fQuick, search]);
+  const clearFilters = () => {
+    setFClient("all"); setFResp("all"); setFCat("all"); setFStatus("open");
+    setFOrigem("all"); setFVisivel("all"); setFQuick("all"); setSearchInput("");
+  };
 
   const stats = useMemo(() => {
     const s = { total: 0, pendente: 0, recebido: 0, concluido: 0, cancelado: 0, atrasado: 0, empresas: 0 };
@@ -359,7 +420,35 @@ function ChecklistPage() {
       </div>
 
       <Card className="mb-4 p-4">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[240px]">
+            <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Buscar por empresa, item, categoria ou observação…"
+              className="pl-8 pr-8"
+              aria-label="Buscar itens do checklist"
+            />
+            {searchInput && (
+              <button
+                type="button"
+                aria-label="Limpar busca"
+                onClick={() => setSearchInput("")}
+                className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          {activeFiltersCount > 0 && (
+            <Badge variant="secondary">Filtros ativos ({activeFiltersCount})</Badge>
+          )}
+          <Button variant="ghost" size="sm" onClick={clearFilters} disabled={activeFiltersCount === 0}>
+            Limpar filtros
+          </Button>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
           <div>
             <Label className="text-xs">Empresa</Label>
             <Select value={fClient} onValueChange={setFClient}>
@@ -417,11 +506,58 @@ function ChecklistPage() {
               </SelectContent>
             </Select>
           </div>
+          <div>
+            <Label className="text-xs">Origem</Label>
+            <Select value={fOrigem} onValueChange={(v: any) => setFOrigem(v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="automatico">Automático do plano</SelectItem>
+                <SelectItem value="manual">Manual</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Visível ao cliente</Label>
+            <Select value={fVisivel} onValueChange={(v: any) => setFVisivel(v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="yes">Sim</SelectItem>
+                <SelectItem value="no">Não</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <Button variant="ghost" size="sm" onClick={() => {
-            setFClient("all"); setFResp("all"); setFCat("all"); setFStatus("open"); setFQuick("all");
-          }}>Limpar filtros</Button>
+          {viewMode === "list" ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <Label className="text-xs">Ordenar por</Label>
+              <Select value={sortKey} onValueChange={(v: any) => setSortKey(v)}>
+                <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="prazo">Prazo</SelectItem>
+                  <SelectItem value="empresa">Empresa</SelectItem>
+                  <SelectItem value="status">Status</SelectItem>
+                  <SelectItem value="categoria">Categoria</SelectItem>
+                  <SelectItem value="responsavel">Responsável</SelectItem>
+                  <SelectItem value="ordem">Ordem do plano</SelectItem>
+                </SelectContent>
+              </Select>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button size="sm" variant="outline" className="h-8"
+                      onClick={() => setSortDir((d) => d === "asc" ? "desc" : "asc")}
+                      aria-label={sortDir === "asc" ? "Ordem crescente" : "Ordem decrescente"}>
+                      {sortDir === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{sortDir === "asc" ? "Crescente" : "Decrescente"}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          ) : <div />}
           <div className="flex items-center gap-1 rounded-md border p-0.5">
             <Button size="sm" variant={viewMode === "grouped" ? "default" : "ghost"} onClick={() => setViewMode("grouped")}>Agrupado</Button>
             <Button size="sm" variant={viewMode === "list" ? "default" : "ghost"} onClick={() => setViewMode("list")}>Lista</Button>
@@ -432,6 +568,17 @@ function ChecklistPage() {
 
       <Card className="p-2">
         {itemsQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
+          : itemsQ.isError ? (
+            <EmptyState icon={<ListChecks className="h-6 w-6" />}
+              title="Não foi possível carregar os dados."
+              description={(itemsQ.error as any)?.message ?? "Verifique sua conexão e tente novamente."}
+              action={
+                <Button size="sm" variant="outline" onClick={() => itemsQ.refetch()}>
+                  <RotateCw className="mr-2 h-4 w-4" /> Tentar novamente
+                </Button>
+              }
+            />
+          )
           : viewMode === "historic" ? (
             <HistoricView clients={clients} selectedClientId={fClient} onOpenComp={(clientId, comp) => {
               setFClient(clientId); changeSelectedComp(comp); setViewMode("grouped");
@@ -440,7 +587,12 @@ function ChecklistPage() {
           : filtered.length === 0 ? (
             selectedComp !== "all" && (itemsQ.data ?? []).length === 0
               ? <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Nenhum checklist foi gerado para esta competência." description="Gere o checklist mensal ou crie um item manual." />
-              : <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Nenhum item corresponde aos filtros selecionados." description="Ajuste ou limpe os filtros." />
+              : <EmptyState
+                  icon={<ListChecks className="h-6 w-6" />}
+                  title="Nenhum item encontrado para os filtros aplicados."
+                  description="Ajuste ou limpe os filtros para ver mais itens."
+                  action={activeFiltersCount > 0 ? <Button size="sm" variant="outline" onClick={clearFilters}>Limpar filtros</Button> : undefined}
+                />
           )
           : viewMode === "list" ? (
             <ul className="divide-y">
@@ -730,37 +882,81 @@ function ItemRow({ item, isAdmin, onEdit, onChange }: any) {
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-1">
-        {item.documents?.storage_path && (
-          <AttachmentButton storagePath={item.documents.storage_path} label="Documento" size="sm" variant="ghost" className="h-8 px-2" />
-        )}
-        {item.status === "pendente" && !item.document_request_id && (
-          <Button size="sm" variant="ghost" title="Solicitar documento ao cliente"
-            onClick={() => solicitar.mutate()} disabled={solicitar.isPending}>
-            <Send className="h-4 w-4" />
-          </Button>
-        )}
-        {item.status === "pendente" && (
-          <Button size="sm" variant="ghost" title="Marcar como Recebido"
-            onClick={() => updateStatus.mutate("recebido")}>
-            <InboxIcon className="h-4 w-4" />
-          </Button>
-        )}
-        {(item.status === "pendente" || item.status === "recebido") && (
-          <Button size="sm" variant="ghost" title="Marcar como Concluído"
-            onClick={() => updateStatus.mutate("concluido")}>
-            <Check className="h-4 w-4" />
-          </Button>
-        )}
-        {item.status !== "cancelado" && item.status !== "concluido" && (
-          <Button size="sm" variant="ghost" title="Cancelar"
-            onClick={() => updateStatus.mutate("cancelado")}>
-            <X className="h-4 w-4" />
-          </Button>
-        )}
-        <Button size="sm" variant="ghost" title="Editar" onClick={onEdit}>
-          <Pencil className="h-4 w-4" />
-        </Button>
-        {isAdmin && <DeleteButton onConfirm={() => remove.mutate()} />}
+        <TooltipProvider delayDuration={200}>
+          {(item.status === "pendente" || item.status === "recebido") && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0" aria-label="Concluir item"
+                  onClick={() => updateStatus.mutate("concluido")} disabled={updateStatus.isPending}>
+                  <Check className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Concluir</TooltipContent>
+            </Tooltip>
+          )}
+          {item.documents?.storage_path ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <AttachmentButton storagePath={item.documents.storage_path} label="" size="sm" variant="ghost" className="h-8 w-8 p-0" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Abrir documento</TooltipContent>
+            </Tooltip>
+          ) : null}
+          <DropdownMenu>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0" aria-label="Mais opções">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>Mais opções</TooltipContent>
+            </Tooltip>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Ações do item</DropdownMenuLabel>
+              {item.status !== "recebido" && item.status !== "concluido" && item.status !== "cancelado" && (
+                <DropdownMenuItem onSelect={() => updateStatus.mutate("recebido")}>
+                  <InboxIcon className="mr-2 h-4 w-4" /> Marcar como Recebido
+                </DropdownMenuItem>
+              )}
+              {item.status !== "pendente" && item.status !== "cancelado" && (
+                <DropdownMenuItem onSelect={() => updateStatus.mutate("pendente")}>
+                  <RotateCw className="mr-2 h-4 w-4" /> Marcar como Pendente
+                </DropdownMenuItem>
+              )}
+              {item.status !== "cancelado" && item.status !== "concluido" && (
+                <DropdownMenuItem onSelect={() => updateStatus.mutate("cancelado")}>
+                  <X className="mr-2 h-4 w-4" /> Cancelar
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={onEdit}>
+                <Pencil className="mr-2 h-4 w-4" /> Editar
+              </DropdownMenuItem>
+              {item.status === "pendente" && !item.document_request_id && (
+                <DropdownMenuItem onSelect={() => solicitar.mutate()} disabled={solicitar.isPending}>
+                  <Send className="mr-2 h-4 w-4" /> Criar solicitação
+                </DropdownMenuItem>
+              )}
+              {isAdmin && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      if (window.confirm("Excluir este item do checklist?")) remove.mutate();
+                    }}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TooltipProvider>
       </div>
     </li>
   );
