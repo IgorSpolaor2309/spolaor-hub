@@ -233,6 +233,39 @@ function ChecklistPage() {
   const changeSelectedComp = (v: string) => { setSelectedComp(v); savePrefs({ selectedComp: v }); };
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  // Keyboard shortcuts: ←/→ change competência, Ctrl/Cmd+F focus search.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const inField = !!target && (
+        target.tagName === "INPUT" || target.tagName === "TEXTAREA" ||
+        target.tagName === "SELECT" || target.isContentEditable
+      );
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        searchRef.current?.focus();
+        searchRef.current?.select();
+        return;
+      }
+      if (inField) return;
+      if (e.key === "ArrowLeft") {
+        setSelectedComp((c) => {
+          const base = c === "all" ? defaultCompetencia() : c;
+          const next = shiftComp(base, -1); savePrefs({ selectedComp: next }); return next;
+        });
+      } else if (e.key === "ArrowRight") {
+        setSelectedComp((c) => {
+          const base = c === "all" ? defaultCompetencia() : c;
+          const next = shiftComp(base, 1); savePrefs({ selectedComp: next }); return next;
+        });
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   // When arriving from the client history section: pre-expand the matching group.
   const forceExpandKey = routeSearch.expand && routeSearch.client && routeSearch.comp
