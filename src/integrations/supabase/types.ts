@@ -126,6 +126,128 @@ export type Database = {
           },
         ]
       }
+      client_checklist_items: {
+        Row: {
+          categoria: string
+          client_id: string
+          competencia: string | null
+          concluded_at: string | null
+          concluded_by: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_by_role: string | null
+          deletion_reason: string | null
+          document_id: string | null
+          document_request_id: string | null
+          id: string
+          observacao: string | null
+          prazo: string | null
+          received_at: string | null
+          responsavel_profile_id: string | null
+          status: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          categoria?: string
+          client_id: string
+          competencia?: string | null
+          concluded_at?: string | null
+          concluded_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_by_role?: string | null
+          deletion_reason?: string | null
+          document_id?: string | null
+          document_request_id?: string | null
+          id?: string
+          observacao?: string | null
+          prazo?: string | null
+          received_at?: string | null
+          responsavel_profile_id?: string | null
+          status?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string
+          client_id?: string
+          competencia?: string | null
+          concluded_at?: string | null
+          concluded_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_by_role?: string | null
+          deletion_reason?: string | null
+          document_id?: string | null
+          document_request_id?: string | null
+          id?: string
+          observacao?: string | null
+          prazo?: string | null
+          received_at?: string | null
+          responsavel_profile_id?: string | null
+          status?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_checklist_items_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_checklist_items_concluded_by_fkey"
+            columns: ["concluded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_checklist_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_checklist_items_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_checklist_items_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_checklist_items_document_request_id_fkey"
+            columns: ["document_request_id"]
+            isOneToOne: false
+            referencedRelation: "document_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_checklist_items_responsavel_profile_id_fkey"
+            columns: ["responsavel_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_collaborators: {
         Row: {
           client_id: string
