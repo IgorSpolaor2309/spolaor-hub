@@ -605,7 +605,7 @@ function ChecklistPage() {
       </Card>
 
       <Card className="p-2">
-        {itemsQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
+        {itemsQ.isLoading ? <ChecklistSkeleton variant={viewMode === "list" ? "list" : "grouped"} />
           : itemsQ.isError ? (
             <EmptyState icon={<ListChecks className="h-6 w-6" />}
               title="Não foi possível carregar os dados."
@@ -641,6 +641,7 @@ function ChecklistPage() {
           ) : (
             <GroupedView items={filtered} planByClient={planByClient} isAdmin={role === "admin"}
               singleComp={selectedComp !== "all"}
+              forceExpandKey={forceExpandKey}
               onEdit={(it: any) => { setEditing(it); setOpen(true); }}
               onChange={() => qc.invalidateQueries({ queryKey: ["checklist-items"] })} />
           )}
