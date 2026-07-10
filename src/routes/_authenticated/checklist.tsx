@@ -801,9 +801,12 @@ function GroupedView({ items, planByClient, isAdmin, singleComp, forceExpandKey,
                   {validos > 0 ? `${conc} de ${validos} concluídos` : "Sem itens"} · {rec} recebidos · {pend} pendentes
                   {canc > 0 ? ` · ${canc} cancelados` : ""} · {total} no total
                 </div>
+                {validos > 0 && (
+                  <Progress value={pct} className="mt-2 h-1.5" aria-label={`Progresso ${pct}%`} />
+                )}
               </div>
               <div className="shrink-0 text-right">
-                <div className="text-lg font-semibold">{validos ? `${pct}%` : "—"}</div>
+                <div className="text-lg font-semibold tabular-nums">{validos ? `${pct}%` : "—"}</div>
               </div>
             </button>
             {isOpen && (
