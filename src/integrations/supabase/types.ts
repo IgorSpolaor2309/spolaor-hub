@@ -151,6 +151,7 @@ export type Database = {
           status: string
           titulo: string
           updated_at: string
+          visivel_cliente: boolean
         }
         Insert: {
           categoria?: string
@@ -176,6 +177,7 @@ export type Database = {
           status?: string
           titulo: string
           updated_at?: string
+          visivel_cliente?: boolean
         }
         Update: {
           categoria?: string
@@ -201,6 +203,7 @@ export type Database = {
           status?: string
           titulo?: string
           updated_at?: string
+          visivel_cliente?: boolean
         }
         Relationships: [
           {
