@@ -228,13 +228,12 @@ function ChecklistPage() {
   });
 
   const filtered = useMemo(() => {
-    return (itemsQ.data ?? []).filter((r: any) => {
+    const arr = (itemsQ.data ?? []).filter((r: any) => {
       if (fClient !== "all" && r.client_id !== fClient) return false;
       if (fResp !== "all" && r.responsavel_profile_id !== fResp) return false;
       if (fCat !== "all" && r.categoria !== fCat) return false;
       if (fStatus === "open" && (r.status === "concluido" || r.status === "cancelado")) return false;
       if (fStatus !== "all" && fStatus !== "open" && r.status !== fStatus) return false;
-      if (fComp && !(r.competencia ?? "").includes(fComp)) return false;
       if (fQuick !== "all") {
         const p = prazoTone(r.prazo, r.status);
         if (fQuick === "atrasado" && p !== "vencido") return false;
@@ -243,20 +242,27 @@ function ChecklistPage() {
       }
       return true;
     });
-  }, [itemsQ.data, fClient, fResp, fCat, fStatus, fComp, fQuick]);
+    return arr.sort(sortDefault);
+  }, [itemsQ.data, fClient, fResp, fCat, fStatus, fQuick]);
 
   const stats = useMemo(() => {
-    const s = { total: 0, pendente: 0, recebido: 0, concluido: 0, cancelado: 0, atrasado: 0 };
+    const s = { total: 0, pendente: 0, recebido: 0, concluido: 0, cancelado: 0, atrasado: 0, empresas: 0 };
+    const empresas = new Set<string>();
     for (const r of filtered as any[]) {
       s.total++;
+      empresas.add(r.client_id);
       if (r.status === "pendente") s.pendente++;
       else if (r.status === "recebido") s.recebido++;
       else if (r.status === "concluido") s.concluido++;
       else if (r.status === "cancelado") s.cancelado++;
       if (prazoTone(r.prazo, r.status) === "vencido") s.atrasado++;
     }
+    s.empresas = empresas.size;
     return s;
   }, [filtered]);
+
+  const validos = stats.pendente + stats.recebido + stats.concluido;
+  const pctGeral = validos ? Math.round((stats.concluido / validos) * 100) : 0;
 
   if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
   if (role !== "admin" && role !== "collaborator") {
