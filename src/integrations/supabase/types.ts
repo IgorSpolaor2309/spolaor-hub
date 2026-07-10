@@ -143,6 +143,8 @@ export type Database = {
           document_request_id: string | null
           id: string
           observacao: string | null
+          origem: string
+          plan_item_id: string | null
           prazo: string | null
           received_at: string | null
           responsavel_profile_id: string | null
@@ -166,6 +168,8 @@ export type Database = {
           document_request_id?: string | null
           id?: string
           observacao?: string | null
+          origem?: string
+          plan_item_id?: string | null
           prazo?: string | null
           received_at?: string | null
           responsavel_profile_id?: string | null
@@ -189,6 +193,8 @@ export type Database = {
           document_request_id?: string | null
           id?: string
           observacao?: string | null
+          origem?: string
+          plan_item_id?: string | null
           prazo?: string | null
           received_at?: string | null
           responsavel_profile_id?: string | null
@@ -237,6 +243,13 @@ export type Database = {
             columns: ["document_request_id"]
             isOneToOne: false
             referencedRelation: "document_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_checklist_items_plan_item_id_fkey"
+            columns: ["plan_item_id"]
+            isOneToOne: false
+            referencedRelation: "plan_items"
             referencedColumns: ["id"]
           },
           {
@@ -294,6 +307,7 @@ export type Database = {
           id: string
           observacoes: string | null
           periodicidade: string
+          plan_id: string | null
           plano: string | null
           proximo_reajuste: string | null
           status_comercial: string
@@ -310,6 +324,7 @@ export type Database = {
           id?: string
           observacoes?: string | null
           periodicidade?: string
+          plan_id?: string | null
           plano?: string | null
           proximo_reajuste?: string | null
           status_comercial?: string
@@ -326,6 +341,7 @@ export type Database = {
           id?: string
           observacoes?: string | null
           periodicidade?: string
+          plan_id?: string | null
           plano?: string | null
           proximo_reajuste?: string | null
           status_comercial?: string
@@ -339,6 +355,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: true
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_commercial_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
             referencedColumns: ["id"]
           },
         ]
@@ -1225,6 +1248,113 @@ export type Database = {
           },
         ]
       }
+      plan_items: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          competencia_aplicavel: string
+          created_at: string
+          departamento: string | null
+          descricao: string | null
+          exige_documento: boolean
+          id: string
+          obrigatorio: boolean
+          ordem: number
+          plan_id: string
+          pode_concluir_manual: boolean
+          prazo_tipo: string
+          prazo_valor: number | null
+          titulo: string
+          updated_at: string
+          visivel_cliente: boolean
+        }
+        Insert: {
+          ativo?: boolean
+          categoria?: string
+          competencia_aplicavel?: string
+          created_at?: string
+          departamento?: string | null
+          descricao?: string | null
+          exige_documento?: boolean
+          id?: string
+          obrigatorio?: boolean
+          ordem?: number
+          plan_id: string
+          pode_concluir_manual?: boolean
+          prazo_tipo?: string
+          prazo_valor?: number | null
+          titulo: string
+          updated_at?: string
+          visivel_cliente?: boolean
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          competencia_aplicavel?: string
+          created_at?: string
+          departamento?: string | null
+          descricao?: string | null
+          exige_documento?: boolean
+          id?: string
+          obrigatorio?: boolean
+          ordem?: number
+          plan_id?: string
+          pode_concluir_manual?: boolean
+          prazo_tipo?: string
+          prazo_valor?: number | null
+          titulo?: string
+          updated_at?: string
+          visivel_cliente?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_items_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plans: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          periodicidade: string
+          status: string
+          tipo_cliente: string
+          updated_at: string
+          valor_padrao: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          periodicidade?: string
+          status?: string
+          tipo_cliente: string
+          updated_at?: string
+          valor_padrao?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          periodicidade?: string
+          status?: string
+          tipo_cliente?: string
+          updated_at?: string
+          valor_padrao?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1469,9 +1599,14 @@ export type Database = {
         Args: { _client_id: string }
         Returns: undefined
       }
+      calc_plan_item_prazo: {
+        Args: { _competencia: string; _tipo: string; _valor: number }
+        Returns: string
+      }
       client_label: { Args: { _client_id: string }; Returns: string }
       client_staff_user_ids: { Args: { _client_id: string }; Returns: string[] }
       client_user_ids: { Args: { _client_id: string }; Returns: string[] }
+      generate_plan_checklist: { Args: { _competencia: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

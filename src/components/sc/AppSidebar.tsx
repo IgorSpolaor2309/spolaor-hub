@@ -2,7 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, UserCog, ClipboardList, FileText, MessageSquare,
   Bell, Settings, LogOut, Briefcase, History, Inbox, CalendarClock, Receipt,
-  KanbanSquare, MessagesSquare, Plug, ListChecks,
+  KanbanSquare, MessagesSquare, Plug, ListChecks, Package,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -23,6 +23,7 @@ const ITEMS: Item[] = [
   { to: "/colaboradores", label: "Colaboradores", icon: UserCog, roles: ["admin"] },
   { to: "/pendencias", label: "Pendências", icon: ClipboardList, roles: ["admin", "collaborator"] },
   { to: "/checklist", label: "Checklist do Cliente", icon: ListChecks, roles: ["admin", "collaborator"] },
+  { to: "/planos", label: "Planos", icon: Package, roles: ["admin", "collaborator"] },
   { to: "/kanban", label: "Kanban", icon: KanbanSquare, roles: ["admin", "collaborator"] },
   { to: "/modelos", label: "Modelos de mensagens", icon: MessagesSquare, roles: ["admin", "collaborator"] },
   { to: "/documentos", label: "Documentos", icon: FileText, roles: ["admin", "collaborator"] },
