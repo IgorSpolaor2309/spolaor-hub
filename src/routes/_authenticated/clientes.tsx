@@ -333,7 +333,11 @@ function ClientsPage() {
                     <td className="py-3 pr-4">{labelOf(CLIENT_TYPES, c.tipo)}</td>
                     <td className="py-3 pr-4 font-mono text-xs">{c.documento ?? "—"}</td>
                     <td className="py-3 pr-4">{formatBR(c.data_entrada)}</td>
+                    <td className="py-3 pr-4">{c.client_commercial?.tipo_cliente ?? "—"}</td>
+                    <td className="py-3 pr-4">{c.client_commercial?.plano ?? "—"}</td>
+                    <td className="py-3 pr-4">{c.client_commercial?.status_comercial ? (c.client_commercial.status_comercial[0].toUpperCase() + c.client_commercial.status_comercial.slice(1)) : "—"}</td>
                     <td className="py-3 pr-4"><StatusBadge value={c.status} /></td>
+
                     {role === "admin" && (
                       <td>
                         <div className="flex items-center justify-end gap-1">
