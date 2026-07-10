@@ -638,3 +638,209 @@ function ItemDialog({ clients, collabs, initial, onDone }: any) {
     </DialogContent>
   );
 }
+
+// =====================================================================
+// PORTAL DO CLIENTE
+// =====================================================================
+const CLIENT_STATUS_LABEL: Record<string, { label: string; hint: string; tone: string }> = {
+  pendente: { label: "Pendente", hint: "Documento ainda não enviado.", tone: "bg-amber-100 text-amber-800" },
+  recebido: { label: "Recebido", hint: "Documento enviado e aguardando conclusão da contabilidade.", tone: "bg-emerald-100 text-emerald-800" },
+  concluido: { label: "Concluído", hint: "Item finalizado.", tone: "bg-green-100 text-green-900" },
+  cancelado: { label: "Cancelado", hint: "Item não é mais necessário.", tone: "bg-zinc-200 text-zinc-700" },
+};
+
+function ClientChecklistView({ userId: _userId }: { userId: string }) {
+  const qc = useQueryClient();
+  const [fClient, setFClient] = useState("all");
+  const [fComp, setFComp] = useState("all");
+  const [fStatus, setFStatus] = useState("all");
+  const [onlyLate, setOnlyLate] = useState(false);
+
+  const itemsQ = useQuery({
+    queryKey: ["client-checklist-items"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("client_checklist_items")
+        .select("id, client_id, titulo, categoria, competencia, prazo, status, document_id, plan_item_id, clients(razao_social, nome_fantasia), documents:document_id(id, nome, storage_path), plan_items:plan_item_id(exige_documento)")
+        .is("deleted_at", null)
+        .order("prazo", { ascending: true, nullsFirst: false });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const items = itemsQ.data ?? [];
+  const companies = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const it of items) map.set(it.client_id, it.clients?.nome_fantasia || it.clients?.razao_social || "Empresa");
+    return Array.from(map.entries());
+  }, [items]);
+  const comps = useMemo(() => {
+    const set = new Set<string>();
+    for (const it of items) if (it.competencia) set.add(it.competencia);
+    return Array.from(set).sort().reverse();
+  }, [items]);
+
+  const filtered = useMemo(() => items.filter((it) => {
+    if (fClient !== "all" && it.client_id !== fClient) return false;
+    if (fComp !== "all" && it.competencia !== fComp) return false;
+    if (fStatus !== "all" && it.status !== fStatus) return false;
+    if (onlyLate && prazoTone(it.prazo, it.status) !== "vencido") return false;
+    return true;
+  }), [items, fClient, fComp, fStatus, onlyLate]);
+
+  // Agrupar Empresa > Competência
+  const groups = useMemo(() => {
+    const g = new Map<string, Map<string, any[]>>();
+    for (const it of filtered) {
+      const cKey = it.client_id;
+      const compKey = it.competencia || "sem_competencia";
+      if (!g.has(cKey)) g.set(cKey, new Map());
+      const inner = g.get(cKey)!;
+      if (!inner.has(compKey)) inner.set(compKey, []);
+      inner.get(compKey)!.push(it);
+    }
+    return g;
+  }, [filtered]);
+
+  return (
+    <div>
+      <PageHeader icon={<ListChecks className="h-5 w-5" />} title="Meu checklist"
+        description="Envie os documentos solicitados para a contabilidade." />
+
+      <Card className="mb-4 p-3">
+        <div className="grid gap-2 sm:grid-cols-4">
+          <Select value={fClient} onValueChange={setFClient}>
+            <SelectTrigger><SelectValue placeholder="Empresa" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as empresas</SelectItem>
+              {companies.map(([id, label]) => <SelectItem key={id} value={id}>{label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={fComp} onValueChange={setFComp}>
+            <SelectTrigger><SelectValue placeholder="Competência" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as competências</SelectItem>
+              {comps.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={fStatus} onValueChange={setFStatus}>
+            <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os status</SelectItem>
+              {Object.entries(CLIENT_STATUS_LABEL).map(([v, s]) => <SelectItem key={v} value={v}>{s.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={onlyLate} onChange={(e) => setOnlyLate(e.target.checked)} />
+            Somente atrasados
+          </label>
+        </div>
+      </Card>
+
+      {itemsQ.isLoading ? (
+        <p className="text-sm text-muted-foreground">Carregando…</p>
+      ) : filtered.length === 0 ? (
+        <EmptyState icon={<InboxIcon className="h-6 w-6" />}
+          title="Não há documentos pendentes para esta competência."
+          description="Assim que houver algo para você enviar, aparecerá aqui." />
+      ) : (
+        <div className="space-y-4">
+          {Array.from(groups.entries()).map(([cid, byComp]) => {
+            const label = companies.find(([id]) => id === cid)?.[1] ?? "Empresa";
+            return (
+              <div key={cid} className="space-y-3">
+                {Array.from(byComp.entries()).map(([comp, list]) => {
+                  const allDone = list.every((i) => i.status === "concluido" || i.status === "cancelado");
+                  return (
+                    <Card key={comp} className="p-4">
+                      <div className="mb-3 flex items-center justify-between">
+                        <div>
+                          <div className="text-xs uppercase text-muted-foreground">{label}</div>
+                          <div className="font-semibold">{comp === "sem_competencia" ? "Sem competência" : comp}</div>
+                        </div>
+                        {allDone && <Badge className="bg-green-100 text-green-900">Tudo em dia nesta competência</Badge>}
+                      </div>
+                      <ul className="divide-y">
+                        {list.map((it) => <ClientItemRow key={it.id} item={it} onChange={() => qc.invalidateQueries({ queryKey: ["client-checklist-items"] })} />)}
+                      </ul>
+                    </Card>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ClientItemRow({ item, onChange }: { item: any; onChange: () => void }) {
+  const st = CLIENT_STATUS_LABEL[item.status] ?? CLIENT_STATUS_LABEL.pendente;
+  const late = prazoTone(item.prazo, item.status) === "vencido";
+  const exigeDoc = item.plan_items?.exige_documento ?? true; // manual → assume que pode enviar
+  const podeEnviar = exigeDoc && item.status !== "concluido" && item.status !== "cancelado";
+  const [uploading, setUploading] = useState(false);
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const path = `${item.client_id}/${Date.now()}-${file.name}`;
+      const { error: upErr } = await supabase.storage.from("documents").upload(path, file);
+      if (upErr) throw upErr;
+      const { data: userRes } = await supabase.auth.getUser();
+      const { error } = await supabase.from("documents").insert({
+        client_id: item.client_id,
+        nome: file.name,
+        tipo: "outro",
+        competencia: item.competencia || null,
+        storage_path: path,
+        uploaded_by: userRes.user?.id,
+        status: "recebido",
+        checklist_item_id: item.id,
+      } as any);
+      if (error) throw error;
+      toast.success(item.document_id ? "Documento substituído." : "Documento enviado.");
+      onChange();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Falha ao enviar.");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
+
+  return (
+    <li className="flex flex-wrap items-center gap-2 py-3 text-sm">
+      <Badge className={st.tone}>{st.label}</Badge>
+      {late && <Badge className="bg-red-100 text-red-800">Atrasado</Badge>}
+      <div className="min-w-0 flex-1">
+        <div className="font-medium">{item.titulo}</div>
+        <div className="text-xs text-muted-foreground">
+          {CAT_LABEL[item.categoria] ?? item.categoria}
+          {item.prazo && <> · Prazo: {formatBR(item.prazo)}</>}
+        </div>
+        <div className="text-xs text-muted-foreground italic">{st.hint}</div>
+      </div>
+      <div className="ml-auto flex flex-wrap items-center gap-2">
+        {item.documents?.storage_path && (
+          <AttachmentButton storagePath={item.documents.storage_path} label="Abrir documento" size="sm" variant="ghost" className="h-8 px-2" />
+        )}
+        {podeEnviar && (
+          <label className="inline-flex">
+            <input type="file" className="hidden" onChange={handleUpload} disabled={uploading} />
+            <Button asChild size="sm" variant={item.document_id ? "outline" : "default"} disabled={uploading}>
+              <span>
+                <Send className="mr-1 h-4 w-4" />
+                {uploading ? "Enviando…" : item.document_id ? "Substituir" : "Enviar documento"}
+              </span>
+            </Button>
+          </label>
+        )}
+      </div>
+    </li>
+  );
+}
