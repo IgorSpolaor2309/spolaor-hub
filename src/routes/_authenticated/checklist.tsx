@@ -191,8 +191,14 @@ function ChecklistPage() {
   const [fResp, setFResp] = useState("all");
   const [fCat, setFCat] = useState("all");
   const [fStatus, setFStatus] = useState<string>("open");
+  const [fOrigem, setFOrigem] = useState<"all" | "automatico" | "manual">("all");
+  const [fVisivel, setFVisivel] = useState<"all" | "yes" | "no">("all");
   const [selectedComp, setSelectedComp] = useState<string>(prefs.selectedComp ?? defaultCompetencia());
   const [fQuick, setFQuick] = useState<"all" | "atrasado" | "hoje" | "3dias">("all");
+  const [searchInput, setSearchInput] = useState("");
+  const search = useDebounced(searchInput, 300);
+  const [sortKey, setSortKey] = useState<"prazo" | "empresa" | "status" | "categoria" | "responsavel" | "ordem">("prazo");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [viewMode, setViewModeState] = useState<"list" | "grouped" | "historic">(prefs.viewMode ?? "grouped");
   const setViewMode = (v: "list" | "grouped" | "historic") => { setViewModeState(v); savePrefs({ viewMode: v }); };
   const changeSelectedComp = (v: string) => { setSelectedComp(v); savePrefs({ selectedComp: v }); };
