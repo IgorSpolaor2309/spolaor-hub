@@ -362,6 +362,9 @@ function ItemRow({ item, isAdmin, onEdit, onChange }: any) {
           <Badge variant="outline">{CAT_LABEL[item.categoria] ?? item.categoria}</Badge>
           {prazoBadge && <Badge className={prazoBadge.tone}>{prazoBadge.icon} {prazoBadge.label}</Badge>}
           {item.document_request_id && <Badge variant="secondary">Solicitado</Badge>}
+          {item.origem === "automatico"
+            ? <Badge className="bg-indigo-100 text-indigo-800">Automático do plano</Badge>
+            : <Badge variant="outline">Manual</Badge>}
         </div>
         <div className="mt-0.5 truncate text-xs text-muted-foreground">
           {empresa}
