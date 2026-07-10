@@ -802,7 +802,7 @@ function HistoricView({ clients, selectedClientId, onOpenComp }: {
     return map;
   }, [histQ.data]);
 
-  if (histQ.isLoading) return <p className="p-3 text-sm text-muted-foreground">Carregando histórico…</p>;
+  if (histQ.isLoading) return <ChecklistSkeleton variant="historic" />;
   if (targetClients.length === 0) return <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Sem empresas" description="Ajuste o filtro de empresa." />;
 
   return (
