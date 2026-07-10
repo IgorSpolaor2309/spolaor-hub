@@ -16,7 +16,8 @@ import { DeleteButton } from "@/components/sc/DeleteButton";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { formatBR, todayLocalYmd } from "@/lib/dates";
 import { toast } from "sonner";
-import { ListChecks, Plus, Check, Inbox as InboxIcon, X, Pencil, Send, Sparkles } from "lucide-react";
+import { ListChecks, Plus, Check, Inbox as InboxIcon, X, Pencil, Send, Sparkles, ChevronDown, ChevronRight } from "lucide-react";
+import { AttachmentButton } from "@/components/sc/AttachmentButton";
 
 function defaultCompetencia() {
   const d = new Date();
@@ -121,6 +122,7 @@ function ChecklistPage() {
   const [fStatus, setFStatus] = useState<string>("open");
   const [fComp, setFComp] = useState("");
   const [fQuick, setFQuick] = useState<"all" | "atrasado" | "hoje" | "3dias">("all");
+  const [viewMode, setViewMode] = useState<"list" | "grouped">("list");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
 
@@ -129,7 +131,7 @@ function ChecklistPage() {
     enabled: ready,
     queryFn: async () => {
       const { data, error } = await supabase.from("clients")
-        .select("id, razao_social, nome_fantasia, documento")
+        .select("id, razao_social, nome_fantasia, documento, client_commercial(plan_id, plans(nome))")
         .is("deleted_at", null).neq("status", "inactive").order("razao_social");
       if (error) throw error;
       return data ?? [];
@@ -152,7 +154,7 @@ function ChecklistPage() {
     enabled: ready,
     queryFn: async () => {
       const { data, error } = await supabase.from("client_checklist_items")
-        .select("*, clients(razao_social, nome_fantasia), profiles:responsavel_profile_id(full_name)")
+        .select("*, clients(razao_social, nome_fantasia), profiles:responsavel_profile_id(full_name), documents:document_id(id, nome, storage_path)")
         .is("deleted_at", null)
         .order("prazo", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: false });
@@ -179,6 +181,19 @@ function ChecklistPage() {
     });
   }, [itemsQ.data, fClient, fResp, fCat, fStatus, fComp, fQuick]);
 
+  const stats = useMemo(() => {
+    const s = { total: 0, pendente: 0, recebido: 0, concluido: 0, cancelado: 0, atrasado: 0 };
+    for (const r of filtered as any[]) {
+      s.total++;
+      if (r.status === "pendente") s.pendente++;
+      else if (r.status === "recebido") s.recebido++;
+      else if (r.status === "concluido") s.concluido++;
+      else if (r.status === "cancelado") s.cancelado++;
+      if (prazoTone(r.prazo, r.status) === "vencido") s.atrasado++;
+    }
+    return s;
+  }, [filtered]);
+
   if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
   if (role !== "admin" && role !== "collaborator") {
     return <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Acesso restrito" description="Apenas administradores e colaboradores acessam o checklist." />;
@@ -186,6 +201,20 @@ function ChecklistPage() {
 
   const clients = clientsQ.data ?? [];
   const collabs = collabsQ.data ?? [];
+
+  // Plano por empresa
+  const planByClient: Record<string, string> = {};
+  for (const c of clients as any[]) {
+    const cc = Array.isArray(c.client_commercial) ? c.client_commercial[0] : c.client_commercial;
+    if (cc?.plans?.nome) planByClient[c.id] = cc.plans.nome;
+  }
+  const clientsSemPlano = (clients as any[]).filter((c) => !planByClient[c.id]).length;
+  const compAtual = defaultCompetencia();
+  const empresasComChecklist = new Set(
+    (itemsQ.data ?? []).filter((i: any) => i.competencia === compAtual).map((i: any) => i.client_id),
+  );
+  const empresasSemChecklistMes = (clients as any[])
+    .filter((c) => planByClient[c.id] && !empresasComChecklist.has(c.id)).length;
 
   return (
     <div>
@@ -213,6 +242,17 @@ function ChecklistPage() {
           </div>
         }
       />
+
+      {/* Indicadores */}
+      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+        <StatCard label="Total" value={stats.total} />
+        <StatCard label="Pendentes" value={stats.pendente} tone="bg-amber-50 text-amber-800" />
+        <StatCard label="Recebidos" value={stats.recebido} tone="bg-emerald-50 text-emerald-800" />
+        <StatCard label="Concluídos" value={stats.concluido} tone="bg-green-50 text-green-900" />
+        <StatCard label="Atrasados" value={stats.atrasado} tone="bg-red-50 text-red-800" />
+        <StatCard label="Empresas sem plano" value={clientsSemPlano} tone="bg-zinc-50 text-zinc-700" />
+        <StatCard label={`Sem checklist (${compAtual})`} value={empresasSemChecklistMes} tone="bg-zinc-50 text-zinc-700" />
+      </div>
 
       <Card className="mb-4 p-4">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
@@ -278,24 +318,107 @@ function ChecklistPage() {
             </Select>
           </div>
         </div>
-        <div className="mt-3">
+        <div className="mt-3 flex items-center justify-between">
           <Button variant="ghost" size="sm" onClick={() => {
             setFClient("all"); setFResp("all"); setFCat("all"); setFStatus("open"); setFComp(""); setFQuick("all");
           }}>Limpar filtros</Button>
+          <div className="flex items-center gap-1 rounded-md border p-0.5">
+            <Button size="sm" variant={viewMode === "list" ? "default" : "ghost"} onClick={() => setViewMode("list")}>Lista</Button>
+            <Button size="sm" variant={viewMode === "grouped" ? "default" : "ghost"} onClick={() => setViewMode("grouped")}>Agrupado</Button>
+          </div>
         </div>
       </Card>
 
       <Card className="p-2">
         {itemsQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
           : filtered.length === 0 ? <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Nenhum item no checklist" description="Crie o primeiro item para começar." />
-          : (
+          : viewMode === "list" ? (
             <ul className="divide-y">
               {filtered.map((r: any) => (
                 <ItemRow key={r.id} item={r} isAdmin={role === "admin"} onEdit={() => { setEditing(r); setOpen(true); }} onChange={() => qc.invalidateQueries({ queryKey: ["checklist-items"] })} />
               ))}
             </ul>
+          ) : (
+            <GroupedView items={filtered} planByClient={planByClient} isAdmin={role === "admin"}
+              onEdit={(it: any) => { setEditing(it); setOpen(true); }}
+              onChange={() => qc.invalidateQueries({ queryKey: ["checklist-items"] })} />
           )}
       </Card>
+    </div>
+  );
+}
+
+function StatCard({ label, value, tone }: { label: string; value: number; tone?: string }) {
+  return (
+    <Card className={`p-3 ${tone ?? ""}`}>
+      <div className="text-xs">{label}</div>
+      <div className="text-xl font-semibold">{value}</div>
+    </Card>
+  );
+}
+
+function GroupedView({ items, planByClient, isAdmin, onEdit, onChange }: any) {
+  type Group = { key: string; clientId: string; competencia: string; empresa: string; plano: string; items: any[] };
+  const groups: Group[] = useMemo(() => {
+    const map = new Map<string, Group>();
+    for (const it of items) {
+      const comp = it.competencia ?? "—";
+      const key = `${it.client_id}::${comp}`;
+      const empresa = it.clients?.nome_fantasia || it.clients?.razao_social || "—";
+      const plano = planByClient[it.client_id] ?? "—";
+      if (!map.has(key)) map.set(key, { key, clientId: it.client_id, competencia: comp, empresa, plano, items: [] });
+      map.get(key)!.items.push(it);
+    }
+    return Array.from(map.values()).sort((a, b) =>
+      a.empresa.localeCompare(b.empresa) || b.competencia.localeCompare(a.competencia));
+  }, [items, planByClient]);
+
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+
+  return (
+    <div className="space-y-2">
+      {groups.map((g) => {
+        const total = g.items.length;
+        let pend = 0, rec = 0, conc = 0, canc = 0, atr = 0;
+        for (const i of g.items) {
+          if (i.status === "pendente") pend++;
+          else if (i.status === "recebido") rec++;
+          else if (i.status === "concluido") conc++;
+          else if (i.status === "cancelado") canc++;
+          if (prazoTone(i.prazo, i.status) === "vencido") atr++;
+        }
+        const pct = total ? Math.round((conc / total) * 100) : 0;
+        const isOpen = !collapsed[g.key];
+        return (
+          <div key={g.key} className="rounded-md border">
+            <button
+              type="button"
+              onClick={() => setCollapsed((c) => ({ ...c, [g.key]: !c[g.key] }))}
+              className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-muted/40"
+            >
+              {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium">{g.empresa}</span>
+                  <Badge variant="outline">Plano: {g.plano}</Badge>
+                  <Badge variant="outline">Comp. {g.competencia}</Badge>
+                </div>
+                <div className="mt-0.5 text-xs text-muted-foreground">
+                  {total} itens · {conc} concluídos · {rec} recebidos · {pend} pendentes · {canc} cancelados
+                  {atr > 0 ? ` · ${atr} atrasados` : ""} · {pct}% concluído
+                </div>
+              </div>
+            </button>
+            {isOpen && (
+              <ul className="divide-y border-t">
+                {g.items.map((r: any) => (
+                  <ItemRow key={r.id} item={r} isAdmin={isAdmin} onEdit={() => onEdit(r)} onChange={onChange} />
+                ))}
+              </ul>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -374,6 +497,9 @@ function ItemRow({ item, isAdmin, onEdit, onChange }: any) {
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-1">
+        {item.documents?.storage_path && (
+          <AttachmentButton storagePath={item.documents.storage_path} label="Documento" size="sm" variant="ghost" className="h-8 px-2" />
+        )}
         {item.status === "pendente" && !item.document_request_id && (
           <Button size="sm" variant="ghost" title="Solicitar documento ao cliente"
             onClick={() => solicitar.mutate()} disabled={solicitar.isPending}>

@@ -884,6 +884,7 @@ export type Database = {
       documents: {
         Row: {
           categoria_validade: string | null
+          checklist_item_id: string | null
           client_id: string
           competencia: string | null
           created_at: string
@@ -903,6 +904,7 @@ export type Database = {
         }
         Insert: {
           categoria_validade?: string | null
+          checklist_item_id?: string | null
           client_id: string
           competencia?: string | null
           created_at?: string
@@ -922,6 +924,7 @@ export type Database = {
         }
         Update: {
           categoria_validade?: string | null
+          checklist_item_id?: string | null
           client_id?: string
           competencia?: string | null
           created_at?: string
@@ -940,6 +943,13 @@ export type Database = {
           uploaded_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "documents_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "client_checklist_items"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "documents_client_id_fkey"
             columns: ["client_id"]
@@ -1247,6 +1257,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      plan_checklist_cron_log: {
+        Row: {
+          competencia: string
+          criados: number
+          empresas_processadas: number
+          empresas_sem_plano: number
+          erro: string | null
+          executed_at: string
+          id: string
+          ignorados_existentes: number
+          origem: string
+        }
+        Insert: {
+          competencia: string
+          criados?: number
+          empresas_processadas?: number
+          empresas_sem_plano?: number
+          erro?: string | null
+          executed_at?: string
+          id?: string
+          ignorados_existentes?: number
+          origem?: string
+        }
+        Update: {
+          competencia?: string
+          criados?: number
+          empresas_processadas?: number
+          empresas_sem_plano?: number
+          erro?: string | null
+          executed_at?: string
+          id?: string
+          ignorados_existentes?: number
+          origem?: string
+        }
+        Relationships: []
       }
       plan_items: {
         Row: {
@@ -1606,6 +1652,7 @@ export type Database = {
       client_label: { Args: { _client_id: string }; Returns: string }
       client_staff_user_ids: { Args: { _client_id: string }; Returns: string[] }
       client_user_ids: { Args: { _client_id: string }; Returns: string[] }
+      cron_generate_current_plan_checklist: { Args: never; Returns: Json }
       generate_plan_checklist: { Args: { _competencia: string }; Returns: Json }
       has_role: {
         Args: {
