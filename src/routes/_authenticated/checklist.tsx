@@ -16,7 +16,7 @@ import { DeleteButton } from "@/components/sc/DeleteButton";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { formatBR, todayLocalYmd } from "@/lib/dates";
 import { toast } from "sonner";
-import { ListChecks, Plus, Check, Inbox as InboxIcon, X, Pencil, Send, Sparkles, ChevronDown, ChevronRight, FileDown } from "lucide-react";
+import { ListChecks, Plus, Check, Inbox as InboxIcon, X, Pencil, Send, Sparkles, ChevronDown, ChevronRight } from "lucide-react";
 import { AttachmentButton } from "@/components/sc/AttachmentButton";
 
 function defaultCompetencia() {
