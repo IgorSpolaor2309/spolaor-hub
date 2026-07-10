@@ -313,19 +313,53 @@ function ChecklistPage() {
         }
       />
 
-      {/* Indicadores */}
-      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+      {/* Seletor de competência */}
+      <Card className="mb-4 p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <Label className="text-xs shrink-0">Competência</Label>
+          <Button size="sm" variant="outline" title="Mês anterior"
+            onClick={() => changeSelectedComp(shiftComp(selectedComp === "all" ? compAtual : selectedComp, -1))}>
+            ‹
+          </Button>
+          <Select value={selectedComp} onValueChange={changeSelectedComp}>
+            <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={compAtual}>{formatCompLabel(compAtual)} (atual)</SelectItem>
+              {Array.from({ length: 12 }, (_, i) => shiftComp(compAtual, -(i + 1))).map((c) => (
+                <SelectItem key={c} value={c}>{formatCompLabel(c)}</SelectItem>
+              ))}
+              <SelectItem value={shiftComp(compAtual, 1)}>{formatCompLabel(shiftComp(compAtual, 1))} (futura)</SelectItem>
+              <SelectItem value="all">Todas as competências</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button size="sm" variant="outline" title="Próximo mês"
+            onClick={() => changeSelectedComp(shiftComp(selectedComp === "all" ? compAtual : selectedComp, 1))}>
+            ›
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => changeSelectedComp(compAtual)}>Hoje</Button>
+          {selectedComp !== "all" && (
+            <Badge variant="outline" className="ml-1">
+              {selectedComp === compAtual ? "Atual"
+                : selectedComp > compAtual ? "Futura" : "Encerrada"}
+            </Badge>
+          )}
+        </div>
+      </Card>
+
+      {/* Resumo da competência */}
+      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+        <StatCard label="Empresas" value={stats.empresas} />
         <StatCard label="Total" value={stats.total} />
         <StatCard label="Pendentes" value={stats.pendente} tone="bg-amber-50 text-amber-800" />
         <StatCard label="Recebidos" value={stats.recebido} tone="bg-emerald-50 text-emerald-800" />
         <StatCard label="Concluídos" value={stats.concluido} tone="bg-green-50 text-green-900" />
         <StatCard label="Atrasados" value={stats.atrasado} tone="bg-red-50 text-red-800" />
-        <StatCard label="Empresas sem plano" value={clientsSemPlano} tone="bg-zinc-50 text-zinc-700" />
-        <StatCard label={`Sem checklist (${compAtual})`} value={empresasSemChecklistMes} tone="bg-zinc-50 text-zinc-700" />
+        <StatCard label="% concluído" value={pctGeral} tone="bg-zinc-50 text-zinc-700" />
+        <StatCard label="Sem plano" value={clientsSemPlano} tone="bg-zinc-50 text-zinc-700" />
       </div>
 
       <Card className="mb-4 p-4">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <div>
             <Label className="text-xs">Empresa</Label>
             <Select value={fClient} onValueChange={setFClient}>
@@ -372,10 +406,6 @@ function ChecklistPage() {
             </Select>
           </div>
           <div>
-            <Label className="text-xs">Competência contém</Label>
-            <Input placeholder="2026-06" value={fComp} onChange={(e) => setFComp(e.target.value)} />
-          </div>
-          <div>
             <Label className="text-xs">Prazo</Label>
             <Select value={fQuick} onValueChange={(v: any) => setFQuick(v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -388,20 +418,30 @@ function ChecklistPage() {
             </Select>
           </div>
         </div>
-        <div className="mt-3 flex items-center justify-between">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
           <Button variant="ghost" size="sm" onClick={() => {
-            setFClient("all"); setFResp("all"); setFCat("all"); setFStatus("open"); setFComp(""); setFQuick("all");
+            setFClient("all"); setFResp("all"); setFCat("all"); setFStatus("open"); setFQuick("all");
           }}>Limpar filtros</Button>
           <div className="flex items-center gap-1 rounded-md border p-0.5">
-            <Button size="sm" variant={viewMode === "list" ? "default" : "ghost"} onClick={() => setViewMode("list")}>Lista</Button>
             <Button size="sm" variant={viewMode === "grouped" ? "default" : "ghost"} onClick={() => setViewMode("grouped")}>Agrupado</Button>
+            <Button size="sm" variant={viewMode === "list" ? "default" : "ghost"} onClick={() => setViewMode("list")}>Lista</Button>
+            <Button size="sm" variant={viewMode === "historic" ? "default" : "ghost"} onClick={() => setViewMode("historic")}>Histórico</Button>
           </div>
         </div>
       </Card>
 
       <Card className="p-2">
         {itemsQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
-          : filtered.length === 0 ? <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Nenhum item no checklist" description="Crie o primeiro item para começar." />
+          : viewMode === "historic" ? (
+            <HistoricView clients={clients} selectedClientId={fClient} onOpenComp={(clientId, comp) => {
+              setFClient(clientId); changeSelectedComp(comp); setViewMode("grouped");
+            }} />
+          )
+          : filtered.length === 0 ? (
+            selectedComp !== "all" && (itemsQ.data ?? []).length === 0
+              ? <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Nenhum checklist foi gerado para esta competência." description="Gere o checklist mensal ou crie um item manual." />
+              : <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Nenhum item corresponde aos filtros selecionados." description="Ajuste ou limpe os filtros." />
+          )
           : viewMode === "list" ? (
             <ul className="divide-y">
               {filtered.map((r: any) => (
@@ -410,13 +450,11 @@ function ChecklistPage() {
             </ul>
           ) : (
             <GroupedView items={filtered} planByClient={planByClient} isAdmin={role === "admin"}
+              singleComp={selectedComp !== "all"}
               onEdit={(it: any) => { setEditing(it); setOpen(true); }}
               onChange={() => qc.invalidateQueries({ queryKey: ["checklist-items"] })} />
           )}
       </Card>
-    </div>
-  );
-}
 
 function StatCard({ label, value, tone }: { label: string; value: number; tone?: string }) {
   return (
