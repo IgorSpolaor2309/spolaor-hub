@@ -216,7 +216,57 @@ function ClientsPage() {
               </Select>
             </div>
           )}
+          <div>
+            <Label className="text-xs">Tipo de cliente</Label>
+            <Select value={fTipoCliente} onValueChange={setFTipoCliente}>
+              <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="B2B">B2B</SelectItem>
+                <SelectItem value="B2C">B2C</SelectItem>
+                <SelectItem value="MEI">MEI</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {planoOptions.length > 0 && (
+            <div>
+              <Label className="text-xs">Plano</Label>
+              <Select value={fPlano} onValueChange={setFPlano}>
+                <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {planoOptions.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <div>
+            <Label className="text-xs">Status comercial</Label>
+            <Select value={fStatusCom} onValueChange={setFStatusCom}>
+              <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="ativo">Ativo</SelectItem>
+                <SelectItem value="suspenso">Suspenso</SelectItem>
+                <SelectItem value="encerrado">Encerrado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Periodicidade</Label>
+            <Select value={fPeriodicidade} onValueChange={setFPeriodicidade}>
+              <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="mensal">Mensal</SelectItem>
+                <SelectItem value="trimestral">Trimestral</SelectItem>
+                <SelectItem value="semestral">Semestral</SelectItem>
+                <SelectItem value="anual">Anual</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <DateRangeFilter value={dateF} onChange={setDateF} label="Data de entrada" variant="range" />
+
           <Button variant="ghost" size="sm" onClick={clearFilters}>Limpar filtros</Button>
         </div>
       </Card>
