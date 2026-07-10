@@ -625,6 +625,10 @@ function ItemDialog({ clients, collabs, initial, onDone }: any) {
           <Label>Observação</Label>
           <Textarea rows={2} value={f.observacao} onChange={(e) => setF({ ...f, observacao: e.target.value })} />
         </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={f.visivel_cliente} onChange={(e) => setF({ ...f, visivel_cliente: e.target.checked })} />
+          Visível para o cliente
+        </label>
       </div>
       <DialogFooter>
         <Button onClick={() => save.mutate()} disabled={!f.client_id || !f.titulo.trim() || save.isPending}>
