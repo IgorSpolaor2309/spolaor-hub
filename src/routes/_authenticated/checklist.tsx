@@ -176,13 +176,16 @@ function ChecklistPage() {
   const qc = useQueryClient();
   const ready = !loading && !!userId && (role === "admin" || role === "collaborator");
 
+  const prefs = useMemo(loadPrefs, []);
   const [fClient, setFClient] = useState("all");
   const [fResp, setFResp] = useState("all");
   const [fCat, setFCat] = useState("all");
   const [fStatus, setFStatus] = useState<string>("open");
-  const [fComp, setFComp] = useState("");
+  const [selectedComp, setSelectedComp] = useState<string>(prefs.selectedComp ?? defaultCompetencia());
   const [fQuick, setFQuick] = useState<"all" | "atrasado" | "hoje" | "3dias">("all");
-  const [viewMode, setViewMode] = useState<"list" | "grouped">("list");
+  const [viewMode, setViewModeState] = useState<"list" | "grouped" | "historic">(prefs.viewMode ?? "grouped");
+  const setViewMode = (v: "list" | "grouped" | "historic") => { setViewModeState(v); savePrefs({ viewMode: v }); };
+  const changeSelectedComp = (v: string) => { setSelectedComp(v); savePrefs({ selectedComp: v }); };
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
 
