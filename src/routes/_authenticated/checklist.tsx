@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/sc/PageHeader";
@@ -12,12 +12,22 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/sc/EmptyState";
-import { DeleteButton } from "@/components/sc/DeleteButton";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { formatBR, todayLocalYmd } from "@/lib/dates";
 import { toast } from "sonner";
-import { ListChecks, Plus, Check, Inbox as InboxIcon, X, Pencil, Send, Sparkles, ChevronDown, ChevronRight } from "lucide-react";
+import { ListChecks, Plus, Check, Inbox as InboxIcon, Send, Sparkles, ChevronDown, ChevronRight, MoreHorizontal, Search, ArrowUp, ArrowDown, ArrowUpDown, RotateCw, Trash2, Pencil, X } from "lucide-react";
 import { AttachmentButton } from "@/components/sc/AttachmentButton";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+function useDebounced<T>(value: T, delay = 300): T {
+  const [v, setV] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setV(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return v;
+}
 
 function defaultCompetencia() {
   const d = new Date();
