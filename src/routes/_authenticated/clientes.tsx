@@ -50,6 +50,10 @@ function ClientsPage() {
   const [fRegime, setFRegime] = useState<string>("all");
   const [fUf, setFUf] = useState<string>("all");
   const [fResp, setFResp] = useState<string>("all");
+  const [fTipoCliente, setFTipoCliente] = useState<string>("all");
+  const [fPlano, setFPlano] = useState<string>("all");
+  const [fStatusCom, setFStatusCom] = useState<string>("all");
+  const [fPeriodicidade, setFPeriodicidade] = useState<string>("all");
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
@@ -62,13 +66,14 @@ function ClientsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("clients")
-        .select("*, client_fiscal_data(regime_tributario, uf, municipio), client_collaborators(collaborator_id, collaborators(id, nome)), client_users(id, ativo)")
+        .select("*, client_fiscal_data(regime_tributario, uf, municipio), client_collaborators(collaborator_id, collaborators(id, nome)), client_users(id, ativo), client_commercial(tipo_cliente, plano, status_comercial, periodicidade)")
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
   });
+
 
   const { data: collaborators = [] } = useQuery({
     queryKey: ["clients-collabs-options"],
