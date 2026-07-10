@@ -149,6 +149,10 @@ function ClientDetail() {
         <Card className="p-4"><div className="text-xs uppercase text-muted-foreground">Entrada</div><div className="mt-1 text-sm">{formatBR(client.data_entrada)}</div></Card>
       </div>
 
+      {role !== "client" && <CommercialCard clientId={id} canEdit={role === "admin"} />}
+
+
+
       {role !== "client" && (
         <Card className="mb-6 p-4">
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Ações rápidas</div>
@@ -184,21 +188,25 @@ function ClientDetail() {
 
         <TabsContent value="timeline">
           <Card className="p-5">
-            {events.length === 0 ? <EmptyState title="Sem eventos" /> : (
-              <ol className="space-y-4">
-                {events.map((e) => (
-                  <li key={e.id} className="flex gap-3">
-                    <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-secondary" />
-                    <div>
-                      <div className="text-sm">{e.descricao}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {e.tipo} · {formatDistanceToNow(new Date(e.created_at), { addSuffix: true, locale: ptBR })}
+            {(() => {
+              const visible = (events as any[]).filter((e) => role !== "client" || !String(e.tipo ?? "").startsWith("comercial_"));
+              return visible.length === 0 ? <EmptyState title="Sem eventos" /> : (
+                <ol className="space-y-4">
+                  {visible.map((e) => (
+                    <li key={e.id} className="flex gap-3">
+                      <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-secondary" />
+                      <div>
+                        <div className="text-sm">{e.descricao}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {e.tipo} · {formatDistanceToNow(new Date(e.created_at), { addSuffix: true, locale: ptBR })}
+                        </div>
                       </div>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            )}
+                    </li>
+                  ))}
+                </ol>
+              );
+            })()}
+
           </Card>
         </TabsContent>
 
@@ -1059,5 +1067,191 @@ function FiscalTab({ clientId, canEdit, isAdmin }: { clientId: string; canEdit: 
         </div>
       )}
     </div>
+  );
+}
+
+/* ---------- Dados comerciais ---------- */
+const PERIODICIDADES = [
+  { value: "mensal", label: "Mensal" },
+  { value: "trimestral", label: "Trimestral" },
+  { value: "semestral", label: "Semestral" },
+  { value: "anual", label: "Anual" },
+] as const;
+const COMERCIAL_STATUSES = [
+  { value: "ativo", label: "Ativo" },
+  { value: "suspenso", label: "Suspenso" },
+  { value: "encerrado", label: "Encerrado" },
+] as const;
+const TIPOS_CLIENTE = ["B2B", "B2C", "MEI"] as const;
+
+const brl = (v: number | null | undefined) =>
+  v == null ? "—" : new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(v));
+
+type CommercialRow = {
+  id?: string;
+  client_id: string;
+  tipo_cliente: "B2B" | "B2C" | "MEI";
+  plano: string | null;
+  valor_mensalidade: number | null;
+  dia_vencimento: number | null;
+  periodicidade: string;
+  status_comercial: string;
+  data_inicio: string | null;
+  data_ultimo_reajuste: string | null;
+  proximo_reajuste: string | null;
+  observacoes: string | null;
+};
+
+function CommercialCard({ clientId, canEdit }: { clientId: string; canEdit: boolean }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const { data, isLoading } = useQuery({
+    queryKey: ["client-commercial", clientId],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("client_commercial").select("*").eq("client_id", clientId).maybeSingle();
+      if (error && error.code !== "PGRST116") throw error;
+      return (data ?? null) as CommercialRow | null;
+    },
+  });
+
+  return (
+    <Card className="mb-6 p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Dados comerciais</div>
+        {canEdit && (
+          <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+            <Pencil className="mr-2 h-4 w-4" /> {data ? "Editar" : "Preencher"}
+          </Button>
+        )}
+      </div>
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Carregando…</p>
+      ) : !data ? (
+        <p className="text-sm text-muted-foreground">Nenhum dado comercial cadastrado.</p>
+      ) : (
+        <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
+          <div><div className="text-xs uppercase text-muted-foreground">Tipo de cliente</div><div>{data.tipo_cliente}</div></div>
+          <div><div className="text-xs uppercase text-muted-foreground">Plano</div><div>{data.plano || "—"}</div></div>
+          <div><div className="text-xs uppercase text-muted-foreground">Mensalidade</div><div>{brl(data.valor_mensalidade)}</div></div>
+          <div><div className="text-xs uppercase text-muted-foreground">Vencimento</div><div>{data.dia_vencimento ? `dia ${data.dia_vencimento}` : "—"}</div></div>
+          <div><div className="text-xs uppercase text-muted-foreground">Periodicidade</div><div>{PERIODICIDADES.find((p) => p.value === data.periodicidade)?.label ?? data.periodicidade}</div></div>
+          <div><div className="text-xs uppercase text-muted-foreground">Status</div><div>{COMERCIAL_STATUSES.find((s) => s.value === data.status_comercial)?.label ?? data.status_comercial}</div></div>
+          <div><div className="text-xs uppercase text-muted-foreground">Início</div><div>{formatBR(data.data_inicio)}</div></div>
+          <div><div className="text-xs uppercase text-muted-foreground">Próximo reajuste</div><div>{formatBR(data.proximo_reajuste)}</div></div>
+          {data.data_ultimo_reajuste && (
+            <div><div className="text-xs uppercase text-muted-foreground">Último reajuste</div><div>{formatBR(data.data_ultimo_reajuste)}</div></div>
+          )}
+          {data.observacoes && (
+            <div className="sm:col-span-2 lg:col-span-4">
+              <div className="text-xs uppercase text-muted-foreground">Observações comerciais</div>
+              <div className="whitespace-pre-wrap">{data.observacoes}</div>
+            </div>
+          )}
+        </div>
+      )}
+      {canEdit && open && (
+        <Dialog open={open} onOpenChange={setOpen}>
+          <CommercialDialog
+            clientId={clientId}
+            current={data ?? null}
+            onDone={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["client-commercial", clientId] }); qc.invalidateQueries({ queryKey: ["clients"] }); qc.invalidateQueries({ queryKey: ["client-events", clientId] }); }}
+          />
+        </Dialog>
+      )}
+    </Card>
+  );
+}
+
+function CommercialDialog({ clientId, current, onDone }: { clientId: string; current: CommercialRow | null; onDone: () => void }) {
+  const [form, setForm] = useState<CommercialRow>(() => current ?? {
+    client_id: clientId,
+    tipo_cliente: "B2B",
+    plano: "",
+    valor_mensalidade: null,
+    dia_vencimento: null,
+    periodicidade: "mensal",
+    status_comercial: "ativo",
+    data_inicio: null,
+    data_ultimo_reajuste: null,
+    proximo_reajuste: null,
+    observacoes: "",
+  });
+  const [valorStr, setValorStr] = useState<string>(current?.valor_mensalidade != null ? String(current.valor_mensalidade).replace(".", ",") : "");
+  const set = (patch: Partial<CommercialRow>) => setForm({ ...form, ...patch });
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const valor = valorStr ? Number(valorStr.replace(/\./g, "").replace(",", ".")) : null;
+      if (valorStr && Number.isNaN(valor)) throw new Error("Valor inválido.");
+      const payload: any = {
+        client_id: clientId,
+        tipo_cliente: form.tipo_cliente,
+        plano: form.plano || null,
+        valor_mensalidade: valor,
+        dia_vencimento: form.dia_vencimento || null,
+        periodicidade: form.periodicidade,
+        status_comercial: form.status_comercial,
+        data_inicio: form.data_inicio || null,
+        data_ultimo_reajuste: form.data_ultimo_reajuste || null,
+        proximo_reajuste: form.proximo_reajuste || null,
+        observacoes: form.observacoes || null,
+      };
+      const { error } = current?.id
+        ? await (supabase as any).from("client_commercial").update(payload).eq("id", current.id)
+        : await (supabase as any).from("client_commercial").insert(payload);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Dados comerciais salvos."); onDone(); },
+    onError: (e: any) => toast.error(e?.message ?? "Falha ao salvar."),
+  });
+
+  return (
+    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogHeader><DialogTitle>Dados comerciais</DialogTitle></DialogHeader>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label>Tipo de cliente *</Label>
+          <Select value={form.tipo_cliente} onValueChange={(v) => set({ tipo_cliente: v as any })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>{TIPOS_CLIENTE.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5"><Label>Nome do plano</Label><Input value={form.plano ?? ""} onChange={(e) => set({ plano: e.target.value })} placeholder="Essencial, Completo, Premium…" /></div>
+        <div className="space-y-1.5">
+          <Label>Valor da mensalidade (R$)</Label>
+          <Input inputMode="decimal" value={valorStr} onChange={(e) => setValorStr(e.target.value)} placeholder="0,00" />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Dia de vencimento</Label>
+          <Input type="number" min={1} max={31} value={form.dia_vencimento ?? ""} onChange={(e) => set({ dia_vencimento: e.target.value ? Number(e.target.value) : null })} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Periodicidade</Label>
+          <Select value={form.periodicidade} onValueChange={(v) => set({ periodicidade: v })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>{PERIODICIDADES.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label>Status comercial</Label>
+          <Select value={form.status_comercial} onValueChange={(v) => set({ status_comercial: v })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>{COMERCIAL_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5"><Label>Data de início</Label><Input type="date" value={form.data_inicio ?? ""} onChange={(e) => set({ data_inicio: e.target.value || null })} /></div>
+        <div className="space-y-1.5"><Label>Último reajuste</Label><Input type="date" value={form.data_ultimo_reajuste ?? ""} onChange={(e) => set({ data_ultimo_reajuste: e.target.value || null })} /></div>
+        <div className="space-y-1.5"><Label>Próximo reajuste</Label><Input type="date" value={form.proximo_reajuste ?? ""} onChange={(e) => set({ proximo_reajuste: e.target.value || null })} /></div>
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label>Observações comerciais (internas)</Label>
+          <Textarea rows={3} value={form.observacoes ?? ""} onChange={(e) => set({ observacoes: e.target.value })} />
+          <p className="text-xs text-muted-foreground">Visível apenas para administradores e colaboradores.</p>
+        </div>
+      </div>
+      <DialogFooter>
+        <Button onClick={() => save.mutate()} disabled={save.isPending}>{save.isPending ? "Salvando…" : "Salvar"}</Button>
+      </DialogFooter>
+    </DialogContent>
   );
 }

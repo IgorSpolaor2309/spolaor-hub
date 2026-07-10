@@ -50,6 +50,10 @@ function ClientsPage() {
   const [fRegime, setFRegime] = useState<string>("all");
   const [fUf, setFUf] = useState<string>("all");
   const [fResp, setFResp] = useState<string>("all");
+  const [fTipoCliente, setFTipoCliente] = useState<string>("all");
+  const [fPlano, setFPlano] = useState<string>("all");
+  const [fStatusCom, setFStatusCom] = useState<string>("all");
+  const [fPeriodicidade, setFPeriodicidade] = useState<string>("all");
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
@@ -62,13 +66,14 @@ function ClientsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("clients")
-        .select("*, client_fiscal_data(regime_tributario, uf, municipio), client_collaborators(collaborator_id, collaborators(id, nome)), client_users(id, ativo)")
+        .select("*, client_fiscal_data(regime_tributario, uf, municipio), client_collaborators(collaborator_id, collaborators(id, nome)), client_users(id, ativo), client_commercial(tipo_cliente, plano, status_comercial, periodicidade)")
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
   });
+
 
   const { data: collaborators = [] } = useQuery({
     queryKey: ["clients-collabs-options"],
@@ -92,6 +97,14 @@ function ClientsPage() {
     }
     return Array.from(s).sort();
   }, [clients]);
+  const planoOptions = useMemo(() => {
+    const s = new Set<string>();
+    for (const c of clients as any[]) {
+      const p = c.client_commercial?.plano;
+      if (p) s.add(p);
+    }
+    return Array.from(s).sort();
+  }, [clients]);
 
   const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
   const filtered = (clients as any[]).filter((c) => {
@@ -104,12 +117,19 @@ function ClientsPage() {
       const ids = (c.client_collaborators ?? []).map((cc: any) => cc.collaborator_id);
       if (!ids.includes(fResp)) return false;
     }
+    if (fTipoCliente !== "all" && (c.client_commercial?.tipo_cliente ?? "") !== fTipoCliente) return false;
+    if (fPlano !== "all" && (c.client_commercial?.plano ?? "") !== fPlano) return false;
+    if (fStatusCom !== "all" && (c.client_commercial?.status_comercial ?? "") !== fStatusCom) return false;
+    if (fPeriodicidade !== "all" && (c.client_commercial?.periodicidade ?? "") !== fPeriodicidade) return false;
     if (!inRange(c.data_entrada ?? c.created_at, range)) return false;
     return true;
   });
   const clearFilters = () => {
-    setQ(""); setFStatus("active"); setFTipo("all"); setFRegime("all"); setFUf("all"); setFResp("all"); setDateF(EMPTY_DATE_FILTER);
+    setQ(""); setFStatus("active"); setFTipo("all"); setFRegime("all"); setFUf("all"); setFResp("all");
+    setFTipoCliente("all"); setFPlano("all"); setFStatusCom("all"); setFPeriodicidade("all");
+    setDateF(EMPTY_DATE_FILTER);
   };
+
 
   if (!ready) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
@@ -196,7 +216,57 @@ function ClientsPage() {
               </Select>
             </div>
           )}
+          <div>
+            <Label className="text-xs">Tipo de cliente</Label>
+            <Select value={fTipoCliente} onValueChange={setFTipoCliente}>
+              <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="B2B">B2B</SelectItem>
+                <SelectItem value="B2C">B2C</SelectItem>
+                <SelectItem value="MEI">MEI</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {planoOptions.length > 0 && (
+            <div>
+              <Label className="text-xs">Plano</Label>
+              <Select value={fPlano} onValueChange={setFPlano}>
+                <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {planoOptions.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <div>
+            <Label className="text-xs">Status comercial</Label>
+            <Select value={fStatusCom} onValueChange={setFStatusCom}>
+              <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="ativo">Ativo</SelectItem>
+                <SelectItem value="suspenso">Suspenso</SelectItem>
+                <SelectItem value="encerrado">Encerrado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Periodicidade</Label>
+            <Select value={fPeriodicidade} onValueChange={setFPeriodicidade}>
+              <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="mensal">Mensal</SelectItem>
+                <SelectItem value="trimestral">Trimestral</SelectItem>
+                <SelectItem value="semestral">Semestral</SelectItem>
+                <SelectItem value="anual">Anual</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <DateRangeFilter value={dateF} onChange={setDateF} label="Data de entrada" variant="range" />
+
           <Button variant="ghost" size="sm" onClick={clearFilters}>Limpar filtros</Button>
         </div>
       </Card>
@@ -222,7 +292,11 @@ function ClientsPage() {
                   <th className="py-2 pr-4">Tipo</th>
                   <th className="py-2 pr-4">Documento</th>
                   <th className="py-2 pr-4">Entrada</th>
+                  <th className="py-2 pr-4">Tipo cliente</th>
+                  <th className="py-2 pr-4">Plano</th>
+                  <th className="py-2 pr-4">Status comercial</th>
                   <th className="py-2 pr-4">Status</th>
+
                   {role === "admin" && <th className="w-10"></th>}
                 </tr>
               </thead>
@@ -259,7 +333,11 @@ function ClientsPage() {
                     <td className="py-3 pr-4">{labelOf(CLIENT_TYPES, c.tipo)}</td>
                     <td className="py-3 pr-4 font-mono text-xs">{c.documento ?? "—"}</td>
                     <td className="py-3 pr-4">{formatBR(c.data_entrada)}</td>
+                    <td className="py-3 pr-4">{c.client_commercial?.tipo_cliente ?? "—"}</td>
+                    <td className="py-3 pr-4">{c.client_commercial?.plano ?? "—"}</td>
+                    <td className="py-3 pr-4">{c.client_commercial?.status_comercial ? (c.client_commercial.status_comercial[0].toUpperCase() + c.client_commercial.status_comercial.slice(1)) : "—"}</td>
                     <td className="py-3 pr-4"><StatusBadge value={c.status} /></td>
+
                     {role === "admin" && (
                       <td>
                         <div className="flex items-center justify-end gap-1">
