@@ -187,6 +187,10 @@ function ClientDetail() {
           <DocsTab clientId={id} docs={docs} userId={userId} onChange={() => qc.invalidateQueries({ queryKey: ["client-docs", id] })} />
         </TabsContent>
 
+        <TabsContent value="checklists">
+          <ChecklistHistorySection clientId={id} />
+        </TabsContent>
+
         <TabsContent value="timeline">
           <Card className="p-5">
             {(() => {
