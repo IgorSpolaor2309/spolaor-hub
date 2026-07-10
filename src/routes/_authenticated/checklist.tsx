@@ -233,7 +233,7 @@ function ChecklistPage() {
     enabled: ready,
     queryFn: async () => {
       let q = supabase.from("client_checklist_items")
-        .select("*, clients(razao_social, nome_fantasia), profiles:responsavel_profile_id(full_name), documents:document_id(id, nome, storage_path)")
+        .select("*, clients(razao_social, nome_fantasia), profiles:responsavel_profile_id(full_name), documents:document_id(id, nome, storage_path), plan_items:plan_item_id(ordem)")
         .is("deleted_at", null);
       if (selectedComp && selectedComp !== "all") q = q.eq("competencia", selectedComp);
       q = q.order("prazo", { ascending: true, nullsFirst: false }).order("created_at", { ascending: false });
