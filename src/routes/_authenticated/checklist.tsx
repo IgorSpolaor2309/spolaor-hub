@@ -213,14 +213,15 @@ function ChecklistPage() {
   });
 
   const itemsQ = useQuery({
-    queryKey: ["checklist-items"],
+    queryKey: ["checklist-items", selectedComp],
     enabled: ready,
     queryFn: async () => {
-      const { data, error } = await supabase.from("client_checklist_items")
+      let q = supabase.from("client_checklist_items")
         .select("*, clients(razao_social, nome_fantasia), profiles:responsavel_profile_id(full_name), documents:document_id(id, nome, storage_path)")
-        .is("deleted_at", null)
-        .order("prazo", { ascending: true, nullsFirst: false })
-        .order("created_at", { ascending: false });
+        .is("deleted_at", null);
+      if (selectedComp && selectedComp !== "all") q = q.eq("competencia", selectedComp);
+      q = q.order("prazo", { ascending: true, nullsFirst: false }).order("created_at", { ascending: false });
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
