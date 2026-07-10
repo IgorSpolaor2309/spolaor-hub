@@ -136,8 +136,33 @@ function GenerateChecklistButton({ onDone }: { onDone: () => void }) {
 
 export const Route = createFileRoute("/_authenticated/checklist")({
   component: ChecklistPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    client: typeof search.client === "string" ? search.client : undefined,
+    comp: typeof search.comp === "string" ? search.comp : undefined,
+    expand: search.expand === "1" || search.expand === true ? true : undefined,
+  }),
   errorComponent: () => <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Não foi possível carregar" description="Tente novamente em instantes." />,
 });
+
+function ChecklistSkeleton({ variant = "grouped" }: { variant?: "grouped" | "list" | "historic" }) {
+  const rows = variant === "list" ? 8 : 3;
+  return (
+    <div className="space-y-2 p-2" aria-busy="true" aria-label="Carregando checklists">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="rounded-md border p-3">
+          <div className="mb-2 h-4 w-1/3 animate-pulse rounded bg-muted" />
+          <div className="h-3 w-2/3 animate-pulse rounded bg-muted/70" />
+          {variant !== "list" && (
+            <div className="mt-3 space-y-1.5">
+              <div className="h-3 w-full animate-pulse rounded bg-muted/50" />
+              <div className="h-3 w-5/6 animate-pulse rounded bg-muted/50" />
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 const CATEGORIAS = [
   { value: "fiscal", label: "Fiscal" },
