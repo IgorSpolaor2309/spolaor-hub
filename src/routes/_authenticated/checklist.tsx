@@ -470,8 +470,8 @@ function StatCard({ label, value, tone }: { label: string; value: number; tone?:
   );
 }
 
-function GroupedView({ items, planByClient, isAdmin, onEdit, onChange }: any) {
-  type Group = { key: string; clientId: string; competencia: string; empresa: string; plano: string; items: any[] };
+function GroupedView({ items, planByClient, isAdmin, singleComp, onEdit, onChange }: any) {
+  type Group = { key: string; clientId: string; competencia: string; empresa: string; plano: string; resp: string; items: any[] };
   const groups: Group[] = useMemo(() => {
     const map = new Map<string, Group>();
     for (const it of items) {
@@ -479,14 +479,26 @@ function GroupedView({ items, planByClient, isAdmin, onEdit, onChange }: any) {
       const key = `${it.client_id}::${comp}`;
       const empresa = it.clients?.nome_fantasia || it.clients?.razao_social || "—";
       const plano = planByClient[it.client_id] ?? "—";
-      if (!map.has(key)) map.set(key, { key, clientId: it.client_id, competencia: comp, empresa, plano, items: [] });
-      map.get(key)!.items.push(it);
+      const resp = it.profiles?.full_name ?? "";
+      if (!map.has(key)) map.set(key, { key, clientId: it.client_id, competencia: comp, empresa, plano, resp, items: [] });
+      const g = map.get(key)!;
+      if (!g.resp && resp) g.resp = resp;
+      g.items.push(it);
     }
+    for (const g of map.values()) g.items.sort(sortDefault);
     return Array.from(map.values()).sort((a, b) =>
       a.empresa.localeCompare(b.empresa) || b.competencia.localeCompare(a.competencia));
   }, [items, planByClient]);
 
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const prefs = useMemo(loadPrefs, []);
+  const [collapsed, setCollapsedState] = useState<Record<string, boolean>>(prefs.collapsed ?? {});
+  const setCollapsed = (updater: (c: Record<string, boolean>) => Record<string, boolean>) => {
+    setCollapsedState((c) => {
+      const next = updater(c);
+      savePrefs({ collapsed: next });
+      return next;
+    });
+  };
 
   return (
     <div className="space-y-2">
@@ -500,7 +512,9 @@ function GroupedView({ items, planByClient, isAdmin, onEdit, onChange }: any) {
           else if (i.status === "cancelado") canc++;
           if (prazoTone(i.prazo, i.status) === "vencido") atr++;
         }
-        const pct = total ? Math.round((conc / total) * 100) : 0;
+        const validos = pend + rec + conc;
+        const pct = validos ? Math.round((conc / validos) * 100) : 0;
+        const encerrada = validos > 0 && pend === 0 && rec === 0;
         const isOpen = !collapsed[g.key];
         return (
           <div key={g.key} className="rounded-md border">
@@ -514,12 +528,18 @@ function GroupedView({ items, planByClient, isAdmin, onEdit, onChange }: any) {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-medium">{g.empresa}</span>
                   <Badge variant="outline">Plano: {g.plano}</Badge>
-                  <Badge variant="outline">Comp. {g.competencia}</Badge>
+                  {!singleComp && <Badge variant="outline">{formatCompLabel(g.competencia)}</Badge>}
+                  {g.resp && <Badge variant="outline">Resp.: {g.resp}</Badge>}
+                  {atr > 0 && <Badge className="bg-red-100 text-red-800">{atr} atrasado{atr > 1 ? "s" : ""}</Badge>}
+                  {encerrada && <Badge variant="outline" className="text-muted-foreground">Competência encerrada</Badge>}
                 </div>
                 <div className="mt-0.5 text-xs text-muted-foreground">
-                  {total} itens · {conc} concluídos · {rec} recebidos · {pend} pendentes · {canc} cancelados
-                  {atr > 0 ? ` · ${atr} atrasados` : ""} · {pct}% concluído
+                  {validos > 0 ? `${conc} de ${validos} concluídos` : "Sem itens"} · {rec} recebidos · {pend} pendentes
+                  {canc > 0 ? ` · ${canc} cancelados` : ""} · {total} no total
                 </div>
+              </div>
+              <div className="shrink-0 text-right">
+                <div className="text-lg font-semibold">{validos ? `${pct}%` : "—"}</div>
               </div>
             </button>
             {isOpen && (
@@ -527,6 +547,106 @@ function GroupedView({ items, planByClient, isAdmin, onEdit, onChange }: any) {
                 {g.items.map((r: any) => (
                   <ItemRow key={r.id} item={r} isAdmin={isAdmin} onEdit={() => onEdit(r)} onChange={onChange} />
                 ))}
+              </ul>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// =====================================================================
+// HISTÓRICO POR EMPRESA
+// =====================================================================
+function HistoricView({ clients, selectedClientId, onOpenComp }: {
+  clients: any[];
+  selectedClientId: string;
+  onOpenComp: (clientId: string, comp: string) => void;
+}) {
+  const targetClients = useMemo(() => {
+    if (selectedClientId !== "all") {
+      const c = clients.find((x) => x.id === selectedClientId);
+      return c ? [c] : [];
+    }
+    return clients;
+  }, [clients, selectedClientId]);
+
+  const clientIds = targetClients.map((c) => c.id);
+
+  const histQ = useQuery({
+    queryKey: ["checklist-history", clientIds.sort().join(",")],
+    enabled: clientIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("client_checklist_items")
+        .select("client_id, competencia, status")
+        .in("client_id", clientIds)
+        .is("deleted_at", null)
+        .not("competencia", "is", null);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const byClient = useMemo(() => {
+    const map = new Map<string, Map<string, { pend: number; rec: number; conc: number; canc: number }>>();
+    for (const it of (histQ.data ?? []) as any[]) {
+      if (!map.has(it.client_id)) map.set(it.client_id, new Map());
+      const inner = map.get(it.client_id)!;
+      const comp = it.competencia as string;
+      if (!inner.has(comp)) inner.set(comp, { pend: 0, rec: 0, conc: 0, canc: 0 });
+      const b = inner.get(comp)!;
+      if (it.status === "pendente") b.pend++;
+      else if (it.status === "recebido") b.rec++;
+      else if (it.status === "concluido") b.conc++;
+      else if (it.status === "cancelado") b.canc++;
+    }
+    return map;
+  }, [histQ.data]);
+
+  if (histQ.isLoading) return <p className="p-3 text-sm text-muted-foreground">Carregando histórico…</p>;
+  if (targetClients.length === 0) return <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Sem empresas" description="Ajuste o filtro de empresa." />;
+
+  return (
+    <div className="space-y-4 p-2">
+      {targetClients.map((c) => {
+        const compMap = byClient.get(c.id);
+        const comps = compMap ? Array.from(compMap.keys()).sort().reverse() : [];
+        const empresa = c.nome_fantasia || c.razao_social;
+        return (
+          <div key={c.id} className="rounded-md border">
+            <div className="border-b bg-muted/30 px-3 py-2 font-medium">{empresa}</div>
+            {comps.length === 0 ? (
+              <p className="p-3 text-sm text-muted-foreground">Sem checklists registrados.</p>
+            ) : (
+              <ul className="divide-y">
+                {comps.map((comp) => {
+                  const b = compMap!.get(comp)!;
+                  const validos = b.pend + b.rec + b.conc;
+                  const pct = validos ? Math.round((b.conc / validos) * 100) : 0;
+                  const total = validos + b.canc;
+                  return (
+                    <li key={comp}>
+                      <button type="button"
+                        onClick={() => onOpenComp(c.id, comp)}
+                        className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left hover:bg-muted/40">
+                        <div className="min-w-0">
+                          <div className="font-medium">{formatCompLabel(comp)}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {validos > 0 ? `${b.conc} de ${validos} concluídos` : "Sem itens válidos"}
+                            {b.rec > 0 ? ` · ${b.rec} recebidos` : ""}
+                            {b.pend > 0 ? ` · ${b.pend} pendentes` : ""}
+                            {b.canc > 0 ? ` · ${b.canc} cancelados` : ""}
+                            {` · ${total} no total`}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-semibold">{validos ? `${pct}%` : "—"}</div>
+                        </div>
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
