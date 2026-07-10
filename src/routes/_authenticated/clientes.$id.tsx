@@ -149,6 +149,10 @@ function ClientDetail() {
         <Card className="p-4"><div className="text-xs uppercase text-muted-foreground">Entrada</div><div className="mt-1 text-sm">{formatBR(client.data_entrada)}</div></Card>
       </div>
 
+      {role !== "client" && <CommercialCard clientId={id} canEdit={role === "admin"} />}
+
+
+
       {role !== "client" && (
         <Card className="mb-6 p-4">
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Ações rápidas</div>
