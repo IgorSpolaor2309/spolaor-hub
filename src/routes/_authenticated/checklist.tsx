@@ -148,19 +148,24 @@ function ChecklistPage() {
         title="Checklist do Cliente"
         description="Acompanhe rapidamente o que cada empresa precisa entregar."
         action={
-          <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null); }}>
-            <DialogTrigger asChild>
-              <Button><Plus className="mr-2 h-4 w-4" /> Novo item</Button>
-            </DialogTrigger>
-            {open && (
-              <ItemDialog
-                clients={clients}
-                collabs={collabs}
-                initial={editing}
-                onDone={() => { setOpen(false); setEditing(null); qc.invalidateQueries({ queryKey: ["checklist-items"] }); }}
-              />
+          <div className="flex items-center gap-2">
+            {role === "admin" && (
+              <GenerateChecklistButton onDone={() => qc.invalidateQueries({ queryKey: ["checklist-items"] })} />
             )}
-          </Dialog>
+            <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null); }}>
+              <DialogTrigger asChild>
+                <Button><Plus className="mr-2 h-4 w-4" /> Novo item</Button>
+              </DialogTrigger>
+              {open && (
+                <ItemDialog
+                  clients={clients}
+                  collabs={collabs}
+                  initial={editing}
+                  onDone={() => { setOpen(false); setEditing(null); qc.invalidateQueries({ queryKey: ["checklist-items"] }); }}
+                />
+              )}
+            </Dialog>
+          </div>
         }
       />
 
