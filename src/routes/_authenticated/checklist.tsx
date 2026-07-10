@@ -266,6 +266,9 @@ function ChecklistPage() {
   const itemsQ = useQuery({
     queryKey: ["checklist-items", selectedComp],
     enabled: ready,
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
+    placeholderData: (prev) => prev,
     queryFn: async () => {
       let q = supabase.from("client_checklist_items")
         .select("*, clients(razao_social, nome_fantasia), profiles:responsavel_profile_id(full_name), documents:document_id(id, nome, storage_path), plan_items:plan_item_id(ordem)")
