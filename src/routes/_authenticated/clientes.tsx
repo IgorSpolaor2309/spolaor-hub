@@ -97,6 +97,14 @@ function ClientsPage() {
     }
     return Array.from(s).sort();
   }, [clients]);
+  const planoOptions = useMemo(() => {
+    const s = new Set<string>();
+    for (const c of clients as any[]) {
+      const p = c.client_commercial?.plano;
+      if (p) s.add(p);
+    }
+    return Array.from(s).sort();
+  }, [clients]);
 
   const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
   const filtered = (clients as any[]).filter((c) => {
@@ -109,12 +117,19 @@ function ClientsPage() {
       const ids = (c.client_collaborators ?? []).map((cc: any) => cc.collaborator_id);
       if (!ids.includes(fResp)) return false;
     }
+    if (fTipoCliente !== "all" && (c.client_commercial?.tipo_cliente ?? "") !== fTipoCliente) return false;
+    if (fPlano !== "all" && (c.client_commercial?.plano ?? "") !== fPlano) return false;
+    if (fStatusCom !== "all" && (c.client_commercial?.status_comercial ?? "") !== fStatusCom) return false;
+    if (fPeriodicidade !== "all" && (c.client_commercial?.periodicidade ?? "") !== fPeriodicidade) return false;
     if (!inRange(c.data_entrada ?? c.created_at, range)) return false;
     return true;
   });
   const clearFilters = () => {
-    setQ(""); setFStatus("active"); setFTipo("all"); setFRegime("all"); setFUf("all"); setFResp("all"); setDateF(EMPTY_DATE_FILTER);
+    setQ(""); setFStatus("active"); setFTipo("all"); setFRegime("all"); setFUf("all"); setFResp("all");
+    setFTipoCliente("all"); setFPlano("all"); setFStatusCom("all"); setFPeriodicidade("all");
+    setDateF(EMPTY_DATE_FILTER);
   };
+
 
   if (!ready) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
