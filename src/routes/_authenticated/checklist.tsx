@@ -544,6 +544,7 @@ function ItemDialog({ clients, collabs, initial, onDone }: any) {
     prazo: initial?.prazo ?? "",
     competencia: initial?.competencia ?? "",
     observacao: initial?.observacao ?? "",
+    visivel_cliente: initial?.visivel_cliente ?? false,
   });
 
   const save = useMutation({
