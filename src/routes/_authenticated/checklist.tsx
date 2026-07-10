@@ -154,7 +154,7 @@ function ChecklistPage() {
     enabled: ready,
     queryFn: async () => {
       const { data, error } = await supabase.from("client_checklist_items")
-        .select("*, clients(razao_social, nome_fantasia), profiles:responsavel_profile_id(full_name), documents:document_id(id, nome, storage_path)")
+        .select("*, clients(razao_social, nome_fantasia), profiles:responsavel_profile_id(full_name)")
         .is("deleted_at", null)
         .order("prazo", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: false });
