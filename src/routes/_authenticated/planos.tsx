@@ -410,11 +410,35 @@ function PlanItemDialog({ planId, initial, onDone }: { planId: string; initial: 
           ))}
         </div>
       </div>
-      <DialogFooter>
+      <DialogFooter className="gap-2 sm:justify-between">
+        {isEdit ? <ApplyToCurrentButton planItemId={initial.id} /> : <span />}
         <Button disabled={!f.titulo.trim() || save.isPending} onClick={() => save.mutate()}>
           {save.isPending ? "Salvando…" : isEdit ? "Salvar" : "Criar item"}
         </Button>
       </DialogFooter>
     </DialogContent>
+  );
+}
+
+function ApplyToCurrentButton({ planItemId }: { planItemId: string }) {
+  const run = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await (supabase as any).rpc("apply_plan_item_to_current", { _plan_item_id: planItemId });
+      if (error) throw error;
+      return data as { competencia: string; empresas_analisadas: number; criados: number; ignorados: number; empresas_sem_plano: number; duracao_ms: number };
+    },
+    onSuccess: (r) => {
+      toast.success(
+        `Competência ${r.competencia}: ${r.criados} criados, ${r.ignorados} ignorados, ${r.empresas_analisadas} analisadas (${r.duracao_ms}ms).`
+      );
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Falha ao aplicar"),
+  });
+  return (
+    <Button type="button" variant="outline" size="sm" onClick={() => {
+      if (confirm("Aplicar este item à competência atual em todas as empresas com este plano?")) run.mutate();
+    }} disabled={run.isPending}>
+      {run.isPending ? "Aplicando…" : "Aplicar à competência atual"}
+    </Button>
   );
 }

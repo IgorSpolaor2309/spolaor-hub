@@ -1645,6 +1645,14 @@ export type Database = {
         Args: { _client_id: string }
         Returns: undefined
       }
+      apply_plan_change: {
+        Args: { _client_id: string; _mode: string; _new_plan_id: string }
+        Returns: Json
+      }
+      apply_plan_item_to_current: {
+        Args: { _plan_item_id: string }
+        Returns: Json
+      }
       calc_plan_item_prazo: {
         Args: { _competencia: string; _tipo: string; _valor: number }
         Returns: string
@@ -1672,6 +1680,10 @@ export type Database = {
           _user_id: string
         }
         Returns: undefined
+      }
+      preview_plan_change: {
+        Args: { _client_id: string; _competencia: string; _new_plan_id: string }
+        Returns: Json
       }
       profiles_shares_client: {
         Args: { _target: string; _viewer: string }

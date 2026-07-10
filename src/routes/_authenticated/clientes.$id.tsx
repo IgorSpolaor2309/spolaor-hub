@@ -1164,10 +1164,12 @@ function CommercialCard({ clientId, canEdit }: { clientId: string; canEdit: bool
 }
 
 function CommercialDialog({ clientId, current, onDone }: { clientId: string; current: CommercialRow | null; onDone: () => void }) {
-  const [form, setForm] = useState<CommercialRow>(() => current ?? {
+  const qc = useQueryClient();
+  const [form, setForm] = useState<CommercialRow & { plan_id?: string | null }>(() => (current as any) ?? {
     client_id: clientId,
     tipo_cliente: "B2B",
     plano: "",
+    plan_id: null,
     valor_mensalidade: null,
     dia_vencimento: null,
     periodicidade: "mensal",
@@ -1178,9 +1180,20 @@ function CommercialDialog({ clientId, current, onDone }: { clientId: string; cur
     observacoes: "",
   });
   const [valorStr, setValorStr] = useState<string>(current?.valor_mensalidade != null ? String(current.valor_mensalidade).replace(".", ",") : "");
-  const set = (patch: Partial<CommercialRow>) => setForm({ ...form, ...patch });
+  const set = (patch: Partial<CommercialRow & { plan_id?: string | null }>) => setForm({ ...form, ...patch });
+  const originalPlanId = (current as any)?.plan_id ?? null;
+  const [pendingPlanChange, setPendingPlanChange] = useState<string | null>(null);
 
-  const save = useMutation({
+  const plansQ = useQuery({
+    queryKey: ["plans-active"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).from("plans").select("id, nome, ativo").eq("ativo", true).order("nome");
+      if (error) throw error;
+      return data as { id: string; nome: string; ativo: boolean }[];
+    },
+  });
+
+  const saveOther = useMutation({
     mutationFn: async () => {
       const valor = valorStr ? Number(valorStr.replace(/\./g, "").replace(",", ".")) : null;
       if (valorStr && Number.isNaN(valor)) throw new Error("Valor inválido.");
@@ -1202,11 +1215,22 @@ function CommercialDialog({ clientId, current, onDone }: { clientId: string; cur
         : await (supabase as any).from("client_commercial").insert(payload);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Dados comerciais salvos."); onDone(); },
+    onSuccess: () => { toast.success("Dados comerciais salvos."); qc.invalidateQueries({ queryKey: ["client-commercial", clientId] }); onDone(); },
     onError: (e: any) => toast.error(e?.message ?? "Falha ao salvar."),
   });
 
+  const submit = () => {
+    const changed = (form.plan_id ?? null) !== (originalPlanId ?? null);
+    if (changed && form.plan_id && originalPlanId) {
+      setPendingPlanChange(form.plan_id);
+      return;
+    }
+    // Plano vinculado pela 1ª vez ou removido: aplica direto sem modal.
+    saveOther.mutate();
+  };
+
   return (
+    <>
     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
       <DialogHeader><DialogTitle>Dados comerciais</DialogTitle></DialogHeader>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -1217,7 +1241,17 @@ function CommercialDialog({ clientId, current, onDone }: { clientId: string; cur
             <SelectContent>{TIPOS_CLIENTE.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
           </Select>
         </div>
-        <div className="space-y-1.5"><Label>Nome do plano</Label><Input value={form.plano ?? ""} onChange={(e) => set({ plano: e.target.value })} placeholder="Essencial, Completo, Premium…" /></div>
+        <div className="space-y-1.5">
+          <Label>Plano vinculado</Label>
+          <Select value={form.plan_id ?? "__none"} onValueChange={(v) => set({ plan_id: v === "__none" ? null : v })}>
+            <SelectTrigger><SelectValue placeholder="Selecione um plano…" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none">— Sem plano —</SelectItem>
+              {(plansQ.data ?? []).map((p) => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5"><Label>Nome do plano (texto livre)</Label><Input value={form.plano ?? ""} onChange={(e) => set({ plano: e.target.value })} placeholder="Opcional" /></div>
         <div className="space-y-1.5">
           <Label>Valor da mensalidade (R$)</Label>
           <Input inputMode="decimal" value={valorStr} onChange={(e) => setValorStr(e.target.value)} placeholder="0,00" />
@@ -1250,8 +1284,89 @@ function CommercialDialog({ clientId, current, onDone }: { clientId: string; cur
         </div>
       </div>
       <DialogFooter>
-        <Button onClick={() => save.mutate()} disabled={save.isPending}>{save.isPending ? "Salvando…" : "Salvar"}</Button>
+        <Button onClick={submit} disabled={saveOther.isPending}>{saveOther.isPending ? "Salvando…" : "Salvar"}</Button>
       </DialogFooter>
     </DialogContent>
+    {pendingPlanChange && (
+      <PlanChangeConfirmDialog
+        clientId={clientId}
+        newPlanId={pendingPlanChange}
+        onClose={() => setPendingPlanChange(null)}
+        onConfirmed={async () => {
+          setPendingPlanChange(null);
+          await saveOther.mutateAsync();
+        }}
+      />
+    )}
+    </>
+  );
+}
+
+function PlanChangeConfirmDialog({ clientId, newPlanId, onClose, onConfirmed }: {
+  clientId: string; newPlanId: string; onClose: () => void; onConfirmed: () => void;
+}) {
+  const [mode, setMode] = useState<"proxima" | "adicionar_faltantes" | "substituir_pendentes">("proxima");
+  const comp = new Date().toISOString().slice(0, 7);
+  const previewQ = useQuery({
+    queryKey: ["plan-change-preview", clientId, newPlanId, comp],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("preview_plan_change", {
+        _client_id: clientId, _new_plan_id: newPlanId, _competencia: comp,
+      });
+      if (error) throw error;
+      return data as { plano_atual_itens: number; plano_novo_itens: number; adicionar: number; substituir: number; preservar: number; competencia: string };
+    },
+  });
+  const apply = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await (supabase as any).rpc("apply_plan_change", {
+        _client_id: clientId, _new_plan_id: newPlanId, _mode: mode,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => { toast.success("Plano alterado."); onConfirmed(); },
+    onError: (e: any) => toast.error(e?.message ?? "Falha ao aplicar troca de plano."),
+  });
+  const p = previewQ.data;
+  return (
+    <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader><DialogTitle>Trocar plano da empresa</DialogTitle></DialogHeader>
+        <div className="space-y-3 text-sm">
+          {previewQ.isLoading ? <p className="text-muted-foreground">Calculando impacto…</p> : p && (
+            <div className="rounded-md border bg-muted/40 p-3">
+              <div className="mb-1 text-xs uppercase text-muted-foreground">Competência {p.competencia}</div>
+              <div className="grid grid-cols-2 gap-y-1">
+                <span>Plano atual</span><span className="text-right">{p.plano_atual_itens} itens</span>
+                <span>Plano novo</span><span className="text-right">{p.plano_novo_itens} itens</span>
+                <span className="text-emerald-700">Serão adicionados</span><span className="text-right font-semibold text-emerald-700">{p.adicionar}</span>
+                <span className="text-amber-700">Serão substituídos</span><span className="text-right font-semibold text-amber-700">{p.substituir}</span>
+                <span className="text-muted-foreground">Preservados</span><span className="text-right">{p.preservar}</span>
+              </div>
+            </div>
+          )}
+          <div className="space-y-2">
+            <Label>Como aplicar?</Label>
+            {[
+              { v: "proxima", t: "Aplicar somente na próxima competência", d: "Nenhum item da competência atual é alterado." },
+              { v: "adicionar_faltantes", t: "Adicionar apenas os itens faltantes", d: "Não apaga nada. Não duplica." },
+              { v: "substituir_pendentes", t: "Substituir os itens pendentes do plano anterior", d: "Só substitui automáticos pendentes. Nunca apaga concluídos, recebidos, cancelados ou manuais." },
+            ].map((o) => (
+              <label key={o.v} className="flex cursor-pointer items-start gap-2 rounded-md border p-2 hover:bg-muted/50">
+                <input type="radio" className="mt-1" name="mode" checked={mode === o.v} onChange={() => setMode(o.v as any)} />
+                <div><div className="font-medium">{o.t}</div><div className="text-xs text-muted-foreground">{o.d}</div></div>
+              </label>
+            ))}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={apply.isPending}>Cancelar</Button>
+          <Button onClick={() => apply.mutate()} disabled={apply.isPending || previewQ.isLoading}>
+            {apply.isPending ? "Aplicando…" : "Confirmar troca"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
