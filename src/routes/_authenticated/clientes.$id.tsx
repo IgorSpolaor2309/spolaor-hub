@@ -188,21 +188,25 @@ function ClientDetail() {
 
         <TabsContent value="timeline">
           <Card className="p-5">
-            {events.length === 0 ? <EmptyState title="Sem eventos" /> : (
-              <ol className="space-y-4">
-                {events.map((e) => (
-                  <li key={e.id} className="flex gap-3">
-                    <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-secondary" />
-                    <div>
-                      <div className="text-sm">{e.descricao}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {e.tipo} · {formatDistanceToNow(new Date(e.created_at), { addSuffix: true, locale: ptBR })}
+            {(() => {
+              const visible = (events as any[]).filter((e) => role !== "client" || !String(e.tipo ?? "").startsWith("comercial_"));
+              return visible.length === 0 ? <EmptyState title="Sem eventos" /> : (
+                <ol className="space-y-4">
+                  {visible.map((e) => (
+                    <li key={e.id} className="flex gap-3">
+                      <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-secondary" />
+                      <div>
+                        <div className="text-sm">{e.descricao}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {e.tipo} · {formatDistanceToNow(new Date(e.created_at), { addSuffix: true, locale: ptBR })}
+                        </div>
                       </div>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            )}
+                    </li>
+                  ))}
+                </ol>
+              );
+            })()}
+
           </Card>
         </TabsContent>
 
