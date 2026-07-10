@@ -136,8 +136,33 @@ function GenerateChecklistButton({ onDone }: { onDone: () => void }) {
 
 export const Route = createFileRoute("/_authenticated/checklist")({
   component: ChecklistPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    client: typeof search.client === "string" ? search.client : undefined,
+    comp: typeof search.comp === "string" ? search.comp : undefined,
+    expand: search.expand === "1" || search.expand === true ? true : undefined,
+  }),
   errorComponent: () => <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Não foi possível carregar" description="Tente novamente em instantes." />,
 });
+
+function ChecklistSkeleton({ variant = "grouped" }: { variant?: "grouped" | "list" | "historic" }) {
+  const rows = variant === "list" ? 8 : 3;
+  return (
+    <div className="space-y-2 p-2" aria-busy="true" aria-label="Carregando checklists">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="rounded-md border p-3">
+          <div className="mb-2 h-4 w-1/3 animate-pulse rounded bg-muted" />
+          <div className="h-3 w-2/3 animate-pulse rounded bg-muted/70" />
+          {variant !== "list" && (
+            <div className="mt-3 space-y-1.5">
+              <div className="h-3 w-full animate-pulse rounded bg-muted/50" />
+              <div className="h-3 w-5/6 animate-pulse rounded bg-muted/50" />
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 const CATEGORIAS = [
   { value: "fiscal", label: "Fiscal" },
@@ -185,15 +210,16 @@ function ChecklistPage() {
   const { role, userId, loading } = useCurrentUser();
   const qc = useQueryClient();
   const ready = !loading && !!userId && (role === "admin" || role === "collaborator");
+  const routeSearch = Route.useSearch();
 
   const prefs = useMemo(loadPrefs, []);
-  const [fClient, setFClient] = useState("all");
+  const [fClient, setFClient] = useState(routeSearch.client ?? "all");
   const [fResp, setFResp] = useState("all");
   const [fCat, setFCat] = useState("all");
   const [fStatus, setFStatus] = useState<string>("open");
   const [fOrigem, setFOrigem] = useState<"all" | "automatico" | "manual">("all");
   const [fVisivel, setFVisivel] = useState<"all" | "yes" | "no">("all");
-  const [selectedComp, setSelectedComp] = useState<string>(prefs.selectedComp ?? defaultCompetencia());
+  const [selectedComp, setSelectedComp] = useState<string>(routeSearch.comp ?? prefs.selectedComp ?? defaultCompetencia());
   const [fQuick, setFQuick] = useState<"all" | "atrasado" | "hoje" | "3dias">("all");
   const [searchInput, setSearchInput] = useState("");
   const search = useDebounced(searchInput, 300);
@@ -205,9 +231,16 @@ function ChecklistPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
 
+  // When arriving from the client history section: pre-expand the matching group.
+  const forceExpandKey = routeSearch.expand && routeSearch.client && routeSearch.comp
+    ? `${routeSearch.client}::${routeSearch.comp}`
+    : undefined;
+
   const clientsQ = useQuery({
     queryKey: ["checklist-clients", userId],
     enabled: ready,
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
     queryFn: async () => {
       const { data, error } = await supabase.from("clients")
         .select("id, razao_social, nome_fantasia, documento, client_commercial(plan_id, plans(nome))")
@@ -220,6 +253,8 @@ function ChecklistPage() {
   const collabsQ = useQuery({
     queryKey: ["checklist-collabs"],
     enabled: ready,
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
     queryFn: async () => {
       const { data, error } = await supabase.from("collaborators")
         .select("id, user_id, nome_completo").eq("status", "active").order("nome_completo");
@@ -231,6 +266,9 @@ function ChecklistPage() {
   const itemsQ = useQuery({
     queryKey: ["checklist-items", selectedComp],
     enabled: ready,
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
+    placeholderData: (prev) => prev,
     queryFn: async () => {
       let q = supabase.from("client_checklist_items")
         .select("*, clients(razao_social, nome_fantasia), profiles:responsavel_profile_id(full_name), documents:document_id(id, nome, storage_path), plan_items:plan_item_id(ordem)")
@@ -567,7 +605,7 @@ function ChecklistPage() {
       </Card>
 
       <Card className="p-2">
-        {itemsQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
+        {itemsQ.isLoading ? <ChecklistSkeleton variant={viewMode === "list" ? "list" : "grouped"} />
           : itemsQ.isError ? (
             <EmptyState icon={<ListChecks className="h-6 w-6" />}
               title="Não foi possível carregar os dados."
@@ -603,6 +641,7 @@ function ChecklistPage() {
           ) : (
             <GroupedView items={filtered} planByClient={planByClient} isAdmin={role === "admin"}
               singleComp={selectedComp !== "all"}
+              forceExpandKey={forceExpandKey}
               onEdit={(it: any) => { setEditing(it); setOpen(true); }}
               onChange={() => qc.invalidateQueries({ queryKey: ["checklist-items"] })} />
           )}
@@ -622,7 +661,7 @@ function StatCard({ label, value, tone }: { label: string; value: number; tone?:
   );
 }
 
-function GroupedView({ items, planByClient, isAdmin, singleComp, onEdit, onChange }: any) {
+function GroupedView({ items, planByClient, isAdmin, singleComp, forceExpandKey, onEdit, onChange }: any) {
   type Group = { key: string; clientId: string; competencia: string; empresa: string; plano: string; resp: string; items: any[] };
   const groups: Group[] = useMemo(() => {
     const map = new Map<string, Group>();
@@ -643,7 +682,14 @@ function GroupedView({ items, planByClient, isAdmin, singleComp, onEdit, onChang
   }, [items, planByClient]);
 
   const prefs = useMemo(loadPrefs, []);
-  const [collapsed, setCollapsedState] = useState<Record<string, boolean>>(prefs.collapsed ?? {});
+  const [collapsed, setCollapsedState] = useState<Record<string, boolean>>(() => {
+    const init = { ...(prefs.collapsed ?? {}) };
+    if (forceExpandKey) init[forceExpandKey] = false;
+    return init;
+  });
+  useEffect(() => {
+    if (forceExpandKey) setCollapsedState((c) => ({ ...c, [forceExpandKey]: false }));
+  }, [forceExpandKey]);
   const setCollapsed = (updater: (c: Record<string, boolean>) => Record<string, boolean>) => {
     setCollapsedState((c) => {
       const next = updater(c);
@@ -756,7 +802,7 @@ function HistoricView({ clients, selectedClientId, onOpenComp }: {
     return map;
   }, [histQ.data]);
 
-  if (histQ.isLoading) return <p className="p-3 text-sm text-muted-foreground">Carregando histórico…</p>;
+  if (histQ.isLoading) return <ChecklistSkeleton variant="historic" />;
   if (targetClients.length === 0) return <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Sem empresas" description="Ajuste o filtro de empresa." />;
 
   return (
