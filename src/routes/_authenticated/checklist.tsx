@@ -196,7 +196,7 @@ function ChecklistPage() {
 
   if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
   if (role !== "admin" && role !== "collaborator") {
-    return <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Acesso restrito" description="Apenas administradores e colaboradores acessam o checklist." />;
+    return <ClientChecklistView userId={userId!} />;
   }
 
   const clients = clientsQ.data ?? [];
