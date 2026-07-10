@@ -420,7 +420,35 @@ function ChecklistPage() {
       </div>
 
       <Card className="mb-4 p-4">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[240px]">
+            <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Buscar por empresa, item, categoria ou observação…"
+              className="pl-8 pr-8"
+              aria-label="Buscar itens do checklist"
+            />
+            {searchInput && (
+              <button
+                type="button"
+                aria-label="Limpar busca"
+                onClick={() => setSearchInput("")}
+                className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          {activeFiltersCount > 0 && (
+            <Badge variant="secondary">Filtros ativos ({activeFiltersCount})</Badge>
+          )}
+          <Button variant="ghost" size="sm" onClick={clearFilters} disabled={activeFiltersCount === 0}>
+            Limpar filtros
+          </Button>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
           <div>
             <Label className="text-xs">Empresa</Label>
             <Select value={fClient} onValueChange={setFClient}>
@@ -478,11 +506,58 @@ function ChecklistPage() {
               </SelectContent>
             </Select>
           </div>
+          <div>
+            <Label className="text-xs">Origem</Label>
+            <Select value={fOrigem} onValueChange={(v: any) => setFOrigem(v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="automatico">Automático do plano</SelectItem>
+                <SelectItem value="manual">Manual</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Visível ao cliente</Label>
+            <Select value={fVisivel} onValueChange={(v: any) => setFVisivel(v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="yes">Sim</SelectItem>
+                <SelectItem value="no">Não</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <Button variant="ghost" size="sm" onClick={() => {
-            setFClient("all"); setFResp("all"); setFCat("all"); setFStatus("open"); setFQuick("all");
-          }}>Limpar filtros</Button>
+          {viewMode === "list" ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <Label className="text-xs">Ordenar por</Label>
+              <Select value={sortKey} onValueChange={(v: any) => setSortKey(v)}>
+                <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="prazo">Prazo</SelectItem>
+                  <SelectItem value="empresa">Empresa</SelectItem>
+                  <SelectItem value="status">Status</SelectItem>
+                  <SelectItem value="categoria">Categoria</SelectItem>
+                  <SelectItem value="responsavel">Responsável</SelectItem>
+                  <SelectItem value="ordem">Ordem do plano</SelectItem>
+                </SelectContent>
+              </Select>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button size="sm" variant="outline" className="h-8"
+                      onClick={() => setSortDir((d) => d === "asc" ? "desc" : "asc")}
+                      aria-label={sortDir === "asc" ? "Ordem crescente" : "Ordem decrescente"}>
+                      {sortDir === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{sortDir === "asc" ? "Crescente" : "Decrescente"}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          ) : <div />}
           <div className="flex items-center gap-1 rounded-md border p-0.5">
             <Button size="sm" variant={viewMode === "grouped" ? "default" : "ghost"} onClick={() => setViewMode("grouped")}>Agrupado</Button>
             <Button size="sm" variant={viewMode === "list" ? "default" : "ghost"} onClick={() => setViewMode("list")}>Lista</Button>
@@ -493,6 +568,17 @@ function ChecklistPage() {
 
       <Card className="p-2">
         {itemsQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
+          : itemsQ.isError ? (
+            <EmptyState icon={<ListChecks className="h-6 w-6" />}
+              title="Não foi possível carregar os dados."
+              description={(itemsQ.error as any)?.message ?? "Verifique sua conexão e tente novamente."}
+              action={
+                <Button size="sm" variant="outline" onClick={() => itemsQ.refetch()}>
+                  <RotateCw className="mr-2 h-4 w-4" /> Tentar novamente
+                </Button>
+              }
+            />
+          )
           : viewMode === "historic" ? (
             <HistoricView clients={clients} selectedClientId={fClient} onOpenComp={(clientId, comp) => {
               setFClient(clientId); changeSelectedComp(comp); setViewMode("grouped");
@@ -501,7 +587,12 @@ function ChecklistPage() {
           : filtered.length === 0 ? (
             selectedComp !== "all" && (itemsQ.data ?? []).length === 0
               ? <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Nenhum checklist foi gerado para esta competência." description="Gere o checklist mensal ou crie um item manual." />
-              : <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Nenhum item corresponde aos filtros selecionados." description="Ajuste ou limpe os filtros." />
+              : <EmptyState
+                  icon={<ListChecks className="h-6 w-6" />}
+                  title="Nenhum item encontrado para os filtros aplicados."
+                  description="Ajuste ou limpe os filtros para ver mais itens."
+                  action={activeFiltersCount > 0 ? <Button size="sm" variant="outline" onClick={clearFilters}>Limpar filtros</Button> : undefined}
+                />
           )
           : viewMode === "list" ? (
             <ul className="divide-y">
