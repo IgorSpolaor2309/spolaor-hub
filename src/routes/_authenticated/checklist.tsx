@@ -15,10 +15,13 @@ import { EmptyState } from "@/components/sc/EmptyState";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { formatBR, todayLocalYmd } from "@/lib/dates";
 import { toast } from "sonner";
-import { ListChecks, Plus, Check, Inbox as InboxIcon, Send, Sparkles, ChevronDown, ChevronRight, MoreHorizontal, Search, ArrowUp, ArrowDown, ArrowUpDown, RotateCw, Trash2, Pencil, X } from "lucide-react";
+import { ListChecks, Plus, Check, Inbox as InboxIcon, Send, Sparkles, ChevronDown, ChevronRight, MoreHorizontal, Search, ArrowUp, ArrowDown, ArrowUpDown, RotateCw, Trash2, Pencil, X, SlidersHorizontal } from "lucide-react";
 import { AttachmentButton } from "@/components/sc/AttachmentButton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Progress } from "@/components/ui/progress";
+import { useRef } from "react";
 
 function useDebounced<T>(value: T, delay = 300): T {
   const [v, setV] = useState(value);
