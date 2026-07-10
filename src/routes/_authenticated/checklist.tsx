@@ -210,15 +210,16 @@ function ChecklistPage() {
   const { role, userId, loading } = useCurrentUser();
   const qc = useQueryClient();
   const ready = !loading && !!userId && (role === "admin" || role === "collaborator");
+  const routeSearch = Route.useSearch();
 
   const prefs = useMemo(loadPrefs, []);
-  const [fClient, setFClient] = useState("all");
+  const [fClient, setFClient] = useState(routeSearch.client ?? "all");
   const [fResp, setFResp] = useState("all");
   const [fCat, setFCat] = useState("all");
   const [fStatus, setFStatus] = useState<string>("open");
   const [fOrigem, setFOrigem] = useState<"all" | "automatico" | "manual">("all");
   const [fVisivel, setFVisivel] = useState<"all" | "yes" | "no">("all");
-  const [selectedComp, setSelectedComp] = useState<string>(prefs.selectedComp ?? defaultCompetencia());
+  const [selectedComp, setSelectedComp] = useState<string>(routeSearch.comp ?? prefs.selectedComp ?? defaultCompetencia());
   const [fQuick, setFQuick] = useState<"all" | "atrasado" | "hoje" | "3dias">("all");
   const [searchInput, setSearchInput] = useState("");
   const search = useDebounced(searchInput, 300);
@@ -230,9 +231,16 @@ function ChecklistPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
 
+  // When arriving from the client history section: pre-expand the matching group.
+  const forceExpandKey = routeSearch.expand && routeSearch.client && routeSearch.comp
+    ? `${routeSearch.client}::${routeSearch.comp}`
+    : undefined;
+
   const clientsQ = useQuery({
     queryKey: ["checklist-clients", userId],
     enabled: ready,
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
     queryFn: async () => {
       const { data, error } = await supabase.from("clients")
         .select("id, razao_social, nome_fantasia, documento, client_commercial(plan_id, plans(nome))")
@@ -245,6 +253,8 @@ function ChecklistPage() {
   const collabsQ = useQuery({
     queryKey: ["checklist-collabs"],
     enabled: ready,
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
     queryFn: async () => {
       const { data, error } = await supabase.from("collaborators")
         .select("id, user_id, nome_completo").eq("status", "active").order("nome_completo");
