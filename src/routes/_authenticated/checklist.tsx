@@ -16,7 +16,52 @@ import { DeleteButton } from "@/components/sc/DeleteButton";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { formatBR, todayLocalYmd } from "@/lib/dates";
 import { toast } from "sonner";
-import { ListChecks, Plus, Check, Inbox as InboxIcon, X, Pencil, Send } from "lucide-react";
+import { ListChecks, Plus, Check, Inbox as InboxIcon, X, Pencil, Send, Sparkles } from "lucide-react";
+
+function defaultCompetencia() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function GenerateChecklistButton({ onDone }: { onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [comp, setComp] = useState(defaultCompetencia());
+  const run = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await (supabase as any).rpc("generate_plan_checklist", { _competencia: comp });
+      if (error) throw error;
+      return data as { criados: number; ignorados_existentes: number; empresas_sem_plano: number };
+    },
+    onSuccess: (r) => {
+      toast.success(`Gerado: ${r.criados} criados · ${r.ignorados_existentes} já existiam · ${r.empresas_sem_plano} sem plano`);
+      setOpen(false);
+      onDone();
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha ao gerar"),
+  });
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline"><Sparkles className="mr-2 h-4 w-4" /> Gerar checklists da competência</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm">
+        <DialogHeader><DialogTitle>Gerar checklists</DialogTitle></DialogHeader>
+        <div className="space-y-2">
+          <Label>Competência (AAAA-MM)</Label>
+          <Input value={comp} onChange={(e) => setComp(e.target.value)} placeholder="2026-07" />
+          <p className="text-xs text-muted-foreground">
+            Gera os itens do plano de cada empresa ativa para essa competência. Não duplica itens existentes.
+          </p>
+        </div>
+        <DialogFooter>
+          <Button disabled={!/^\d{4}-\d{2}$/.test(comp) || run.isPending} onClick={() => run.mutate()}>
+            {run.isPending ? "Gerando…" : "Gerar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/checklist")({
   component: ChecklistPage,
