@@ -648,14 +648,19 @@ export type Database = {
       }
       document_requests: {
         Row: {
+          attachment_final_name: string | null
+          attachment_final_path: string | null
           categoria: string | null
           client_id: string
           competencia: string | null
           created_at: string
+          criado_por: string | null
+          criado_por_role: string | null
           deleted_at: string | null
           deleted_by: string | null
           deleted_by_role: string | null
           deletion_reason: string | null
+          departamento: string | null
           descricao: string | null
           document_id: string | null
           id: string
@@ -667,18 +672,25 @@ export type Database = {
           prazo: string | null
           responsavel_profile_id: string | null
           status: string
+          tipo_solicitacao: string | null
           titulo: string
           updated_at: string
+          urgencia: string
         }
         Insert: {
+          attachment_final_name?: string | null
+          attachment_final_path?: string | null
           categoria?: string | null
           client_id: string
           competencia?: string | null
           created_at?: string
+          criado_por?: string | null
+          criado_por_role?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_by_role?: string | null
           deletion_reason?: string | null
+          departamento?: string | null
           descricao?: string | null
           document_id?: string | null
           id?: string
@@ -690,18 +702,25 @@ export type Database = {
           prazo?: string | null
           responsavel_profile_id?: string | null
           status?: string
+          tipo_solicitacao?: string | null
           titulo: string
           updated_at?: string
+          urgencia?: string
         }
         Update: {
+          attachment_final_name?: string | null
+          attachment_final_path?: string | null
           categoria?: string | null
           client_id?: string
           competencia?: string | null
           created_at?: string
+          criado_por?: string | null
+          criado_por_role?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_by_role?: string | null
           deletion_reason?: string | null
+          departamento?: string | null
           descricao?: string | null
           document_id?: string | null
           id?: string
@@ -713,8 +732,10 @@ export type Database = {
           prazo?: string | null
           responsavel_profile_id?: string | null
           status?: string
+          tipo_solicitacao?: string | null
           titulo?: string
           updated_at?: string
+          urgencia?: string
         }
         Relationships: [
           {
