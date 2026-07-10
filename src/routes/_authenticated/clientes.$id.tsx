@@ -170,6 +170,7 @@ function ClientDetail() {
         <TabsList>
           <TabsTrigger value="pendencias">Pendências</TabsTrigger>
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
+          <TabsTrigger value="checklists">Checklists</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="interacoes">Interações</TabsTrigger>
           <TabsTrigger value="requisitos">Requisitos</TabsTrigger>
