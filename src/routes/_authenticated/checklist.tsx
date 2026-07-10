@@ -882,37 +882,81 @@ function ItemRow({ item, isAdmin, onEdit, onChange }: any) {
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-1">
-        {item.documents?.storage_path && (
-          <AttachmentButton storagePath={item.documents.storage_path} label="Documento" size="sm" variant="ghost" className="h-8 px-2" />
-        )}
-        {item.status === "pendente" && !item.document_request_id && (
-          <Button size="sm" variant="ghost" title="Solicitar documento ao cliente"
-            onClick={() => solicitar.mutate()} disabled={solicitar.isPending}>
-            <Send className="h-4 w-4" />
-          </Button>
-        )}
-        {item.status === "pendente" && (
-          <Button size="sm" variant="ghost" title="Marcar como Recebido"
-            onClick={() => updateStatus.mutate("recebido")}>
-            <InboxIcon className="h-4 w-4" />
-          </Button>
-        )}
-        {(item.status === "pendente" || item.status === "recebido") && (
-          <Button size="sm" variant="ghost" title="Marcar como Concluído"
-            onClick={() => updateStatus.mutate("concluido")}>
-            <Check className="h-4 w-4" />
-          </Button>
-        )}
-        {item.status !== "cancelado" && item.status !== "concluido" && (
-          <Button size="sm" variant="ghost" title="Cancelar"
-            onClick={() => updateStatus.mutate("cancelado")}>
-            <X className="h-4 w-4" />
-          </Button>
-        )}
-        <Button size="sm" variant="ghost" title="Editar" onClick={onEdit}>
-          <Pencil className="h-4 w-4" />
-        </Button>
-        {isAdmin && <DeleteButton onConfirm={() => remove.mutate()} />}
+        <TooltipProvider delayDuration={200}>
+          {(item.status === "pendente" || item.status === "recebido") && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0" aria-label="Concluir item"
+                  onClick={() => updateStatus.mutate("concluido")} disabled={updateStatus.isPending}>
+                  <Check className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Concluir</TooltipContent>
+            </Tooltip>
+          )}
+          {item.documents?.storage_path ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <AttachmentButton storagePath={item.documents.storage_path} label="" size="sm" variant="ghost" className="h-8 w-8 p-0" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Abrir documento</TooltipContent>
+            </Tooltip>
+          ) : null}
+          <DropdownMenu>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0" aria-label="Mais opções">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>Mais opções</TooltipContent>
+            </Tooltip>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Ações do item</DropdownMenuLabel>
+              {item.status !== "recebido" && item.status !== "concluido" && item.status !== "cancelado" && (
+                <DropdownMenuItem onSelect={() => updateStatus.mutate("recebido")}>
+                  <InboxIcon className="mr-2 h-4 w-4" /> Marcar como Recebido
+                </DropdownMenuItem>
+              )}
+              {item.status !== "pendente" && item.status !== "cancelado" && (
+                <DropdownMenuItem onSelect={() => updateStatus.mutate("pendente")}>
+                  <RotateCw className="mr-2 h-4 w-4" /> Marcar como Pendente
+                </DropdownMenuItem>
+              )}
+              {item.status !== "cancelado" && item.status !== "concluido" && (
+                <DropdownMenuItem onSelect={() => updateStatus.mutate("cancelado")}>
+                  <X className="mr-2 h-4 w-4" /> Cancelar
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={onEdit}>
+                <Pencil className="mr-2 h-4 w-4" /> Editar
+              </DropdownMenuItem>
+              {item.status === "pendente" && !item.document_request_id && (
+                <DropdownMenuItem onSelect={() => solicitar.mutate()} disabled={solicitar.isPending}>
+                  <Send className="mr-2 h-4 w-4" /> Criar solicitação
+                </DropdownMenuItem>
+              )}
+              {isAdmin && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      if (window.confirm("Excluir este item do checklist?")) remove.mutate();
+                    }}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TooltipProvider>
       </div>
     </li>
   );
