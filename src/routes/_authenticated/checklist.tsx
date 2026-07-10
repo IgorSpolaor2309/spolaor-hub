@@ -15,10 +15,13 @@ import { EmptyState } from "@/components/sc/EmptyState";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { formatBR, todayLocalYmd } from "@/lib/dates";
 import { toast } from "sonner";
-import { ListChecks, Plus, Check, Inbox as InboxIcon, Send, Sparkles, ChevronDown, ChevronRight, MoreHorizontal, Search, ArrowUp, ArrowDown, ArrowUpDown, RotateCw, Trash2, Pencil, X } from "lucide-react";
+import { ListChecks, Plus, Check, Inbox as InboxIcon, Send, Sparkles, ChevronDown, ChevronRight, MoreHorizontal, Search, ArrowUp, ArrowDown, ArrowUpDown, RotateCw, Trash2, Pencil, X, SlidersHorizontal } from "lucide-react";
 import { AttachmentButton } from "@/components/sc/AttachmentButton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Progress } from "@/components/ui/progress";
+import { useRef } from "react";
 
 function useDebounced<T>(value: T, delay = 300): T {
   const [v, setV] = useState(value);
@@ -206,6 +209,93 @@ const PRAZO_BADGE: Record<PrazoTone, { label: string; tone: string; icon: string
   sem: null,
 };
 
+function renderFilterFields(p: any) {
+  const { fClient, setFClient, fResp, setFResp, fCat, setFCat, fStatus, setFStatus, fQuick, setFQuick, fOrigem, setFOrigem, fVisivel, setFVisivel, clients, collabs } = p;
+  return (
+    <>
+      <div>
+        <Label className="text-xs">Empresa</Label>
+        <Select value={fClient} onValueChange={setFClient}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas</SelectItem>
+            {clients.map((c: any) => (
+              <SelectItem key={c.id} value={c.id}>{c.nome_fantasia || c.razao_social}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label className="text-xs">Responsável</Label>
+        <Select value={fResp} onValueChange={setFResp}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            {collabs.map((c: any) => (
+              <SelectItem key={c.user_id} value={c.user_id}>{c.nome_completo}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label className="text-xs">Categoria</Label>
+        <Select value={fCat} onValueChange={setFCat}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas</SelectItem>
+            {CATEGORIAS.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label className="text-xs">Status</Label>
+        <Select value={fStatus} onValueChange={setFStatus}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="open">Em aberto</SelectItem>
+            <SelectItem value="all">Todos</SelectItem>
+            {STATUS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label className="text-xs">Prazo</Label>
+        <Select value={fQuick} onValueChange={(v: any) => setFQuick(v)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Qualquer</SelectItem>
+            <SelectItem value="atrasado">🔴 Atrasado</SelectItem>
+            <SelectItem value="hoje">🟠 Vence hoje</SelectItem>
+            <SelectItem value="3dias">🟡 Próximos 3 dias</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label className="text-xs">Origem</Label>
+        <Select value={fOrigem} onValueChange={(v: any) => setFOrigem(v)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas</SelectItem>
+            <SelectItem value="automatico">Automático do plano</SelectItem>
+            <SelectItem value="manual">Manual</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label className="text-xs">Visível ao cliente</Label>
+        <Select value={fVisivel} onValueChange={(v: any) => setFVisivel(v)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="yes">Sim</SelectItem>
+            <SelectItem value="no">Não</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    </>
+  );
+}
+
 function ChecklistPage() {
   const { role, userId, loading } = useCurrentUser();
   const qc = useQueryClient();
@@ -230,6 +320,39 @@ function ChecklistPage() {
   const changeSelectedComp = (v: string) => { setSelectedComp(v); savePrefs({ selectedComp: v }); };
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  // Keyboard shortcuts: ←/→ change competência, Ctrl/Cmd+F focus search.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const inField = !!target && (
+        target.tagName === "INPUT" || target.tagName === "TEXTAREA" ||
+        target.tagName === "SELECT" || target.isContentEditable
+      );
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        searchRef.current?.focus();
+        searchRef.current?.select();
+        return;
+      }
+      if (inField) return;
+      if (e.key === "ArrowLeft") {
+        setSelectedComp((c) => {
+          const base = c === "all" ? defaultCompetencia() : c;
+          const next = shiftComp(base, -1); savePrefs({ selectedComp: next }); return next;
+        });
+      } else if (e.key === "ArrowRight") {
+        setSelectedComp((c) => {
+          const base = c === "all" ? defaultCompetencia() : c;
+          const next = shiftComp(base, 1); savePrefs({ selectedComp: next }); return next;
+        });
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   // When arriving from the client history section: pre-expand the matching group.
   const forceExpandKey = routeSearch.expand && routeSearch.client && routeSearch.comp
@@ -459,12 +582,13 @@ function ChecklistPage() {
 
       <Card className="mb-4 p-4">
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 min-w-[240px]">
+          <div className="relative flex-1 min-w-[200px]">
             <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
+              ref={searchRef}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Buscar por empresa, item, categoria ou observação…"
+              placeholder="Buscar por empresa, item, categoria… (Ctrl+F)"
               className="pl-8 pr-8"
               aria-label="Buscar itens do checklist"
             />
@@ -480,93 +604,35 @@ function ChecklistPage() {
             )}
           </div>
           {activeFiltersCount > 0 && (
-            <Badge variant="secondary">Filtros ativos ({activeFiltersCount})</Badge>
+            <Badge variant="secondary" className="hidden sm:inline-flex">Filtros ativos ({activeFiltersCount})</Badge>
           )}
-          <Button variant="ghost" size="sm" onClick={clearFilters} disabled={activeFiltersCount === 0}>
+          <Button variant="ghost" size="sm" onClick={clearFilters} disabled={activeFiltersCount === 0} className="hidden md:inline-flex">
             Limpar filtros
           </Button>
+          <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+            <SheetTrigger asChild>
+              <Button size="sm" variant="outline" className="md:hidden" aria-label="Abrir filtros">
+                <SlidersHorizontal className="mr-2 h-4 w-4" />
+                Filtros{activeFiltersCount > 0 ? ` (${activeFiltersCount})` : ""}
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[92vw] max-w-sm overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>Filtros</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4 grid gap-3">
+                {renderFilterFields({ fClient, setFClient, fResp, setFResp, fCat, setFCat, fStatus, setFStatus, fQuick, setFQuick, fOrigem, setFOrigem, fVisivel, setFVisivel, clients, collabs })}
+                <Button variant="outline" onClick={clearFilters} disabled={activeFiltersCount === 0}>
+                  Limpar filtros
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-          <div>
-            <Label className="text-xs">Empresa</Label>
-            <Select value={fClient} onValueChange={setFClient}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                {clients.map((c: any) => (
-                  <SelectItem key={c.id} value={c.id}>{c.nome_fantasia || c.razao_social}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs">Responsável</Label>
-            <Select value={fResp} onValueChange={setFResp}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                {collabs.map((c: any) => (
-                  <SelectItem key={c.user_id} value={c.user_id}>{c.nome_completo}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs">Categoria</Label>
-            <Select value={fCat} onValueChange={setFCat}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                {CATEGORIAS.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs">Status</Label>
-            <Select value={fStatus} onValueChange={setFStatus}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="open">Em aberto</SelectItem>
-                <SelectItem value="all">Todos</SelectItem>
-                {STATUS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs">Prazo</Label>
-            <Select value={fQuick} onValueChange={(v: any) => setFQuick(v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Qualquer</SelectItem>
-                <SelectItem value="atrasado">🔴 Atrasado</SelectItem>
-                <SelectItem value="hoje">🟠 Vence hoje</SelectItem>
-                <SelectItem value="3dias">🟡 Próximos 3 dias</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs">Origem</Label>
-            <Select value={fOrigem} onValueChange={(v: any) => setFOrigem(v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                <SelectItem value="automatico">Automático do plano</SelectItem>
-                <SelectItem value="manual">Manual</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs">Visível ao cliente</Label>
-            <Select value={fVisivel} onValueChange={(v: any) => setFVisivel(v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="yes">Sim</SelectItem>
-                <SelectItem value="no">Não</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="hidden gap-3 md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
+          {renderFilterFields({ fClient, setFClient, fResp, setFResp, fCat, setFCat, fStatus, setFStatus, fQuick, setFQuick, fOrigem, setFOrigem, fVisivel, setFVisivel, clients, collabs })}
         </div>
+
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
           {viewMode === "list" ? (
             <div className="flex flex-wrap items-center gap-2">
@@ -735,9 +801,12 @@ function GroupedView({ items, planByClient, isAdmin, singleComp, forceExpandKey,
                   {validos > 0 ? `${conc} de ${validos} concluídos` : "Sem itens"} · {rec} recebidos · {pend} pendentes
                   {canc > 0 ? ` · ${canc} cancelados` : ""} · {total} no total
                 </div>
+                {validos > 0 && (
+                  <Progress value={pct} className="mt-2 h-1.5" aria-label={`Progresso ${pct}%`} />
+                )}
               </div>
               <div className="shrink-0 text-right">
-                <div className="text-lg font-semibold">{validos ? `${pct}%` : "—"}</div>
+                <div className="text-lg font-semibold tabular-nums">{validos ? `${pct}%` : "—"}</div>
               </div>
             </button>
             {isOpen && (
