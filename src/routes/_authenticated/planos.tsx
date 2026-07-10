@@ -410,7 +410,8 @@ function PlanItemDialog({ planId, initial, onDone }: { planId: string; initial: 
           ))}
         </div>
       </div>
-      <DialogFooter>
+      <DialogFooter className="gap-2 sm:justify-between">
+        {isEdit ? <ApplyToCurrentButton planItemId={initial.id} /> : <span />}
         <Button disabled={!f.titulo.trim() || save.isPending} onClick={() => save.mutate()}>
           {save.isPending ? "Salvando…" : isEdit ? "Salvar" : "Criar item"}
         </Button>
