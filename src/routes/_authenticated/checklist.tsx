@@ -209,6 +209,93 @@ const PRAZO_BADGE: Record<PrazoTone, { label: string; tone: string; icon: string
   sem: null,
 };
 
+function renderFilterFields(p: any) {
+  const { fClient, setFClient, fResp, setFResp, fCat, setFCat, fStatus, setFStatus, fQuick, setFQuick, fOrigem, setFOrigem, fVisivel, setFVisivel, clients, collabs } = p;
+  return (
+    <>
+      <div>
+        <Label className="text-xs">Empresa</Label>
+        <Select value={fClient} onValueChange={setFClient}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas</SelectItem>
+            {clients.map((c: any) => (
+              <SelectItem key={c.id} value={c.id}>{c.nome_fantasia || c.razao_social}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label className="text-xs">Responsável</Label>
+        <Select value={fResp} onValueChange={setFResp}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            {collabs.map((c: any) => (
+              <SelectItem key={c.user_id} value={c.user_id}>{c.nome_completo}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label className="text-xs">Categoria</Label>
+        <Select value={fCat} onValueChange={setFCat}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas</SelectItem>
+            {CATEGORIAS.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label className="text-xs">Status</Label>
+        <Select value={fStatus} onValueChange={setFStatus}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="open">Em aberto</SelectItem>
+            <SelectItem value="all">Todos</SelectItem>
+            {STATUS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label className="text-xs">Prazo</Label>
+        <Select value={fQuick} onValueChange={(v: any) => setFQuick(v)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Qualquer</SelectItem>
+            <SelectItem value="atrasado">🔴 Atrasado</SelectItem>
+            <SelectItem value="hoje">🟠 Vence hoje</SelectItem>
+            <SelectItem value="3dias">🟡 Próximos 3 dias</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label className="text-xs">Origem</Label>
+        <Select value={fOrigem} onValueChange={(v: any) => setFOrigem(v)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas</SelectItem>
+            <SelectItem value="automatico">Automático do plano</SelectItem>
+            <SelectItem value="manual">Manual</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label className="text-xs">Visível ao cliente</Label>
+        <Select value={fVisivel} onValueChange={(v: any) => setFVisivel(v)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="yes">Sim</SelectItem>
+            <SelectItem value="no">Não</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    </>
+  );
+}
+
 function ChecklistPage() {
   const { role, userId, loading } = useCurrentUser();
   const qc = useQueryClient();
