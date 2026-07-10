@@ -557,6 +557,7 @@ function ItemDialog({ clients, collabs, initial, onDone }: any) {
         prazo: f.prazo || null,
         competencia: f.competencia || null,
         observacao: f.observacao || null,
+        visivel_cliente: f.visivel_cliente,
       };
       if (isEdit) {
         const { error } = await supabase.from("client_checklist_items").update(payload).eq("id", initial.id);
