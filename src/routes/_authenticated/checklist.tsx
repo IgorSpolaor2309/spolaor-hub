@@ -498,7 +498,7 @@ function ItemRow({ item, isAdmin, onEdit, onChange }: any) {
       </div>
       <div className="flex shrink-0 items-center gap-1">
         {item.documents?.storage_path && (
-          <AttachmentButton storagePath={item.documents.storage_path} label="" iconOnly title="Abrir documento vinculado" />
+          <AttachmentButton storagePath={item.documents.storage_path} label="Documento" size="sm" variant="ghost" className="h-8 px-2" />
         )}
         {item.status === "pendente" && !item.document_request_id && (
           <Button size="sm" variant="ghost" title="Solicitar documento ao cliente"
