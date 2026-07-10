@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedValidadesRouteImport } from './routes/_authenticated/validades'
 import { Route as AuthenticatedSolicitacoesRouteImport } from './routes/_authenticated/solicitacoes'
+import { Route as AuthenticatedPlanosRouteImport } from './routes/_authenticated/planos'
 import { Route as AuthenticatedPendenciasRouteImport } from './routes/_authenticated/pendencias'
 import { Route as AuthenticatedNotificacoesRouteImport } from './routes/_authenticated/notificacoes'
 import { Route as AuthenticatedModelosRouteImport } from './routes/_authenticated/modelos'
@@ -63,6 +64,11 @@ const AuthenticatedSolicitacoesRoute =
     path: '/solicitacoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlanosRoute = AuthenticatedPlanosRouteImport.update({
+  id: '/planos',
+  path: '/planos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPendenciasRoute = AuthenticatedPendenciasRouteImport.update({
   id: '/pendencias',
   path: '/pendencias',
@@ -174,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/modelos': typeof AuthenticatedModelosRoute
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/pendencias': typeof AuthenticatedPendenciasRoute
+  '/planos': typeof AuthenticatedPlanosRoute
   '/solicitacoes': typeof AuthenticatedSolicitacoesRoute
   '/validades': typeof AuthenticatedValidadesRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
@@ -197,6 +204,7 @@ export interface FileRoutesByTo {
   '/modelos': typeof AuthenticatedModelosRoute
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/pendencias': typeof AuthenticatedPendenciasRoute
+  '/planos': typeof AuthenticatedPlanosRoute
   '/solicitacoes': typeof AuthenticatedSolicitacoesRoute
   '/validades': typeof AuthenticatedValidadesRoute
   '/': typeof AuthenticatedIndexRoute
@@ -223,6 +231,7 @@ export interface FileRoutesById {
   '/_authenticated/modelos': typeof AuthenticatedModelosRoute
   '/_authenticated/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/_authenticated/pendencias': typeof AuthenticatedPendenciasRoute
+  '/_authenticated/planos': typeof AuthenticatedPlanosRoute
   '/_authenticated/solicitacoes': typeof AuthenticatedSolicitacoesRoute
   '/_authenticated/validades': typeof AuthenticatedValidadesRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
@@ -250,6 +259,7 @@ export interface FileRouteTypes {
     | '/modelos'
     | '/notificacoes'
     | '/pendencias'
+    | '/planos'
     | '/solicitacoes'
     | '/validades'
     | '/clientes/$id'
@@ -273,6 +283,7 @@ export interface FileRouteTypes {
     | '/modelos'
     | '/notificacoes'
     | '/pendencias'
+    | '/planos'
     | '/solicitacoes'
     | '/validades'
     | '/'
@@ -298,6 +309,7 @@ export interface FileRouteTypes {
     | '/_authenticated/modelos'
     | '/_authenticated/notificacoes'
     | '/_authenticated/pendencias'
+    | '/_authenticated/planos'
     | '/_authenticated/solicitacoes'
     | '/_authenticated/validades'
     | '/_authenticated/'
@@ -353,6 +365,13 @@ declare module '@tanstack/react-router' {
       path: '/solicitacoes'
       fullPath: '/solicitacoes'
       preLoaderRoute: typeof AuthenticatedSolicitacoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/planos': {
+      id: '/_authenticated/planos'
+      path: '/planos'
+      fullPath: '/planos'
+      preLoaderRoute: typeof AuthenticatedPlanosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/pendencias': {
@@ -506,6 +525,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedModelosRoute: typeof AuthenticatedModelosRoute
   AuthenticatedNotificacoesRoute: typeof AuthenticatedNotificacoesRoute
   AuthenticatedPendenciasRoute: typeof AuthenticatedPendenciasRoute
+  AuthenticatedPlanosRoute: typeof AuthenticatedPlanosRoute
   AuthenticatedSolicitacoesRoute: typeof AuthenticatedSolicitacoesRoute
   AuthenticatedValidadesRoute: typeof AuthenticatedValidadesRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -528,6 +548,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedModelosRoute: AuthenticatedModelosRoute,
   AuthenticatedNotificacoesRoute: AuthenticatedNotificacoesRoute,
   AuthenticatedPendenciasRoute: AuthenticatedPendenciasRoute,
+  AuthenticatedPlanosRoute: AuthenticatedPlanosRoute,
   AuthenticatedSolicitacoesRoute: AuthenticatedSolicitacoesRoute,
   AuthenticatedValidadesRoute: AuthenticatedValidadesRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
