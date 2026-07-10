@@ -393,7 +393,7 @@ function GroupedView({ items, planByClient, isAdmin, onEdit, onChange }: any) {
           <div key={g.key} className="rounded-md border">
             <button
               type="button"
-              onClick={() => setCollapsed((c) => ({ ...c, [g.key]: !c[g.key] === false ? true : false }))}
+              onClick={() => setCollapsed((c) => ({ ...c, [g.key]: !c[g.key] }))}
               className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-muted/40"
             >
               {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
