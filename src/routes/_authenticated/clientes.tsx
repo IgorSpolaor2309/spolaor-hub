@@ -26,6 +26,8 @@ import {
 import { useServerFn } from "@tanstack/react-start";
 import { adminSetClientStatus } from "@/lib/admin-users.functions";
 import { getAdminClientsPage } from "@/lib/access-diagnostics.functions";
+import { DemoBadge } from "@/components/sc/DemoBadge";
+import { DemoFilter, matchesDemoFilter, type DemoFilterValue } from "@/components/sc/DemoFilter";
 
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { CLIENT_TYPES, labelOf } from "@/lib/sc-types";
