@@ -154,6 +154,7 @@ function ProcessTypesPage() {
             <SelectItem value="antigos">Mais antigos</SelectItem>
           </SelectContent>
         </Select>
+        <div className="ml-auto"><DemoFilter value={demoFilter} onChange={setDemoFilter} /></div>
       </div>
 
       <Card className="p-2">
