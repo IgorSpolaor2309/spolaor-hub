@@ -38,6 +38,7 @@ function HomologPage() {
   const summaryFn = useServerFn(homologSummary);
   const createFn = useServerFn(homologCreateEnvironment);
   const wipeFn = useServerFn(homologWipe);
+  const wipePreviewFn = useServerFn(homologWipePreview);
   const resetFn = useServerFn(homologReset);
   const batchesFn = useServerFn(homologListBatches);
   const auditFn = useServerFn(homologListAudit);
