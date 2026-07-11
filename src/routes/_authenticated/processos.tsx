@@ -123,6 +123,11 @@ function ProcessesPage() {
       if (fStatus !== "all" && r.status !== fStatus) return false;
       if (fPrio !== "all" && r.prioridade !== fPrio) return false;
       if (fResp !== "all" && r.responsavel_id !== fResp) return false;
+      if (fPrazo !== "all") {
+        if (r.status === "concluido" || r.status === "cancelado") return false;
+        const k = prazoKind(r.prazo_final);
+        if (k !== fPrazo) return false;
+      }
       if (q) {
         const hay = `${r.clients?.razao_social ?? ""} ${r.clients?.nome_fantasia ?? ""} ${r.process_types?.nome ?? ""} ${r.observacoes ?? ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
@@ -135,6 +140,7 @@ function ProcessesPage() {
         case "responsavel": return (a.responsavel?.full_name ?? "~").localeCompare(b.responsavel?.full_name ?? "~");
         case "status": return (a.status ?? "").localeCompare(b.status ?? "");
         case "abertura": return (b.data_abertura ?? "").localeCompare(a.data_abertura ?? "");
+        case "progresso": return (b.progresso ?? 0) - (a.progresso ?? 0);
         case "prazo":
         default: {
           const av = a.prazo_final ?? "9999-99-99";
@@ -144,7 +150,29 @@ function ProcessesPage() {
       }
     });
     return arr;
-  }, [listQ.data, search, fClient, fType, fStatus, fPrio, fResp, sortBy]);
+  }, [listQ.data, search, fClient, fType, fStatus, fPrio, fResp, fPrazo, sortBy]);
+
+  const kpis = useMemo(() => {
+    const arr = listQ.data ?? [];
+    const abertos = arr.filter((r: any) => r.status !== "concluido" && r.status !== "cancelado");
+    return {
+      total: arr.length,
+      abertos: abertos.length,
+      em_andamento: arr.filter((r: any) => r.status === "em_andamento").length,
+      aguardando: arr.filter((r: any) => r.status === "aguardando_cliente" || r.status === "aguardando_orgao").length,
+      vencidos: abertos.filter((r: any) => prazoKind(r.prazo_final) === "vencido").length,
+      hoje: abertos.filter((r: any) => prazoKind(r.prazo_final) === "hoje").length,
+      em_breve: abertos.filter((r: any) => prazoKind(r.prazo_final) === "em_breve").length,
+      concluidos: arr.filter((r: any) => r.status === "concluido").length,
+    };
+  }, [listQ.data]);
+
+  const activeFilters = [fClient, fType, fStatus, fPrio, fResp, fPrazo].filter((v) => v !== "all").length + (search ? 1 : 0);
+  const clearFilters = () => {
+    setSearch(""); setFClient("all"); setFType("all"); setFStatus("all");
+    setFPrio("all"); setFResp("all"); setFPrazo("all");
+  };
+
 
   if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
   if (role !== "admin" && role !== "collaborator") {
