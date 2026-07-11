@@ -2,7 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, UserCog, ClipboardList, FileText, MessageSquare,
   Bell, Settings, LogOut, Briefcase, History, Inbox, CalendarClock, Receipt,
-  KanbanSquare, MessagesSquare, Plug, ListChecks, Package, Workflow, GitBranch,
+  KanbanSquare, MessagesSquare, Plug, ListChecks, Package, Workflow, GitBranch, FlaskConical,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
