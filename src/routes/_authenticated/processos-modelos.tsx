@@ -308,10 +308,22 @@ function StepDialog({ typeId, initial, nextOrdem, onDone }: { typeId: string; in
     ordem: initial?.ordem ?? nextOrdem,
     departamento: initial?.departamento ?? "",
     prazo_dias: initial?.prazo_dias ?? "",
+    prazo_tipo: initial?.prazo_tipo ?? "abertura",
+    responsavel_padrao_id: initial?.responsavel_padrao_id ?? "",
     obrigatoria: initial?.obrigatoria ?? true,
     exige_documento: initial?.exige_documento ?? false,
     visivel_cliente: initial?.visivel_cliente ?? false,
     pode_concluir_manual: initial?.pode_concluir_manual ?? true,
+  });
+  const collabsQ = useQuery({
+    queryKey: ["processes-collabs"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("collaborators")
+        .select("id, user_id, nome_completo").eq("status", "active").order("nome_completo");
+      if (error) throw error;
+      return (data ?? []).filter((c: any) => c.user_id);
+    },
   });
   const save = useMutation({
     mutationFn: async () => {
@@ -322,6 +334,8 @@ function StepDialog({ typeId, initial, nextOrdem, onDone }: { typeId: string; in
         ordem: Number(f.ordem) || 0,
         departamento: f.departamento || null,
         prazo_dias: f.prazo_dias === "" ? null : Number(f.prazo_dias),
+        prazo_tipo: f.prazo_tipo,
+        responsavel_padrao_id: f.responsavel_padrao_id || null,
         obrigatoria: f.obrigatoria,
         exige_documento: f.exige_documento,
         visivel_cliente: f.visivel_cliente,
@@ -359,6 +373,28 @@ function StepDialog({ typeId, initial, nextOrdem, onDone }: { typeId: string; in
             <Label>Prazo (dias)</Label>
             <Input type="number" value={f.prazo_dias} onChange={(e) => setF({ ...f, prazo_dias: e.target.value as any })} />
           </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Contagem do prazo</Label>
+            <Select value={f.prazo_tipo} onValueChange={(v) => setF({ ...f, prazo_tipo: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="abertura">A partir da abertura do processo</SelectItem>
+                <SelectItem value="anterior">Após a conclusão da etapa anterior</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5 sm:col-span-3">
+            <Label>Responsável padrão</Label>
+            <Select value={f.responsavel_padrao_id || "__none__"} onValueChange={(v) => setF({ ...f, responsavel_padrao_id: v === "__none__" ? "" : v })}>
+              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— Nenhum —</SelectItem>
+                {(collabsQ.data ?? []).map((c: any) => (
+                  <SelectItem key={c.user_id} value={c.user_id}>{c.nome_completo}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div className="space-y-1.5">
           <Label>Descrição</Label>
@@ -386,3 +422,4 @@ function StepDialog({ typeId, initial, nextOrdem, onDone }: { typeId: string; in
     </DialogContent>
   );
 }
+
