@@ -1204,6 +1204,100 @@ export type Database = {
         }
         Relationships: []
       }
+      demo_manual_test_steps: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          persona_email: string
+          persona_label: string
+          persona_role: string
+          run_id: string
+          status: string
+          step_code: string
+          step_label: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          persona_email: string
+          persona_label: string
+          persona_role: string
+          run_id: string
+          status?: string
+          step_code: string
+          step_label: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          persona_email?: string
+          persona_label?: string
+          persona_role?: string
+          run_id?: string
+          status?: string
+          step_code?: string
+          step_label?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_manual_test_steps_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "demo_validation_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      demo_validation_runs: {
+        Row: {
+          admin_id: string
+          batch_id: string
+          checks_json: Json
+          counts_json: Json
+          created_at: string
+          id: string
+          overall: string
+          run_label: string | null
+        }
+        Insert: {
+          admin_id: string
+          batch_id: string
+          checks_json?: Json
+          counts_json?: Json
+          created_at?: string
+          id?: string
+          overall: string
+          run_label?: string | null
+        }
+        Update: {
+          admin_id?: string
+          batch_id?: string
+          checks_json?: Json
+          counts_json?: Json
+          created_at?: string
+          id?: string
+          overall?: string
+          run_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_validation_runs_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "demo_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_requests: {
         Row: {
           attachment_final_name: string | null
@@ -2455,6 +2549,48 @@ export type Database = {
         Args: { _label?: string }
         Returns: Json
       }
+      admin_demo_list_manual_steps: {
+        Args: { _run_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          notes: string | null
+          persona_email: string
+          persona_label: string
+          persona_role: string
+          run_id: string
+          status: string
+          step_code: string
+          step_label: string
+          updated_at: string
+          updated_by: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "demo_manual_test_steps"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      admin_demo_list_validation_runs: {
+        Args: { _batch_id?: string }
+        Returns: {
+          admin_id: string
+          batch_id: string
+          checks_json: Json
+          counts_json: Json
+          created_at: string
+          id: string
+          overall: string
+          run_label: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "demo_validation_runs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       admin_demo_orphan_auth_user_ids: {
         Args: never
         Returns: {
@@ -2477,6 +2613,29 @@ export type Database = {
         Returns: Json
       }
       admin_demo_summary: { Args: never; Returns: Json }
+      admin_demo_update_manual_step: {
+        Args: { _notes?: string; _status: string; _step_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          notes: string | null
+          persona_email: string
+          persona_label: string
+          persona_role: string
+          run_id: string
+          status: string
+          step_code: string
+          step_label: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "demo_manual_test_steps"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       admin_demo_validate_batch: { Args: { p_batch_id: string }; Returns: Json }
       admin_demo_wipe: { Args: { _batch_id?: string }; Returns: Json }
       admin_demo_wipe_preview: { Args: { _batch_id?: string }; Returns: Json }
