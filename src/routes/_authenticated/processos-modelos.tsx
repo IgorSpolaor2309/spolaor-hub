@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/sc/PageHeader";
@@ -10,13 +10,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { DeleteButton } from "@/components/sc/DeleteButton";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { toast } from "sonner";
-import { GitBranch, Plus, Pencil, ChevronDown, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
+import { GitBranch, Plus, Pencil, ChevronDown, ChevronRight, ArrowUp, ArrowDown, Eye, EyeOff, Globe, Lock, RefreshCw, CheckCircle2, AlertCircle, Clock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/processos-modelos")({
   component: ProcessTypesPage,
