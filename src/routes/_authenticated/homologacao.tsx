@@ -700,59 +700,130 @@ function ValidationHistoryCard({ batchId }: { batchId: string }) {
         </div>
       )}
 
-      {selectedRun && (
-        <div className="space-y-3 pt-2">
-          <h3 className="text-sm font-semibold">Roteiro manual por persona</h3>
-          {steps.isLoading ? (
-            <div className="text-sm text-muted-foreground">Carregando passos…</div>
-          ) : Object.keys(stepsByPersona).length === 0 ? (
-            <div className="text-sm text-muted-foreground">Nenhum passo semeado para esta execução.</div>
-          ) : (
-            Object.entries(stepsByPersona).map(([key, list]) => {
-              const [role, email, label] = key.split("::");
-              return (
-                <div key={key} className="rounded border p-3 space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline">{role}</Badge>
-                    <span className="font-medium text-sm">{label}</span>
-                    <code className="text-xs text-muted-foreground">{email}</code>
-                  </div>
-                  <div className="grid gap-1">
-                    {list.map((s: any) => (
-                      <div key={s.id} className="flex flex-wrap items-center justify-between gap-2 rounded border p-2 text-sm">
-                        <div className="flex items-center gap-2">
-                          {s.status === "pass" ? (
-                            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                          ) : s.status === "fail" ? (
-                            <XCircle className="h-4 w-4 text-destructive" />
-                          ) : s.status === "skip" ? (
-                            <EyeOff className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <AlertTriangle className="h-4 w-4 text-amber-600" />
-                          )}
-                          <span>{s.step_label}</span>
-                          <Badge variant="outline" className="text-[10px]">{s.step_code}</Badge>
-                        </div>
-                        <div className="flex gap-1">
-                          {(["pass", "warn_as_fail", "skip", "pending"] as const).map(() => null)}
-                          <Button size="sm" variant={s.status === "pass" ? "default" : "outline"} disabled={updateMut.isPending}
-                            onClick={() => updateMut.mutate({ step_id: s.id, status: "pass" })}>Aprovar</Button>
-                          <Button size="sm" variant={s.status === "fail" ? "destructive" : "outline"} disabled={updateMut.isPending}
-                            onClick={() => updateMut.mutate({ step_id: s.id, status: "fail" })}>Reprovar</Button>
-                          <Button size="sm" variant={s.status === "skip" ? "secondary" : "outline"} disabled={updateMut.isPending}
-                            onClick={() => updateMut.mutate({ step_id: s.id, status: "skip" })}>Pular</Button>
-                          <Button size="sm" variant="ghost" disabled={updateMut.isPending}
-                            onClick={() => updateMut.mutate({ step_id: s.id, status: "pending", notes: null })}>Limpar</Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+      {selectedRun && (() => {
+        const run = runsList.find((r) => r.id === selectedRun);
+        const checks: any[] = (run?.checks_json as any[]) ?? [];
+        const autoPass = checks.filter((c) => c.status === "pass").length;
+        const autoWarn = checks.filter((c) => c.status === "warn").length;
+        const autoFail = checks.filter((c) => c.status === "fail").length;
+        const allSteps = (steps.data as any[]) ?? [];
+        const mPass = allSteps.filter((s) => s.status === "pass").length;
+        const mFail = allSteps.filter((s) => s.status === "fail").length;
+        const mSkip = allSteps.filter((s) => s.status === "skip").length;
+        const mPending = allSteps.filter((s) => s.status === "pending").length;
+
+        let consolidated: { label: string; variant: "default" | "secondary" | "destructive" };
+        if (autoFail > 0 || mFail > 0) consolidated = { label: "Reprovado", variant: "destructive" };
+        else if (autoWarn > 0) consolidated = { label: "Atenção", variant: "secondary" };
+        else if (mPending > 0) consolidated = { label: "Validação pendente", variant: "secondary" };
+        else consolidated = { label: "Aprovado", variant: "default" };
+
+        return (
+          <div className="space-y-3 pt-2" id="homolog-print-area">
+            <div className="rounded-md border p-3 space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Badge variant={consolidated.variant}>{consolidated.label}</Badge>
+                  <span className="text-sm font-medium">{run?.run_label || "—"}</span>
+                  <span className="text-xs text-muted-foreground">{fmtDate(run?.created_at)}</span>
                 </div>
-              );
-            })
-          )}
-        </div>
-      )}
+                <Button size="sm" variant="outline" onClick={() => window.print()} className="print:hidden">
+                  <Printer className="mr-1 h-4 w-4" /> Imprimir relatório
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                <div className="rounded border p-2"><div className="text-muted-foreground">Automáticos aprovados</div><div className="font-semibold text-base">{autoPass}</div></div>
+                <div className="rounded border p-2"><div className="text-muted-foreground">Alertas</div><div className="font-semibold text-base">{autoWarn}</div></div>
+                <div className="rounded border p-2"><div className="text-muted-foreground">Falhas automáticas</div><div className="font-semibold text-base">{autoFail}</div></div>
+                <div className="rounded border p-2"><div className="text-muted-foreground">Manuais aprovados</div><div className="font-semibold text-base">{mPass}</div></div>
+                <div className="rounded border p-2"><div className="text-muted-foreground">Manuais reprovados</div><div className="font-semibold text-base">{mFail}</div></div>
+                <div className="rounded border p-2"><div className="text-muted-foreground">Pulados</div><div className="font-semibold text-base">{mSkip}</div></div>
+                <div className="rounded border p-2"><div className="text-muted-foreground">Pendentes</div><div className="font-semibold text-base">{mPending}</div></div>
+                <div className="rounded border p-2"><div className="text-muted-foreground">Lote</div><div className="font-mono text-[11px] break-all">{run?.batch_id?.slice(0, 8) || "—"}</div></div>
+              </div>
+            </div>
+
+            <div className="rounded-md border p-3 space-y-1">
+              <div className="text-xs font-medium uppercase text-muted-foreground">Checagens automáticas</div>
+              {checks.length === 0 ? (
+                <div className="text-xs text-muted-foreground">Sem checagens.</div>
+              ) : checks.map((c: any) => (
+                <div key={c.code} className="flex items-start justify-between gap-2 text-sm">
+                  <div className="flex items-start gap-2">
+                    {c.status === "pass" ? <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600" /> :
+                      c.status === "warn" ? <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-600" /> :
+                      <XCircle className="mt-0.5 h-4 w-4 text-destructive" />}
+                    <div>
+                      <div className="font-medium">{c.label}</div>
+                      <div className="text-xs text-muted-foreground">{c.detail}</div>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="shrink-0 text-[10px]">{c.code}</Badge>
+                </div>
+              ))}
+            </div>
+
+            <h3 className="text-sm font-semibold">Roteiro manual por persona</h3>
+            {steps.isLoading ? (
+              <div className="text-sm text-muted-foreground">Carregando passos…</div>
+            ) : Object.keys(stepsByPersona).length === 0 ? (
+              <div className="text-sm text-muted-foreground">Nenhum passo semeado para esta execução.</div>
+            ) : (
+              Object.entries(stepsByPersona).map(([key, list]) => {
+                const [role, email, label] = key.split("::");
+                const p = list.filter((s: any) => s.status === "pass").length;
+                const f = list.filter((s: any) => s.status === "fail").length;
+                const sk = list.filter((s: any) => s.status === "skip").length;
+                const pd = list.filter((s: any) => s.status === "pending").length;
+                return (
+                  <div key={key} className="rounded border p-3 space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">{role}</Badge>
+                      <span className="font-medium text-sm">{label}</span>
+                      <code className="text-xs text-muted-foreground">{email}</code>
+                      <span className="ml-auto text-xs text-muted-foreground">
+                        {p} aprovados · {pd} pendentes · {f} reprovados · {sk} pulados
+                      </span>
+                    </div>
+                    <div className="grid gap-1">
+                      {list.map((s: any) => (
+                        <div key={s.id} className="flex flex-wrap items-center justify-between gap-2 rounded border p-2 text-sm">
+                          <div className="flex items-center gap-2">
+                            {s.status === "pass" ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> :
+                              s.status === "fail" ? <XCircle className="h-4 w-4 text-destructive" /> :
+                              s.status === "skip" ? <EyeOff className="h-4 w-4 text-muted-foreground" /> :
+                              <AlertTriangle className="h-4 w-4 text-amber-600" />}
+                            <span>{s.step_label}</span>
+                            <Badge variant="outline" className="text-[10px]">{s.step_code}</Badge>
+                            {s.notes && <span className="text-xs text-muted-foreground italic">— {s.notes}</span>}
+                          </div>
+                          <div className="flex gap-1 print:hidden">
+                            <Button size="sm" variant={s.status === "pass" ? "default" : "outline"} disabled={updateMut.isPending}
+                              onClick={() => updateMut.mutate({ step_id: s.id, status: "pass" })}>Aprovar</Button>
+                            <Button size="sm" variant={s.status === "fail" ? "destructive" : "outline"} disabled={updateMut.isPending}
+                              onClick={() => updateMut.mutate({ step_id: s.id, status: "fail" })}>Reprovar</Button>
+                            <Button size="sm" variant={s.status === "skip" ? "secondary" : "outline"} disabled={updateMut.isPending}
+                              onClick={() => updateMut.mutate({ step_id: s.id, status: "skip" })}>Pular</Button>
+                            <Button size="sm" variant="ghost" disabled={updateMut.isPending}
+                              onClick={() => updateMut.mutate({ step_id: s.id, status: "pending", notes: null })}>Limpar</Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        );
+      })()}
+      <style>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          #homolog-print-area, #homolog-print-area * { visibility: visible !important; }
+          #homolog-print-area { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+      `}</style>
     </Card>
   );
 }
