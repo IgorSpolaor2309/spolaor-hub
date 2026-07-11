@@ -2565,6 +2565,10 @@ export type Database = {
       }
       client_staff_user_ids: { Args: { _client_id: string }; Returns: string[] }
       client_user_ids: { Args: { _client_id: string }; Returns: string[] }
+      collaborator_visible_to_user: {
+        Args: { _collab_id: string; _user_id: string }
+        Returns: boolean
+      }
       cron_generate_current_plan_checklist: { Args: never; Returns: Json }
       current_actor_role: { Args: never; Returns: string }
       generate_plan_checklist: { Args: { _competencia: string }; Returns: Json }
@@ -2628,6 +2632,10 @@ export type Database = {
       }
       user_has_client_access: {
         Args: { _client_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_owns_collaborator: {
+        Args: { _collab_id: string; _user_id: string }
         Returns: boolean
       }
     }
