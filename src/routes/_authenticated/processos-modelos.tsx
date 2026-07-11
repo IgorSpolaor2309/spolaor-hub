@@ -426,3 +426,100 @@ function StepDialog({ typeId, initial, nextOrdem, onDone }: { typeId: string; in
   );
 }
 
+
+function StepRequirements({ stepId, canEdit }: { stepId: string; canEdit: boolean }) {
+  const qc = useQueryClient();
+  const [showForm, setShowForm] = useState(false);
+  const [nome, setNome] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [obrigatorio, setObrigatorio] = useState(true);
+
+  const q = useQuery({
+    queryKey: ["process-step-requirements", stepId],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).from("process_step_requirements")
+        .select("*").eq("process_step_id", stepId).order("ordem").order("created_at");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["process-step-requirements", stepId] });
+
+  const add = useMutation({
+    mutationFn: async () => {
+      const nextOrdem = (q.data ?? []).length;
+      const { error } = await (supabase as any).from("process_step_requirements").insert({
+        process_step_id: stepId, nome: nome.trim(), descricao: descricao || null,
+        obrigatorio, ordem: nextOrdem,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Requisito criado"); setNome(""); setDescricao(""); setObrigatorio(true); setShowForm(false); invalidate(); },
+    onError: (e: any) => toast.error(e.message ?? "Falha"),
+  });
+
+  const toggleObrig = useMutation({
+    mutationFn: async ({ id, obrigatorio }: { id: string; obrigatorio: boolean }) => {
+      const { error } = await (supabase as any).from("process_step_requirements").update({ obrigatorio }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidate(),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase as any).from("process_step_requirements").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Requisito removido"); invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const items = q.data ?? [];
+  return (
+    <div className="mt-2 ml-8 rounded border-l-2 bg-muted/20 p-2 pl-3">
+      <div className="mb-1 flex items-center justify-between">
+        <div className="text-xs font-medium text-muted-foreground">Requisitos documentais ({items.length})</div>
+        {canEdit && (
+          <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => setShowForm((v) => !v)}>
+            <Plus className="mr-1 h-3 w-3" /> Adicionar
+          </Button>
+        )}
+      </div>
+      {items.length === 0 && !showForm && <p className="text-[11px] text-muted-foreground">Nenhum requisito cadastrado.</p>}
+      {items.length > 0 && (
+        <ul className="mb-1 space-y-1">
+          {items.map((r: any) => (
+            <li key={r.id} className="flex flex-wrap items-center gap-2 text-xs">
+              <span>{r.nome}</span>
+              {canEdit ? (
+                <button type="button" onClick={() => toggleObrig.mutate({ id: r.id, obrigatorio: !r.obrigatorio })}>
+                  <Badge variant={r.obrigatorio ? "secondary" : "outline"} className="cursor-pointer text-[10px]">
+                    {r.obrigatorio ? "Obrigatório" : "Opcional"}
+                  </Badge>
+                </button>
+              ) : (
+                <Badge variant={r.obrigatorio ? "secondary" : "outline"} className="text-[10px]">{r.obrigatorio ? "Obrigatório" : "Opcional"}</Badge>
+              )}
+              {r.descricao && <span className="text-muted-foreground">— {r.descricao}</span>}
+              {canEdit && <div className="ml-auto"><DeleteButton onConfirm={() => remove.mutate(r.id)} /></div>}
+            </li>
+          ))}
+        </ul>
+      )}
+      {showForm && canEdit && (
+        <div className="mt-2 grid gap-2 rounded border bg-background p-2">
+          <Input placeholder="Nome do documento (ex.: Contrato social assinado)" value={nome} onChange={(e) => setNome(e.target.value)} className="h-8" />
+          <Input placeholder="Descrição/orientação (opcional)" value={descricao} onChange={(e) => setDescricao(e.target.value)} className="h-8" />
+          <label className="flex items-center gap-2 text-xs">
+            <Checkbox checked={obrigatorio} onCheckedChange={(v) => setObrigatorio(!!v)} /> Obrigatório
+          </label>
+          <div className="flex gap-2">
+            <Button size="sm" disabled={!nome.trim() || add.isPending} onClick={() => add.mutate()}>Salvar</Button>
+            <Button size="sm" variant="ghost" onClick={() => setShowForm(false)}>Cancelar</Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
