@@ -24,6 +24,8 @@ const ITEMS: Item[] = [
   { to: "/pendencias", label: "Pendências", icon: ClipboardList, roles: ["admin", "collaborator"] },
   { to: "/checklist", label: "Checklist do Cliente", icon: ListChecks, roles: ["admin", "collaborator"] },
   { to: "/planos", label: "Planos", icon: Package, roles: ["admin", "collaborator"] },
+  { to: "/processos", label: "Processos", icon: Workflow, roles: ["admin", "collaborator"] },
+  { to: "/processos-modelos", label: "Modelos de processos", icon: GitBranch, roles: ["admin", "collaborator"] },
   { to: "/kanban", label: "Kanban", icon: KanbanSquare, roles: ["admin", "collaborator"] },
   { to: "/modelos", label: "Modelos de mensagens", icon: MessagesSquare, roles: ["admin", "collaborator"] },
   { to: "/documentos", label: "Documentos", icon: FileText, roles: ["admin", "collaborator"] },
