@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-type ClientPageRow = Record<string, unknown> & {
+type ClientPageRow = any & {
   id: string;
   client_fiscal_data: Record<string, unknown> | null;
   client_collaborators: Array<{
@@ -11,11 +11,6 @@ type ClientPageRow = Record<string, unknown> & {
   client_users: Array<{ id: string; ativo: boolean | null }>;
   client_commercial: Record<string, unknown> | null;
 };
-
-function includesPerson(value: string | null | undefined) {
-  const s = (value ?? "").toLowerCase();
-  return s.includes("bruno") || s.includes("igor");
-}
 
 export const getAdminClientsPage = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -158,6 +153,10 @@ export const homologAccessDiagnostic = createServerFn({ method: "GET" })
     const collaborators = allCollaboratorsRes.data ?? [];
     const links = allLinksRes.data ?? [];
     const authUsers = authUsersRes.data?.users ?? [];
+    const includesPerson = (value: string | null | undefined) => {
+      const s = (value ?? "").toLowerCase();
+      return s.includes("bruno") || s.includes("igor");
+    };
 
     const targetUserIds = new Set<string>();
     for (const user of authUsers) {
