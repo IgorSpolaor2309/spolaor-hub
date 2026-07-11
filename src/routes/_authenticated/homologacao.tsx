@@ -31,10 +31,13 @@ function fmtDate(s?: string | null) {
   return d.toLocaleString("pt-BR");
 }
 
+type Persona = { label: string; role: string; email: string; magic_link: string | null };
+
 function HomologPage() {
   const qc = useQueryClient();
   const [label, setLabel] = useState("Ambiente demo");
   const [wipePreview, setWipePreview] = useState<Record<string, number> | null>(null);
+  const [sessionPersonas, setSessionPersonas] = useState<Persona[] | null>(null);
 
   const summaryFn = useServerFn(homologSummary);
   const createFn = useServerFn(homologCreateEnvironment);
