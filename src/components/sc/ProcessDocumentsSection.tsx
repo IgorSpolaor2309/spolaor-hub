@@ -214,9 +214,28 @@ export function ProcessDocumentsSection({ processId, clientId, steps, canEdit }:
   );
 }
 
-function RequirementRow({ req, clientId, canEdit, onSet }:
-  { req: any; clientId: string; canEdit: boolean; onSet: (docId: string | null) => void }) {
+const REQ_STATUS_TONE: Record<string, string> = {
+  pendente: "bg-amber-100 text-amber-800",
+  solicitado: "bg-sky-100 text-sky-800",
+  em_andamento: "bg-indigo-100 text-indigo-800",
+  aguardando_cliente: "bg-amber-100 text-amber-800",
+  reenviar: "bg-amber-100 text-amber-800",
+  recebido: "bg-emerald-100 text-emerald-800",
+  concluido: "bg-emerald-100 text-emerald-800",
+  recusado: "bg-rose-100 text-rose-800",
+  cancelado: "bg-zinc-200 text-zinc-700",
+};
+const REQ_STATUS_LABEL: Record<string, string> = {
+  pendente: "Pendente", solicitado: "Solicitado", em_andamento: "Em andamento",
+  aguardando_cliente: "Aguardando cliente", reenviar: "Reenviar",
+  recebido: "Recebido", concluido: "Concluído", recusado: "Recusado", cancelado: "Cancelado",
+};
+
+function RequirementRow({ req, clientId, canEdit, onSet, processId, stepId, stepNome, activeRequest, onChanged }:
+  { req: any; clientId: string; canEdit: boolean; onSet: (docId: string | null) => void;
+    processId: string; stepId: string; stepNome: string; activeRequest: any | null; onChanged: () => void }) {
   const [open, setOpen] = useState(false);
+  const [reqOpen, setReqOpen] = useState(false);
   const doc = req.documents;
   const missing = !req.document_id;
   const removed = req.document_id && doc?.deleted_at;
@@ -229,12 +248,36 @@ function RequirementRow({ req, clientId, canEdit, onSet }:
       <span className={req.obrigatorio ? "font-medium" : ""}>{req.nome}</span>
       {req.obrigatorio ? <Badge variant="secondary" className="text-[10px]">Obrigatório</Badge>
         : <Badge variant="outline" className="text-[10px]">Opcional</Badge>}
-      {missing && <Badge className="bg-zinc-100 text-zinc-700">Pendente</Badge>}
+      {missing && !activeRequest && <Badge className="bg-zinc-100 text-zinc-700">Pendente</Badge>}
       {removed && <Badge className="bg-red-100 text-red-800">Documento removido</Badge>}
       {met && <span className="text-xs text-muted-foreground">· {doc?.nome}</span>}
+      {activeRequest && (
+        <Badge className={REQ_STATUS_TONE[activeRequest.status] ?? "bg-zinc-100 text-zinc-700"}>
+          Solicitação: {REQ_STATUS_LABEL[activeRequest.status] ?? activeRequest.status}
+          {activeRequest.prazo ? ` · prazo ${formatBR(activeRequest.prazo)}` : ""}
+        </Badge>
+      )}
       {req.observacao && <span className="text-[11px] text-muted-foreground italic">{req.observacao}</span>}
-      <div className="ml-auto flex items-center gap-1">
+      <div className="ml-auto flex flex-wrap items-center gap-1">
         {met && <AttachmentButton storagePath={doc?.storage_path} label="Abrir" />}
+        {activeRequest ? (
+          <Button asChild size="sm" variant="outline" className="h-7">
+            <Link to="/solicitacoes"><ExternalLink className="mr-1 h-3.5 w-3.5" /> Abrir solicitação</Link>
+          </Button>
+        ) : canEdit && !met && (
+          <>
+            <Dialog open={reqOpen} onOpenChange={setReqOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="default" className="h-7">
+                  <Send className="mr-1 h-3.5 w-3.5" /> Solicitar ao cliente
+                </Button>
+              </DialogTrigger>
+              {reqOpen && <RequestFromRequirementDialog
+                clientId={clientId} processId={processId} stepId={stepId} stepNome={stepNome} req={req}
+                onDone={() => { setReqOpen(false); onChanged(); }} onClose={() => setReqOpen(false)} />}
+            </Dialog>
+          </>
+        )}
         {canEdit && (
           <>
             <Dialog open={open} onOpenChange={setOpen}>
@@ -257,6 +300,98 @@ function RequirementRow({ req, clientId, canEdit, onSet }:
     </li>
   );
 }
+
+function RequestFromRequirementDialog({
+  clientId, processId, stepId, stepNome, req, onDone, onClose,
+}: {
+  clientId: string; processId: string; stepId: string; stepNome: string; req: any;
+  onDone: () => void; onClose: () => void;
+}) {
+  const [titulo, setTitulo] = useState<string>(req.nome ?? "");
+  const [descricao, setDescricao] = useState<string>(
+    [req.descricao, req.observacao, stepNome ? `Etapa: ${stepNome}` : null].filter(Boolean).join("\n"),
+  );
+  const [prazo, setPrazo] = useState<string>("");
+  const [urgencia, setUrgencia] = useState<string>("normal");
+  const [obsInterna, setObsInterna] = useState<string>("");
+
+  const create = useMutation({
+    mutationFn: async () => {
+      const payload: any = {
+        client_id: clientId,
+        titulo: titulo.trim(),
+        descricao: descricao || null,
+        urgencia,
+        prazo: prazo || null,
+        status: "solicitado",
+        tipo_solicitacao: "outro",
+        observacoes_internas: obsInterna || null,
+        company_process_id: processId,
+        company_process_step_id: stepId,
+        company_process_step_requirement_id: req.id,
+      };
+      const { error } = await (supabase as any).from("document_requests").insert(payload);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Solicitação criada e enviada ao cliente."); onDone(); },
+    onError: (e: any) => {
+      const msg = e?.message ?? "Falha ao criar solicitação.";
+      if (/uq_dr_active_per_requirement|duplicate/i.test(msg)) {
+        toast.error("Já existe uma solicitação ativa para este requisito.");
+      } else if (/row-level security|permission/i.test(msg)) {
+        toast.error("Sem permissão para esta empresa.");
+      } else toast.error(msg);
+    },
+  });
+
+  return (
+    <DialogContent className="max-w-lg">
+      <DialogHeader>
+        <DialogTitle>Solicitar documento ao cliente</DialogTitle>
+      </DialogHeader>
+      <div className="grid gap-3">
+        <div className="rounded border bg-muted/40 p-2 text-xs text-muted-foreground">
+          Vinculada ao requisito <span className="font-medium text-foreground">{req.nome}</span> da etapa <span className="font-medium text-foreground">{stepNome}</span>.
+        </div>
+        <div className="space-y-1.5">
+          <Label>Título *</Label>
+          <Input value={titulo} onChange={(e) => setTitulo(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Descrição / orientação ao cliente</Label>
+          <Textarea rows={3} value={descricao} onChange={(e) => setDescricao(e.target.value)} />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label>Prazo</Label>
+            <Input type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Urgência</Label>
+            <Select value={urgencia} onValueChange={setUrgencia}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="normal">Normal</SelectItem>
+                <SelectItem value="urgente">Urgente</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label>Observação interna (opcional)</Label>
+          <Textarea rows={2} value={obsInterna} onChange={(e) => setObsInterna(e.target.value)} />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+        <Button disabled={!titulo.trim() || create.isPending} onClick={() => create.mutate()}>
+          {create.isPending ? "Enviando…" : "Criar solicitação"}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+
 
 function LinkDocDialog({ processId, clientId, steps, onDone }:
   { processId: string; clientId: string; steps: Array<{ id: string; ordem: number; nome: string }>; onDone: () => void }) {
