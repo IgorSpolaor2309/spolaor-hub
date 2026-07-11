@@ -64,6 +64,7 @@ function CollaboratorsPage() {
   const getAdminCollaborators = useServerFn(getAdminCollaboratorsPage);
   const [editing, setEditing] = useState<CollabRow | null>(null);
   const [open, setOpen] = useState(false);
+  const [demoFilter, setDemoFilter] = useState<DemoFilterValue>("real");
 
   const { data: list = [], error: listError, isLoading } = useQuery({
     queryKey: ["collaborators"],
@@ -71,6 +72,7 @@ function CollaboratorsPage() {
       return (await getAdminCollaborators({})) as CollabRow[];
     },
   });
+  const filteredList = list.filter((c) => matchesDemoFilter(c, demoFilter));
 
   function openNew() {
     setEditing(null);
