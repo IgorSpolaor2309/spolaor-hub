@@ -108,7 +108,7 @@ function CollaboratorsPage() {
           />
         ) : isLoading ? (
           <p className="text-sm text-muted-foreground">Carregando…</p>
-        ) : list.length === 0 ? (
+        ) : filteredList.length === 0 ? (
           <EmptyState
             icon={<UserCog className="h-6 w-6" />}
             title="Nenhum colaborador cadastrado"
