@@ -122,7 +122,19 @@ function DocsPage() {
             <tbody>
               {filtered.map((d: any) => (
                 <tr key={d.id} className="border-b">
-                  <td className="py-3 pr-4 font-medium">{d.nome}</td>
+                  <td className="py-3 pr-4 font-medium">
+                    <div>{d.nome}</div>
+                    {(d.company_process_documents ?? []).length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {(d.company_process_documents as any[]).map((cpd) => (
+                          <Link key={cpd.id} to="/processos/$id" params={{ id: cpd.company_process_id }}
+                            className="inline-flex items-center gap-1 rounded bg-blue-50 px-1.5 py-0.5 text-[10px] text-blue-700 hover:underline">
+                            Processo: {cpd.company_processes?.process_types?.nome ?? "—"}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </td>
                   <td>
                     {d.client_id ? (
                       <Link to="/clientes/$id" params={{ id: d.client_id }} className="text-secondary hover:underline">
