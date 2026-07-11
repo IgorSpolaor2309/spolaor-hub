@@ -52,6 +52,8 @@ const STEP_STATUS_MAP = Object.fromEntries(STEP_STATUSES.map((s) => [s.value, s]
 const TIMELINE_TIPOS = new Set([
   "processo_aberto", "processo_status", "processo_responsavel", "processo_prazo",
   "processo_etapa_status", "processo_etapa_responsavel", "processo_etapa_prazo",
+  "processo_documento_vinculado", "processo_etapa_documento_vinculado", "processo_documento_desvinculado",
+  "processo_requisito_atendido", "processo_requisito_substituido", "processo_requisito_removido",
 ]);
 const TIMELINE_ICON: Record<string, any> = {
   processo_aberto: FilePlus2,
@@ -61,6 +63,12 @@ const TIMELINE_ICON: Record<string, any> = {
   processo_etapa_status: CheckCircle2,
   processo_etapa_responsavel: UserRound,
   processo_etapa_prazo: CalendarClock,
+  processo_documento_vinculado: Paperclip,
+  processo_etapa_documento_vinculado: Paperclip,
+  processo_documento_desvinculado: Paperclip,
+  processo_requisito_atendido: CheckCircle2,
+  processo_requisito_substituido: Paperclip,
+  processo_requisito_removido: XCircle,
 };
 const STATUS_LABEL: Record<string, string> = {
   nao_iniciado: "não iniciado", em_andamento: "em andamento",
