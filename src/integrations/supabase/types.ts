@@ -2124,6 +2124,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_bulk_set_model_visibility: {
+        Args: {
+          _include_requirements?: boolean
+          _process_type_id: string
+          _visible: boolean
+        }
+        Returns: Json
+      }
       admin_create_client_with_user:
         | {
             Args: { _papel?: string; _payload: Json; _user_id: string }
@@ -2157,6 +2165,10 @@ export type Database = {
       admin_soft_delete_client: {
         Args: { _client_id: string }
         Returns: undefined
+      }
+      admin_sync_process_visibility: {
+        Args: { _dry_run?: boolean; _mode: string; _process_type_id: string }
+        Returns: Json
       }
       apply_plan_change: {
         Args: { _client_id: string; _mode: string; _new_plan_id: string }
