@@ -18,6 +18,7 @@ import { AlertTriangle, FlaskConical, RotateCw, Trash2, Sparkles, Copy, External
 import {
   homologSummary, homologCreateEnvironment, homologWipe, homologWipePreview, homologReset,
   homologListBatches, homologListAudit, homologContaminationReport, homologRepairCaseA,
+  homologPurgeOrphanAuthUsers,
 } from "@/lib/homologacao.functions";
 import { homologAccessDiagnostic } from "@/lib/access-diagnostics.functions";
 
