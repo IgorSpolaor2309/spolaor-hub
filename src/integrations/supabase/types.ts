@@ -734,19 +734,25 @@ export type Database = {
       company_process_steps: {
         Row: {
           company_process_id: string
+          concluida_dentro_prazo: boolean | null
           concluida_por: string | null
           created_at: string
           data_conclusao: string | null
+          data_inicio: string | null
           departamento: string | null
           descricao: string | null
           exige_documento: boolean
           id: string
           nome: string
+          notif_vence_em_breve_em: string | null
+          notif_vencida_em: string | null
           obrigatoria: boolean
           observacoes: string | null
           ordem: number
           pode_concluir_manual: boolean
           prazo: string | null
+          prazo_dias: number | null
+          prazo_tipo: string
           process_step_id: string | null
           responsavel_id: string | null
           status: string
@@ -755,19 +761,25 @@ export type Database = {
         }
         Insert: {
           company_process_id: string
+          concluida_dentro_prazo?: boolean | null
           concluida_por?: string | null
           created_at?: string
           data_conclusao?: string | null
+          data_inicio?: string | null
           departamento?: string | null
           descricao?: string | null
           exige_documento?: boolean
           id?: string
           nome: string
+          notif_vence_em_breve_em?: string | null
+          notif_vencida_em?: string | null
           obrigatoria?: boolean
           observacoes?: string | null
           ordem?: number
           pode_concluir_manual?: boolean
           prazo?: string | null
+          prazo_dias?: number | null
+          prazo_tipo?: string
           process_step_id?: string | null
           responsavel_id?: string | null
           status?: string
@@ -776,19 +788,25 @@ export type Database = {
         }
         Update: {
           company_process_id?: string
+          concluida_dentro_prazo?: boolean | null
           concluida_por?: string | null
           created_at?: string
           data_conclusao?: string | null
+          data_inicio?: string | null
           departamento?: string | null
           descricao?: string | null
           exige_documento?: boolean
           id?: string
           nome?: string
+          notif_vence_em_breve_em?: string | null
+          notif_vencida_em?: string | null
           obrigatoria?: boolean
           observacoes?: string | null
           ordem?: number
           pode_concluir_manual?: boolean
           prazo?: string | null
+          prazo_dias?: number | null
+          prazo_tipo?: string
           process_step_id?: string | null
           responsavel_id?: string | null
           status?: string
@@ -818,13 +836,19 @@ export type Database = {
           created_at: string
           created_by: string | null
           data_abertura: string
+          data_conclusao: string | null
+          etapas_concluidas: number
           id: string
+          motivo_espera: string | null
           observacoes: string | null
           prazo_final: string | null
           prioridade: string
           process_type_id: string
+          progresso: number
           responsavel_id: string | null
           status: string
+          status_changed_at: string
+          total_etapas: number
           updated_at: string
         }
         Insert: {
@@ -832,13 +856,19 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data_abertura?: string
+          data_conclusao?: string | null
+          etapas_concluidas?: number
           id?: string
+          motivo_espera?: string | null
           observacoes?: string | null
           prazo_final?: string | null
           prioridade?: string
           process_type_id: string
+          progresso?: number
           responsavel_id?: string | null
           status?: string
+          status_changed_at?: string
+          total_etapas?: number
           updated_at?: string
         }
         Update: {
@@ -846,13 +876,19 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data_abertura?: string
+          data_conclusao?: string | null
+          etapas_concluidas?: number
           id?: string
+          motivo_espera?: string | null
           observacoes?: string | null
           prazo_final?: string | null
           prioridade?: string
           process_type_id?: string
+          progresso?: number
           responsavel_id?: string | null
           status?: string
+          status_changed_at?: string
+          total_etapas?: number
           updated_at?: string
         }
         Relationships: [
@@ -1557,7 +1593,9 @@ export type Database = {
           ordem: number
           pode_concluir_manual: boolean
           prazo_dias: number | null
+          prazo_tipo: string
           process_type_id: string
+          responsavel_padrao_id: string | null
           updated_at: string
           visivel_cliente: boolean
         }
@@ -1572,7 +1610,9 @@ export type Database = {
           ordem?: number
           pode_concluir_manual?: boolean
           prazo_dias?: number | null
+          prazo_tipo?: string
           process_type_id: string
+          responsavel_padrao_id?: string | null
           updated_at?: string
           visivel_cliente?: boolean
         }
@@ -1587,7 +1627,9 @@ export type Database = {
           ordem?: number
           pode_concluir_manual?: boolean
           prazo_dias?: number | null
+          prazo_tipo?: string
           process_type_id?: string
+          responsavel_padrao_id?: string | null
           updated_at?: string
           visivel_cliente?: boolean
         }
@@ -1900,6 +1942,7 @@ export type Database = {
       client_staff_user_ids: { Args: { _client_id: string }; Returns: string[] }
       client_user_ids: { Args: { _client_id: string }; Returns: string[] }
       cron_generate_current_plan_checklist: { Args: never; Returns: Json }
+      current_actor_role: { Args: never; Returns: string }
       generate_plan_checklist: { Args: { _competencia: string }; Returns: Json }
       has_role: {
         Args: {
@@ -1935,9 +1978,14 @@ export type Database = {
         Args: { _client_id: string; _competencia: string; _new_plan_id: string }
         Returns: Json
       }
+      processos_notificar_vencimentos: { Args: never; Returns: Json }
       profiles_shares_client: {
         Args: { _target: string; _viewer: string }
         Returns: boolean
+      }
+      recalc_company_process: {
+        Args: { _process_id: string }
+        Returns: undefined
       }
       user_has_client_access: {
         Args: { _client_id: string; _user_id: string }
