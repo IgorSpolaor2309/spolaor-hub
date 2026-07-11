@@ -610,11 +610,57 @@ function StepsSection({ typeId, canEdit }: { typeId: string; canEdit: boolean })
           )}
         </div>
       </div>
+
+      {/* Filtros rápidos + busca */}
+      {steps.length > 0 && (
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <Input placeholder="Buscar etapa…" value={search} onChange={(e) => setSearch(e.target.value)}
+            className="h-8 w-48" />
+          {([
+            ["todas", "Todas"],
+            ["publicas", "Só públicas"],
+            ["internas", "Só internas"],
+            ["com_reqs", "Com requisitos"],
+            ["sem_reqs", "Sem requisitos"],
+          ] as const).map(([k, l]) => (
+            <button key={k} type="button" onClick={() => setFilter(k)}>
+              <Badge variant={filter === k ? "default" : "outline"} className="cursor-pointer text-[10px]">{l}</Badge>
+            </button>
+          ))}
+          <span className="ml-auto text-[11px] text-muted-foreground">
+            {filteredSteps.length} de {steps.length} etapa(s)
+          </span>
+        </div>
+      )}
+
+      {/* Barra de seleção múltipla */}
+      {canEdit && selectedIds.length > 0 && (
+        <div className="mb-2 flex flex-wrap items-center gap-2 rounded border border-indigo-200 bg-indigo-50 p-2 text-xs">
+          <span className="font-medium">{selectedIds.length} selecionada(s)</span>
+          <Button size="sm" variant="ghost" className="h-7" disabled={bulkSelected.isPending}
+            onClick={() => bulkSelected.mutate({ patch: { visivel_cliente: true } })}>
+            <Eye className="mr-1 h-3.5 w-3.5" /> Tornar públicas
+          </Button>
+          <Button size="sm" variant="ghost" className="h-7" disabled={bulkSelected.isPending}
+            onClick={() => bulkSelected.mutate({ patch: { visivel_cliente: false } })}>
+            <EyeOff className="mr-1 h-3.5 w-3.5" /> Tornar internas
+          </Button>
+          <Button size="sm" variant="ghost" className="h-7" disabled={bulkSelected.isPending}
+            onClick={() => bulkSelected.mutate({ patch: { nome_publico: null, descricao_publica: null, observacao_publica: null } })}>
+            Limpar textos públicos
+          </Button>
+          <Button size="sm" variant="ghost" className="ml-auto h-7" onClick={() => setSelected({})}>
+            <X className="mr-1 h-3.5 w-3.5" /> Limpar seleção
+          </Button>
+        </div>
+      )}
+
       {stepsQ.isLoading ? <p className="text-xs text-muted-foreground">Carregando…</p>
         : steps.length === 0 ? <p className="text-xs text-muted-foreground">Nenhuma etapa cadastrada.</p>
+        : filteredSteps.length === 0 ? <p className="text-xs text-muted-foreground">Nenhuma etapa corresponde ao filtro.</p>
         : (
           <ul className="divide-y">
-            {steps.map((it: any, idx: number) => (
+            {filteredSteps.map((it: any, idx: number) => (
               <li key={it.id} className="py-2 text-sm">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="w-8 text-xs text-muted-foreground">#{it.ordem}</span>
