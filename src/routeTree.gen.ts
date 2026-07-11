@@ -23,6 +23,7 @@ import { Route as AuthenticatedNotificacoesRouteImport } from './routes/_authent
 import { Route as AuthenticatedModelosRouteImport } from './routes/_authenticated/modelos'
 import { Route as AuthenticatedMinhasPendenciasRouteImport } from './routes/_authenticated/minhas-pendencias'
 import { Route as AuthenticatedMinhaAreaRouteImport } from './routes/_authenticated/minha-area'
+import { Route as AuthenticatedMeusProcessosRouteImport } from './routes/_authenticated/meus-processos'
 import { Route as AuthenticatedMeusDocumentosRouteImport } from './routes/_authenticated/meus-documentos'
 import { Route as AuthenticatedKanbanRouteImport } from './routes/_authenticated/kanban'
 import { Route as AuthenticatedInteracoesRouteImport } from './routes/_authenticated/interacoes'
@@ -110,6 +111,12 @@ const AuthenticatedMinhaAreaRoute = AuthenticatedMinhaAreaRouteImport.update({
   path: '/minha-area',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMeusProcessosRoute =
+  AuthenticatedMeusProcessosRouteImport.update({
+    id: '/meus-processos',
+    path: '/meus-processos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMeusDocumentosRoute =
   AuthenticatedMeusDocumentosRouteImport.update({
     id: '/meus-documentos',
@@ -195,6 +202,7 @@ export interface FileRoutesByFullPath {
   '/interacoes': typeof AuthenticatedInteracoesRoute
   '/kanban': typeof AuthenticatedKanbanRoute
   '/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
+  '/meus-processos': typeof AuthenticatedMeusProcessosRoute
   '/minha-area': typeof AuthenticatedMinhaAreaRoute
   '/minhas-pendencias': typeof AuthenticatedMinhasPendenciasRoute
   '/modelos': typeof AuthenticatedModelosRoute
@@ -222,6 +230,7 @@ export interface FileRoutesByTo {
   '/interacoes': typeof AuthenticatedInteracoesRoute
   '/kanban': typeof AuthenticatedKanbanRoute
   '/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
+  '/meus-processos': typeof AuthenticatedMeusProcessosRoute
   '/minha-area': typeof AuthenticatedMinhaAreaRoute
   '/minhas-pendencias': typeof AuthenticatedMinhasPendenciasRoute
   '/modelos': typeof AuthenticatedModelosRoute
@@ -252,6 +261,7 @@ export interface FileRoutesById {
   '/_authenticated/interacoes': typeof AuthenticatedInteracoesRoute
   '/_authenticated/kanban': typeof AuthenticatedKanbanRoute
   '/_authenticated/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
+  '/_authenticated/meus-processos': typeof AuthenticatedMeusProcessosRoute
   '/_authenticated/minha-area': typeof AuthenticatedMinhaAreaRoute
   '/_authenticated/minhas-pendencias': typeof AuthenticatedMinhasPendenciasRoute
   '/_authenticated/modelos': typeof AuthenticatedModelosRoute
@@ -283,6 +293,7 @@ export interface FileRouteTypes {
     | '/interacoes'
     | '/kanban'
     | '/meus-documentos'
+    | '/meus-processos'
     | '/minha-area'
     | '/minhas-pendencias'
     | '/modelos'
@@ -310,6 +321,7 @@ export interface FileRouteTypes {
     | '/interacoes'
     | '/kanban'
     | '/meus-documentos'
+    | '/meus-processos'
     | '/minha-area'
     | '/minhas-pendencias'
     | '/modelos'
@@ -339,6 +351,7 @@ export interface FileRouteTypes {
     | '/_authenticated/interacoes'
     | '/_authenticated/kanban'
     | '/_authenticated/meus-documentos'
+    | '/_authenticated/meus-processos'
     | '/_authenticated/minha-area'
     | '/_authenticated/minhas-pendencias'
     | '/_authenticated/modelos'
@@ -459,6 +472,13 @@ declare module '@tanstack/react-router' {
       path: '/minha-area'
       fullPath: '/minha-area'
       preLoaderRoute: typeof AuthenticatedMinhaAreaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/meus-processos': {
+      id: '/_authenticated/meus-processos'
+      path: '/meus-processos'
+      fullPath: '/meus-processos'
+      preLoaderRoute: typeof AuthenticatedMeusProcessosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/meus-documentos': {
@@ -593,6 +613,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedInteracoesRoute: typeof AuthenticatedInteracoesRoute
   AuthenticatedKanbanRoute: typeof AuthenticatedKanbanRoute
   AuthenticatedMeusDocumentosRoute: typeof AuthenticatedMeusDocumentosRoute
+  AuthenticatedMeusProcessosRoute: typeof AuthenticatedMeusProcessosRoute
   AuthenticatedMinhaAreaRoute: typeof AuthenticatedMinhaAreaRoute
   AuthenticatedMinhasPendenciasRoute: typeof AuthenticatedMinhasPendenciasRoute
   AuthenticatedModelosRoute: typeof AuthenticatedModelosRoute
@@ -618,6 +639,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInteracoesRoute: AuthenticatedInteracoesRoute,
   AuthenticatedKanbanRoute: AuthenticatedKanbanRoute,
   AuthenticatedMeusDocumentosRoute: AuthenticatedMeusDocumentosRoute,
+  AuthenticatedMeusProcessosRoute: AuthenticatedMeusProcessosRoute,
   AuthenticatedMinhaAreaRoute: AuthenticatedMinhaAreaRoute,
   AuthenticatedMinhasPendenciasRoute: AuthenticatedMinhasPendenciasRoute,
   AuthenticatedModelosRoute: AuthenticatedModelosRoute,
@@ -643,13 +665,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

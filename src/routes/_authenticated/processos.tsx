@@ -15,8 +15,10 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { EmptyState } from "@/components/sc/EmptyState";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { clientLabel } from "@/lib/client-display";
+import { prazoKind, PRAZO_STYLE } from "@/lib/processo-prazo";
 import { toast } from "sonner";
-import { Workflow, Plus, Search } from "lucide-react";
+import { Workflow, Plus, Search, X } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/processos")({
   component: ProcessesPage,
@@ -49,7 +51,9 @@ function ProcessesPage() {
   const [fStatus, setFStatus] = useState<string>("all");
   const [fPrio, setFPrio] = useState<string>("all");
   const [fResp, setFResp] = useState<string>("all");
+  const [fPrazo, setFPrazo] = useState<string>("all"); // all | vencido | hoje | em_breve | sem_prazo
   const [sortBy, setSortBy] = useState<string>("prazo");
+
 
   const ready = !loading && (role === "admin" || role === "collaborator");
 
@@ -60,7 +64,7 @@ function ProcessesPage() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("company_processes")
-        .select("*, clients(razao_social, nome_fantasia, documento), process_types(nome, cor, categoria), steps:company_process_steps(id, status)")
+        .select("id, client_id, process_type_id, responsavel_id, data_abertura, prazo_final, prioridade, status, observacoes, progresso, total_etapas, etapas_concluidas, motivo_espera, clients(razao_social, nome_fantasia, documento), process_types(nome, cor, categoria)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       const rows = data ?? [];
@@ -73,6 +77,7 @@ function ProcessesPage() {
       return rows.map((r: any) => ({ ...r, responsavel: r.responsavel_id ? { full_name: profMap[r.responsavel_id] ?? null } : null }));
     },
   });
+
 
   const typesQ = useQuery({
     queryKey: ["process-types-active"],
@@ -118,6 +123,11 @@ function ProcessesPage() {
       if (fStatus !== "all" && r.status !== fStatus) return false;
       if (fPrio !== "all" && r.prioridade !== fPrio) return false;
       if (fResp !== "all" && r.responsavel_id !== fResp) return false;
+      if (fPrazo !== "all") {
+        if (r.status === "concluido" || r.status === "cancelado") return false;
+        const k = prazoKind(r.prazo_final);
+        if (k !== fPrazo) return false;
+      }
       if (q) {
         const hay = `${r.clients?.razao_social ?? ""} ${r.clients?.nome_fantasia ?? ""} ${r.process_types?.nome ?? ""} ${r.observacoes ?? ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
@@ -130,6 +140,7 @@ function ProcessesPage() {
         case "responsavel": return (a.responsavel?.full_name ?? "~").localeCompare(b.responsavel?.full_name ?? "~");
         case "status": return (a.status ?? "").localeCompare(b.status ?? "");
         case "abertura": return (b.data_abertura ?? "").localeCompare(a.data_abertura ?? "");
+        case "progresso": return (b.progresso ?? 0) - (a.progresso ?? 0);
         case "prazo":
         default: {
           const av = a.prazo_final ?? "9999-99-99";
@@ -139,7 +150,29 @@ function ProcessesPage() {
       }
     });
     return arr;
-  }, [listQ.data, search, fClient, fType, fStatus, fPrio, fResp, sortBy]);
+  }, [listQ.data, search, fClient, fType, fStatus, fPrio, fResp, fPrazo, sortBy]);
+
+  const kpis = useMemo(() => {
+    const arr = listQ.data ?? [];
+    const abertos = arr.filter((r: any) => r.status !== "concluido" && r.status !== "cancelado");
+    return {
+      total: arr.length,
+      abertos: abertos.length,
+      em_andamento: arr.filter((r: any) => r.status === "em_andamento").length,
+      aguardando: arr.filter((r: any) => r.status === "aguardando_cliente" || r.status === "aguardando_orgao").length,
+      vencidos: abertos.filter((r: any) => prazoKind(r.prazo_final) === "vencido").length,
+      hoje: abertos.filter((r: any) => prazoKind(r.prazo_final) === "hoje").length,
+      em_breve: abertos.filter((r: any) => prazoKind(r.prazo_final) === "em_breve").length,
+      concluidos: arr.filter((r: any) => r.status === "concluido").length,
+    };
+  }, [listQ.data]);
+
+  const activeFilters = [fClient, fType, fStatus, fPrio, fResp, fPrazo].filter((v) => v !== "all").length + (search ? 1 : 0);
+  const clearFilters = () => {
+    setSearch(""); setFClient("all"); setFType("all"); setFStatus("all");
+    setFPrio("all"); setFResp("all"); setFPrazo("all");
+  };
+
 
   if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
   if (role !== "admin" && role !== "collaborator") {
@@ -165,6 +198,26 @@ function ProcessesPage() {
           </Dialog>
         }
       />
+
+      {/* Indicadores rápidos */}
+      <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+        {[
+          { k: "total", label: "Total", v: kpis.total, cls: "bg-muted" },
+          { k: "abertos", label: "Abertos", v: kpis.abertos, cls: "bg-blue-50" },
+          { k: "em_andamento", label: "Em andamento", v: kpis.em_andamento, cls: "bg-blue-100", filter: () => setFStatus("em_andamento") },
+          { k: "aguardando", label: "Aguardando", v: kpis.aguardando, cls: "bg-amber-50" },
+          { k: "vencidos", label: "Vencidos", v: kpis.vencidos, cls: "bg-red-50 text-red-800", filter: () => setFPrazo("vencido") },
+          { k: "hoje", label: "Hoje", v: kpis.hoje, cls: "bg-orange-50 text-orange-800", filter: () => setFPrazo("hoje") },
+          { k: "em_breve", label: "Em breve", v: kpis.em_breve, cls: "bg-amber-50 text-amber-800", filter: () => setFPrazo("em_breve") },
+          { k: "concluidos", label: "Concluídos", v: kpis.concluidos, cls: "bg-emerald-50 text-emerald-800", filter: () => setFStatus("concluido") },
+        ].map((k) => (
+          <button key={k.k} onClick={k.filter} disabled={!k.filter}
+            className={`${k.cls} rounded-md border p-2 text-left transition ${k.filter ? "hover:brightness-95" : ""}`}>
+            <div className="text-[10px] uppercase tracking-wide opacity-70">{k.label}</div>
+            <div className="text-lg font-semibold">{k.v}</div>
+          </button>
+        ))}
+      </div>
 
       <Card className="mb-3 p-3">
         <div className="grid gap-2 md:grid-cols-6">
@@ -227,6 +280,19 @@ function ProcessesPage() {
             </Select>
           </div>
           <div>
+            <Label className="text-xs">Prazo</Label>
+            <Select value={fPrazo} onValueChange={setFPrazo}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="vencido">Vencidos</SelectItem>
+                <SelectItem value="hoje">Vence hoje</SelectItem>
+                <SelectItem value="em_breve">Vence em breve</SelectItem>
+                <SelectItem value="sem_prazo">Sem prazo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
             <Label className="text-xs">Ordenar por</Label>
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -235,24 +301,36 @@ function ProcessesPage() {
                 <SelectItem value="empresa">Empresa</SelectItem>
                 <SelectItem value="responsavel">Responsável</SelectItem>
                 <SelectItem value="status">Status</SelectItem>
+                <SelectItem value="progresso">Progresso</SelectItem>
                 <SelectItem value="abertura">Data de abertura</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
+        {activeFilters > 0 && (
+          <div className="mt-2 flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground">{activeFilters} filtro(s) ativo(s) · exibindo {filtered.length}</span>
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
+              <X className="mr-1 h-3.5 w-3.5" /> Limpar
+            </Button>
+          </div>
+        )}
       </Card>
 
       <Card className="p-2">
         {listQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
-          : filtered.length === 0 ? <EmptyState icon={<Workflow className="h-6 w-6" />} title="Nenhum processo" description="Crie o primeiro processo clicando em 'Novo processo'." />
+          : filtered.length === 0 ? <EmptyState icon={<Workflow className="h-6 w-6" />} title="Nenhum processo" description="Ajuste os filtros ou crie um novo processo." />
           : (
             <ul className="divide-y">
               {filtered.map((p: any) => {
-                const total = p.steps?.length ?? 0;
-                const done = (p.steps ?? []).filter((s: any) => s.status === "concluida").length;
-                const pct = total ? Math.round((done / total) * 100) : 0;
+                const total = p.total_etapas ?? 0;
+                const done = p.etapas_concluidas ?? 0;
+                const pct = p.progresso ?? 0;
                 const st = STATUS_MAP[p.status];
                 const pr = PRIO_MAP[p.prioridade];
+                const isOpen = p.status !== "concluido" && p.status !== "cancelado";
+                const pk = isOpen ? prazoKind(p.prazo_final) : null;
+                const pkBadge = pk && (pk === "vencido" || pk === "hoje" || pk === "em_breve") ? PRAZO_STYLE[pk] : null;
                 return (
                   <li key={p.id}>
                     <Link to="/processos/$id" params={{ id: p.id }} className="block p-3 hover:bg-muted/40">
@@ -262,6 +340,7 @@ function ProcessesPage() {
                         <Badge variant="outline">{p.process_types?.nome}</Badge>
                         {st && <Badge className={st.cls}>{st.label}</Badge>}
                         {pr && <Badge className={pr.cls}>{pr.label}</Badge>}
+                        {pkBadge && <Badge className={pkBadge.cls}>{pkBadge.label}</Badge>}
                         {p.responsavel?.full_name && <span className="text-xs text-muted-foreground">· {p.responsavel.full_name}</span>}
                         {p.prazo_final && <span className="text-xs text-muted-foreground">· prazo {new Date(p.prazo_final).toLocaleDateString("pt-BR")}</span>}
                         <span className="ml-auto text-xs text-muted-foreground">{done}/{total} etapas</span>
@@ -280,6 +359,8 @@ function ProcessesPage() {
     </div>
   );
 }
+
+
 
 function NewProcessDialog({ clients, types, collabs, onDone }: { clients: any[]; types: any[]; collabs: any[]; onDone: () => void }) {
   const [f, setF] = useState({

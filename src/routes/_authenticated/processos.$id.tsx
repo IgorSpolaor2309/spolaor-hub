@@ -15,8 +15,11 @@ import { EmptyState } from "@/components/sc/EmptyState";
 import { DeleteButton } from "@/components/sc/DeleteButton";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { clientLabel } from "@/lib/client-display";
+import { prazoKind, PRAZO_STYLE } from "@/lib/processo-prazo";
 import { toast } from "sonner";
 import { Workflow, ArrowLeft, Check, RotateCcw } from "lucide-react";
+
+
 
 export const Route = createFileRoute("/_authenticated/processos/$id")({
   component: ProcessDetail,
@@ -215,6 +218,14 @@ function ProcessDetail() {
               <Input type="date" defaultValue={p.prazo_final ?? ""}
                 onBlur={(e) => { const v = e.target.value || null; if (v !== p.prazo_final) updateProc.mutate({ prazo_final: v }); }} />
             </div>
+            {(p.status === "aguardando_cliente" || p.status === "aguardando_orgao") && (
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label className="text-xs">Motivo da espera</Label>
+                <Input defaultValue={p.motivo_espera ?? ""}
+                  placeholder="Ex.: aguardando envio de documento pelo cliente"
+                  onBlur={(e) => { if (e.target.value !== (p.motivo_espera ?? "")) updateProc.mutate({ motivo_espera: e.target.value || null }); }} />
+              </div>
+            )}
             <div className="space-y-1.5 sm:col-span-2">
               <Label className="text-xs">Observações</Label>
               <Textarea rows={2} defaultValue={p.observacoes ?? ""}
@@ -222,6 +233,7 @@ function ProcessDetail() {
             </div>
           </div>
         </Card>
+
 
         <Card className="p-4">
           <div className="mb-2 text-sm font-medium">Linha do tempo</div>
@@ -255,12 +267,15 @@ function ProcessDetail() {
               {steps.map((s: any) => {
                 const ss = STEP_STATUS_MAP[s.status];
                 const isDone = s.status === "concluida";
+                const pk = prazoKind(s.prazo, { status: s.status, concluidaDentroPrazo: s.concluida_dentro_prazo });
+                const pkBadge = pk === "sem_prazo" || pk === "no_prazo" ? null : PRAZO_STYLE[pk];
                 return (
                   <li key={s.id} className="p-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="w-8 text-xs text-muted-foreground">#{s.ordem}</span>
                       <span className={`font-medium ${isDone ? "line-through text-muted-foreground" : ""}`}>{s.nome}</span>
                       {ss && <Badge className={ss.cls}>{ss.label}</Badge>}
+                      {pkBadge && <Badge className={pkBadge.cls}>{pkBadge.label}</Badge>}
                       {s.departamento && <Badge variant="outline">{s.departamento}</Badge>}
                       {s.obrigatoria && <Badge variant="secondary">Obrigatória</Badge>}
                       {s.exige_documento && <Badge className="bg-amber-100 text-amber-800">Exige doc.</Badge>}
@@ -268,6 +283,7 @@ function ProcessDetail() {
                       {s.responsavel?.full_name && <span className="text-xs text-muted-foreground">· {s.responsavel.full_name}</span>}
                       {s.prazo && <span className="text-xs text-muted-foreground">· prazo {new Date(s.prazo).toLocaleDateString("pt-BR")}</span>}
                       <div className="ml-auto flex items-center gap-1">
+
                         {!isDone ? (
                           <Button size="sm" variant="outline" disabled={!s.pode_concluir_manual}
                             onClick={() => updateStep.mutate({ stepId: s.id, patch: { status: "concluida", data_conclusao: new Date().toISOString(), concluida_por: userId } })}>
