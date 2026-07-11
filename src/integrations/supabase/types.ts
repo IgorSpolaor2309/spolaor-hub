@@ -2417,6 +2417,7 @@ export type Database = {
       admin_demo_reset: { Args: { _label?: string }; Returns: Json }
       admin_demo_summary: { Args: never; Returns: Json }
       admin_demo_wipe: { Args: { _batch_id?: string }; Returns: Json }
+      admin_demo_wipe_preview: { Args: { _batch_id?: string }; Returns: Json }
       admin_duplicate_process_type: {
         Args: {
           _descricao?: string

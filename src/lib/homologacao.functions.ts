@@ -40,6 +40,18 @@ export const homologCreateEnvironment = createServerFn({ method: "POST" })
     return res as { batch_id: string; counts: Record<string, number> };
   });
 
+export const homologWipePreview = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { batch_id?: string | null }) => input)
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context.supabase, context.userId);
+    const { data: res, error } = await context.supabase.rpc("admin_demo_wipe_preview", {
+      _batch_id: data.batch_id ?? undefined,
+    } as any);
+    if (error) throw new Error(error.message);
+    return res as Record<string, number>;
+  });
+
 export const homologWipe = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { batch_id?: string | null }) => input)
@@ -48,7 +60,14 @@ export const homologWipe = createServerFn({ method: "POST" })
     const { data: res, error } = await context.supabase.rpc("admin_demo_wipe", {
       _batch_id: data.batch_id ?? undefined,
     } as any);
-    if (error) throw new Error(error.message);
+    if (error) {
+      await context.supabase.from("demo_audit_log").insert({
+        admin_id: context.userId,
+        action: "wipe_failed",
+        payload_json: { batch_id: data.batch_id ?? null, error: error.message },
+      });
+      throw new Error("Não foi possível limpar os dados de demonstração. Nenhum registro foi removido. Detalhe: " + error.message);
+    }
     return res as Record<string, number>;
   });
 
