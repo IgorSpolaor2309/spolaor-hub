@@ -59,6 +59,19 @@ export function ProcessDocumentsSection({ processId, clientId, steps, canEdit }:
     enabled: steps.length > 0,
   });
 
+  const reqRequestsQ = useQuery({
+    queryKey: ["process-req-requests", processId],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).from("document_requests")
+        .select("id, titulo, status, prazo, created_at, company_process_step_requirement_id, responsavel_profile_id, document_id, profiles:responsavel_profile_id(full_name)")
+        .eq("company_process_id", processId)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const unlink = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await (supabase as any).from("company_process_documents").delete().eq("id", id);
