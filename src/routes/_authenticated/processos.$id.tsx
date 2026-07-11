@@ -277,27 +277,35 @@ function ProcessDetail() {
 
 
         <Card className="p-4">
-          <div className="mb-2 text-sm font-medium">Linha do tempo</div>
-          {steps.length === 0 ? <p className="text-xs text-muted-foreground">Nenhuma etapa.</p> : (
-            <ol className="relative space-y-3 border-l pl-4">
-              {steps.map((s: any) => {
-                const ss = STEP_STATUS_MAP[s.status];
-                return (
-                  <li key={s.id} className="relative">
-                    <span className={`absolute -left-[9px] top-1 h-3 w-3 rounded-full border ${s.status === "concluida" ? "bg-emerald-500 border-emerald-500" : s.status === "em_andamento" ? "bg-blue-500 border-blue-500" : "bg-background"}`} />
-                    <div className="text-sm font-medium">{s.nome}</div>
-                    <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
-                      {ss && <Badge className={`${ss.cls} text-[10px]`}>{ss.label}</Badge>}
-                      {s.prazo && <span>· prazo {new Date(s.prazo).toLocaleDateString("pt-BR")}</span>}
-                      {s.data_conclusao && <span>· concl. {new Date(s.data_conclusao).toLocaleDateString("pt-BR")}</span>}
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          )}
+          <div className="mb-2 text-sm font-medium">Timeline</div>
+          {historyQ.isLoading ? <p className="text-xs text-muted-foreground">Carregando…</p>
+            : (historyQ.data ?? []).filter((e: any) => TIMELINE_TIPOS.has(e.tipo)).length === 0
+              ? <p className="text-xs text-muted-foreground">Nenhum evento registrado.</p>
+              : (
+                <ol className="relative space-y-3 border-l pl-4">
+                  {(historyQ.data ?? [])
+                    .filter((e: any) => TIMELINE_TIPOS.has(e.tipo))
+                    .slice(0, 30)
+                    .map((e: any) => {
+                      const meta = e.metadata ?? {};
+                      const Icon = TIMELINE_ICON[e.tipo] ?? Activity;
+                      return (
+                        <li key={e.id} className="relative">
+                          <span className="absolute -left-[11px] top-0.5 flex h-4 w-4 items-center justify-center rounded-full border bg-background">
+                            <Icon className="h-2.5 w-2.5" />
+                          </span>
+                          <div className="text-xs font-medium">{friendlyTimeline(e.tipo, e.descricao, meta)}</div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {new Date(e.created_at).toLocaleString("pt-BR")} · {e.actor_name ?? "sistema"}
+                          </div>
+                        </li>
+                      );
+                    })}
+                </ol>
+              )}
         </Card>
       </div>
+
 
       <Card className="mt-3 p-2">
         <div className="border-b px-2 py-2 text-sm font-medium">Etapas</div>
