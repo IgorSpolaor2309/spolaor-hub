@@ -26,10 +26,17 @@ export const homologCreateEnvironment = createServerFn({ method: "POST" })
   .inputValidator((input: { label?: string | null }) => input)
   .handler(async ({ data, context }) => {
     await ensureAdmin(context.supabase, context.userId);
-    const { data: res, error } = await context.supabase.rpc("admin_demo_create_environment", {
-      _label: data.label?.trim() || "Ambiente demo",
-    });
-    if (error) throw new Error(error.message);
+    const label = data.label?.trim() || "Ambiente demo";
+    const { data: res, error } = await context.supabase.rpc("admin_demo_create_environment", { _label: label });
+    if (error) {
+      // registra falha amigável na auditoria (a transação da RPC já rolou back)
+      await context.supabase.from("demo_audit_log").insert({
+        admin_id: context.userId,
+        action: "create_environment_failed",
+        payload_json: { label, error: error.message },
+      });
+      throw new Error("Não foi possível criar o ambiente de demonstração. Nenhum dado foi gravado. Detalhe técnico: " + error.message);
+    }
     return res as { batch_id: string; counts: Record<string, number> };
   });
 
