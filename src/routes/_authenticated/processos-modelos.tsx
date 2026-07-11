@@ -529,6 +529,48 @@ function StepsSection({ typeId, canEdit }: { typeId: string; canEdit: boolean })
   const steps = stepsQ.data ?? [];
   const visibleCount = useMemo(() => steps.filter((s: any) => s.visivel_cliente).length, [steps]);
 
+  const reqCountsQ = useQuery({
+    queryKey: ["process-steps-req-counts", typeId, steps.length],
+    enabled: steps.length > 0,
+    queryFn: async () => {
+      const ids = steps.map((s: any) => s.id);
+      const { data, error } = await (supabase as any).from("process_step_requirements")
+        .select("process_step_id").in("process_step_id", ids);
+      if (error) throw error;
+      const map: Record<string, number> = {};
+      (data ?? []).forEach((r: any) => { map[r.process_step_id] = (map[r.process_step_id] ?? 0) + 1; });
+      return map;
+    },
+  });
+  const reqCount = (id: string) => reqCountsQ.data?.[id] ?? 0;
+
+  const filteredSteps = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return steps.filter((s: any) => {
+      if (term && !(`${s.nome} ${s.descricao ?? ""} ${s.nome_publico ?? ""}`.toLowerCase().includes(term))) return false;
+      if (filter === "publicas" && !s.visivel_cliente) return false;
+      if (filter === "internas" && s.visivel_cliente) return false;
+      if (filter === "com_reqs" && reqCount(s.id) === 0) return false;
+      if (filter === "sem_reqs" && reqCount(s.id) > 0) return false;
+      return true;
+    });
+  }, [steps, search, filter, reqCountsQ.data]);
+
+  const selectedIds = Object.keys(selected).filter((k) => selected[k]);
+  const bulkSelected = useMutation({
+    mutationFn: async ({ patch }: { patch: any }) => {
+      const { error } = await (supabase as any).from("process_steps").update(patch).in("id", selectedIds);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success(`${selectedIds.length} etapa(s) atualizadas`);
+      setSelected({});
+      qc.invalidateQueries({ queryKey: ["process-steps", typeId] });
+      qc.invalidateQueries({ queryKey: ["process-models-stats"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha"),
+  });
+
   return (
     <div className="mt-3 rounded-md border bg-muted/30 p-3">
       <div className="mb-2 flex flex-wrap items-center gap-2">
