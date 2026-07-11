@@ -2056,7 +2056,7 @@ export type Database = {
       timeline_events: {
         Row: {
           actor_profile_id: string | null
-          client_id: string
+          client_id: string | null
           created_at: string
           descricao: string
           id: string
@@ -2065,7 +2065,7 @@ export type Database = {
         }
         Insert: {
           actor_profile_id?: string | null
-          client_id: string
+          client_id?: string | null
           created_at?: string
           descricao: string
           id?: string
@@ -2074,7 +2074,7 @@ export type Database = {
         }
         Update: {
           actor_profile_id?: string | null
-          client_id?: string
+          client_id?: string | null
           created_at?: string
           descricao?: string
           id?: string
@@ -2146,12 +2146,39 @@ export type Database = {
             }
             Returns: string
           }
+      admin_duplicate_process_type: {
+        Args: {
+          _descricao?: string
+          _nome: string
+          _source: string
+          _status?: string
+        }
+        Returns: string
+      }
       admin_find_profile_by_email: {
         Args: { _email: string }
         Returns: {
           email: string
           full_name: string
           id: string
+        }[]
+      }
+      admin_import_model_config: {
+        Args: { _source: string; _target: string }
+        Returns: Json
+      }
+      admin_process_models_stats: {
+        Args: never
+        Returns: {
+          etapas_publicas: number
+          etapas_total: number
+          process_type_id: string
+          processos_ativos: number
+          processos_total: number
+          requisitos_publicos: number
+          requisitos_total: number
+          ultima_alteracao: string
+          ultima_sincronizacao: string
         }[]
       }
       admin_restore_client: { Args: { _client_id: string }; Returns: undefined }
