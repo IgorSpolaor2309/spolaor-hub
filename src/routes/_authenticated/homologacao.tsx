@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { AlertTriangle, FlaskConical, RotateCw, Trash2, Sparkles } from "lucide-react";
 import {
-  homologSummary, homologCreateEnvironment, homologWipe, homologReset,
+  homologSummary, homologCreateEnvironment, homologWipe, homologWipePreview, homologReset,
   homologListBatches, homologListAudit,
 } from "@/lib/homologacao.functions";
 import { homologAccessDiagnostic } from "@/lib/access-diagnostics.functions";
