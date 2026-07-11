@@ -17,8 +17,8 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { clientLabel } from "@/lib/client-display";
 import { prazoKind, PRAZO_STYLE } from "@/lib/processo-prazo";
 import { toast } from "sonner";
-import { Workflow, ArrowLeft, Check, RotateCcw, History } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Workflow, ArrowLeft, Check, RotateCcw } from "lucide-react";
+
 
 
 export const Route = createFileRoute("/_authenticated/processos/$id")({
