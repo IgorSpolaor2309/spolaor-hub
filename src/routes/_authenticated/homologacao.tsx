@@ -19,6 +19,7 @@ import {
   homologSummary, homologCreateEnvironment, homologWipe, homologWipePreview, homologReset,
   homologListBatches, homologListAudit, homologContaminationReport, homologRepairCaseA,
   homologPurgeOrphanAuthUsers, homologValidateBatch,
+  homologListValidationRuns, homologListManualSteps, homologUpdateManualStep,
 } from "@/lib/homologacao.functions";
 import { homologAccessDiagnostic } from "@/lib/access-diagnostics.functions";
 
