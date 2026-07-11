@@ -61,6 +61,7 @@ function ClientsPage() {
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
+  const [demoFilter, setDemoFilter] = useState<DemoFilterValue>("real");
 
 
   const { data: clients = [], isLoading, error: clientsError } = useQuery({
