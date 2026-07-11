@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useServerFn } from "@tanstack/react-start";
 import { adminSetClientStatus } from "@/lib/admin-users.functions";
+import { getAdminClientsPage } from "@/lib/access-diagnostics.functions";
 
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { CLIENT_TYPES, labelOf } from "@/lib/sc-types";
@@ -42,6 +43,7 @@ export const Route = createFileRoute("/_authenticated/clientes")({
 function ClientsPage() {
   const { role, userId, loading } = useCurrentUser();
   const qc = useQueryClient();
+  const getAdminClients = useServerFn(getAdminClientsPage);
   const isAdmin = role === "admin";
   const ready = !loading && !!userId && !!role;
   const [q, setQ] = useState("");
@@ -64,6 +66,7 @@ function ClientsPage() {
     enabled: ready,
     retry: 1,
     queryFn: async () => {
+      if (isAdmin) return await getAdminClients({});
       const { data, error } = await supabase
         .from("clients")
         .select("*, client_fiscal_data(regime_tributario, uf, municipio), client_collaborators(collaborator_id, collaborators(id, nome)), client_users(id, ativo), client_commercial(tipo_cliente, plano, status_comercial, periodicidade)")
@@ -275,7 +278,7 @@ function ClientsPage() {
 
 
         {clientsError ? (
-          <EmptyState icon={<Building2 className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />
+          <EmptyState icon={<Building2 className="h-6 w-6" />} title="Não foi possível carregar os dados" description={(clientsError as Error).message || "Tente novamente em instantes."} />
         ) : isLoading ? (
           <p className="text-sm text-muted-foreground">Carregando…</p>
         ) : filtered.length === 0 ? (

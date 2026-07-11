@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useServerFn } from "@tanstack/react-start";
 import { adminSetCollaboratorStatus } from "@/lib/admin-users.functions";
+import { getAdminCollaboratorsPage } from "@/lib/access-diagnostics.functions";
 
 
 export const Route = createFileRoute("/_authenticated/colaboradores")({
@@ -57,17 +58,14 @@ const emptyForm: Omit<CollabRow, "id"> = {
 
 function CollaboratorsPage() {
   const qc = useQueryClient();
+  const getAdminCollaborators = useServerFn(getAdminCollaboratorsPage);
   const [editing, setEditing] = useState<CollabRow | null>(null);
   const [open, setOpen] = useState(false);
 
-  const { data: list = [] } = useQuery({
+  const { data: list = [], error: listError, isLoading } = useQuery({
     queryKey: ["collaborators"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("collaborators")
-        .select("*")
-        .order("created_at", { ascending: false });
-      return (data ?? []) as CollabRow[];
+      return (await getAdminCollaborators({})) as CollabRow[];
     },
   });
 
@@ -93,7 +91,15 @@ function CollaboratorsPage() {
       />
 
       <Card className="p-4">
-        {list.length === 0 ? (
+        {listError ? (
+          <EmptyState
+            icon={<UserCog className="h-6 w-6" />}
+            title="Não foi possível carregar colaboradores"
+            description={(listError as Error).message || "Verifique as permissões da consulta."}
+          />
+        ) : isLoading ? (
+          <p className="text-sm text-muted-foreground">Carregando…</p>
+        ) : list.length === 0 ? (
           <EmptyState
             icon={<UserCog className="h-6 w-6" />}
             title="Nenhum colaborador cadastrado"
