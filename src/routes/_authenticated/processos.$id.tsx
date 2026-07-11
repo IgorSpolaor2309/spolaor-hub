@@ -267,12 +267,15 @@ function ProcessDetail() {
               {steps.map((s: any) => {
                 const ss = STEP_STATUS_MAP[s.status];
                 const isDone = s.status === "concluida";
+                const pk = prazoKind(s.prazo, { status: s.status, concluidaDentroPrazo: s.concluida_dentro_prazo });
+                const pkBadge = pk === "sem_prazo" || pk === "no_prazo" ? null : PRAZO_STYLE[pk];
                 return (
                   <li key={s.id} className="p-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="w-8 text-xs text-muted-foreground">#{s.ordem}</span>
                       <span className={`font-medium ${isDone ? "line-through text-muted-foreground" : ""}`}>{s.nome}</span>
                       {ss && <Badge className={ss.cls}>{ss.label}</Badge>}
+                      {pkBadge && <Badge className={pkBadge.cls}>{pkBadge.label}</Badge>}
                       {s.departamento && <Badge variant="outline">{s.departamento}</Badge>}
                       {s.obrigatoria && <Badge variant="secondary">Obrigatória</Badge>}
                       {s.exige_documento && <Badge className="bg-amber-100 text-amber-800">Exige doc.</Badge>}
@@ -280,6 +283,7 @@ function ProcessDetail() {
                       {s.responsavel?.full_name && <span className="text-xs text-muted-foreground">· {s.responsavel.full_name}</span>}
                       {s.prazo && <span className="text-xs text-muted-foreground">· prazo {new Date(s.prazo).toLocaleDateString("pt-BR")}</span>}
                       <div className="ml-auto flex items-center gap-1">
+
                         {!isDone ? (
                           <Button size="sm" variant="outline" disabled={!s.pode_concluir_manual}
                             onClick={() => updateStep.mutate({ stepId: s.id, patch: { status: "concluida", data_conclusao: new Date().toISOString(), concluida_por: userId } })}>
