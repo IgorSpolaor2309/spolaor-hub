@@ -173,6 +173,7 @@ function ProcessTypesPage() {
                     </Button>
                     {t.cor && <span className="h-3 w-3 rounded-full border" style={{ background: t.cor }} />}
                     <span className="font-medium">{t.nome}</span>
+                    {t.is_demo && <DemoBadge compact />}
                     {t.categoria && <Badge variant="outline">{CAT_LABEL[t.categoria] ?? t.categoria}</Badge>}
                     <Badge className={t.status === "ativo" ? "bg-emerald-100 text-emerald-800" : "bg-zinc-200 text-zinc-700"}>
                       {t.status === "ativo" ? "Ativo" : "Inativo"}
