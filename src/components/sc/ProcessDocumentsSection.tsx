@@ -176,6 +176,9 @@ export function ProcessDocumentsSection({ processId, clientId, steps, canEdit }:
                     <ul className="mb-2 space-y-1">
                       {stepReqs.map((r: any) => (
                         <RequirementRow key={r.id} req={r} clientId={clientId} canEdit={canEdit}
+                          processId={processId} stepId={s.id} stepNome={s.nome}
+                          activeRequest={activeReqRequestByReqId[r.id] ?? null}
+                          onChanged={invalidate}
                           onSet={(docId) => setReqDoc.mutate({ reqId: r.id, docId })} />
                       ))}
                     </ul>
