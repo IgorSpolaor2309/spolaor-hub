@@ -51,7 +51,9 @@ function ProcessesPage() {
   const [fStatus, setFStatus] = useState<string>("all");
   const [fPrio, setFPrio] = useState<string>("all");
   const [fResp, setFResp] = useState<string>("all");
+  const [fPrazo, setFPrazo] = useState<string>("all"); // all | vencido | hoje | em_breve | sem_prazo
   const [sortBy, setSortBy] = useState<string>("prazo");
+
 
   const ready = !loading && (role === "admin" || role === "collaborator");
 
