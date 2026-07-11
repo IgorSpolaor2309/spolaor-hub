@@ -532,6 +532,11 @@ function HomologPage() {
         )}
       </Card>
 
+      {/* Histórico de validações e roteiro manual por persona */}
+      <ValidationHistoryCard batchId={validateBatchId} />
+
+
+
       {/* Lotes */}
       <Card className="p-4 space-y-3">
         <h2 className="text-lg font-semibold">Lotes de demonstração</h2>
