@@ -128,9 +128,11 @@ function CollaboratorsPage() {
               </tr>
             </thead>
             <tbody>
-              {list.map((c) => (
+              {filteredList.map((c) => (
                 <tr key={c.id} className="border-b">
-                  <td className="py-3 pr-4 font-medium">{c.nome}</td>
+                  <td className="py-3 pr-4 font-medium">
+                    <span className="inline-flex items-center gap-2">{c.nome}{c.is_demo ? <DemoBadge compact /> : null}</span>
+                  </td>
                   <td>{c.email ?? "—"}</td>
                   <td>{c.cargo ?? "—"}</td>
                   <td>{c.departamento ?? "—"}</td>
