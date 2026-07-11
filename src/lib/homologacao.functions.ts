@@ -319,6 +319,25 @@ export const homologRepairCaseA = createServerFn({ method: "POST" })
     return data as { processes_fixed: number; steps_fixed: number };
   });
 
+export const homologValidateBatch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { batch_id: string }) => input)
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context.supabase, context.userId);
+    if (!data.batch_id) throw new Error("Selecione um lote demo para validar.");
+    const { data: res, error } = await context.supabase.rpc("admin_demo_validate_batch", {
+      p_batch_id: data.batch_id,
+    } as any);
+    if (error) throw new Error(error.message);
+    return res as {
+      batch_id: string;
+      label: string;
+      overall: "pass" | "warn" | "fail";
+      checks: Array<{ code: string; label: string; status: "pass" | "warn" | "fail"; detail: string; count?: number }>;
+      validated_at: string;
+    };
+  });
+
 export const homologPurgeOrphanAuthUsers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {

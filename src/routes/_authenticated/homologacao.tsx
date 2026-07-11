@@ -14,11 +14,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { useState } from "react";
-import { AlertTriangle, FlaskConical, RotateCw, Trash2, Sparkles, Copy, ExternalLink, EyeOff } from "lucide-react";
+import { AlertTriangle, FlaskConical, RotateCw, Trash2, Sparkles, Copy, ExternalLink, EyeOff, CheckCircle2, XCircle, ShieldCheck } from "lucide-react";
 import {
   homologSummary, homologCreateEnvironment, homologWipe, homologWipePreview, homologReset,
   homologListBatches, homologListAudit, homologContaminationReport, homologRepairCaseA,
-  homologPurgeOrphanAuthUsers,
+  homologPurgeOrphanAuthUsers, homologValidateBatch,
 } from "@/lib/homologacao.functions";
 import { homologAccessDiagnostic } from "@/lib/access-diagnostics.functions";
 
@@ -39,6 +39,8 @@ function HomologPage() {
   const [label, setLabel] = useState("Ambiente demo");
   const [wipePreview, setWipePreview] = useState<Record<string, number> | null>(null);
   const [sessionPersonas, setSessionPersonas] = useState<Persona[] | null>(null);
+  const [validateBatchId, setValidateBatchId] = useState<string>("");
+  const [validation, setValidation] = useState<any>(null);
 
   const summaryFn = useServerFn(homologSummary);
   const createFn = useServerFn(homologCreateEnvironment);
@@ -51,6 +53,7 @@ function HomologPage() {
   const contaminationFn = useServerFn(homologContaminationReport);
   const repairFn = useServerFn(homologRepairCaseA);
   const purgeOrphanFn = useServerFn(homologPurgeOrphanAuthUsers);
+  const validateFn = useServerFn(homologValidateBatch);
 
   const summary = useQuery({ queryKey: ["homolog-summary"], queryFn: () => summaryFn({}) });
   const batches = useQuery({ queryKey: ["homolog-batches"], queryFn: () => batchesFn({}) });
@@ -109,6 +112,18 @@ function HomologPage() {
     },
     onError: (e: any) => toast.error(e?.message || "Falha ao higienizar contas órfãs."),
   });
+
+  const validateMut = useMutation({
+    mutationFn: () => validateFn({ data: { batch_id: validateBatchId } }),
+    onSuccess: (r: any) => {
+      setValidation(r);
+      const msg = r.overall === "pass" ? "Ambiente aprovado." : r.overall === "warn" ? "Ambiente com atenção." : "Ambiente reprovado.";
+      (r.overall === "fail" ? toast.error : r.overall === "warn" ? toast.warning : toast.success)(msg);
+      qc.invalidateQueries({ queryKey: ["homolog-audit"] });
+    },
+    onError: (e: any) => toast.error(e?.message || "Falha ao validar ambiente."),
+  });
+
 
   const totalDemo = summary.data
     ? Object.entries(summary.data)
@@ -440,6 +455,76 @@ function HomologPage() {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {/* Validar ambiente */}
+      <Card className="p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold">Validar ambiente</h2>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Executa validação completa (somente leitura) do lote demo selecionado. Não altera nenhum registro
+          e não corrige dados automaticamente. Cada execução é registrada na auditoria.
+        </p>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="min-w-[280px] flex-1">
+            <Label>Lote demo</Label>
+            <select
+              className="w-full rounded-md border bg-background p-2 text-sm"
+              value={validateBatchId}
+              onChange={(e) => setValidateBatchId(e.target.value)}
+            >
+              <option value="">Selecione um lote…</option>
+              {(batches.data ?? []).map((b: any) => (
+                <option key={b.id} value={b.id}>
+                  {b.label} · {fmtDate(b.created_at)} · {b.id.slice(0, 8)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Button
+            onClick={() => validateMut.mutate()}
+            disabled={!validateBatchId || validateMut.isPending}
+          >
+            <ShieldCheck className="mr-1 h-4 w-4" />
+            {validateMut.isPending ? "Validando…" : "Validar ambiente"}
+          </Button>
+        </div>
+
+        {validation && (
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge
+                variant={validation.overall === "pass" ? "default" : validation.overall === "warn" ? "secondary" : "destructive"}
+              >
+                {validation.overall === "pass" ? "Aprovado" : validation.overall === "warn" ? "Atenção" : "Reprovado"}
+              </Badge>
+              <span className="text-sm font-medium">{validation.label}</span>
+              <span className="text-xs text-muted-foreground">{fmtDate(validation.validated_at)}</span>
+            </div>
+            <div className="grid gap-1">
+              {(validation.checks ?? []).map((c: any) => (
+                <div key={c.code} className="flex items-start justify-between gap-2 rounded border p-2 text-sm">
+                  <div className="flex items-start gap-2">
+                    {c.status === "pass" ? (
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600" />
+                    ) : c.status === "warn" ? (
+                      <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-600" />
+                    ) : (
+                      <XCircle className="mt-0.5 h-4 w-4 text-destructive" />
+                    )}
+                    <div>
+                      <div className="font-medium">{c.label}</div>
+                      <div className="text-xs text-muted-foreground">{c.detail}</div>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="shrink-0">{c.code}</Badge>
+                </div>
+              ))}
             </div>
           </div>
         )}
