@@ -1,0 +1,242 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { PageHeader } from "@/components/sc/PageHeader";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+import { useState } from "react";
+import { AlertTriangle, FlaskConical, RotateCw, Trash2, Sparkles } from "lucide-react";
+import {
+  homologSummary, homologCreateEnvironment, homologWipe, homologReset,
+  homologListBatches, homologListAudit,
+} from "@/lib/homologacao.functions";
+
+export const Route = createFileRoute("/_authenticated/configuracoes/homologacao")({
+  component: HomologPage,
+});
+
+function fmtDate(s?: string | null) {
+  if (!s) return "—";
+  const d = new Date(s);
+  return d.toLocaleString("pt-BR");
+}
+
+function HomologPage() {
+  const qc = useQueryClient();
+  const [label, setLabel] = useState("Ambiente demo");
+
+  const summaryFn = useServerFn(homologSummary);
+  const createFn = useServerFn(homologCreateEnvironment);
+  const wipeFn = useServerFn(homologWipe);
+  const resetFn = useServerFn(homologReset);
+  const batchesFn = useServerFn(homologListBatches);
+  const auditFn = useServerFn(homologListAudit);
+
+  const summary = useQuery({ queryKey: ["homolog-summary"], queryFn: () => summaryFn({}) });
+  const batches = useQuery({ queryKey: ["homolog-batches"], queryFn: () => batchesFn({}) });
+  const audit = useQuery({ queryKey: ["homolog-audit"], queryFn: () => auditFn({}) });
+
+  const invalidateAll = () => {
+    qc.invalidateQueries({ queryKey: ["homolog-summary"] });
+    qc.invalidateQueries({ queryKey: ["homolog-batches"] });
+    qc.invalidateQueries({ queryKey: ["homolog-audit"] });
+  };
+
+  const createMut = useMutation({
+    mutationFn: () => createFn({ data: { label } }),
+    onSuccess: () => { toast.success("Ambiente de demonstração criado."); invalidateAll(); },
+    onError: (e: any) => toast.error(e?.message || "Falha ao criar ambiente."),
+  });
+  const wipeMut = useMutation({
+    mutationFn: () => wipeFn({ data: {} }),
+    onSuccess: () => { toast.success("Dados de demonstração removidos."); invalidateAll(); },
+    onError: (e: any) => toast.error(e?.message || "Falha ao limpar dados."),
+  });
+  const resetMut = useMutation({
+    mutationFn: () => resetFn({ data: { label } }),
+    onSuccess: () => { toast.success("Ambiente recriado com sucesso."); invalidateAll(); },
+    onError: (e: any) => toast.error(e?.message || "Falha ao recriar ambiente."),
+  });
+
+  const totalDemo = summary.data
+    ? Object.entries(summary.data)
+        .filter(([k]) => k !== "batches")
+        .reduce((acc, [, v]) => acc + (Number(v) || 0), 0)
+    : 0;
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Homologação e Testes"
+        description="Ambiente isolado para testar fluxos com dados fictícios — dados reais nunca são afetados."
+      />
+
+      <div className="flex items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+        <AlertTriangle className="h-4 w-4 text-amber-600" />
+        <span>
+          Você está na <strong>Central de Homologação</strong>. Todas as ações desta página operam
+          exclusivamente sobre registros marcados como demonstração (<code>is_demo = true</code>).
+        </span>
+      </div>
+
+      {/* Ambiente de demonstração */}
+      <Card className="p-4 space-y-4">
+        <div className="flex items-center gap-2">
+          <FlaskConical className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold">Ambiente de demonstração</h2>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-4">
+          <SummaryCard label="Registros de demo" value={totalDemo} loading={summary.isLoading} />
+          <SummaryCard label="Empresas demo" value={summary.data?.clients ?? 0} loading={summary.isLoading} />
+          <SummaryCard label="Checklists demo" value={summary.data?.client_checklist_items ?? 0} loading={summary.isLoading} />
+          <SummaryCard label="Lotes ativos" value={summary.data?.batches ?? 0} loading={summary.isLoading} />
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+          <div>
+            <Label>Rótulo do lote</Label>
+            <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Ambiente demo" />
+          </div>
+          <div className="flex flex-wrap items-end gap-2">
+            <Button onClick={() => createMut.mutate()} disabled={createMut.isPending}>
+              <Sparkles className="h-4 w-4 mr-1" /> Criar ambiente
+            </Button>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" disabled={resetMut.isPending}>
+                  <RotateCw className="h-4 w-4 mr-1" /> Recriar ambiente
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Recriar ambiente de demonstração?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Todos os dados marcados como demonstração serão removidos e um novo ambiente
+                    será criado. <strong>Os dados reais não serão afetados.</strong>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => resetMut.mutate()}>Recriar</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" disabled={wipeMut.isPending}>
+                  <Trash2 className="h-4 w-4 mr-1" /> Limpar demonstração
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Remover todos os dados de demonstração?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta ação removerá <strong>somente</strong> os dados criados pela Central de
+                    Homologação (<code>is_demo = true</code>). Os dados reais não serão afetados.
+                    <br /><br />
+                    Total atual de registros de demo: <strong>{totalDemo}</strong>.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => wipeMut.mutate()}>Limpar tudo</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
+
+        {summary.data && (
+          <div className="rounded-md border p-3">
+            <div className="text-xs font-medium text-muted-foreground mb-2">Detalhamento por tabela</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+              {Object.entries(summary.data)
+                .filter(([k]) => k !== "batches")
+                .map(([k, v]) => (
+                  <div key={k} className="flex justify-between">
+                    <span className="text-muted-foreground">{k}</span>
+                    <span className="font-medium">{v as number}</span>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {/* Lotes */}
+      <Card className="p-4 space-y-3">
+        <h2 className="text-lg font-semibold">Lotes de demonstração</h2>
+        {batches.isLoading ? (
+          <div className="text-sm text-muted-foreground">Carregando…</div>
+        ) : (batches.data ?? []).length === 0 ? (
+          <div className="text-sm text-muted-foreground">Nenhum lote criado ainda.</div>
+        ) : (
+          <div className="space-y-2">
+            {(batches.data ?? []).map((b: any) => (
+              <div key={b.id} className="flex flex-wrap items-center justify-between gap-2 rounded border p-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <Badge variant={b.status === "active" ? "default" : "secondary"}>{b.status}</Badge>
+                  <span className="font-medium">{b.label}</span>
+                  <span className="text-xs text-muted-foreground">{fmtDate(b.created_at)}</span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {Object.entries(b.counts_json ?? {}).map(([k, v]) => `${k}: ${v}`).join(" · ") || "—"}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {/* Auditoria */}
+      <Card className="p-4 space-y-3">
+        <h2 className="text-lg font-semibold">Histórico das execuções</h2>
+        {audit.isLoading ? (
+          <div className="text-sm text-muted-foreground">Carregando…</div>
+        ) : (audit.data ?? []).length === 0 ? (
+          <div className="text-sm text-muted-foreground">Sem registros ainda.</div>
+        ) : (
+          <div className="space-y-1 text-sm">
+            {(audit.data ?? []).map((e: any) => (
+              <div key={e.id} className="flex flex-wrap justify-between gap-2 border-b py-1">
+                <div>
+                  <Badge variant="outline" className="mr-2">{e.action}</Badge>
+                  <span className="text-xs text-muted-foreground">{fmtDate(e.created_at)}</span>
+                </div>
+                <code className="text-xs text-muted-foreground">
+                  {e.batch_id ? e.batch_id.slice(0, 8) : "—"}
+                </code>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <p className="text-xs text-muted-foreground">
+        Próximas fases: contas de teste, gerador de cenários, execução de automações em modo
+        simulação, painel de saúde do sistema e checklist de homologação.
+      </p>
+    </div>
+  );
+}
+
+function SummaryCard({ label, value, loading }: { label: string; value: number; loading?: boolean }) {
+  return (
+    <div className="rounded-lg border p-3">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-2xl font-semibold">{loading ? "…" : value}</div>
+    </div>
+  );
+}
