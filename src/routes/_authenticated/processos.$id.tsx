@@ -48,6 +48,53 @@ const STEP_STATUSES = [
 ];
 const STEP_STATUS_MAP = Object.fromEntries(STEP_STATUSES.map((s) => [s.value, s]));
 
+const TIMELINE_TIPOS = new Set([
+  "processo_aberto", "processo_status", "processo_responsavel", "processo_prazo",
+  "processo_etapa_status", "processo_etapa_responsavel", "processo_etapa_prazo",
+]);
+const TIMELINE_ICON: Record<string, any> = {
+  processo_aberto: FilePlus2,
+  processo_status: Activity,
+  processo_responsavel: UserRound,
+  processo_prazo: CalendarClock,
+  processo_etapa_status: CheckCircle2,
+  processo_etapa_responsavel: UserRound,
+  processo_etapa_prazo: CalendarClock,
+};
+const STATUS_LABEL: Record<string, string> = {
+  nao_iniciado: "não iniciado", em_andamento: "em andamento",
+  aguardando_cliente: "aguardando cliente", aguardando_orgao: "aguardando órgão",
+  concluido: "concluído", cancelado: "cancelado",
+  pendente: "pendente", concluida: "concluída", cancelada: "cancelada",
+};
+const fmtDate = (v: any) => v ? new Date(v).toLocaleDateString("pt-BR") : "—";
+function friendlyTimeline(tipo: string, descricao: string, meta: any): string {
+  const oldL = STATUS_LABEL[meta?.old] ?? meta?.old;
+  const newL = STATUS_LABEL[meta?.new] ?? meta?.new;
+  switch (tipo) {
+    case "processo_aberto": return "Processo aberto.";
+    case "processo_status":
+      if (newL === "aguardando cliente" || newL === "aguardando órgão")
+        return `Processo em espera (${newL})${meta?.motivo_espera ? `: ${meta.motivo_espera}` : ""}.`;
+      if (newL === "em andamento" && (oldL === "aguardando cliente" || oldL === "aguardando órgão"))
+        return "Processo retomado.";
+      return `Status → ${newL ?? "—"}.`;
+    case "processo_responsavel": return "Responsável do processo alterado.";
+    case "processo_prazo": return `Prazo alterado (${fmtDate(meta?.old)} → ${fmtDate(meta?.new)}).`;
+    case "processo_etapa_status": {
+      const stepName = descricao?.match(/"([^"]+)"/)?.[1];
+      const nm = stepName ? `"${stepName}"` : "etapa";
+      if (newL === "concluída") return `Etapa ${nm} concluída.`;
+      if (oldL === "concluída" && newL !== "concluída") return `Etapa ${nm} reaberta.`;
+      if (newL === "em andamento") return `Etapa ${nm} iniciada.`;
+      return `Etapa ${nm} → ${newL ?? "—"}.`;
+    }
+    case "processo_etapa_responsavel": return descricao ?? "Responsável de etapa alterado.";
+    case "processo_etapa_prazo": return `${descricao} (${fmtDate(meta?.old)} → ${fmtDate(meta?.new)}).`;
+    default: return descricao ?? tipo;
+  }
+}
+
 function ProcessDetail() {
   const { id } = Route.useParams();
   const { role, userId, loading } = useCurrentUser();
