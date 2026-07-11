@@ -19,6 +19,7 @@ import {
   homologSummary, homologCreateEnvironment, homologWipe, homologReset,
   homologListBatches, homologListAudit,
 } from "@/lib/homologacao.functions";
+import { homologAccessDiagnostic } from "@/lib/access-diagnostics.functions";
 
 export const Route = createFileRoute("/_authenticated/homologacao")({
   component: HomologPage,
@@ -40,15 +41,18 @@ function HomologPage() {
   const resetFn = useServerFn(homologReset);
   const batchesFn = useServerFn(homologListBatches);
   const auditFn = useServerFn(homologListAudit);
+  const diagnosticFn = useServerFn(homologAccessDiagnostic);
 
   const summary = useQuery({ queryKey: ["homolog-summary"], queryFn: () => summaryFn({}) });
   const batches = useQuery({ queryKey: ["homolog-batches"], queryFn: () => batchesFn({}) });
   const audit = useQuery({ queryKey: ["homolog-audit"], queryFn: () => auditFn({}) });
+  const diagnostic = useQuery({ queryKey: ["homolog-access-diagnostic"], queryFn: () => diagnosticFn({}) });
 
   const invalidateAll = () => {
     qc.invalidateQueries({ queryKey: ["homolog-summary"] });
     qc.invalidateQueries({ queryKey: ["homolog-batches"] });
     qc.invalidateQueries({ queryKey: ["homolog-audit"] });
+    qc.invalidateQueries({ queryKey: ["homolog-access-diagnostic"] });
   };
 
   const createMut = useMutation({
@@ -170,6 +174,71 @@ function HomologPage() {
                     <span className="font-medium">{v as number}</span>
                   </div>
                 ))}
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {/* Diagnóstico temporário */}
+      <Card className="p-4 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold">Diagnóstico de acesso</h2>
+          <Button variant="outline" size="sm" onClick={() => diagnostic.refetch()} disabled={diagnostic.isFetching}>
+            Atualizar diagnóstico
+          </Button>
+        </div>
+        {diagnostic.isLoading ? (
+          <div className="text-sm text-muted-foreground">Carregando diagnóstico…</div>
+        ) : diagnostic.error ? (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+            {(diagnostic.error as Error).message}
+          </div>
+        ) : diagnostic.data && (
+          <div className="space-y-4 text-sm">
+            <div className="grid gap-2 md:grid-cols-3">
+              <DiagnosticItem label="Usuário autenticado" value={diagnostic.data.current_profile?.email || diagnostic.data.current_user} />
+              <DiagnosticItem label="Papel atual" value={(diagnostic.data.current_roles ?? []).join(", ") || "—"} />
+              <DiagnosticItem label="Status" value={diagnostic.data.current_status || "—"} />
+              <DiagnosticItem label="Perfil encontrado" value={diagnostic.data.current_profile?.full_name || "—"} />
+              <DiagnosticItem label="Colaborador relacionado" value={diagnostic.data.current_collaborator?.nome || "—"} />
+              <DiagnosticItem label="Empresas acessíveis" value={String(diagnostic.data.accessible_companies_count ?? 0)} />
+              <DiagnosticItem label="Total de colaboradores" value={String(diagnostic.data.total_collaborators ?? 0)} />
+              <DiagnosticItem label="Colaboradores visíveis" value={String(diagnostic.data.visible_collaborators_count ?? 0)} />
+              <DiagnosticItem label="Query Empresas" value={`${diagnostic.data.page_query_counts?.empresas ?? 0} registros`} />
+            </div>
+
+            <div className="rounded-md border p-3">
+              <div className="mb-2 text-xs font-medium uppercase text-muted-foreground">Últimos erros das queries</div>
+              <div className="grid gap-1 text-xs md:grid-cols-2">
+                <div>Empresas: {diagnostic.data.last_errors?.empresas || "sem erro"}</div>
+                <div>Colaboradores: {diagnostic.data.last_errors?.colaboradores || "sem erro"}</div>
+              </div>
+            </div>
+
+            <div className="rounded-md border p-3">
+              <div className="mb-2 text-xs font-medium uppercase text-muted-foreground">Empresas retornadas</div>
+              <div className="flex flex-wrap gap-2">
+                {(diagnostic.data.accessible_companies ?? []).map((client: any) => (
+                  <Badge key={client.id} variant={client.is_demo ? "secondary" : "outline"}>{client.razao_social}</Badge>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-md border p-3">
+              <div className="mb-2 text-xs font-medium uppercase text-muted-foreground">Bruno e Igor</div>
+              <div className="space-y-2">
+                {(diagnostic.data.target_accounts ?? []).map((account: any) => (
+                  <div key={account.user_id} className="rounded border bg-muted/30 p-2 text-xs">
+                    <div className="font-medium">{account.profile?.full_name || account.auth_email || account.user_id}</div>
+                    <div className="text-muted-foreground">
+                      Auth: {account.auth_email || "—"} · Papel: {(account.roles ?? []).join(", ") || "—"} · Colaborador: {account.collaborator?.nome || "—"} · Status: {account.collaborator?.status || account.profile?.status || "—"}
+                    </div>
+                    <div className="mt-1 text-muted-foreground">
+                      Empresas vinculadas: {(account.linked_clients ?? []).map((client: any) => client.razao_social).join("; ") || "nenhuma"}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
