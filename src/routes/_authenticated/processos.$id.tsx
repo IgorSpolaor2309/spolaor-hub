@@ -448,6 +448,13 @@ function ProcessDetail() {
           )}
       </Card>
 
+      <ProcessDocumentsSection
+        processId={id}
+        clientId={p.client_id}
+        steps={steps.map((s: any) => ({ id: s.id, ordem: s.ordem, nome: s.nome }))}
+        canEdit={isAdmin || role === "collaborator"}
+      />
+
       {isAdmin && (
         <Card className="mt-3 p-2">
           <div className="border-b px-2 py-2 text-sm font-medium">
