@@ -469,6 +469,9 @@ function StepsSection({ typeId, canEdit }: { typeId: string; canEdit: boolean })
   const [editing, setEditing] = useState<any>(null);
   const [preview, setPreview] = useState<{ step: any; requirements: any[] } | null>(null);
   const [syncOpen, setSyncOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"todas" | "publicas" | "internas" | "com_reqs" | "sem_reqs">("todas");
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
 
   const stepsQ = useQuery({
     queryKey: ["process-steps", typeId],
