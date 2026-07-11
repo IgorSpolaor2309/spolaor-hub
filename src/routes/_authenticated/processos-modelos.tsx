@@ -47,6 +47,7 @@ function ProcessTypesPage() {
   const [sortBy, setSortBy] = useState<"nome" | "mais_usados" | "recentes" | "antigos" | "etapas">("nome");
   const [dupOf, setDupOf] = useState<any>(null);
   const [importInto, setImportInto] = useState<any>(null);
+  const [demoFilter, setDemoFilter] = useState<DemoFilterValue>("real");
 
   const typesQ = useQuery({
     queryKey: ["process-types"],
