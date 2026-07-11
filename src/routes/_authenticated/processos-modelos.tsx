@@ -79,7 +79,7 @@ function ProcessTypesPage() {
   }, [statsQ.data]);
 
   const sortedTypes = useMemo(() => {
-    const arr = [...(typesQ.data ?? [])];
+    const arr = [...(typesQ.data ?? [])].filter((t: any) => matchesDemoFilter(t, demoFilter));
     const get = (t: any) => statsMap.get(t.id) ?? {};
     switch (sortBy) {
       case "mais_usados": arr.sort((a, b) => (get(b).processos_ativos ?? 0) - (get(a).processos_ativos ?? 0)); break;
@@ -89,7 +89,7 @@ function ProcessTypesPage() {
       default: arr.sort((a, b) => (a.nome ?? "").localeCompare(b.nome ?? ""));
     }
     return arr;
-  }, [typesQ.data, statsMap, sortBy]);
+  }, [typesQ.data, statsMap, sortBy, demoFilter]);
 
   // Totais agregados para o dashboard
   const totals = useMemo(() => {
