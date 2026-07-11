@@ -17,6 +17,7 @@ import { Route as AuthenticatedValidadesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedSolicitacoesRouteImport } from './routes/_authenticated/solicitacoes'
 import { Route as AuthenticatedProcessosModelosRouteImport } from './routes/_authenticated/processos-modelos'
 import { Route as AuthenticatedProcessosRouteImport } from './routes/_authenticated/processos'
+import { Route as AuthenticatedPortalProcessosRouteImport } from './routes/_authenticated/portal-processos'
 import { Route as AuthenticatedPlanosRouteImport } from './routes/_authenticated/planos'
 import { Route as AuthenticatedPendenciasRouteImport } from './routes/_authenticated/pendencias'
 import { Route as AuthenticatedNotificacoesRouteImport } from './routes/_authenticated/notificacoes'
@@ -35,6 +36,7 @@ import { Route as AuthenticatedColaboradoresRouteImport } from './routes/_authen
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
 import { Route as AuthenticatedChecklistRouteImport } from './routes/_authenticated/checklist'
 import { Route as AuthenticatedProcessosIdRouteImport } from './routes/_authenticated/processos.$id'
+import { Route as AuthenticatedPortalProcessosIdRouteImport } from './routes/_authenticated/portal-processos.$id'
 import { Route as AuthenticatedIntegracoesOmieRouteImport } from './routes/_authenticated/integracoes.omie'
 import { Route as AuthenticatedClientesIdRouteImport } from './routes/_authenticated/clientes.$id'
 
@@ -79,6 +81,12 @@ const AuthenticatedProcessosRoute = AuthenticatedProcessosRouteImport.update({
   path: '/processos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPortalProcessosRoute =
+  AuthenticatedPortalProcessosRouteImport.update({
+    id: '/portal-processos',
+    path: '/portal-processos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlanosRoute = AuthenticatedPlanosRouteImport.update({
   id: '/planos',
   path: '/planos',
@@ -176,6 +184,12 @@ const AuthenticatedProcessosIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedProcessosRoute,
   } as any)
+const AuthenticatedPortalProcessosIdRoute =
+  AuthenticatedPortalProcessosIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedPortalProcessosRoute,
+  } as any)
 const AuthenticatedIntegracoesOmieRoute =
   AuthenticatedIntegracoesOmieRouteImport.update({
     id: '/integracoes/omie',
@@ -209,12 +223,14 @@ export interface FileRoutesByFullPath {
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/pendencias': typeof AuthenticatedPendenciasRoute
   '/planos': typeof AuthenticatedPlanosRoute
+  '/portal-processos': typeof AuthenticatedPortalProcessosRouteWithChildren
   '/processos': typeof AuthenticatedProcessosRouteWithChildren
   '/processos-modelos': typeof AuthenticatedProcessosModelosRoute
   '/solicitacoes': typeof AuthenticatedSolicitacoesRoute
   '/validades': typeof AuthenticatedValidadesRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
   '/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
+  '/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
 }
 export interface FileRoutesByTo {
@@ -237,6 +253,7 @@ export interface FileRoutesByTo {
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/pendencias': typeof AuthenticatedPendenciasRoute
   '/planos': typeof AuthenticatedPlanosRoute
+  '/portal-processos': typeof AuthenticatedPortalProcessosRouteWithChildren
   '/processos': typeof AuthenticatedProcessosRouteWithChildren
   '/processos-modelos': typeof AuthenticatedProcessosModelosRoute
   '/solicitacoes': typeof AuthenticatedSolicitacoesRoute
@@ -244,6 +261,7 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
   '/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
+  '/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
 }
 export interface FileRoutesById {
@@ -268,6 +286,7 @@ export interface FileRoutesById {
   '/_authenticated/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/_authenticated/pendencias': typeof AuthenticatedPendenciasRoute
   '/_authenticated/planos': typeof AuthenticatedPlanosRoute
+  '/_authenticated/portal-processos': typeof AuthenticatedPortalProcessosRouteWithChildren
   '/_authenticated/processos': typeof AuthenticatedProcessosRouteWithChildren
   '/_authenticated/processos-modelos': typeof AuthenticatedProcessosModelosRoute
   '/_authenticated/solicitacoes': typeof AuthenticatedSolicitacoesRoute
@@ -275,6 +294,7 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/clientes/$id': typeof AuthenticatedClientesIdRoute
   '/_authenticated/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
+  '/_authenticated/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/_authenticated/processos/$id': typeof AuthenticatedProcessosIdRoute
 }
 export interface FileRouteTypes {
@@ -300,12 +320,14 @@ export interface FileRouteTypes {
     | '/notificacoes'
     | '/pendencias'
     | '/planos'
+    | '/portal-processos'
     | '/processos'
     | '/processos-modelos'
     | '/solicitacoes'
     | '/validades'
     | '/clientes/$id'
     | '/integracoes/omie'
+    | '/portal-processos/$id'
     | '/processos/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -328,6 +350,7 @@ export interface FileRouteTypes {
     | '/notificacoes'
     | '/pendencias'
     | '/planos'
+    | '/portal-processos'
     | '/processos'
     | '/processos-modelos'
     | '/solicitacoes'
@@ -335,6 +358,7 @@ export interface FileRouteTypes {
     | '/'
     | '/clientes/$id'
     | '/integracoes/omie'
+    | '/portal-processos/$id'
     | '/processos/$id'
   id:
     | '__root__'
@@ -358,6 +382,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notificacoes'
     | '/_authenticated/pendencias'
     | '/_authenticated/planos'
+    | '/_authenticated/portal-processos'
     | '/_authenticated/processos'
     | '/_authenticated/processos-modelos'
     | '/_authenticated/solicitacoes'
@@ -365,6 +390,7 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/clientes/$id'
     | '/_authenticated/integracoes/omie'
+    | '/_authenticated/portal-processos/$id'
     | '/_authenticated/processos/$id'
   fileRoutesById: FileRoutesById
 }
@@ -430,6 +456,13 @@ declare module '@tanstack/react-router' {
       path: '/processos'
       fullPath: '/processos'
       preLoaderRoute: typeof AuthenticatedProcessosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/portal-processos': {
+      id: '/_authenticated/portal-processos'
+      path: '/portal-processos'
+      fullPath: '/portal-processos'
+      preLoaderRoute: typeof AuthenticatedPortalProcessosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/planos': {
@@ -558,6 +591,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProcessosIdRouteImport
       parentRoute: typeof AuthenticatedProcessosRoute
     }
+    '/_authenticated/portal-processos/$id': {
+      id: '/_authenticated/portal-processos/$id'
+      path: '/$id'
+      fullPath: '/portal-processos/$id'
+      preLoaderRoute: typeof AuthenticatedPortalProcessosIdRouteImport
+      parentRoute: typeof AuthenticatedPortalProcessosRoute
+    }
     '/_authenticated/integracoes/omie': {
       id: '/_authenticated/integracoes/omie'
       path: '/integracoes/omie'
@@ -586,6 +626,20 @@ const AuthenticatedClientesRouteChildren: AuthenticatedClientesRouteChildren = {
 const AuthenticatedClientesRouteWithChildren =
   AuthenticatedClientesRoute._addFileChildren(
     AuthenticatedClientesRouteChildren,
+  )
+
+interface AuthenticatedPortalProcessosRouteChildren {
+  AuthenticatedPortalProcessosIdRoute: typeof AuthenticatedPortalProcessosIdRoute
+}
+
+const AuthenticatedPortalProcessosRouteChildren: AuthenticatedPortalProcessosRouteChildren =
+  {
+    AuthenticatedPortalProcessosIdRoute: AuthenticatedPortalProcessosIdRoute,
+  }
+
+const AuthenticatedPortalProcessosRouteWithChildren =
+  AuthenticatedPortalProcessosRoute._addFileChildren(
+    AuthenticatedPortalProcessosRouteChildren,
   )
 
 interface AuthenticatedProcessosRouteChildren {
@@ -620,6 +674,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNotificacoesRoute: typeof AuthenticatedNotificacoesRoute
   AuthenticatedPendenciasRoute: typeof AuthenticatedPendenciasRoute
   AuthenticatedPlanosRoute: typeof AuthenticatedPlanosRoute
+  AuthenticatedPortalProcessosRoute: typeof AuthenticatedPortalProcessosRouteWithChildren
   AuthenticatedProcessosRoute: typeof AuthenticatedProcessosRouteWithChildren
   AuthenticatedProcessosModelosRoute: typeof AuthenticatedProcessosModelosRoute
   AuthenticatedSolicitacoesRoute: typeof AuthenticatedSolicitacoesRoute
@@ -646,6 +701,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNotificacoesRoute: AuthenticatedNotificacoesRoute,
   AuthenticatedPendenciasRoute: AuthenticatedPendenciasRoute,
   AuthenticatedPlanosRoute: AuthenticatedPlanosRoute,
+  AuthenticatedPortalProcessosRoute:
+    AuthenticatedPortalProcessosRouteWithChildren,
   AuthenticatedProcessosRoute: AuthenticatedProcessosRouteWithChildren,
   AuthenticatedProcessosModelosRoute: AuthenticatedProcessosModelosRoute,
   AuthenticatedSolicitacoesRoute: AuthenticatedSolicitacoesRoute,
