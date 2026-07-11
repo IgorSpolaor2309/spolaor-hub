@@ -113,6 +113,18 @@ function HomologPage() {
     onError: (e: any) => toast.error(e?.message || "Falha ao higienizar contas órfãs."),
   });
 
+  const validateMut = useMutation({
+    mutationFn: () => validateFn({ data: { batch_id: validateBatchId } }),
+    onSuccess: (r: any) => {
+      setValidation(r);
+      const msg = r.overall === "pass" ? "Ambiente aprovado." : r.overall === "warn" ? "Ambiente com atenção." : "Ambiente reprovado.";
+      (r.overall === "fail" ? toast.error : r.overall === "warn" ? toast.warning : toast.success)(msg);
+      qc.invalidateQueries({ queryKey: ["homolog-audit"] });
+    },
+    onError: (e: any) => toast.error(e?.message || "Falha ao validar ambiente."),
+  });
+
+
   const totalDemo = summary.data
     ? Object.entries(summary.data)
         .filter(([k]) => k !== "batches")
