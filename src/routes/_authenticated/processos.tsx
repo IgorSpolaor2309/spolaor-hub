@@ -60,10 +60,17 @@ function ProcessesPage() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("company_processes")
-        .select("*, clients(razao_social, nome_fantasia, documento), process_types(nome, cor, categoria), responsavel:profiles!responsavel_id(full_name), steps:company_process_steps(id, status)")
+        .select("*, clients(razao_social, nome_fantasia, documento), process_types(nome, cor, categoria), steps:company_process_steps(id, status)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      const rows = data ?? [];
+      const ids = Array.from(new Set(rows.map((r: any) => r.responsavel_id).filter(Boolean)));
+      let profMap: Record<string, string> = {};
+      if (ids.length) {
+        const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids as string[]);
+        (profs ?? []).forEach((p: any) => { profMap[p.id] = p.full_name; });
+      }
+      return rows.map((r: any) => ({ ...r, responsavel: r.responsavel_id ? { full_name: profMap[r.responsavel_id] ?? null } : null }));
     },
   });
 
