@@ -731,6 +731,147 @@ export type Database = {
           },
         ]
       }
+      company_process_steps: {
+        Row: {
+          company_process_id: string
+          concluida_por: string | null
+          created_at: string
+          data_conclusao: string | null
+          departamento: string | null
+          descricao: string | null
+          exige_documento: boolean
+          id: string
+          nome: string
+          obrigatoria: boolean
+          observacoes: string | null
+          ordem: number
+          pode_concluir_manual: boolean
+          prazo: string | null
+          process_step_id: string | null
+          responsavel_id: string | null
+          status: string
+          updated_at: string
+          visivel_cliente: boolean
+        }
+        Insert: {
+          company_process_id: string
+          concluida_por?: string | null
+          created_at?: string
+          data_conclusao?: string | null
+          departamento?: string | null
+          descricao?: string | null
+          exige_documento?: boolean
+          id?: string
+          nome: string
+          obrigatoria?: boolean
+          observacoes?: string | null
+          ordem?: number
+          pode_concluir_manual?: boolean
+          prazo?: string | null
+          process_step_id?: string | null
+          responsavel_id?: string | null
+          status?: string
+          updated_at?: string
+          visivel_cliente?: boolean
+        }
+        Update: {
+          company_process_id?: string
+          concluida_por?: string | null
+          created_at?: string
+          data_conclusao?: string | null
+          departamento?: string | null
+          descricao?: string | null
+          exige_documento?: boolean
+          id?: string
+          nome?: string
+          obrigatoria?: boolean
+          observacoes?: string | null
+          ordem?: number
+          pode_concluir_manual?: boolean
+          prazo?: string | null
+          process_step_id?: string | null
+          responsavel_id?: string | null
+          status?: string
+          updated_at?: string
+          visivel_cliente?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_process_steps_company_process_id_fkey"
+            columns: ["company_process_id"]
+            isOneToOne: false
+            referencedRelation: "company_processes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_process_steps_process_step_id_fkey"
+            columns: ["process_step_id"]
+            isOneToOne: false
+            referencedRelation: "process_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_processes: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          data_abertura: string
+          id: string
+          observacoes: string | null
+          prazo_final: string | null
+          prioridade: string
+          process_type_id: string
+          responsavel_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          data_abertura?: string
+          id?: string
+          observacoes?: string | null
+          prazo_final?: string | null
+          prioridade?: string
+          process_type_id: string
+          responsavel_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          data_abertura?: string
+          id?: string
+          observacoes?: string | null
+          prazo_final?: string | null
+          prioridade?: string
+          process_type_id?: string
+          responsavel_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_processes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_processes_process_type_id_fkey"
+            columns: ["process_type_id"]
+            isOneToOne: false
+            referencedRelation: "process_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_requests: {
         Row: {
           attachment_final_name: string | null
@@ -1404,6 +1545,101 @@ export type Database = {
         }
         Relationships: []
       }
+      process_steps: {
+        Row: {
+          created_at: string
+          departamento: string | null
+          descricao: string | null
+          exige_documento: boolean
+          id: string
+          nome: string
+          obrigatoria: boolean
+          ordem: number
+          pode_concluir_manual: boolean
+          prazo_dias: number | null
+          process_type_id: string
+          updated_at: string
+          visivel_cliente: boolean
+        }
+        Insert: {
+          created_at?: string
+          departamento?: string | null
+          descricao?: string | null
+          exige_documento?: boolean
+          id?: string
+          nome: string
+          obrigatoria?: boolean
+          ordem?: number
+          pode_concluir_manual?: boolean
+          prazo_dias?: number | null
+          process_type_id: string
+          updated_at?: string
+          visivel_cliente?: boolean
+        }
+        Update: {
+          created_at?: string
+          departamento?: string | null
+          descricao?: string | null
+          exige_documento?: boolean
+          id?: string
+          nome?: string
+          obrigatoria?: boolean
+          ordem?: number
+          pode_concluir_manual?: boolean
+          prazo_dias?: number | null
+          process_type_id?: string
+          updated_at?: string
+          visivel_cliente?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "process_steps_process_type_id_fkey"
+            columns: ["process_type_id"]
+            isOneToOne: false
+            referencedRelation: "process_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      process_types: {
+        Row: {
+          categoria: string | null
+          cor: string | null
+          created_at: string
+          descricao: string | null
+          icone: string | null
+          id: string
+          nome: string
+          ordem: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          categoria?: string | null
+          cor?: string | null
+          created_at?: string
+          descricao?: string | null
+          icone?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string | null
+          cor?: string | null
+          created_at?: string
+          descricao?: string | null
+          icone?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1683,6 +1919,17 @@ export type Database = {
           _user_id: string
         }
         Returns: undefined
+      }
+      open_company_process: {
+        Args: {
+          _client_id: string
+          _observacoes?: string
+          _prazo_final?: string
+          _prioridade?: string
+          _process_type_id: string
+          _responsavel_id?: string
+        }
+        Returns: string
       }
       preview_plan_change: {
         Args: { _client_id: string; _competencia: string; _new_plan_id: string }
