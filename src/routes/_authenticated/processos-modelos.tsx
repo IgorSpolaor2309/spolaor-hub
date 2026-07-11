@@ -745,6 +745,15 @@ function StepRequirements({ stepId, canEdit }: { stepId: string; canEdit: boolea
     onSuccess: () => invalidate(),
   });
 
+  const patch = useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: any }) => {
+      const { error } = await (supabase as any).from("process_step_requirements").update(patch).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidate(),
+    onError: (e: any) => toast.error(e.message ?? "Falha"),
+  });
+
   const remove = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await (supabase as any).from("process_step_requirements").delete().eq("id", id);
@@ -755,10 +764,14 @@ function StepRequirements({ stepId, canEdit }: { stepId: string; canEdit: boolea
   });
 
   const items = q.data ?? [];
+  const visibleCount = items.filter((r: any) => r.visivel_cliente).length;
   return (
     <div className="mt-2 ml-8 rounded border-l-2 bg-muted/20 p-2 pl-3">
-      <div className="mb-1 flex items-center justify-between">
-        <div className="text-xs font-medium text-muted-foreground">Requisitos documentais ({items.length})</div>
+      <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+        <div className="text-xs font-medium text-muted-foreground">
+          Requisitos documentais ({items.length})
+          {items.length > 0 && <span className="ml-2 text-[10px]">· {visibleCount} visível(is) ao cliente</span>}
+        </div>
         {canEdit && (
           <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => setShowForm((v) => !v)}>
             <Plus className="mr-1 h-3 w-3" /> Adicionar
@@ -780,8 +793,29 @@ function StepRequirements({ stepId, canEdit }: { stepId: string; canEdit: boolea
               ) : (
                 <Badge variant={r.obrigatorio ? "secondary" : "outline"} className="text-[10px]">{r.obrigatorio ? "Obrigatório" : "Opcional"}</Badge>
               )}
+              {r.visivel_cliente
+                ? <Badge className="bg-blue-100 text-blue-800 gap-1 text-[10px]"><Globe className="h-2.5 w-2.5" /> Visível</Badge>
+                : <Badge variant="outline" className="gap-1 text-[10px]"><Lock className="h-2.5 w-2.5" /> Interna</Badge>}
               {r.descricao && <span className="text-muted-foreground">— {r.descricao}</span>}
-              {canEdit && <div className="ml-auto"><DeleteButton onConfirm={() => remove.mutate(r.id)} /></div>}
+              {canEdit && (
+                <div className="ml-auto flex items-center gap-1">
+                  <label className="flex items-center gap-1 rounded border bg-background px-1.5 py-0.5 text-[10px]" title="Mostrar ao cliente">
+                    <Switch checked={!!r.visivel_cliente}
+                      onCheckedChange={(v) => patch.mutate({ id: r.id, patch: { visivel_cliente: v } })} />
+                    Mostrar
+                  </label>
+                  <PublicTextsPopover
+                    title="Textos públicos do requisito"
+                    values={{ nome_publico: r.nome_publico, descricao_publica: r.descricao_publica }}
+                    fields={[
+                      { key: "nome_publico", label: "Nome público", placeholder: r.nome },
+                      { key: "descricao_publica", label: "Descrição pública", textarea: true, placeholder: r.descricao ?? "" },
+                    ]}
+                    onSave={(p) => patch.mutateAsync({ id: r.id, patch: p })}
+                  />
+                  <DeleteButton onConfirm={() => remove.mutate(r.id)} />
+                </div>
+              )}
             </li>
           ))}
         </ul>
