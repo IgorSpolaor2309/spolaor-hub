@@ -107,6 +107,29 @@ function ProcessDetail() {
     },
   });
 
+  const historyQ = useQuery({
+    queryKey: ["company-process-history", id],
+    enabled: ready,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("timeline_events")
+        .select("id, tipo, descricao, metadata, created_at, actor_profile_id")
+        .filter("metadata->>process_id", "eq", id)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      const rows = data ?? [];
+      const ids = Array.from(new Set(rows.map((r: any) => r.actor_profile_id).filter(Boolean)));
+      let profMap: Record<string, string> = {};
+      if (ids.length) {
+        const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids as string[]);
+        (profs ?? []).forEach((p: any) => { profMap[p.id] = p.full_name; });
+      }
+      return rows.map((r: any) => ({ ...r, actor_name: r.actor_profile_id ? profMap[r.actor_profile_id] ?? null : null }));
+    },
+  });
+
+
   const updateProc = useMutation({
     mutationFn: async (patch: any) => {
       const { error } = await (supabase as any).from("company_processes").update(patch).eq("id", id);
