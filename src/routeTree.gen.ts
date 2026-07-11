@@ -28,6 +28,7 @@ import { Route as AuthenticatedMeusProcessosRouteImport } from './routes/_authen
 import { Route as AuthenticatedMeusDocumentosRouteImport } from './routes/_authenticated/meus-documentos'
 import { Route as AuthenticatedKanbanRouteImport } from './routes/_authenticated/kanban'
 import { Route as AuthenticatedInteracoesRouteImport } from './routes/_authenticated/interacoes'
+import { Route as AuthenticatedHomologacaoRouteImport } from './routes/_authenticated/homologacao'
 import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
 import { Route as AuthenticatedGuiasRouteImport } from './routes/_authenticated/guias'
 import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authenticated/documentos'
@@ -38,7 +39,6 @@ import { Route as AuthenticatedChecklistRouteImport } from './routes/_authentica
 import { Route as AuthenticatedProcessosIdRouteImport } from './routes/_authenticated/processos.$id'
 import { Route as AuthenticatedPortalProcessosIdRouteImport } from './routes/_authenticated/portal-processos.$id'
 import { Route as AuthenticatedIntegracoesOmieRouteImport } from './routes/_authenticated/integracoes.omie'
-import { Route as AuthenticatedConfiguracoesHomologacaoRouteImport } from './routes/_authenticated/configuracoes.homologacao'
 import { Route as AuthenticatedClientesIdRouteImport } from './routes/_authenticated/clientes.$id'
 
 const SegurancaRoute = SegurancaRouteImport.update({
@@ -142,6 +142,12 @@ const AuthenticatedInteracoesRoute = AuthenticatedInteracoesRouteImport.update({
   path: '/interacoes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedHomologacaoRoute =
+  AuthenticatedHomologacaoRouteImport.update({
+    id: '/homologacao',
+    path: '/homologacao',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedHistoricoRoute = AuthenticatedHistoricoRouteImport.update({
   id: '/historico',
   path: '/historico',
@@ -197,12 +203,6 @@ const AuthenticatedIntegracoesOmieRoute =
     path: '/integracoes/omie',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedConfiguracoesHomologacaoRoute =
-  AuthenticatedConfiguracoesHomologacaoRouteImport.update({
-    id: '/homologacao',
-    path: '/homologacao',
-    getParentRoute: () => AuthenticatedConfiguracoesRoute,
-  } as any)
 const AuthenticatedClientesIdRoute = AuthenticatedClientesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -216,10 +216,11 @@ export interface FileRoutesByFullPath {
   '/checklist': typeof AuthenticatedChecklistRoute
   '/clientes': typeof AuthenticatedClientesRouteWithChildren
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
-  '/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
+  '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/documentos': typeof AuthenticatedDocumentosRoute
   '/guias': typeof AuthenticatedGuiasRoute
   '/historico': typeof AuthenticatedHistoricoRoute
+  '/homologacao': typeof AuthenticatedHomologacaoRoute
   '/interacoes': typeof AuthenticatedInteracoesRoute
   '/kanban': typeof AuthenticatedKanbanRoute
   '/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
@@ -236,7 +237,6 @@ export interface FileRoutesByFullPath {
   '/solicitacoes': typeof AuthenticatedSolicitacoesRoute
   '/validades': typeof AuthenticatedValidadesRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
-  '/configuracoes/homologacao': typeof AuthenticatedConfiguracoesHomologacaoRoute
   '/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
   '/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
@@ -247,10 +247,11 @@ export interface FileRoutesByTo {
   '/checklist': typeof AuthenticatedChecklistRoute
   '/clientes': typeof AuthenticatedClientesRouteWithChildren
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
-  '/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
+  '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/documentos': typeof AuthenticatedDocumentosRoute
   '/guias': typeof AuthenticatedGuiasRoute
   '/historico': typeof AuthenticatedHistoricoRoute
+  '/homologacao': typeof AuthenticatedHomologacaoRoute
   '/interacoes': typeof AuthenticatedInteracoesRoute
   '/kanban': typeof AuthenticatedKanbanRoute
   '/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
@@ -268,7 +269,6 @@ export interface FileRoutesByTo {
   '/validades': typeof AuthenticatedValidadesRoute
   '/': typeof AuthenticatedIndexRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
-  '/configuracoes/homologacao': typeof AuthenticatedConfiguracoesHomologacaoRoute
   '/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
   '/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
@@ -281,10 +281,11 @@ export interface FileRoutesById {
   '/_authenticated/checklist': typeof AuthenticatedChecklistRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRouteWithChildren
   '/_authenticated/colaboradores': typeof AuthenticatedColaboradoresRoute
-  '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
+  '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/documentos': typeof AuthenticatedDocumentosRoute
   '/_authenticated/guias': typeof AuthenticatedGuiasRoute
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
+  '/_authenticated/homologacao': typeof AuthenticatedHomologacaoRoute
   '/_authenticated/interacoes': typeof AuthenticatedInteracoesRoute
   '/_authenticated/kanban': typeof AuthenticatedKanbanRoute
   '/_authenticated/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
@@ -302,7 +303,6 @@ export interface FileRoutesById {
   '/_authenticated/validades': typeof AuthenticatedValidadesRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/clientes/$id': typeof AuthenticatedClientesIdRoute
-  '/_authenticated/configuracoes/homologacao': typeof AuthenticatedConfiguracoesHomologacaoRoute
   '/_authenticated/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
   '/_authenticated/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/_authenticated/processos/$id': typeof AuthenticatedProcessosIdRoute
@@ -320,6 +320,7 @@ export interface FileRouteTypes {
     | '/documentos'
     | '/guias'
     | '/historico'
+    | '/homologacao'
     | '/interacoes'
     | '/kanban'
     | '/meus-documentos'
@@ -336,7 +337,6 @@ export interface FileRouteTypes {
     | '/solicitacoes'
     | '/validades'
     | '/clientes/$id'
-    | '/configuracoes/homologacao'
     | '/integracoes/omie'
     | '/portal-processos/$id'
     | '/processos/$id'
@@ -351,6 +351,7 @@ export interface FileRouteTypes {
     | '/documentos'
     | '/guias'
     | '/historico'
+    | '/homologacao'
     | '/interacoes'
     | '/kanban'
     | '/meus-documentos'
@@ -368,7 +369,6 @@ export interface FileRouteTypes {
     | '/validades'
     | '/'
     | '/clientes/$id'
-    | '/configuracoes/homologacao'
     | '/integracoes/omie'
     | '/portal-processos/$id'
     | '/processos/$id'
@@ -384,6 +384,7 @@ export interface FileRouteTypes {
     | '/_authenticated/documentos'
     | '/_authenticated/guias'
     | '/_authenticated/historico'
+    | '/_authenticated/homologacao'
     | '/_authenticated/interacoes'
     | '/_authenticated/kanban'
     | '/_authenticated/meus-documentos'
@@ -401,7 +402,6 @@ export interface FileRouteTypes {
     | '/_authenticated/validades'
     | '/_authenticated/'
     | '/_authenticated/clientes/$id'
-    | '/_authenticated/configuracoes/homologacao'
     | '/_authenticated/integracoes/omie'
     | '/_authenticated/portal-processos/$id'
     | '/_authenticated/processos/$id'
@@ -548,6 +548,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInteracoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/homologacao': {
+      id: '/_authenticated/homologacao'
+      path: '/homologacao'
+      fullPath: '/homologacao'
+      preLoaderRoute: typeof AuthenticatedHomologacaoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/historico': {
       id: '/_authenticated/historico'
       path: '/historico'
@@ -618,13 +625,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIntegracoesOmieRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/configuracoes/homologacao': {
-      id: '/_authenticated/configuracoes/homologacao'
-      path: '/homologacao'
-      fullPath: '/configuracoes/homologacao'
-      preLoaderRoute: typeof AuthenticatedConfiguracoesHomologacaoRouteImport
-      parentRoute: typeof AuthenticatedConfiguracoesRoute
-    }
     '/_authenticated/clientes/$id': {
       id: '/_authenticated/clientes/$id'
       path: '/$id'
@@ -646,21 +646,6 @@ const AuthenticatedClientesRouteChildren: AuthenticatedClientesRouteChildren = {
 const AuthenticatedClientesRouteWithChildren =
   AuthenticatedClientesRoute._addFileChildren(
     AuthenticatedClientesRouteChildren,
-  )
-
-interface AuthenticatedConfiguracoesRouteChildren {
-  AuthenticatedConfiguracoesHomologacaoRoute: typeof AuthenticatedConfiguracoesHomologacaoRoute
-}
-
-const AuthenticatedConfiguracoesRouteChildren: AuthenticatedConfiguracoesRouteChildren =
-  {
-    AuthenticatedConfiguracoesHomologacaoRoute:
-      AuthenticatedConfiguracoesHomologacaoRoute,
-  }
-
-const AuthenticatedConfiguracoesRouteWithChildren =
-  AuthenticatedConfiguracoesRoute._addFileChildren(
-    AuthenticatedConfiguracoesRouteChildren,
   )
 
 interface AuthenticatedPortalProcessosRouteChildren {
@@ -695,10 +680,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChecklistRoute: typeof AuthenticatedChecklistRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRouteWithChildren
   AuthenticatedColaboradoresRoute: typeof AuthenticatedColaboradoresRoute
-  AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRouteWithChildren
+  AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRoute
   AuthenticatedGuiasRoute: typeof AuthenticatedGuiasRoute
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
+  AuthenticatedHomologacaoRoute: typeof AuthenticatedHomologacaoRoute
   AuthenticatedInteracoesRoute: typeof AuthenticatedInteracoesRoute
   AuthenticatedKanbanRoute: typeof AuthenticatedKanbanRoute
   AuthenticatedMeusDocumentosRoute: typeof AuthenticatedMeusDocumentosRoute
@@ -722,10 +708,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChecklistRoute: AuthenticatedChecklistRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRouteWithChildren,
   AuthenticatedColaboradoresRoute: AuthenticatedColaboradoresRoute,
-  AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRouteWithChildren,
+  AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedDocumentosRoute: AuthenticatedDocumentosRoute,
   AuthenticatedGuiasRoute: AuthenticatedGuiasRoute,
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
+  AuthenticatedHomologacaoRoute: AuthenticatedHomologacaoRoute,
   AuthenticatedInteracoesRoute: AuthenticatedInteracoesRoute,
   AuthenticatedKanbanRoute: AuthenticatedKanbanRoute,
   AuthenticatedMeusDocumentosRoute: AuthenticatedMeusDocumentosRoute,

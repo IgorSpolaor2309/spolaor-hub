@@ -20,7 +20,7 @@ import {
   homologListBatches, homologListAudit,
 } from "@/lib/homologacao.functions";
 
-export const Route = createFileRoute("/_authenticated/configuracoes/homologacao")({
+export const Route = createFileRoute("/_authenticated/homologacao")({
   component: HomologPage,
 });
 
