@@ -611,3 +611,148 @@ function DiagnosticItem({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+function ValidationHistoryCard({ batchId }: { batchId: string }) {
+  const qc = useQueryClient();
+  const runsFn = useServerFn(homologListValidationRuns);
+  const stepsFn = useServerFn(homologListManualSteps);
+  const updateFn = useServerFn(homologUpdateManualStep);
+  const [selectedRun, setSelectedRun] = useState<string>("");
+
+  const runs = useQuery({
+    queryKey: ["homolog-runs", batchId || null],
+    queryFn: () => runsFn({ data: { batch_id: batchId || null } }),
+  });
+  const steps = useQuery({
+    queryKey: ["homolog-manual-steps", selectedRun],
+    queryFn: () => stepsFn({ data: { run_id: selectedRun } }),
+    enabled: !!selectedRun,
+  });
+
+  const updateMut = useMutation({
+    mutationFn: (v: { step_id: string; status: "pending" | "pass" | "fail" | "skip"; notes?: string | null }) =>
+      updateFn({ data: v }),
+    onSuccess: () => {
+      toast.success("Passo atualizado.");
+      qc.invalidateQueries({ queryKey: ["homolog-manual-steps", selectedRun] });
+    },
+    onError: (e: any) => toast.error(e?.message || "Falha ao atualizar passo."),
+  });
+
+  const runsList: any[] = (runs.data as any[]) ?? [];
+  const stepsByPersona = ((steps.data as any[]) ?? []).reduce<Record<string, any[]>>((acc, s) => {
+    const key = `${s.persona_role}::${s.persona_email}::${s.persona_label}`;
+    (acc[key] ||= []).push(s);
+    return acc;
+  }, {});
+
+  return (
+    <Card className="p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <ShieldCheck className="h-5 w-5 text-primary" />
+        <h2 className="text-lg font-semibold">Histórico de validações e roteiro manual</h2>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Cada execução de <em>Validar ambiente</em> é persistida e semeia automaticamente um roteiro de testes manuais
+        por persona (magic link). Selecione uma execução para registrar os resultados dos testes manuais.
+      </p>
+
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="min-w-[320px] flex-1">
+          <Label>Execução</Label>
+          <select
+            className="w-full rounded-md border bg-background p-2 text-sm"
+            value={selectedRun}
+            onChange={(e) => setSelectedRun(e.target.value)}
+          >
+            <option value="">Selecione uma execução…</option>
+            {runsList.map((r: any) => (
+              <option key={r.id} value={r.id}>
+                {r.run_label || "—"} · {r.overall.toUpperCase()} · {new Date(r.created_at).toLocaleString("pt-BR")} · {r.id.slice(0, 8)}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {runs.isLoading ? (
+        <div className="text-sm text-muted-foreground">Carregando execuções…</div>
+      ) : runsList.length === 0 ? (
+        <div className="text-sm text-muted-foreground">Nenhuma execução registrada ainda.</div>
+      ) : (
+        <div className="grid gap-1 text-sm">
+          {runsList.slice(0, 5).map((r: any) => (
+            <div key={r.id} className="flex flex-wrap items-center justify-between gap-2 rounded border p-2">
+              <div className="flex items-center gap-2">
+                <Badge variant={r.overall === "pass" ? "default" : r.overall === "warn" ? "secondary" : "destructive"}>
+                  {r.overall}
+                </Badge>
+                <span className="font-medium">{r.run_label || "—"}</span>
+                <span className="text-xs text-muted-foreground">
+                  {new Date(r.created_at).toLocaleString("pt-BR")}
+                </span>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => setSelectedRun(r.id)}>
+                Abrir roteiro
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {selectedRun && (
+        <div className="space-y-3 pt-2">
+          <h3 className="text-sm font-semibold">Roteiro manual por persona</h3>
+          {steps.isLoading ? (
+            <div className="text-sm text-muted-foreground">Carregando passos…</div>
+          ) : Object.keys(stepsByPersona).length === 0 ? (
+            <div className="text-sm text-muted-foreground">Nenhum passo semeado para esta execução.</div>
+          ) : (
+            Object.entries(stepsByPersona).map(([key, list]) => {
+              const [role, email, label] = key.split("::");
+              return (
+                <div key={key} className="rounded border p-3 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="outline">{role}</Badge>
+                    <span className="font-medium text-sm">{label}</span>
+                    <code className="text-xs text-muted-foreground">{email}</code>
+                  </div>
+                  <div className="grid gap-1">
+                    {list.map((s: any) => (
+                      <div key={s.id} className="flex flex-wrap items-center justify-between gap-2 rounded border p-2 text-sm">
+                        <div className="flex items-center gap-2">
+                          {s.status === "pass" ? (
+                            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                          ) : s.status === "fail" ? (
+                            <XCircle className="h-4 w-4 text-destructive" />
+                          ) : s.status === "skip" ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <AlertTriangle className="h-4 w-4 text-amber-600" />
+                          )}
+                          <span>{s.step_label}</span>
+                          <Badge variant="outline" className="text-[10px]">{s.step_code}</Badge>
+                        </div>
+                        <div className="flex gap-1">
+                          {(["pass", "warn_as_fail", "skip", "pending"] as const).map(() => null)}
+                          <Button size="sm" variant={s.status === "pass" ? "default" : "outline"} disabled={updateMut.isPending}
+                            onClick={() => updateMut.mutate({ step_id: s.id, status: "pass" })}>Aprovar</Button>
+                          <Button size="sm" variant={s.status === "fail" ? "destructive" : "outline"} disabled={updateMut.isPending}
+                            onClick={() => updateMut.mutate({ step_id: s.id, status: "fail" })}>Reprovar</Button>
+                          <Button size="sm" variant={s.status === "skip" ? "secondary" : "outline"} disabled={updateMut.isPending}
+                            onClick={() => updateMut.mutate({ step_id: s.id, status: "skip" })}>Pular</Button>
+                          <Button size="sm" variant="ghost" disabled={updateMut.isPending}
+                            onClick={() => updateMut.mutate({ step_id: s.id, status: "pending", notes: null })}>Limpar</Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+    </Card>
+  );
+}
