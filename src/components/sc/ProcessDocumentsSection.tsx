@@ -93,6 +93,18 @@ export function ProcessDocumentsSection({ processId, clientId, steps, canEdit }:
 
   const docs = docsQ.data ?? [];
   const reqs = reqQ.data ?? [];
+  const reqRequests = reqRequestsQ.data ?? [];
+  const activeReqRequestByReqId = useMemo(() => {
+    const m: Record<string, any> = {};
+    for (const r of reqRequests) {
+      if (!r.company_process_step_requirement_id) continue;
+      // Ativa = não cancelada, não concluída, não recebida (matching o UNIQUE do banco)
+      const isActive = !["cancelado", "concluido", "recebido"].includes(r.status);
+      const cur = m[r.company_process_step_requirement_id];
+      if (isActive && !cur) m[r.company_process_step_requirement_id] = r;
+    }
+    return m;
+  }, [reqRequests]);
   const stepMap = useMemo(() => Object.fromEntries(steps.map(s => [s.id, s])), [steps]);
   const generalDocs = docs.filter((d: any) => !d.company_process_step_id);
   const docsByStep = useMemo(() => {
