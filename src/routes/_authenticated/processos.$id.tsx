@@ -497,6 +497,3 @@ function AuditRow({ event }: { event: any }) {
     </li>
   );
 }
-    </div>
-  );
-}
