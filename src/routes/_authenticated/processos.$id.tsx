@@ -57,9 +57,13 @@ function ProcessDetail() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("company_processes")
-        .select("*, clients(id, razao_social, nome_fantasia, documento), process_types(nome, categoria, cor), responsavel:profiles!responsavel_id(full_name)")
+        .select("*, clients(id, razao_social, nome_fantasia, documento), process_types(nome, categoria, cor)")
         .eq("id", id).maybeSingle();
       if (error) throw error;
+      if (data?.responsavel_id) {
+        const { data: prof } = await supabase.from("profiles").select("full_name").eq("id", data.responsavel_id).maybeSingle();
+        (data as any).responsavel = prof ?? null;
+      }
       return data;
     },
   });
@@ -70,10 +74,21 @@ function ProcessDetail() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("company_process_steps")
-        .select("*, responsavel:profiles!responsavel_id(full_name), concluida:profiles!concluida_por(full_name)")
+        .select("*")
         .eq("company_process_id", id).order("ordem").order("created_at");
       if (error) throw error;
-      return data ?? [];
+      const rows = data ?? [];
+      const ids = Array.from(new Set(rows.flatMap((r: any) => [r.responsavel_id, r.concluida_por]).filter(Boolean)));
+      let profMap: Record<string, string> = {};
+      if (ids.length) {
+        const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids as string[]);
+        (profs ?? []).forEach((p: any) => { profMap[p.id] = p.full_name; });
+      }
+      return rows.map((r: any) => ({
+        ...r,
+        responsavel: r.responsavel_id ? { full_name: profMap[r.responsavel_id] ?? null } : null,
+        concluida: r.concluida_por ? { full_name: profMap[r.concluida_por] ?? null } : null,
+      }));
     },
   });
 
