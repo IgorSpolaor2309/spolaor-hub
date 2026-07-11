@@ -231,6 +231,28 @@ function HomologPage() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" disabled={purgeOrphanMut.isPending} title="Remove contas de autenticação demo sem perfil correspondente">
+                  <Trash2 className="h-4 w-4 mr-1" /> Higienizar contas órfãs
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Remover contas de autenticação demo órfãs?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Serão removidas apenas contas com e-mail <code>demo-*@homolog.spolaor.local</code>
+                    {" "}que <strong>não possuem mais perfil</strong> no banco (sobras de lotes apagados diretamente pelo banco).
+                    Nenhuma conta real será afetada.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => purgeOrphanMut.mutate()}>Higienizar</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
 
