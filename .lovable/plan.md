@@ -1,67 +1,78 @@
-# Multiempresa para contas de cliente — SC Central
+# Central de Homologação e Testes
 
-Objetivo: permitir que uma mesma conta de cliente acesse várias empresas/CNPJs, sem misturar dados nem quebrar o que existe. Fazer a menor alteração possível.
+Área administrativa em `Configurações → Homologação e Testes`, acessível apenas a administradores, para testar fluxos do SC Central com dados fictícios sem afetar produção.
 
-## 1. Banco de dados (1 migração)
+Dado o tamanho do escopo (16 blocos), proponho entregar em **4 fases sequenciais**, cada uma validável isoladamente. Confirme se aprova o plano completo ou se quer começar somente pela Fase 1.
 
-**Nova tabela `public.client_users`**
-- `id uuid pk`
-- `client_id uuid → clients(id) on delete cascade`
-- `user_id uuid → auth.users(id) on delete cascade`
-- `papel text` (responsavel | financeiro | socio | operacional | outro), nullable
-- `ativo boolean default true`
-- `criado_por uuid`
-- `created_at`, `updated_at`
-- `unique(client_id, user_id)`
-- GRANTs padrão (`authenticated`, `service_role`); RLS habilitada
-- Políticas:
-  - SELECT: admin OR `user_id = auth.uid()` OR colaborador vinculado ao client
-  - INSERT/UPDATE/DELETE: somente admin (`has_role(auth.uid(),'admin')`)
-- Trigger `set_updated_at`
+---
 
-**Backfill (idempotente, na mesma migração)**
-```sql
-INSERT INTO public.client_users (client_id, user_id, ativo)
-SELECT id, owner_profile_id, true FROM public.clients
-WHERE owner_profile_id IS NOT NULL
-ON CONFLICT (client_id, user_id) DO NOTHING;
-```
-`clients.owner_profile_id` NÃO é removido (compatibilidade).
+## Regra central de segurança
 
-**Atualizar `user_has_client_access`** para considerar `client_users.ativo = true` além do `owner_profile_id` e do vínculo de colaborador. Mantém assinatura — todas as RLS existentes continuam válidas.
+Todos os dados criados pela Central recebem:
 
-**Atualizar `client_staff_user_ids`**: continua devolvendo apenas equipe (admin + colaboradores). Sem mudança.
+- coluna `is_demo boolean default false` nas tabelas afetadas (clients, collaborators, profiles, processes, plans, documents, document_requests, tax_guides, notifications, timeline_events, checklist items);
+- coluna `demo_batch_id uuid` apontando para tabela nova `demo_batches` (id, created_by, created_at, label, status, counts_json);
+- tabela `demo_audit_log` (id, admin_id, action, batch_id, payload_json, created_at) para auditoria de todas as ações da Central.
 
-**Atualizar `profiles_shares_client`**: incluir vínculo via `client_users` para que nomes apareçam corretamente no chat multiempresa.
+**Toda limpeza/restauração filtra obrigatoriamente por `is_demo = true`** via RPC `SECURITY DEFINER` que valida `has_role(auth.uid(), 'admin')` e nunca aceita ids sem essa marca. Nenhum código de teste toca linhas com `is_demo = false`.
 
-**Notificações com nome da empresa**: ajustar as funções `on_document_request_change`, `on_tax_guide_change`, `on_document_insert_notify`, `on_chat_message_insert` para concatenar nome fantasia/razão social no título/mensagem. Loop de destinatários do owner passa a iterar `client_users` ativos (em vez de single `owner_profile_id`).
+Notificações e integrações externas checam `is_demo` do destinatário e são bloqueadas quando o modo homologação estiver ativo para dados reais.
 
-## 2. Helpers de frontend
+---
 
-- `src/lib/client-display.ts` — `clientLabel(c)` retorna Nome Fantasia ⟶ Razão Social ⟶ CNPJ; `clientShort(c)` para chips.
-- `src/hooks/use-my-clients.ts` — devolve `{ clients, selectedId, setSelectedId }` lendo `clients` aos quais o usuário tem acesso (RLS faz o filtro). Persiste seleção em `localStorage`. Inclui opção “Todas as empresas”.
-- `src/components/sc/CompanySelector.tsx` — `<Select>` reutilizável usado no dashboard, chat e Minha área.
+## Fase 1 — Fundação e Ambiente de Demonstração
 
-## 3. Telas (alterações mínimas)
+**Migração 1:**
+- `demo_batches`, `demo_audit_log` (com GRANTs, RLS, políticas admin-only via `has_role`);
+- adicionar `is_demo`, `demo_batch_id` nas tabelas listadas acima (default false, index parcial `where is_demo`);
+- RPC `admin_demo_create_environment()` — cria 3 empresas fictícias + perfis + dados operacionais coerentes em transação única;
+- RPC `admin_demo_wipe(batch_id?)` — apaga somente `is_demo = true`;
+- RPC `admin_demo_reset()` — wipe + create em transação;
+- RPC `admin_demo_summary()` — contagens por tabela.
 
-- **Dashboard cliente** (`routes/_authenticated/index.tsx`): se >1 empresa, mostrar `CompanySelector`; agregados respeitam seleção. Cards/listas sempre mostram empresa.
-- **Minha área** (`minha-area.tsx`): listar todas as empresas vinculadas com nome, CNPJ, status e atalhos para solicitações/guias/documentos/chat daquela empresa.
-- **Listagens** (`solicitacoes`, `documentos`, `guias`, `validades`, `pendencias`, `minhas-pendencias`, `kanban`, `notificacoes`, `interacoes`): adicionar coluna/linha “Empresa” usando `clientLabel`. Já carregam `clients(...)` no select — adicionar onde faltar.
-- **Chat** (`interacoes.tsx`): a lista de conversas já é por `client_id`. Garantir título “Chat — {empresa}” no topo e nome da empresa em cada item da sidebar. Cliente com várias empresas vê várias conversas (já suportado pela query atual).
-- **Admin – edição de cliente** (`clientes.$id.tsx`): nova seção “Usuários com acesso a esta empresa” listando `client_users`, com botões adicionar (autocomplete por e-mail entre perfis existentes), desativar/reativar, remover. Impedir duplicados via unique.
-- **Admin – edição de usuário cliente** (onde existir gestão de contas, p.ex. `colaboradores.tsx`/configurações): se houver tela de contas de cliente, adicionar “Empresas vinculadas a esta conta” espelhando o mesmo CRUD a partir do outro lado. Caso não exista uma tela dedicada hoje, o CRUD pelo lado do cliente (item anterior) já cobre.
-- **Verificação de vínculos** (se houver tela em `configuracoes.tsx`): adicionar contagens — contas sem empresa, empresas sem usuário cliente, contas com múltiplas empresas, vínculos inativos.
+**Página `/configuracoes/homologacao`** (route sob `_authenticated/`, gate extra `has_role admin`):
+- header com aviso permanente "Ambiente de homologação";
+- seção Ambiente: botões Criar / Restaurar / Limpar / Recriar com dialog de confirmação reforçada mostrando o `admin_demo_summary()`;
+- seção Histórico das execuções lendo `demo_audit_log`.
 
-## 4. Compatibilidade
+## Fase 2 — Contas, Cenários e Prévia
 
-- `owner_profile_id` preservado; queries antigas continuam funcionando.
-- Backfill garante que clientes atuais ganham linha em `client_users` automaticamente.
-- Nenhuma RLS é afrouxada — `user_has_client_access` só ganha mais um OR.
+- Seção **Contas de teste**: lista as contas fictícias (email, perfil, empresas, status, última utilização). Reutiliza `adminCreateUser` / redefinição de senha existentes — sem senhas fixas na tela.
+- **Gerador de cenários**: RPCs `admin_demo_scenario(kind, client_id)` para cada cenário listado (etapa vencida, aguardando cliente, checklist incompleto, etc.), sempre marcando `is_demo = true`.
+- **Visualizar como usuário**: drawer read-only que renderiza sidebar + páginas principais com um `previewAsUserId` em contexto React. Não altera sessão nem `auth.uid()`; queries continuam com RLS do admin (documentado como "prévia visual, não teste de permissão").
 
-## 5. Itens explicitamente fora do escopo
+## Fase 3 — Automações, Saúde e Notificações
 
-OMIE, Consulta CNPJ, planos, pagamentos, marketplace, login público, cadastro público, refatoração ampla, remoção de `owner_profile_id`.
+- Seção **Execução de automações**: lista rotinas existentes (checklist mensal, notificações de processos, validades). Cada uma com botões **Simulação** (dry-run, retorna JSON do que faria) e **Executar em demonstração** (filtra `is_demo = true`). Reutiliza funções já existentes com um parâmetro `_scope text default 'demo'`.
+- **Painel de saúde**: RPC `admin_health_check()` retornando array de checks (empresas sem colaborador, etapas sem responsável, processos concluídos <100%, checklists duplicados, etc.) classificados saudável/atenção/erro com links.
+- Guarda em `notifications`/envios externos: helper `should_send_notification(user_id)` que bloqueia envio real quando destinatário tem `is_demo = true` no modo errado, e vice-versa.
 
-## Entregáveis ao final
+## Fase 4 — Checklist de Homologação, Bugs e Testes Automatizados
 
-Lista de tabelas alteradas, migração de dados, arquivos editados, telas com seletor/identificação, comportamento do chat, políticas RLS ajustadas e checklist de testes manuais (admin, colaborador, cliente com 1 e com N empresas; criação/remoção de vínculo; chat por empresa; notificações com nome de empresa).
+- Tabelas `homolog_test_cases` (módulo, cenário, perfil, resultado esperado, status, responsável, data, observação) e `homolog_issues` (título, descrição, passos, gravidade, status, anexos_json). Seed com os testes listados nos blocos 10 e 11.
+- UI de checklist com filtros por módulo/status e diálogo para registrar problema.
+- **Testes automatizados**: o projeto não tem Vitest/Playwright configurados. Entrego base mínima com Vitest + 3-4 smoke tests (utilitários puros de `src/lib/`) e um `README` explicando como rodar. Playwright fica para fase futura conforme instrução.
+
+---
+
+## Detalhes técnicos
+
+- **Rota**: `src/routes/_authenticated/configuracoes.homologacao.tsx` com `beforeLoad` chamando `has_role admin` via server fn; sidebar entry visível só para admin.
+- **Server functions**: `src/lib/homologacao.functions.ts` com `requireSupabaseAuth` + `ensureAdmin`. RPCs pesados em SQL para atomicidade.
+- **Sem crons novos**: reutiliza `plan_checklist_cron_log` e rotas `/api/public/hooks/*` existentes; a Central só invoca as funções manualmente.
+- **RLS**: `is_demo` não relaxa nenhuma policy existente. Novas tabelas (`demo_batches`, `demo_audit_log`, `homolog_*`) têm policy `USING (has_role(auth.uid(), 'admin'))`.
+- **Auditoria**: todo RPC administrativo grava em `demo_audit_log` antes de commitar.
+- **Índices**: parciais `WHERE is_demo = true` nas tabelas grandes (documents, notifications, timeline_events).
+
+---
+
+## O que fica fora desta entrega
+
+- IA / OCR / leitura automática de documentos (explicitamente excluídos);
+- Playwright end-to-end (fase futura);
+- Troca real de identidade / impersonation com `auth.uid()` — a prévia é apenas visual;
+- Módulo de suporte completo — apenas registro simples de bugs de homologação.
+
+---
+
+**Confirme:** aprovo entregar as 4 fases em sequência (uma por turno) ou prefere que eu comece já implementando a Fase 1 agora?
