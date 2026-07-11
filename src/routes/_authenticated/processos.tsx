@@ -199,6 +199,26 @@ function ProcessesPage() {
         }
       />
 
+      {/* Indicadores rápidos */}
+      <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+        {[
+          { k: "total", label: "Total", v: kpis.total, cls: "bg-muted" },
+          { k: "abertos", label: "Abertos", v: kpis.abertos, cls: "bg-blue-50" },
+          { k: "em_andamento", label: "Em andamento", v: kpis.em_andamento, cls: "bg-blue-100", filter: () => setFStatus("em_andamento") },
+          { k: "aguardando", label: "Aguardando", v: kpis.aguardando, cls: "bg-amber-50" },
+          { k: "vencidos", label: "Vencidos", v: kpis.vencidos, cls: "bg-red-50 text-red-800", filter: () => setFPrazo("vencido") },
+          { k: "hoje", label: "Hoje", v: kpis.hoje, cls: "bg-orange-50 text-orange-800", filter: () => setFPrazo("hoje") },
+          { k: "em_breve", label: "Em breve", v: kpis.em_breve, cls: "bg-amber-50 text-amber-800", filter: () => setFPrazo("em_breve") },
+          { k: "concluidos", label: "Concluídos", v: kpis.concluidos, cls: "bg-emerald-50 text-emerald-800", filter: () => setFStatus("concluido") },
+        ].map((k) => (
+          <button key={k.k} onClick={k.filter} disabled={!k.filter}
+            className={`${k.cls} rounded-md border p-2 text-left transition ${k.filter ? "hover:brightness-95" : ""}`}>
+            <div className="text-[10px] uppercase tracking-wide opacity-70">{k.label}</div>
+            <div className="text-lg font-semibold">{k.v}</div>
+          </button>
+        ))}
+      </div>
+
       <Card className="mb-3 p-3">
         <div className="grid gap-2 md:grid-cols-6">
           <div className="relative md:col-span-2">
@@ -260,6 +280,19 @@ function ProcessesPage() {
             </Select>
           </div>
           <div>
+            <Label className="text-xs">Prazo</Label>
+            <Select value={fPrazo} onValueChange={setFPrazo}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="vencido">Vencidos</SelectItem>
+                <SelectItem value="hoje">Vence hoje</SelectItem>
+                <SelectItem value="em_breve">Vence em breve</SelectItem>
+                <SelectItem value="sem_prazo">Sem prazo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
             <Label className="text-xs">Ordenar por</Label>
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -268,24 +301,36 @@ function ProcessesPage() {
                 <SelectItem value="empresa">Empresa</SelectItem>
                 <SelectItem value="responsavel">Responsável</SelectItem>
                 <SelectItem value="status">Status</SelectItem>
+                <SelectItem value="progresso">Progresso</SelectItem>
                 <SelectItem value="abertura">Data de abertura</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
+        {activeFilters > 0 && (
+          <div className="mt-2 flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground">{activeFilters} filtro(s) ativo(s) · exibindo {filtered.length}</span>
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
+              <X className="mr-1 h-3.5 w-3.5" /> Limpar
+            </Button>
+          </div>
+        )}
       </Card>
 
       <Card className="p-2">
         {listQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
-          : filtered.length === 0 ? <EmptyState icon={<Workflow className="h-6 w-6" />} title="Nenhum processo" description="Crie o primeiro processo clicando em 'Novo processo'." />
+          : filtered.length === 0 ? <EmptyState icon={<Workflow className="h-6 w-6" />} title="Nenhum processo" description="Ajuste os filtros ou crie um novo processo." />
           : (
             <ul className="divide-y">
               {filtered.map((p: any) => {
-                const total = p.steps?.length ?? 0;
-                const done = (p.steps ?? []).filter((s: any) => s.status === "concluida").length;
-                const pct = total ? Math.round((done / total) * 100) : 0;
+                const total = p.total_etapas ?? 0;
+                const done = p.etapas_concluidas ?? 0;
+                const pct = p.progresso ?? 0;
                 const st = STATUS_MAP[p.status];
                 const pr = PRIO_MAP[p.prioridade];
+                const isOpen = p.status !== "concluido" && p.status !== "cancelado";
+                const pk = isOpen ? prazoKind(p.prazo_final) : null;
+                const pkBadge = pk && (pk === "vencido" || pk === "hoje" || pk === "em_breve") ? PRAZO_STYLE[pk] : null;
                 return (
                   <li key={p.id}>
                     <Link to="/processos/$id" params={{ id: p.id }} className="block p-3 hover:bg-muted/40">
@@ -295,6 +340,7 @@ function ProcessesPage() {
                         <Badge variant="outline">{p.process_types?.nome}</Badge>
                         {st && <Badge className={st.cls}>{st.label}</Badge>}
                         {pr && <Badge className={pr.cls}>{pr.label}</Badge>}
+                        {pkBadge && <Badge className={pkBadge.cls}>{pkBadge.label}</Badge>}
                         {p.responsavel?.full_name && <span className="text-xs text-muted-foreground">· {p.responsavel.full_name}</span>}
                         {p.prazo_final && <span className="text-xs text-muted-foreground">· prazo {new Date(p.prazo_final).toLocaleDateString("pt-BR")}</span>}
                         <span className="ml-auto text-xs text-muted-foreground">{done}/{total} etapas</span>
@@ -313,6 +359,8 @@ function ProcessesPage() {
     </div>
   );
 }
+
+
 
 function NewProcessDialog({ clients, types, collabs, onDone }: { clients: any[]; types: any[]; collabs: any[]; onDone: () => void }) {
   const [f, setF] = useState({
