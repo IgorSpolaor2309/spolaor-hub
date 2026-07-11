@@ -107,12 +107,40 @@ function ProcessDetail() {
     },
   });
 
+  const historyQ = useQuery({
+    queryKey: ["company-process-history", id],
+    enabled: ready,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("timeline_events")
+        .select("id, tipo, descricao, metadata, created_at, actor_profile_id")
+        .filter("metadata->>process_id", "eq", id)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      const rows = data ?? [];
+      const ids = Array.from(new Set(rows.map((r: any) => r.actor_profile_id).filter(Boolean)));
+      let profMap: Record<string, string> = {};
+      if (ids.length) {
+        const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids as string[]);
+        (profs ?? []).forEach((p: any) => { profMap[p.id] = p.full_name; });
+      }
+      return rows.map((r: any) => ({ ...r, actor_name: r.actor_profile_id ? profMap[r.actor_profile_id] ?? null : null }));
+    },
+  });
+
+
   const updateProc = useMutation({
     mutationFn: async (patch: any) => {
       const { error } = await (supabase as any).from("company_processes").update(patch).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["company-process", id] }); qc.invalidateQueries({ queryKey: ["company-processes"] }); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["company-process", id] });
+      qc.invalidateQueries({ queryKey: ["company-processes"] });
+      qc.invalidateQueries({ queryKey: ["company-process-history", id] });
+      qc.invalidateQueries({ queryKey: ["processos-indicadores"] });
+    },
     onError: (e: any) => toast.error(e.message ?? "Falha ao atualizar"),
   });
 
@@ -121,9 +149,15 @@ function ProcessDetail() {
       const { error } = await (supabase as any).from("company_process_steps").update(patch).eq("id", stepId);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["company-process-steps", id] }); qc.invalidateQueries({ queryKey: ["company-processes"] }); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["company-process-steps", id] });
+      qc.invalidateQueries({ queryKey: ["company-processes"] });
+      qc.invalidateQueries({ queryKey: ["company-process-history", id] });
+      qc.invalidateQueries({ queryKey: ["processos-indicadores"] });
+    },
     onError: (e: any) => toast.error(e.message ?? "Falha ao atualizar etapa"),
   });
+
 
   const removeProc = useMutation({
     mutationFn: async () => {
@@ -187,7 +221,13 @@ function ProcessDetail() {
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label className="text-xs">Status</Label>
-              <Select value={p.status} onValueChange={(v) => updateProc.mutate({ status: v })}>
+              <Select value={p.status} onValueChange={(v) => {
+                if ((v === "aguardando_cliente" || v === "aguardando_orgao") && !((p.motivo_espera ?? "").trim())) {
+                  toast.error("Informe o motivo da espera antes de mudar o status.");
+                  return;
+                }
+                updateProc.mutate({ status: v });
+              }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
@@ -218,14 +258,15 @@ function ProcessDetail() {
               <Input type="date" defaultValue={p.prazo_final ?? ""}
                 onBlur={(e) => { const v = e.target.value || null; if (v !== p.prazo_final) updateProc.mutate({ prazo_final: v }); }} />
             </div>
-            {(p.status === "aguardando_cliente" || p.status === "aguardando_orgao") && (
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label className="text-xs">Motivo da espera</Label>
-                <Input defaultValue={p.motivo_espera ?? ""}
-                  placeholder="Ex.: aguardando envio de documento pelo cliente"
-                  onBlur={(e) => { if (e.target.value !== (p.motivo_espera ?? "")) updateProc.mutate({ motivo_espera: e.target.value || null }); }} />
-              </div>
-            )}
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label className="text-xs">
+                Motivo da espera
+                {(p.status === "aguardando_cliente" || p.status === "aguardando_orgao") && <span className="text-red-600"> *</span>}
+              </Label>
+              <Input defaultValue={p.motivo_espera ?? ""}
+                placeholder="Obrigatório para status de espera (cliente/órgão)"
+                onBlur={(e) => { if (e.target.value !== (p.motivo_espera ?? "")) updateProc.mutate({ motivo_espera: e.target.value || null }); }} />
+            </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label className="text-xs">Observações</Label>
               <Textarea rows={2} defaultValue={p.observacoes ?? ""}
@@ -335,6 +376,42 @@ function ProcessDetail() {
                         <Textarea rows={2} defaultValue={s.observacoes ?? ""}
                           onBlur={(e) => { if (e.target.value !== (s.observacoes ?? "")) updateStep.mutate({ stepId: s.id, patch: { observacoes: e.target.value || null } }); }} />
                       </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+      </Card>
+
+      <Card className="mt-3 p-2">
+        <div className="border-b px-2 py-2 text-sm font-medium">Histórico detalhado</div>
+        {historyQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
+          : (historyQ.data ?? []).length === 0 ? <p className="p-3 text-sm text-muted-foreground">Sem eventos registrados.</p>
+          : (
+            <ul className="divide-y">
+              {(historyQ.data ?? []).map((h: any) => {
+                const meta = h.metadata ?? {};
+                const hasOldNew = meta.old !== undefined || meta.new !== undefined;
+                return (
+                  <li key={h.id} className="p-3 text-sm">
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <Badge variant="outline" className="text-[10px]">{h.tipo}</Badge>
+                      <span className="font-medium">{h.descricao}</span>
+                      <span className="ml-auto text-xs text-muted-foreground">
+                        {new Date(h.created_at).toLocaleString("pt-BR")}
+                      </span>
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                      <span>Ator: {h.actor_name ?? "sistema"}</span>
+                      {meta.origem_ator && <span>· Origem: {meta.origem_ator}</span>}
+                      {hasOldNew && (
+                        <span>
+                          · De <code className="rounded bg-muted px-1">{String(meta.old ?? "—")}</code>
+                          {" "}para <code className="rounded bg-muted px-1">{String(meta.new ?? "—")}</code>
+                        </span>
+                      )}
+                      {meta.motivo_espera && <span>· Motivo: {meta.motivo_espera}</span>}
                     </div>
                   </li>
                 );
