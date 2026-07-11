@@ -268,30 +268,33 @@ function StepsSection({ typeId, canEdit }: { typeId: string; canEdit: boolean })
         : (
           <ul className="divide-y">
             {steps.map((it: any, idx: number) => (
-              <li key={it.id} className="flex flex-wrap items-center gap-2 py-2 text-sm">
-                <span className="w-8 text-xs text-muted-foreground">#{it.ordem}</span>
-                <span className="font-medium">{it.nome}</span>
-                {it.departamento && <Badge variant="outline">{it.departamento}</Badge>}
-                {it.obrigatoria && <Badge variant="secondary">Obrigatória</Badge>}
-                {it.exige_documento && <Badge className="bg-amber-100 text-amber-800">Exige doc.</Badge>}
-                {it.visivel_cliente && <Badge className="bg-blue-100 text-blue-800">Visível ao cliente</Badge>}
-                {it.prazo_dias != null && <span className="text-xs text-muted-foreground">{it.prazo_dias}d</span>}
-                {canEdit && (
-                  <div className="ml-auto flex items-center gap-1">
-                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" disabled={idx === 0}
-                      onClick={() => { const prev = steps[idx - 1]; move.mutate({ id: it.id, ordem: prev.ordem }); move.mutate({ id: prev.id, ordem: it.ordem }); }}>
-                      <ArrowUp className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" disabled={idx === steps.length - 1}
-                      onClick={() => { const next = steps[idx + 1]; move.mutate({ id: it.id, ordem: next.ordem }); move.mutate({ id: next.id, ordem: it.ordem }); }}>
-                      <ArrowDown className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => { setEditing(it); setOpen(true); }}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <DeleteButton onConfirm={() => remove.mutate(it.id)} />
-                  </div>
-                )}
+              <li key={it.id} className="py-2 text-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="w-8 text-xs text-muted-foreground">#{it.ordem}</span>
+                  <span className="font-medium">{it.nome}</span>
+                  {it.departamento && <Badge variant="outline">{it.departamento}</Badge>}
+                  {it.obrigatoria && <Badge variant="secondary">Obrigatória</Badge>}
+                  {it.exige_documento && <Badge className="bg-amber-100 text-amber-800">Exige doc.</Badge>}
+                  {it.visivel_cliente && <Badge className="bg-blue-100 text-blue-800">Visível ao cliente</Badge>}
+                  {it.prazo_dias != null && <span className="text-xs text-muted-foreground">{it.prazo_dias}d</span>}
+                  {canEdit && (
+                    <div className="ml-auto flex items-center gap-1">
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" disabled={idx === 0}
+                        onClick={() => { const prev = steps[idx - 1]; move.mutate({ id: it.id, ordem: prev.ordem }); move.mutate({ id: prev.id, ordem: it.ordem }); }}>
+                        <ArrowUp className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" disabled={idx === steps.length - 1}
+                        onClick={() => { const next = steps[idx + 1]; move.mutate({ id: it.id, ordem: next.ordem }); move.mutate({ id: next.id, ordem: it.ordem }); }}>
+                        <ArrowDown className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => { setEditing(it); setOpen(true); }}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <DeleteButton onConfirm={() => remove.mutate(it.id)} />
+                    </div>
+                  )}
+                </div>
+                <StepRequirements stepId={it.id} canEdit={canEdit} />
               </li>
             ))}
           </ul>
