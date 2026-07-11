@@ -58,7 +58,17 @@ function HomologPage() {
     qc.invalidateQueries({ queryKey: ["homolog-batches"] });
     qc.invalidateQueries({ queryKey: ["homolog-audit"] });
     qc.invalidateQueries({ queryKey: ["homolog-access-diagnostic"] });
+    qc.invalidateQueries({ queryKey: ["homolog-contamination"] });
   };
+
+  const repairMut = useMutation({
+    mutationFn: () => repairFn({}),
+    onSuccess: (r: any) => {
+      toast.success(`Caso A corrigido: ${r.processes_fixed} processo(s), ${r.steps_fixed} etapa(s).`);
+      invalidateAll();
+    },
+    onError: (e: any) => toast.error(e?.message || "Falha ao corrigir contaminação."),
+  });
 
   const createMut = useMutation({
     mutationFn: () => createFn({ data: { label } }),
