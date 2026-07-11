@@ -176,7 +176,7 @@ function HomologPage() {
                               .map(([k, v]) => (
                                 <div key={k} className="flex justify-between">
                                   <span className="text-muted-foreground">{k}</span>
-                                  <span className="font-medium">{v}</span>
+                                  <span className="font-medium">{Number(v)}</span>
                                 </div>
                               ))}
                             {Object.values(wipePreview).every((v) => Number(v) === 0) && (
