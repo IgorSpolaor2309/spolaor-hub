@@ -1036,6 +1036,9 @@ export type Database = {
           attachment_final_path: string | null
           categoria: string | null
           client_id: string
+          company_process_id: string | null
+          company_process_step_id: string | null
+          company_process_step_requirement_id: string | null
           competencia: string | null
           created_at: string
           criado_por: string | null
@@ -1066,6 +1069,9 @@ export type Database = {
           attachment_final_path?: string | null
           categoria?: string | null
           client_id: string
+          company_process_id?: string | null
+          company_process_step_id?: string | null
+          company_process_step_requirement_id?: string | null
           competencia?: string | null
           created_at?: string
           criado_por?: string | null
@@ -1096,6 +1102,9 @@ export type Database = {
           attachment_final_path?: string | null
           categoria?: string | null
           client_id?: string
+          company_process_id?: string | null
+          company_process_step_id?: string | null
+          company_process_step_requirement_id?: string | null
           competencia?: string | null
           created_at?: string
           criado_por?: string | null
@@ -1127,6 +1136,27 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_requests_company_process_id_fkey"
+            columns: ["company_process_id"]
+            isOneToOne: false
+            referencedRelation: "company_processes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_requests_company_process_step_id_fkey"
+            columns: ["company_process_step_id"]
+            isOneToOne: false
+            referencedRelation: "company_process_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_requests_company_process_step_requirement_id_fkey"
+            columns: ["company_process_step_requirement_id"]
+            isOneToOne: false
+            referencedRelation: "company_process_step_requirements"
             referencedColumns: ["id"]
           },
           {
