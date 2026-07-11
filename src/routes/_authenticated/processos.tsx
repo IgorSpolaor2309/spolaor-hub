@@ -115,6 +115,18 @@ function ProcessesPage() {
     },
   });
 
+  const indicQ = useQuery({
+    queryKey: ["processos-indicadores"],
+    enabled: ready,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("processos_indicadores");
+      if (error) throw error;
+      return data as any;
+    },
+  });
+
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const arr = (listQ.data ?? []).filter((r: any) => {
