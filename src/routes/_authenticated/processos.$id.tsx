@@ -439,41 +439,64 @@ function ProcessDetail() {
           )}
       </Card>
 
-      <Card className="mt-3 p-2">
-        <div className="border-b px-2 py-2 text-sm font-medium">Histórico detalhado</div>
-        {historyQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
-          : (historyQ.data ?? []).length === 0 ? <p className="p-3 text-sm text-muted-foreground">Sem eventos registrados.</p>
-          : (
-            <ul className="divide-y">
-              {(historyQ.data ?? []).map((h: any) => {
-                const meta = h.metadata ?? {};
-                const hasOldNew = meta.old !== undefined || meta.new !== undefined;
-                return (
-                  <li key={h.id} className="p-3 text-sm">
-                    <div className="flex flex-wrap items-baseline gap-2">
-                      <Badge variant="outline" className="text-[10px]">{h.tipo}</Badge>
-                      <span className="font-medium">{h.descricao}</span>
-                      <span className="ml-auto text-xs text-muted-foreground">
-                        {new Date(h.created_at).toLocaleString("pt-BR")}
-                      </span>
-                    </div>
-                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                      <span>Ator: {h.actor_name ?? "sistema"}</span>
-                      {meta.origem_ator && <span>· Origem: {meta.origem_ator}</span>}
-                      {hasOldNew && (
-                        <span>
-                          · De <code className="rounded bg-muted px-1">{String(meta.old ?? "—")}</code>
-                          {" "}para <code className="rounded bg-muted px-1">{String(meta.new ?? "—")}</code>
-                        </span>
-                      )}
-                      {meta.motivo_espera && <span>· Motivo: {meta.motivo_espera}</span>}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+      {isAdmin && (
+        <Card className="mt-3 p-2">
+          <div className="border-b px-2 py-2 text-sm font-medium">
+            Histórico de alterações
+            <span className="ml-2 text-xs font-normal text-muted-foreground">técnico · somente administradores</span>
+          </div>
+          {historyQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
+            : (historyQ.data ?? []).length === 0 ? <p className="p-3 text-sm text-muted-foreground">Sem eventos registrados.</p>
+            : (
+              <ul className="divide-y">
+                {(historyQ.data ?? []).map((h: any) => (
+                  <AuditRow key={h.id} event={h} />
+                ))}
+              </ul>
+            )}
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function AuditRow({ event }: { event: any }) {
+  const [open, setOpen] = useState(false);
+  const meta = event.metadata ?? {};
+  const hasOldNew = meta.old !== undefined || meta.new !== undefined;
+  const entity = event.tipo?.startsWith("processo_etapa_") ? "company_process_steps"
+    : event.tipo?.startsWith("processo_") ? "company_processes" : "—";
+  return (
+    <li className="text-sm">
+      <button type="button" onClick={() => setOpen((o) => !o)}
+        className="flex w-full flex-wrap items-baseline gap-2 p-3 text-left hover:bg-muted/40">
+        {open ? <ChevronDown className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" /> : <ChevronRight className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />}
+        <Badge variant="outline" className="text-[10px]">{event.tipo}</Badge>
+        <span className="font-medium">{event.descricao}</span>
+        <span className="ml-auto text-xs text-muted-foreground">
+          {new Date(event.created_at).toLocaleString("pt-BR")}
+        </span>
+      </button>
+      {open && (
+        <div className="grid gap-1 border-t bg-muted/20 px-3 py-2 text-xs sm:grid-cols-2">
+          <div><span className="text-muted-foreground">Usuário:</span> {event.actor_name ?? "sistema"}</div>
+          <div><span className="text-muted-foreground">Papel/Origem:</span> {meta.origem_ator ?? "—"}</div>
+          <div><span className="text-muted-foreground">Entidade:</span> {entity}</div>
+          <div><span className="text-muted-foreground">Ação:</span> {event.tipo}</div>
+          {meta.step_id && <div><span className="text-muted-foreground">Etapa (id):</span> <code className="rounded bg-background px-1">{meta.step_id}</code></div>}
+          {meta.process_id && <div><span className="text-muted-foreground">Processo (id):</span> <code className="rounded bg-background px-1">{meta.process_id}</code></div>}
+          {hasOldNew && (
+            <>
+              <div><span className="text-muted-foreground">Valor anterior:</span> <code className="rounded bg-background px-1">{String(meta.old ?? "—")}</code></div>
+              <div><span className="text-muted-foreground">Valor novo:</span> <code className="rounded bg-background px-1">{String(meta.new ?? "—")}</code></div>
+            </>
           )}
-      </Card>
+          {meta.motivo_espera && <div className="sm:col-span-2"><span className="text-muted-foreground">Motivo:</span> {meta.motivo_espera}</div>}
+        </div>
+      )}
+    </li>
+  );
+}
     </div>
   );
 }
