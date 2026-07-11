@@ -39,8 +39,8 @@ export const homologWipe = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await ensureAdmin(context.supabase, context.userId);
     const { data: res, error } = await context.supabase.rpc("admin_demo_wipe", {
-      _batch_id: data.batch_id ?? null,
-    });
+      _batch_id: data.batch_id ?? undefined,
+    } as any);
     if (error) throw new Error(error.message);
     return res as Record<string, number>;
   });
