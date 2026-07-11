@@ -121,6 +121,7 @@ function HomologPage() {
       const msg = r.overall === "pass" ? "Ambiente aprovado." : r.overall === "warn" ? "Ambiente com atenção." : "Ambiente reprovado.";
       (r.overall === "fail" ? toast.error : r.overall === "warn" ? toast.warning : toast.success)(msg);
       qc.invalidateQueries({ queryKey: ["homolog-audit"] });
+      qc.invalidateQueries({ queryKey: ["homolog-runs"] });
     },
     onError: (e: any) => toast.error(e?.message || "Falha ao validar ambiente."),
   });
