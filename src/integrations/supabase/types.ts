@@ -1978,6 +1978,7 @@ export type Database = {
         Args: { _client_id: string; _competencia: string; _new_plan_id: string }
         Returns: Json
       }
+      processos_indicadores: { Args: never; Returns: Json }
       processos_notificar_vencimentos: { Args: never; Returns: Json }
       profiles_shares_client: {
         Args: { _target: string; _viewer: string }
