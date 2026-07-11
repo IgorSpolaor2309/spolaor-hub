@@ -39,6 +39,8 @@ function HomologPage() {
   const [label, setLabel] = useState("Ambiente demo");
   const [wipePreview, setWipePreview] = useState<Record<string, number> | null>(null);
   const [sessionPersonas, setSessionPersonas] = useState<Persona[] | null>(null);
+  const [validateBatchId, setValidateBatchId] = useState<string>("");
+  const [validation, setValidation] = useState<any>(null);
 
   const summaryFn = useServerFn(homologSummary);
   const createFn = useServerFn(homologCreateEnvironment);
