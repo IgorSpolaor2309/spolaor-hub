@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/sc/PageHeader";
@@ -17,7 +17,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { clientLabel } from "@/lib/client-display";
 import { prazoKind, PRAZO_STYLE } from "@/lib/processo-prazo";
 import { toast } from "sonner";
-import { Workflow, ArrowLeft, Check, RotateCcw } from "lucide-react";
+import { Workflow, ArrowLeft, Check, RotateCcw, FilePlus2, Activity, UserRound, CalendarClock, CheckCircle2, PauseCircle, PlayCircle, XCircle, ChevronDown, ChevronRight } from "lucide-react";
 
 
 
@@ -47,6 +47,53 @@ const STEP_STATUSES = [
   { value: "cancelada", label: "Cancelada", cls: "bg-red-100 text-red-800" },
 ];
 const STEP_STATUS_MAP = Object.fromEntries(STEP_STATUSES.map((s) => [s.value, s]));
+
+const TIMELINE_TIPOS = new Set([
+  "processo_aberto", "processo_status", "processo_responsavel", "processo_prazo",
+  "processo_etapa_status", "processo_etapa_responsavel", "processo_etapa_prazo",
+]);
+const TIMELINE_ICON: Record<string, any> = {
+  processo_aberto: FilePlus2,
+  processo_status: Activity,
+  processo_responsavel: UserRound,
+  processo_prazo: CalendarClock,
+  processo_etapa_status: CheckCircle2,
+  processo_etapa_responsavel: UserRound,
+  processo_etapa_prazo: CalendarClock,
+};
+const STATUS_LABEL: Record<string, string> = {
+  nao_iniciado: "não iniciado", em_andamento: "em andamento",
+  aguardando_cliente: "aguardando cliente", aguardando_orgao: "aguardando órgão",
+  concluido: "concluído", cancelado: "cancelado",
+  pendente: "pendente", concluida: "concluída", cancelada: "cancelada",
+};
+const fmtDate = (v: any) => v ? new Date(v).toLocaleDateString("pt-BR") : "—";
+function friendlyTimeline(tipo: string, descricao: string, meta: any): string {
+  const oldL = STATUS_LABEL[meta?.old] ?? meta?.old;
+  const newL = STATUS_LABEL[meta?.new] ?? meta?.new;
+  switch (tipo) {
+    case "processo_aberto": return "Processo aberto.";
+    case "processo_status":
+      if (newL === "aguardando cliente" || newL === "aguardando órgão")
+        return `Processo em espera (${newL})${meta?.motivo_espera ? `: ${meta.motivo_espera}` : ""}.`;
+      if (newL === "em andamento" && (oldL === "aguardando cliente" || oldL === "aguardando órgão"))
+        return "Processo retomado.";
+      return `Status → ${newL ?? "—"}.`;
+    case "processo_responsavel": return "Responsável do processo alterado.";
+    case "processo_prazo": return `Prazo alterado (${fmtDate(meta?.old)} → ${fmtDate(meta?.new)}).`;
+    case "processo_etapa_status": {
+      const stepName = descricao?.match(/"([^"]+)"/)?.[1];
+      const nm = stepName ? `"${stepName}"` : "etapa";
+      if (newL === "concluída") return `Etapa ${nm} concluída.`;
+      if (oldL === "concluída" && newL !== "concluída") return `Etapa ${nm} reaberta.`;
+      if (newL === "em andamento") return `Etapa ${nm} iniciada.`;
+      return `Etapa ${nm} → ${newL ?? "—"}.`;
+    }
+    case "processo_etapa_responsavel": return descricao ?? "Responsável de etapa alterado.";
+    case "processo_etapa_prazo": return `${descricao} (${fmtDate(meta?.old)} → ${fmtDate(meta?.new)}).`;
+    default: return descricao ?? tipo;
+  }
+}
 
 function ProcessDetail() {
   const { id } = Route.useParams();
@@ -277,27 +324,35 @@ function ProcessDetail() {
 
 
         <Card className="p-4">
-          <div className="mb-2 text-sm font-medium">Linha do tempo</div>
-          {steps.length === 0 ? <p className="text-xs text-muted-foreground">Nenhuma etapa.</p> : (
-            <ol className="relative space-y-3 border-l pl-4">
-              {steps.map((s: any) => {
-                const ss = STEP_STATUS_MAP[s.status];
-                return (
-                  <li key={s.id} className="relative">
-                    <span className={`absolute -left-[9px] top-1 h-3 w-3 rounded-full border ${s.status === "concluida" ? "bg-emerald-500 border-emerald-500" : s.status === "em_andamento" ? "bg-blue-500 border-blue-500" : "bg-background"}`} />
-                    <div className="text-sm font-medium">{s.nome}</div>
-                    <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
-                      {ss && <Badge className={`${ss.cls} text-[10px]`}>{ss.label}</Badge>}
-                      {s.prazo && <span>· prazo {new Date(s.prazo).toLocaleDateString("pt-BR")}</span>}
-                      {s.data_conclusao && <span>· concl. {new Date(s.data_conclusao).toLocaleDateString("pt-BR")}</span>}
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          )}
+          <div className="mb-2 text-sm font-medium">Timeline</div>
+          {historyQ.isLoading ? <p className="text-xs text-muted-foreground">Carregando…</p>
+            : (historyQ.data ?? []).filter((e: any) => TIMELINE_TIPOS.has(e.tipo)).length === 0
+              ? <p className="text-xs text-muted-foreground">Nenhum evento registrado.</p>
+              : (
+                <ol className="relative space-y-3 border-l pl-4">
+                  {(historyQ.data ?? [])
+                    .filter((e: any) => TIMELINE_TIPOS.has(e.tipo))
+                    .slice(0, 30)
+                    .map((e: any) => {
+                      const meta = e.metadata ?? {};
+                      const Icon = TIMELINE_ICON[e.tipo] ?? Activity;
+                      return (
+                        <li key={e.id} className="relative">
+                          <span className="absolute -left-[11px] top-0.5 flex h-4 w-4 items-center justify-center rounded-full border bg-background">
+                            <Icon className="h-2.5 w-2.5" />
+                          </span>
+                          <div className="text-xs font-medium">{friendlyTimeline(e.tipo, e.descricao, meta)}</div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {new Date(e.created_at).toLocaleString("pt-BR")} · {e.actor_name ?? "sistema"}
+                          </div>
+                        </li>
+                      );
+                    })}
+                </ol>
+              )}
         </Card>
       </div>
+
 
       <Card className="mt-3 p-2">
         <div className="border-b px-2 py-2 text-sm font-medium">Etapas</div>
@@ -384,41 +439,61 @@ function ProcessDetail() {
           )}
       </Card>
 
-      <Card className="mt-3 p-2">
-        <div className="border-b px-2 py-2 text-sm font-medium">Histórico detalhado</div>
-        {historyQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
-          : (historyQ.data ?? []).length === 0 ? <p className="p-3 text-sm text-muted-foreground">Sem eventos registrados.</p>
-          : (
-            <ul className="divide-y">
-              {(historyQ.data ?? []).map((h: any) => {
-                const meta = h.metadata ?? {};
-                const hasOldNew = meta.old !== undefined || meta.new !== undefined;
-                return (
-                  <li key={h.id} className="p-3 text-sm">
-                    <div className="flex flex-wrap items-baseline gap-2">
-                      <Badge variant="outline" className="text-[10px]">{h.tipo}</Badge>
-                      <span className="font-medium">{h.descricao}</span>
-                      <span className="ml-auto text-xs text-muted-foreground">
-                        {new Date(h.created_at).toLocaleString("pt-BR")}
-                      </span>
-                    </div>
-                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                      <span>Ator: {h.actor_name ?? "sistema"}</span>
-                      {meta.origem_ator && <span>· Origem: {meta.origem_ator}</span>}
-                      {hasOldNew && (
-                        <span>
-                          · De <code className="rounded bg-muted px-1">{String(meta.old ?? "—")}</code>
-                          {" "}para <code className="rounded bg-muted px-1">{String(meta.new ?? "—")}</code>
-                        </span>
-                      )}
-                      {meta.motivo_espera && <span>· Motivo: {meta.motivo_espera}</span>}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-      </Card>
+      {isAdmin && (
+        <Card className="mt-3 p-2">
+          <div className="border-b px-2 py-2 text-sm font-medium">
+            Histórico de alterações
+            <span className="ml-2 text-xs font-normal text-muted-foreground">técnico · somente administradores</span>
+          </div>
+          {historyQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
+            : (historyQ.data ?? []).length === 0 ? <p className="p-3 text-sm text-muted-foreground">Sem eventos registrados.</p>
+            : (
+              <ul className="divide-y">
+                {(historyQ.data ?? []).map((h: any) => (
+                  <AuditRow key={h.id} event={h} />
+                ))}
+              </ul>
+            )}
+        </Card>
+      )}
     </div>
+  );
+}
+
+function AuditRow({ event }: { event: any }) {
+  const [open, setOpen] = useState(false);
+  const meta = event.metadata ?? {};
+  const hasOldNew = meta.old !== undefined || meta.new !== undefined;
+  const entity = event.tipo?.startsWith("processo_etapa_") ? "company_process_steps"
+    : event.tipo?.startsWith("processo_") ? "company_processes" : "—";
+  return (
+    <li className="text-sm">
+      <button type="button" onClick={() => setOpen((o) => !o)}
+        className="flex w-full flex-wrap items-baseline gap-2 p-3 text-left hover:bg-muted/40">
+        {open ? <ChevronDown className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" /> : <ChevronRight className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />}
+        <Badge variant="outline" className="text-[10px]">{event.tipo}</Badge>
+        <span className="font-medium">{event.descricao}</span>
+        <span className="ml-auto text-xs text-muted-foreground">
+          {new Date(event.created_at).toLocaleString("pt-BR")}
+        </span>
+      </button>
+      {open && (
+        <div className="grid gap-1 border-t bg-muted/20 px-3 py-2 text-xs sm:grid-cols-2">
+          <div><span className="text-muted-foreground">Usuário:</span> {event.actor_name ?? "sistema"}</div>
+          <div><span className="text-muted-foreground">Papel/Origem:</span> {meta.origem_ator ?? "—"}</div>
+          <div><span className="text-muted-foreground">Entidade:</span> {entity}</div>
+          <div><span className="text-muted-foreground">Ação:</span> {event.tipo}</div>
+          {meta.step_id && <div><span className="text-muted-foreground">Etapa (id):</span> <code className="rounded bg-background px-1">{meta.step_id}</code></div>}
+          {meta.process_id && <div><span className="text-muted-foreground">Processo (id):</span> <code className="rounded bg-background px-1">{meta.process_id}</code></div>}
+          {hasOldNew && (
+            <>
+              <div><span className="text-muted-foreground">Valor anterior:</span> <code className="rounded bg-background px-1">{String(meta.old ?? "—")}</code></div>
+              <div><span className="text-muted-foreground">Valor novo:</span> <code className="rounded bg-background px-1">{String(meta.new ?? "—")}</code></div>
+            </>
+          )}
+          {meta.motivo_espera && <div className="sm:col-span-2"><span className="text-muted-foreground">Motivo:</span> {meta.motivo_espera}</div>}
+        </div>
+      )}
+    </li>
   );
 }
