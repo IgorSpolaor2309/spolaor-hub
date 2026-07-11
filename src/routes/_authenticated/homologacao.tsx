@@ -34,6 +34,7 @@ function fmtDate(s?: string | null) {
 function HomologPage() {
   const qc = useQueryClient();
   const [label, setLabel] = useState("Ambiente demo");
+  const [wipePreview, setWipePreview] = useState<Record<string, number> | null>(null);
 
   const summaryFn = useServerFn(homologSummary);
   const createFn = useServerFn(homologCreateEnvironment);
