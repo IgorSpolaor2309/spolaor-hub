@@ -2455,6 +2455,13 @@ export type Database = {
         Args: { _label?: string }
         Returns: Json
       }
+      admin_demo_orphan_auth_user_ids: {
+        Args: never
+        Returns: {
+          email: string
+          user_id: string
+        }[]
+      }
       admin_demo_persona_user_ids: {
         Args: { _batch_id?: string }
         Returns: {

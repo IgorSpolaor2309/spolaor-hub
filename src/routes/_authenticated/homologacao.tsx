@@ -18,6 +18,7 @@ import { AlertTriangle, FlaskConical, RotateCw, Trash2, Sparkles, Copy, External
 import {
   homologSummary, homologCreateEnvironment, homologWipe, homologWipePreview, homologReset,
   homologListBatches, homologListAudit, homologContaminationReport, homologRepairCaseA,
+  homologPurgeOrphanAuthUsers,
 } from "@/lib/homologacao.functions";
 import { homologAccessDiagnostic } from "@/lib/access-diagnostics.functions";
 
@@ -49,6 +50,7 @@ function HomologPage() {
   const diagnosticFn = useServerFn(homologAccessDiagnostic);
   const contaminationFn = useServerFn(homologContaminationReport);
   const repairFn = useServerFn(homologRepairCaseA);
+  const purgeOrphanFn = useServerFn(homologPurgeOrphanAuthUsers);
 
   const summary = useQuery({ queryKey: ["homolog-summary"], queryFn: () => summaryFn({}) });
   const batches = useQuery({ queryKey: ["homolog-batches"], queryFn: () => batchesFn({}) });
@@ -95,6 +97,17 @@ function HomologPage() {
       invalidateAll();
     },
     onError: (e: any) => toast.error(e?.message || "Falha ao recriar ambiente."),
+  });
+
+  const purgeOrphanMut = useMutation({
+    mutationFn: () => purgeOrphanFn({}),
+    onSuccess: (r: any) => {
+      toast.success(
+        `Higienização concluída: ${r.deleted} conta(s) removida(s), ${r.failed} falha(s), ${r.candidates} candidato(s).`,
+      );
+      invalidateAll();
+    },
+    onError: (e: any) => toast.error(e?.message || "Falha ao higienizar contas órfãs."),
   });
 
   const totalDemo = summary.data
@@ -215,6 +228,28 @@ function HomologPage() {
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
                   <AlertDialogAction onClick={() => wipeMut.mutate()}>Limpar tudo</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" disabled={purgeOrphanMut.isPending} title="Remove contas de autenticação demo sem perfil correspondente">
+                  <Trash2 className="h-4 w-4 mr-1" /> Higienizar contas órfãs
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Remover contas de autenticação demo órfãs?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Serão removidas apenas contas com e-mail <code>demo-*@homolog.spolaor.local</code>
+                    {" "}que <strong>não possuem mais perfil</strong> no banco (sobras de lotes apagados diretamente pelo banco).
+                    Nenhuma conta real será afetada.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => purgeOrphanMut.mutate()}>Higienizar</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>

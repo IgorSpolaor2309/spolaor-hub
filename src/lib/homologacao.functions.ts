@@ -318,3 +318,30 @@ export const homologRepairCaseA = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return data as { processes_fixed: number; steps_fixed: number };
   });
+
+export const homologPurgeOrphanAuthUsers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await ensureAdmin(context.supabase, context.userId);
+    const { data, error } = await context.supabase.rpc("admin_demo_orphan_auth_user_ids");
+    if (error) throw new Error(error.message);
+    const rows = (data ?? []) as Array<{ user_id: string; email: string }>;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let deleted = 0;
+    let failed = 0;
+    for (const r of rows) {
+      try {
+        try { await supabaseAdmin.auth.admin.signOut(r.user_id, "global"); } catch { /* noop */ }
+        const { error: delErr } = await supabaseAdmin.auth.admin.deleteUser(r.user_id);
+        if (delErr) failed++; else deleted++;
+      } catch {
+        failed++;
+      }
+    }
+    await context.supabase.from("demo_audit_log").insert({
+      admin_id: context.userId,
+      action: "orphan_auth_users_purged",
+      payload_json: { candidates: rows.length, deleted, failed },
+    });
+    return { candidates: rows.length, deleted, failed };
+  });
