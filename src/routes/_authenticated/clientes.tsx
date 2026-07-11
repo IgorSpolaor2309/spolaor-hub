@@ -274,9 +274,11 @@ function ClientsPage() {
           </div>
           <DateRangeFilter value={dateF} onChange={setDateF} label="Data de entrada" variant="range" />
 
+          {isAdmin && <DemoFilter value={demoFilter} onChange={setDemoFilter} />}
           <Button variant="ghost" size="sm" onClick={clearFilters}>Limpar filtros</Button>
         </div>
       </Card>
+
 
       <Card className="p-4">
 
