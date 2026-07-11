@@ -55,7 +55,7 @@ function DocsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
-        .select("*, clients(razao_social, nome_fantasia)")
+        .select("*, clients(razao_social, nome_fantasia), company_process_documents(id, company_process_id, company_process_step_id, company_processes(id, process_types(nome)))")
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
