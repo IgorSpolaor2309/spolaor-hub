@@ -135,7 +135,12 @@ function ProcessDetail() {
       const { error } = await (supabase as any).from("company_processes").update(patch).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["company-process", id] }); qc.invalidateQueries({ queryKey: ["company-processes"] }); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["company-process", id] });
+      qc.invalidateQueries({ queryKey: ["company-processes"] });
+      qc.invalidateQueries({ queryKey: ["company-process-history", id] });
+      qc.invalidateQueries({ queryKey: ["processos-indicadores"] });
+    },
     onError: (e: any) => toast.error(e.message ?? "Falha ao atualizar"),
   });
 
@@ -144,9 +149,15 @@ function ProcessDetail() {
       const { error } = await (supabase as any).from("company_process_steps").update(patch).eq("id", stepId);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["company-process-steps", id] }); qc.invalidateQueries({ queryKey: ["company-processes"] }); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["company-process-steps", id] });
+      qc.invalidateQueries({ queryKey: ["company-processes"] });
+      qc.invalidateQueries({ queryKey: ["company-process-history", id] });
+      qc.invalidateQueries({ queryKey: ["processos-indicadores"] });
+    },
     onError: (e: any) => toast.error(e.message ?? "Falha ao atualizar etapa"),
   });
+
 
   const removeProc = useMutation({
     mutationFn: async () => {
