@@ -19,7 +19,7 @@ import { EmptyState } from "@/components/sc/EmptyState";
 import { DeleteButton } from "@/components/sc/DeleteButton";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { toast } from "sonner";
-import { GitBranch, Plus, Pencil, ChevronDown, ChevronRight, ArrowUp, ArrowDown, Eye, EyeOff, Globe, Lock, RefreshCw, CheckCircle2, AlertCircle, Clock } from "lucide-react";
+import { GitBranch, Plus, Pencil, ChevronDown, ChevronRight, ArrowUp, ArrowDown, Eye, EyeOff, Globe, Lock, RefreshCw, CheckCircle2, AlertCircle, Clock, Copy, Download, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/processos-modelos")({
   component: ProcessTypesPage,
