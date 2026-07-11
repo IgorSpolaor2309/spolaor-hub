@@ -75,17 +75,25 @@ function HomologPage() {
 
   const createMut = useMutation({
     mutationFn: () => createFn({ data: { label } }),
-    onSuccess: () => { toast.success("Ambiente de demonstração criado."); invalidateAll(); },
+    onSuccess: (r: any) => {
+      setSessionPersonas((r?.personas ?? []) as Persona[]);
+      toast.success("Ambiente demo criado. Copie os links agora — não serão exibidos novamente.");
+      invalidateAll();
+    },
     onError: (e: any) => toast.error(e?.message || "Falha ao criar ambiente."),
   });
   const wipeMut = useMutation({
     mutationFn: () => wipeFn({ data: {} }),
-    onSuccess: () => { toast.success("Dados de demonstração removidos."); invalidateAll(); },
+    onSuccess: () => { setSessionPersonas(null); toast.success("Dados de demonstração e contas removidos."); invalidateAll(); },
     onError: (e: any) => toast.error(e?.message || "Falha ao limpar dados."),
   });
   const resetMut = useMutation({
     mutationFn: () => resetFn({ data: { label } }),
-    onSuccess: () => { toast.success("Ambiente recriado com sucesso."); invalidateAll(); },
+    onSuccess: (r: any) => {
+      setSessionPersonas((r?.created?.personas ?? []) as Persona[]);
+      toast.success("Ambiente recriado. Novos links gerados.");
+      invalidateAll();
+    },
     onError: (e: any) => toast.error(e?.message || "Falha ao recriar ambiente."),
   });
 
