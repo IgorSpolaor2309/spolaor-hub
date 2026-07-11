@@ -660,9 +660,15 @@ function StepsSection({ typeId, canEdit }: { typeId: string; canEdit: boolean })
         : filteredSteps.length === 0 ? <p className="text-xs text-muted-foreground">Nenhuma etapa corresponde ao filtro.</p>
         : (
           <ul className="divide-y">
-            {filteredSteps.map((it: any, idx: number) => (
+            {filteredSteps.map((it: any) => {
+              const idx = steps.findIndex((s: any) => s.id === it.id);
+              return (
               <li key={it.id} className="py-2 text-sm">
                 <div className="flex flex-wrap items-center gap-2">
+                  {canEdit && (
+                    <Checkbox checked={!!selected[it.id]}
+                      onCheckedChange={(v) => setSelected((s) => ({ ...s, [it.id]: !!v }))} />
+                  )}
                   <span className="w-8 text-xs text-muted-foreground">#{it.ordem}</span>
                   <span className="font-medium">{it.nome}</span>
                   {it.departamento && <Badge variant="outline">{it.departamento}</Badge>}
