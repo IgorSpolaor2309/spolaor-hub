@@ -64,7 +64,7 @@ function ProcessesPage() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("company_processes")
-        .select("*, clients(razao_social, nome_fantasia, documento), process_types(nome, cor, categoria), steps:company_process_steps(id, status)")
+        .select("id, client_id, process_type_id, responsavel_id, data_abertura, prazo_final, prioridade, status, observacoes, progresso, total_etapas, etapas_concluidas, motivo_espera, clients(razao_social, nome_fantasia, documento), process_types(nome, cor, categoria)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       const rows = data ?? [];
@@ -77,6 +77,7 @@ function ProcessesPage() {
       return rows.map((r: any) => ({ ...r, responsavel: r.responsavel_id ? { full_name: profMap[r.responsavel_id] ?? null } : null }));
     },
   });
+
 
   const typesQ = useQuery({
     queryKey: ["process-types-active"],
