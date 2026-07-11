@@ -17,6 +17,7 @@ import { Route as AuthenticatedValidadesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedSolicitacoesRouteImport } from './routes/_authenticated/solicitacoes'
 import { Route as AuthenticatedProcessosModelosRouteImport } from './routes/_authenticated/processos-modelos'
 import { Route as AuthenticatedProcessosRouteImport } from './routes/_authenticated/processos'
+import { Route as AuthenticatedPortalProcessosRouteImport } from './routes/_authenticated/portal-processos'
 import { Route as AuthenticatedPlanosRouteImport } from './routes/_authenticated/planos'
 import { Route as AuthenticatedPendenciasRouteImport } from './routes/_authenticated/pendencias'
 import { Route as AuthenticatedNotificacoesRouteImport } from './routes/_authenticated/notificacoes'
@@ -79,6 +80,12 @@ const AuthenticatedProcessosRoute = AuthenticatedProcessosRouteImport.update({
   path: '/processos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPortalProcessosRoute =
+  AuthenticatedPortalProcessosRouteImport.update({
+    id: '/portal-processos',
+    path: '/portal-processos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlanosRoute = AuthenticatedPlanosRouteImport.update({
   id: '/planos',
   path: '/planos',
@@ -209,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/pendencias': typeof AuthenticatedPendenciasRoute
   '/planos': typeof AuthenticatedPlanosRoute
+  '/portal-processos': typeof AuthenticatedPortalProcessosRoute
   '/processos': typeof AuthenticatedProcessosRouteWithChildren
   '/processos-modelos': typeof AuthenticatedProcessosModelosRoute
   '/solicitacoes': typeof AuthenticatedSolicitacoesRoute
@@ -237,6 +245,7 @@ export interface FileRoutesByTo {
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/pendencias': typeof AuthenticatedPendenciasRoute
   '/planos': typeof AuthenticatedPlanosRoute
+  '/portal-processos': typeof AuthenticatedPortalProcessosRoute
   '/processos': typeof AuthenticatedProcessosRouteWithChildren
   '/processos-modelos': typeof AuthenticatedProcessosModelosRoute
   '/solicitacoes': typeof AuthenticatedSolicitacoesRoute
@@ -268,6 +277,7 @@ export interface FileRoutesById {
   '/_authenticated/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/_authenticated/pendencias': typeof AuthenticatedPendenciasRoute
   '/_authenticated/planos': typeof AuthenticatedPlanosRoute
+  '/_authenticated/portal-processos': typeof AuthenticatedPortalProcessosRoute
   '/_authenticated/processos': typeof AuthenticatedProcessosRouteWithChildren
   '/_authenticated/processos-modelos': typeof AuthenticatedProcessosModelosRoute
   '/_authenticated/solicitacoes': typeof AuthenticatedSolicitacoesRoute
@@ -300,6 +310,7 @@ export interface FileRouteTypes {
     | '/notificacoes'
     | '/pendencias'
     | '/planos'
+    | '/portal-processos'
     | '/processos'
     | '/processos-modelos'
     | '/solicitacoes'
@@ -328,6 +339,7 @@ export interface FileRouteTypes {
     | '/notificacoes'
     | '/pendencias'
     | '/planos'
+    | '/portal-processos'
     | '/processos'
     | '/processos-modelos'
     | '/solicitacoes'
@@ -358,6 +370,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notificacoes'
     | '/_authenticated/pendencias'
     | '/_authenticated/planos'
+    | '/_authenticated/portal-processos'
     | '/_authenticated/processos'
     | '/_authenticated/processos-modelos'
     | '/_authenticated/solicitacoes'
@@ -430,6 +443,13 @@ declare module '@tanstack/react-router' {
       path: '/processos'
       fullPath: '/processos'
       preLoaderRoute: typeof AuthenticatedProcessosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/portal-processos': {
+      id: '/_authenticated/portal-processos'
+      path: '/portal-processos'
+      fullPath: '/portal-processos'
+      preLoaderRoute: typeof AuthenticatedPortalProcessosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/planos': {
@@ -620,6 +640,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNotificacoesRoute: typeof AuthenticatedNotificacoesRoute
   AuthenticatedPendenciasRoute: typeof AuthenticatedPendenciasRoute
   AuthenticatedPlanosRoute: typeof AuthenticatedPlanosRoute
+  AuthenticatedPortalProcessosRoute: typeof AuthenticatedPortalProcessosRoute
   AuthenticatedProcessosRoute: typeof AuthenticatedProcessosRouteWithChildren
   AuthenticatedProcessosModelosRoute: typeof AuthenticatedProcessosModelosRoute
   AuthenticatedSolicitacoesRoute: typeof AuthenticatedSolicitacoesRoute
@@ -646,6 +667,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNotificacoesRoute: AuthenticatedNotificacoesRoute,
   AuthenticatedPendenciasRoute: AuthenticatedPendenciasRoute,
   AuthenticatedPlanosRoute: AuthenticatedPlanosRoute,
+  AuthenticatedPortalProcessosRoute: AuthenticatedPortalProcessosRoute,
   AuthenticatedProcessosRoute: AuthenticatedProcessosRouteWithChildren,
   AuthenticatedProcessosModelosRoute: AuthenticatedProcessosModelosRoute,
   AuthenticatedSolicitacoesRoute: AuthenticatedSolicitacoesRoute,
