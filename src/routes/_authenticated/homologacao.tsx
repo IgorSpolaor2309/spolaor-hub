@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { useState } from "react";
-import { AlertTriangle, FlaskConical, RotateCw, Trash2, Sparkles } from "lucide-react";
+import { AlertTriangle, FlaskConical, RotateCw, Trash2, Sparkles, Copy, ExternalLink, EyeOff } from "lucide-react";
 import {
   homologSummary, homologCreateEnvironment, homologWipe, homologWipePreview, homologReset,
   homologListBatches, homologListAudit, homologContaminationReport, homologRepairCaseA,
