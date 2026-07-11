@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { useState } from "react";
-import { AlertTriangle, FlaskConical, RotateCw, Trash2, Sparkles } from "lucide-react";
+import { AlertTriangle, FlaskConical, RotateCw, Trash2, Sparkles, Copy, ExternalLink, EyeOff } from "lucide-react";
 import {
   homologSummary, homologCreateEnvironment, homologWipe, homologWipePreview, homologReset,
   homologListBatches, homologListAudit, homologContaminationReport, homologRepairCaseA,
@@ -31,10 +31,13 @@ function fmtDate(s?: string | null) {
   return d.toLocaleString("pt-BR");
 }
 
+type Persona = { label: string; role: string; email: string; magic_link: string | null };
+
 function HomologPage() {
   const qc = useQueryClient();
   const [label, setLabel] = useState("Ambiente demo");
   const [wipePreview, setWipePreview] = useState<Record<string, number> | null>(null);
+  const [sessionPersonas, setSessionPersonas] = useState<Persona[] | null>(null);
 
   const summaryFn = useServerFn(homologSummary);
   const createFn = useServerFn(homologCreateEnvironment);
@@ -72,17 +75,25 @@ function HomologPage() {
 
   const createMut = useMutation({
     mutationFn: () => createFn({ data: { label } }),
-    onSuccess: () => { toast.success("Ambiente de demonstração criado."); invalidateAll(); },
+    onSuccess: (r: any) => {
+      setSessionPersonas((r?.personas ?? []) as Persona[]);
+      toast.success("Ambiente demo criado. Copie os links agora — não serão exibidos novamente.");
+      invalidateAll();
+    },
     onError: (e: any) => toast.error(e?.message || "Falha ao criar ambiente."),
   });
   const wipeMut = useMutation({
     mutationFn: () => wipeFn({ data: {} }),
-    onSuccess: () => { toast.success("Dados de demonstração removidos."); invalidateAll(); },
+    onSuccess: () => { setSessionPersonas(null); toast.success("Dados de demonstração e contas removidos."); invalidateAll(); },
     onError: (e: any) => toast.error(e?.message || "Falha ao limpar dados."),
   });
   const resetMut = useMutation({
     mutationFn: () => resetFn({ data: { label } }),
-    onSuccess: () => { toast.success("Ambiente recriado com sucesso."); invalidateAll(); },
+    onSuccess: (r: any) => {
+      setSessionPersonas((r?.created?.personas ?? []) as Persona[]);
+      toast.success("Ambiente recriado. Novos links gerados.");
+      invalidateAll();
+    },
     onError: (e: any) => toast.error(e?.message || "Falha ao recriar ambiente."),
   });
 
@@ -226,6 +237,63 @@ function HomologPage() {
           </div>
         )}
       </Card>
+
+      {sessionPersonas && sessionPersonas.length > 0 && (
+        <Card className="p-4 space-y-3 border-amber-400/60 bg-amber-50/40">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="text-lg font-semibold">Credenciais desta sessão</h2>
+              <p className="text-xs text-muted-foreground">
+                Estes links de acesso são <strong>temporários</strong>, gerados apenas para esta sessão do administrador.
+                Não são gravados no banco. Ao recarregar a página eles somem — copie ou abra agora.
+                Recomendado: abrir em <strong>janela anônima</strong> para não conflitar com sua sessão real.
+              </p>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => setSessionPersonas(null)}>
+              <EyeOff className="mr-1 h-4 w-4" /> Ocultar
+            </Button>
+          </div>
+          <div className="grid gap-2">
+            {sessionPersonas.map((p) => (
+              <div key={p.email} className="rounded-md border bg-background p-2 text-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="secondary">{p.role}</Badge>
+                  <span className="font-medium">{p.label}</span>
+                  <code className="text-xs text-muted-foreground">{p.email}</code>
+                </div>
+                {p.magic_link ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        try { await navigator.clipboard.writeText(p.magic_link!); toast.success("Link copiado."); }
+                        catch { toast.error("Não foi possível copiar."); }
+                      }}
+                    >
+                      <Copy className="mr-1 h-3 w-3" /> Copiar link
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => window.open(p.magic_link!, "_blank", "noopener,noreferrer")}
+                    >
+                      <ExternalLink className="mr-1 h-3 w-3" /> Abrir em nova aba
+                    </Button>
+                    <span className="text-xs text-muted-foreground">
+                      Dica: abra em janela anônima para simular a persona.
+                    </span>
+                  </div>
+                ) : (
+                  <div className="mt-2 text-xs text-destructive">
+                    Não foi possível gerar magic link para esta conta.
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Contaminação */}
       <Card className="p-4 space-y-3">

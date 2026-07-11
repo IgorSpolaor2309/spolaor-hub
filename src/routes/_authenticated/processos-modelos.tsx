@@ -20,6 +20,8 @@ import { DeleteButton } from "@/components/sc/DeleteButton";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { toast } from "sonner";
 import { GitBranch, Plus, Pencil, ChevronDown, ChevronRight, ArrowUp, ArrowDown, Eye, EyeOff, Globe, Lock, RefreshCw, CheckCircle2, AlertCircle, Clock, Copy, Download, X } from "lucide-react";
+import { DemoBadge } from "@/components/sc/DemoBadge";
+import { DemoFilter, matchesDemoFilter, type DemoFilterValue } from "@/components/sc/DemoFilter";
 
 export const Route = createFileRoute("/_authenticated/processos-modelos")({
   component: ProcessTypesPage,
@@ -45,6 +47,7 @@ function ProcessTypesPage() {
   const [sortBy, setSortBy] = useState<"nome" | "mais_usados" | "recentes" | "antigos" | "etapas">("nome");
   const [dupOf, setDupOf] = useState<any>(null);
   const [importInto, setImportInto] = useState<any>(null);
+  const [demoFilter, setDemoFilter] = useState<DemoFilterValue>("real");
 
   const typesQ = useQuery({
     queryKey: ["process-types"],
@@ -76,7 +79,7 @@ function ProcessTypesPage() {
   }, [statsQ.data]);
 
   const sortedTypes = useMemo(() => {
-    const arr = [...(typesQ.data ?? [])];
+    const arr = [...(typesQ.data ?? [])].filter((t: any) => matchesDemoFilter(t, demoFilter));
     const get = (t: any) => statsMap.get(t.id) ?? {};
     switch (sortBy) {
       case "mais_usados": arr.sort((a, b) => (get(b).processos_ativos ?? 0) - (get(a).processos_ativos ?? 0)); break;
@@ -86,7 +89,7 @@ function ProcessTypesPage() {
       default: arr.sort((a, b) => (a.nome ?? "").localeCompare(b.nome ?? ""));
     }
     return arr;
-  }, [typesQ.data, statsMap, sortBy]);
+  }, [typesQ.data, statsMap, sortBy, demoFilter]);
 
   // Totais agregados para o dashboard
   const totals = useMemo(() => {
@@ -151,6 +154,7 @@ function ProcessTypesPage() {
             <SelectItem value="antigos">Mais antigos</SelectItem>
           </SelectContent>
         </Select>
+        <div className="ml-auto"><DemoFilter value={demoFilter} onChange={setDemoFilter} /></div>
       </div>
 
       <Card className="p-2">
@@ -169,6 +173,7 @@ function ProcessTypesPage() {
                     </Button>
                     {t.cor && <span className="h-3 w-3 rounded-full border" style={{ background: t.cor }} />}
                     <span className="font-medium">{t.nome}</span>
+                    {t.is_demo && <DemoBadge compact />}
                     {t.categoria && <Badge variant="outline">{CAT_LABEL[t.categoria] ?? t.categoria}</Badge>}
                     <Badge className={t.status === "ativo" ? "bg-emerald-100 text-emerald-800" : "bg-zinc-200 text-zinc-700"}>
                       {t.status === "ativo" ? "Ativo" : "Inativo"}

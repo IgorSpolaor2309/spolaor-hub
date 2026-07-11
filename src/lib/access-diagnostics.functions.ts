@@ -99,7 +99,7 @@ export const getAdminCollaboratorsPage = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("collaborators")
-      .select("id, nome, email, telefone, cargo, departamento, data_admissao, status, observacoes, user_id, created_at")
+      .select("id, nome, email, telefone, cargo, departamento, data_admissao, status, observacoes, user_id, created_at, is_demo, demo_batch_id")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data ?? [];

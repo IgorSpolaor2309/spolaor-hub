@@ -282,19 +282,25 @@ export type Database = {
           client_id: string
           collaborator_id: string
           created_at: string
+          demo_batch_id: string | null
           id: string
+          is_demo: boolean
         }
         Insert: {
           client_id: string
           collaborator_id: string
           created_at?: string
+          demo_batch_id?: string | null
           id?: string
+          is_demo?: boolean
         }
         Update: {
           client_id?: string
           collaborator_id?: string
           created_at?: string
+          demo_batch_id?: string | null
           id?: string
+          is_demo?: boolean
         }
         Relationships: [
           {
@@ -309,6 +315,13 @@ export type Database = {
             columns: ["collaborator_id"]
             isOneToOne: false
             referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_collaborators_demo_batch_id_fkey"
+            columns: ["demo_batch_id"]
+            isOneToOne: false
+            referencedRelation: "demo_batches"
             referencedColumns: ["id"]
           },
         ]
@@ -525,7 +538,9 @@ export type Database = {
           client_id: string
           created_at: string
           criado_por: string | null
+          demo_batch_id: string | null
           id: string
+          is_demo: boolean
           papel: string | null
           updated_at: string
           user_id: string
@@ -535,7 +550,9 @@ export type Database = {
           client_id: string
           created_at?: string
           criado_por?: string | null
+          demo_batch_id?: string | null
           id?: string
+          is_demo?: boolean
           papel?: string | null
           updated_at?: string
           user_id: string
@@ -545,7 +562,9 @@ export type Database = {
           client_id?: string
           created_at?: string
           criado_por?: string | null
+          demo_batch_id?: string | null
           id?: string
+          is_demo?: boolean
           papel?: string | null
           updated_at?: string
           user_id?: string
@@ -556,6 +575,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_users_demo_batch_id_fkey"
+            columns: ["demo_batch_id"]
+            isOneToOne: false
+            referencedRelation: "demo_batches"
             referencedColumns: ["id"]
           },
         ]
@@ -2365,23 +2391,37 @@ export type Database = {
       user_roles: {
         Row: {
           created_at: string
+          demo_batch_id: string | null
           id: string
+          is_demo: boolean
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
           created_at?: string
+          demo_batch_id?: string | null
           id?: string
+          is_demo?: boolean
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
           created_at?: string
+          demo_batch_id?: string | null
           id?: string
+          is_demo?: boolean
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_demo_batch_id_fkey"
+            columns: ["demo_batch_id"]
+            isOneToOne: false
+            referencedRelation: "demo_batches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -2415,8 +2455,20 @@ export type Database = {
         Args: { _label?: string }
         Returns: Json
       }
+      admin_demo_persona_user_ids: {
+        Args: { _batch_id?: string }
+        Returns: {
+          email: string
+          role: string
+          user_id: string
+        }[]
+      }
       admin_demo_repair_case_a: { Args: never; Returns: Json }
       admin_demo_reset: { Args: { _label?: string }; Returns: Json }
+      admin_demo_seed_batch: {
+        Args: { _label: string; _personas: Json }
+        Returns: Json
+      }
       admin_demo_summary: { Args: never; Returns: Json }
       admin_demo_wipe: { Args: { _batch_id?: string }; Returns: Json }
       admin_demo_wipe_preview: { Args: { _batch_id?: string }; Returns: Json }

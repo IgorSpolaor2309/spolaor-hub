@@ -26,6 +26,8 @@ import {
 import { useServerFn } from "@tanstack/react-start";
 import { adminSetClientStatus } from "@/lib/admin-users.functions";
 import { getAdminClientsPage } from "@/lib/access-diagnostics.functions";
+import { DemoBadge } from "@/components/sc/DemoBadge";
+import { DemoFilter, matchesDemoFilter, type DemoFilterValue } from "@/components/sc/DemoFilter";
 
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { CLIENT_TYPES, labelOf } from "@/lib/sc-types";
@@ -59,6 +61,7 @@ function ClientsPage() {
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
+  const [demoFilter, setDemoFilter] = useState<DemoFilterValue>("real");
 
 
   const { data: clients = [], isLoading, error: clientsError } = useQuery({
@@ -125,6 +128,7 @@ function ClientsPage() {
     if (fStatusCom !== "all" && (c.client_commercial?.status_comercial ?? "") !== fStatusCom) return false;
     if (fPeriodicidade !== "all" && (c.client_commercial?.periodicidade ?? "") !== fPeriodicidade) return false;
     if (!inRange(c.data_entrada ?? c.created_at, range)) return false;
+    if (!matchesDemoFilter(c, demoFilter)) return false;
     return true;
   });
   const clearFilters = () => {
@@ -270,9 +274,11 @@ function ClientsPage() {
           </div>
           <DateRangeFilter value={dateF} onChange={setDateF} label="Data de entrada" variant="range" />
 
+          {isAdmin && <DemoFilter value={demoFilter} onChange={setDemoFilter} />}
           <Button variant="ghost" size="sm" onClick={clearFilters}>Limpar filtros</Button>
         </div>
       </Card>
+
 
       <Card className="p-4">
 
@@ -310,6 +316,7 @@ function ClientsPage() {
                       <Link to="/clientes/$id" params={{ id: c.id }} className="font-medium text-primary hover:underline">
                         {c.razao_social}
                       </Link>
+                      {c.is_demo && <DemoBadge className="ml-2" compact />}
                       {c.nome_fantasia && <div className="text-xs text-muted-foreground">{c.nome_fantasia}</div>}
                       {role === "admin" && !((c.client_users ?? []) as any[]).some((u: any) => u.ativo) && (
                         <Link

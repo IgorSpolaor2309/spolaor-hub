@@ -25,6 +25,8 @@ import {
 import { useServerFn } from "@tanstack/react-start";
 import { adminSetCollaboratorStatus } from "@/lib/admin-users.functions";
 import { getAdminCollaboratorsPage } from "@/lib/access-diagnostics.functions";
+import { DemoBadge } from "@/components/sc/DemoBadge";
+import { DemoFilter, matchesDemoFilter, type DemoFilterValue } from "@/components/sc/DemoFilter";
 
 
 export const Route = createFileRoute("/_authenticated/colaboradores")({
@@ -42,6 +44,7 @@ type CollabRow = {
   status: string;
   observacoes: string | null;
   user_id: string | null;
+  is_demo?: boolean | null;
 };
 
 const emptyForm: Omit<CollabRow, "id"> = {
@@ -61,6 +64,7 @@ function CollaboratorsPage() {
   const getAdminCollaborators = useServerFn(getAdminCollaboratorsPage);
   const [editing, setEditing] = useState<CollabRow | null>(null);
   const [open, setOpen] = useState(false);
+  const [demoFilter, setDemoFilter] = useState<DemoFilterValue>("real");
 
   const { data: list = [], error: listError, isLoading } = useQuery({
     queryKey: ["collaborators"],
@@ -68,6 +72,7 @@ function CollaboratorsPage() {
       return (await getAdminCollaborators({})) as CollabRow[];
     },
   });
+  const filteredList = list.filter((c) => matchesDemoFilter(c, demoFilter));
 
   function openNew() {
     setEditing(null);
@@ -91,6 +96,10 @@ function CollaboratorsPage() {
       />
 
       <Card className="p-4">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div className="text-xs text-muted-foreground">{filteredList.length} de {list.length} colaborador(es)</div>
+          <DemoFilter value={demoFilter} onChange={setDemoFilter} />
+        </div>
         {listError ? (
           <EmptyState
             icon={<UserCog className="h-6 w-6" />}
@@ -99,7 +108,7 @@ function CollaboratorsPage() {
           />
         ) : isLoading ? (
           <p className="text-sm text-muted-foreground">Carregando…</p>
-        ) : list.length === 0 ? (
+        ) : filteredList.length === 0 ? (
           <EmptyState
             icon={<UserCog className="h-6 w-6" />}
             title="Nenhum colaborador cadastrado"
@@ -119,9 +128,11 @@ function CollaboratorsPage() {
               </tr>
             </thead>
             <tbody>
-              {list.map((c) => (
+              {filteredList.map((c) => (
                 <tr key={c.id} className="border-b">
-                  <td className="py-3 pr-4 font-medium">{c.nome}</td>
+                  <td className="py-3 pr-4 font-medium">
+                    <span className="inline-flex items-center gap-2">{c.nome}{c.is_demo ? <DemoBadge compact /> : null}</span>
+                  </td>
                   <td>{c.email ?? "—"}</td>
                   <td>{c.cargo ?? "—"}</td>
                   <td>{c.departamento ?? "—"}</td>
