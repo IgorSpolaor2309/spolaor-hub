@@ -108,3 +108,21 @@ export const homologListAudit = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return data ?? [];
   });
+
+export const homologContaminationReport = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await ensureAdmin(context.supabase, context.userId);
+    const { data, error } = await context.supabase.rpc("admin_demo_contamination_report");
+    if (error) throw new Error(error.message);
+    return data as Record<string, any[]>;
+  });
+
+export const homologRepairCaseA = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await ensureAdmin(context.supabase, context.userId);
+    const { data, error } = await context.supabase.rpc("admin_demo_repair_case_a");
+    if (error) throw new Error(error.message);
+    return data as { processes_fixed: number; steps_fixed: number };
+  });
