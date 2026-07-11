@@ -316,6 +316,7 @@ function ClientsPage() {
                       <Link to="/clientes/$id" params={{ id: c.id }} className="font-medium text-primary hover:underline">
                         {c.razao_social}
                       </Link>
+                      {c.is_demo && <DemoBadge className="ml-2" compact />}
                       {c.nome_fantasia && <div className="text-xs text-muted-foreground">{c.nome_fantasia}</div>}
                       {role === "admin" && !((c.client_users ?? []) as any[]).some((u: any) => u.ativo) && (
                         <Link
