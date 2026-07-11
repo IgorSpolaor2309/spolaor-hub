@@ -44,6 +44,7 @@ type CollabRow = {
   status: string;
   observacoes: string | null;
   user_id: string | null;
+  is_demo?: boolean | null;
 };
 
 const emptyForm: Omit<CollabRow, "id"> = {
