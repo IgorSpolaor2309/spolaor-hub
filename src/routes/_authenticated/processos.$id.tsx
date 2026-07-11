@@ -383,6 +383,42 @@ function ProcessDetail() {
             </ul>
           )}
       </Card>
+
+      <Card className="mt-3 p-2">
+        <div className="border-b px-2 py-2 text-sm font-medium">Histórico detalhado</div>
+        {historyQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
+          : (historyQ.data ?? []).length === 0 ? <p className="p-3 text-sm text-muted-foreground">Sem eventos registrados.</p>
+          : (
+            <ul className="divide-y">
+              {(historyQ.data ?? []).map((h: any) => {
+                const meta = h.metadata ?? {};
+                const hasOldNew = meta.old !== undefined || meta.new !== undefined;
+                return (
+                  <li key={h.id} className="p-3 text-sm">
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <Badge variant="outline" className="text-[10px]">{h.tipo}</Badge>
+                      <span className="font-medium">{h.descricao}</span>
+                      <span className="ml-auto text-xs text-muted-foreground">
+                        {new Date(h.created_at).toLocaleString("pt-BR")}
+                      </span>
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                      <span>Ator: {h.actor_name ?? "sistema"}</span>
+                      {meta.origem_ator && <span>· Origem: {meta.origem_ator}</span>}
+                      {hasOldNew && (
+                        <span>
+                          · De <code className="rounded bg-muted px-1">{String(meta.old ?? "—")}</code>
+                          {" "}para <code className="rounded bg-muted px-1">{String(meta.new ?? "—")}</code>
+                        </span>
+                      )}
+                      {meta.motivo_espera && <span>· Motivo: {meta.motivo_espera}</span>}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+      </Card>
     </div>
   );
 }
