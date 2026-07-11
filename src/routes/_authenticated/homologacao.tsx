@@ -138,7 +138,17 @@ function HomologPage() {
               </AlertDialogContent>
             </AlertDialog>
 
-            <AlertDialog>
+            <AlertDialog
+              onOpenChange={(open) => {
+                if (open) {
+                  wipePreviewFn({ data: {} })
+                    .then((r) => setWipePreview(r as Record<string, number>))
+                    .catch(() => setWipePreview(null));
+                } else {
+                  setWipePreview(null);
+                }
+              }}
+            >
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" disabled={wipeMut.isPending}>
                   <Trash2 className="h-4 w-4 mr-1" /> Limpar demonstração
@@ -147,11 +157,34 @@ function HomologPage() {
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Remover todos os dados de demonstração?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta ação removerá <strong>somente</strong> os dados criados pela Central de
-                    Homologação (<code>is_demo = true</code>). Os dados reais não serão afetados.
-                    <br /><br />
-                    Total atual de registros de demo: <strong>{totalDemo}</strong>.
+                  <AlertDialogDescription asChild>
+                    <div className="space-y-2">
+                      <div>
+                        Esta ação removerá <strong>somente</strong> os dados criados pela Central de
+                        Homologação (<code>is_demo = true</code>). Os dados reais não serão afetados.
+                      </div>
+                      <div>Total atual de registros de demo: <strong>{totalDemo}</strong>.</div>
+                      {wipePreview === null ? (
+                        <div className="text-xs text-muted-foreground">Calculando o que será removido…</div>
+                      ) : (
+                        <div className="rounded-md border p-2 text-xs">
+                          <div className="font-medium mb-1">Serão removidos:</div>
+                          <div className="grid grid-cols-2 gap-1">
+                            {Object.entries(wipePreview)
+                              .filter(([, v]) => Number(v) > 0)
+                              .map(([k, v]) => (
+                                <div key={k} className="flex justify-between">
+                                  <span className="text-muted-foreground">{k}</span>
+                                  <span className="font-medium">{v}</span>
+                                </div>
+                              ))}
+                            {Object.values(wipePreview).every((v) => Number(v) === 0) && (
+                              <div className="col-span-2 text-muted-foreground">Nenhum registro demo encontrado.</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
