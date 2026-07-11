@@ -364,3 +364,42 @@ export const homologPurgeOrphanAuthUsers = createServerFn({ method: "POST" })
     });
     return { candidates: rows.length, deleted, failed };
   });
+
+export const homologListValidationRuns = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { batch_id?: string | null }) => input)
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context.supabase, context.userId);
+    const { data: rows, error } = await context.supabase.rpc("admin_demo_list_validation_runs", {
+      _batch_id: data.batch_id ?? undefined,
+    } as any);
+    if (error) throw new Error(error.message);
+    return (rows ?? []) as any[];
+  });
+
+export const homologListManualSteps = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { run_id: string }) => input)
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context.supabase, context.userId);
+    if (!data.run_id) throw new Error("run_id obrigatório");
+    const { data: rows, error } = await context.supabase.rpc("admin_demo_list_manual_steps", {
+      _run_id: data.run_id,
+    } as any);
+    if (error) throw new Error(error.message);
+    return (rows ?? []) as any[];
+  });
+
+export const homologUpdateManualStep = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { step_id: string; status: "pending" | "pass" | "fail" | "skip"; notes?: string | null }) => input)
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context.supabase, context.userId);
+    const { data: row, error } = await context.supabase.rpc("admin_demo_update_manual_step", {
+      _step_id: data.step_id,
+      _status: data.status,
+      _notes: data.notes ?? null,
+    } as any);
+    if (error) throw new Error(error.message);
+    return row as any;
+  });
