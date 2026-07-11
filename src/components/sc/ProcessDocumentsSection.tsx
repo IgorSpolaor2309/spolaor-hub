@@ -12,7 +12,10 @@ import { AttachmentButton } from "@/components/sc/AttachmentButton";
 import { DeleteButton } from "@/components/sc/DeleteButton";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { toast } from "sonner";
-import { FileText, Link2, Paperclip, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
+import { FileText, Link2, Paperclip, CheckCircle2, AlertCircle, XCircle, Send, ExternalLink } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Textarea } from "@/components/ui/textarea";
+import { formatBR } from "@/lib/dates";
 
 type Props = {
   processId: string;
