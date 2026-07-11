@@ -2004,11 +2004,13 @@ export type Database = {
       process_steps: {
         Row: {
           created_at: string
+          demo_batch_id: string | null
           departamento: string | null
           descricao: string | null
           descricao_publica: string | null
           exige_documento: boolean
           id: string
+          is_demo: boolean
           nome: string
           nome_publico: string | null
           obrigatoria: boolean
@@ -2024,11 +2026,13 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          demo_batch_id?: string | null
           departamento?: string | null
           descricao?: string | null
           descricao_publica?: string | null
           exige_documento?: boolean
           id?: string
+          is_demo?: boolean
           nome: string
           nome_publico?: string | null
           obrigatoria?: boolean
@@ -2044,11 +2048,13 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          demo_batch_id?: string | null
           departamento?: string | null
           descricao?: string | null
           descricao_publica?: string | null
           exige_documento?: boolean
           id?: string
+          is_demo?: boolean
           nome?: string
           nome_publico?: string | null
           obrigatoria?: boolean
@@ -2064,6 +2070,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "process_steps_demo_batch_id_fkey"
+            columns: ["demo_batch_id"]
+            isOneToOne: false
+            referencedRelation: "demo_batches"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "process_steps_process_type_id_fkey"
             columns: ["process_type_id"]
             isOneToOne: false
@@ -2077,9 +2090,11 @@ export type Database = {
           categoria: string | null
           cor: string | null
           created_at: string
+          demo_batch_id: string | null
           descricao: string | null
           icone: string | null
           id: string
+          is_demo: boolean
           nome: string
           ordem: number
           status: string
@@ -2089,9 +2104,11 @@ export type Database = {
           categoria?: string | null
           cor?: string | null
           created_at?: string
+          demo_batch_id?: string | null
           descricao?: string | null
           icone?: string | null
           id?: string
+          is_demo?: boolean
           nome: string
           ordem?: number
           status?: string
@@ -2101,15 +2118,25 @@ export type Database = {
           categoria?: string | null
           cor?: string | null
           created_at?: string
+          demo_batch_id?: string | null
           descricao?: string | null
           icone?: string | null
           id?: string
+          is_demo?: boolean
           nome?: string
           ordem?: number
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "process_types_demo_batch_id_fkey"
+            columns: ["demo_batch_id"]
+            isOneToOne: false
+            referencedRelation: "demo_batches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

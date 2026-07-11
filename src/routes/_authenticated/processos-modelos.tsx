@@ -69,12 +69,6 @@ function ProcessTypesPage() {
     },
   });
 
-  if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
-  if (role !== "admin" && role !== "collaborator") {
-    return <EmptyState icon={<GitBranch className="h-6 w-6" />} title="Acesso restrito" description="Apenas administradores e colaboradores." />;
-  }
-  const isAdmin = role === "admin";
-
   const statsMap = useMemo(() => {
     const m = new Map<string, any>();
     (statsQ.data ?? []).forEach((s: any) => m.set(s.process_type_id, s));
@@ -110,6 +104,13 @@ function ProcessTypesPage() {
       processos_ativos: sum("processos_ativos"),
     };
   }, [typesQ.data, statsQ.data]);
+
+  if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
+  if (role !== "admin" && role !== "collaborator") {
+    return <EmptyState icon={<GitBranch className="h-6 w-6" />} title="Acesso restrito" description="Apenas administradores e colaboradores." />;
+  }
+  const isAdmin = role === "admin";
+
 
   return (
     <div>
