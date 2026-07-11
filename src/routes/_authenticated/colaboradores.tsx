@@ -96,6 +96,10 @@ function CollaboratorsPage() {
       />
 
       <Card className="p-4">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div className="text-xs text-muted-foreground">{filteredList.length} de {list.length} colaborador(es)</div>
+          <DemoFilter value={demoFilter} onChange={setDemoFilter} />
+        </div>
         {listError ? (
           <EmptyState
             icon={<UserCog className="h-6 w-6" />}
