@@ -53,6 +53,7 @@ function HomologPage() {
   const contaminationFn = useServerFn(homologContaminationReport);
   const repairFn = useServerFn(homologRepairCaseA);
   const purgeOrphanFn = useServerFn(homologPurgeOrphanAuthUsers);
+  const validateFn = useServerFn(homologValidateBatch);
 
   const summary = useQuery({ queryKey: ["homolog-summary"], queryFn: () => summaryFn({}) });
   const batches = useQuery({ queryKey: ["homolog-batches"], queryFn: () => batchesFn({}) });
