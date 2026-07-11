@@ -219,6 +219,8 @@ function StepsSection({ typeId, canEdit }: { typeId: string; canEdit: boolean })
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [preview, setPreview] = useState<{ step: any; requirements: any[] } | null>(null);
+  const [syncOpen, setSyncOpen] = useState(false);
 
   const stepsQ = useQuery({
     queryKey: ["process-steps", typeId],
@@ -247,24 +249,73 @@ function StepsSection({ typeId, canEdit }: { typeId: string; canEdit: boolean })
     onSuccess: () => qc.invalidateQueries({ queryKey: ["process-steps", typeId] }),
   });
 
+  const patchStep = useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: any }) => {
+      const { error } = await (supabase as any).from("process_steps").update(patch).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["process-steps", typeId] }),
+    onError: (e: any) => toast.error(e.message ?? "Falha ao salvar"),
+  });
+
+  const bulk = useMutation({
+    mutationFn: async ({ visible }: { visible: boolean }) => {
+      const { data, error } = await (supabase as any).rpc("admin_bulk_set_model_visibility", {
+        _process_type_id: typeId, _visible: visible, _include_requirements: true,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data: any) => {
+      toast.success(`${data.etapas} etapa(s) e ${data.requisitos} requisito(s) atualizados`);
+      qc.invalidateQueries({ queryKey: ["process-steps", typeId] });
+      // invalidate all requirements for this type
+      qc.invalidateQueries({ predicate: (q) => Array.isArray(q.queryKey) && q.queryKey[0] === "process-step-requirements" });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha"),
+  });
+
   const steps = stepsQ.data ?? [];
+  const visibleCount = useMemo(() => steps.filter((s: any) => s.visivel_cliente).length, [steps]);
 
   return (
     <div className="mt-3 rounded-md border bg-muted/30 p-3">
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
         <div className="text-sm font-medium">Etapas</div>
-        {canEdit && (
-          <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null); }}>
-            <DialogTrigger asChild>
-              <Button size="sm" variant="outline"><Plus className="mr-1 h-3.5 w-3.5" /> Adicionar etapa</Button>
-            </DialogTrigger>
-            {open && <StepDialog typeId={typeId} initial={editing} nextOrdem={steps.length} onDone={() => {
-              setOpen(false); setEditing(null);
-              qc.invalidateQueries({ queryKey: ["process-steps", typeId] });
-              qc.invalidateQueries({ queryKey: ["process-types"] });
-            }} />}
-          </Dialog>
+        {steps.length > 0 && (
+          <Badge variant="outline" className="gap-1 text-[10px]">
+            <Globe className="h-3 w-3" /> {visibleCount} de {steps.length} visíveis ao cliente
+          </Badge>
         )}
+        <div className="ml-auto flex flex-wrap items-center gap-1">
+          {canEdit && steps.length > 0 && (
+            <>
+              <Button size="sm" variant="ghost" className="h-7" disabled={bulk.isPending}
+                onClick={() => bulk.mutate({ visible: true })}>
+                <Eye className="mr-1 h-3.5 w-3.5" /> Mostrar todas
+              </Button>
+              <Button size="sm" variant="ghost" className="h-7" disabled={bulk.isPending}
+                onClick={() => bulk.mutate({ visible: false })}>
+                <EyeOff className="mr-1 h-3.5 w-3.5" /> Ocultar todas
+              </Button>
+              <Button size="sm" variant="outline" className="h-7" onClick={() => setSyncOpen(true)}>
+                <RefreshCw className="mr-1 h-3.5 w-3.5" /> Sincronizar
+              </Button>
+            </>
+          )}
+          {canEdit && (
+            <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null); }}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline"><Plus className="mr-1 h-3.5 w-3.5" /> Adicionar etapa</Button>
+              </DialogTrigger>
+              {open && <StepDialog typeId={typeId} initial={editing} nextOrdem={steps.length} onDone={() => {
+                setOpen(false); setEditing(null);
+                qc.invalidateQueries({ queryKey: ["process-steps", typeId] });
+                qc.invalidateQueries({ queryKey: ["process-types"] });
+              }} />}
+            </Dialog>
+          )}
+        </div>
       </div>
       {stepsQ.isLoading ? <p className="text-xs text-muted-foreground">Carregando…</p>
         : steps.length === 0 ? <p className="text-xs text-muted-foreground">Nenhuma etapa cadastrada.</p>
@@ -278,33 +329,258 @@ function StepsSection({ typeId, canEdit }: { typeId: string; canEdit: boolean })
                   {it.departamento && <Badge variant="outline">{it.departamento}</Badge>}
                   {it.obrigatoria && <Badge variant="secondary">Obrigatória</Badge>}
                   {it.exige_documento && <Badge className="bg-amber-100 text-amber-800">Exige doc.</Badge>}
-                  {it.visivel_cliente && <Badge className="bg-blue-100 text-blue-800">Visível ao cliente</Badge>}
+                  {it.visivel_cliente
+                    ? <Badge className="bg-blue-100 text-blue-800 gap-1"><Globe className="h-3 w-3" /> Visível</Badge>
+                    : <Badge variant="outline" className="gap-1"><Lock className="h-3 w-3" /> Interna</Badge>}
                   {it.prazo_dias != null && <span className="text-xs text-muted-foreground">{it.prazo_dias}d</span>}
-                  {canEdit && (
-                    <div className="ml-auto flex items-center gap-1">
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" disabled={idx === 0}
-                        onClick={() => { const prev = steps[idx - 1]; move.mutate({ id: it.id, ordem: prev.ordem }); move.mutate({ id: prev.id, ordem: it.ordem }); }}>
-                        <ArrowUp className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" disabled={idx === steps.length - 1}
-                        onClick={() => { const next = steps[idx + 1]; move.mutate({ id: it.id, ordem: next.ordem }); move.mutate({ id: next.id, ordem: it.ordem }); }}>
-                        <ArrowDown className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => { setEditing(it); setOpen(true); }}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <DeleteButton onConfirm={() => remove.mutate(it.id)} />
-                    </div>
-                  )}
+                  <div className="ml-auto flex items-center gap-1">
+                    <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs"
+                      onClick={async () => {
+                        const { data: reqs } = await (supabase as any).from("process_step_requirements")
+                          .select("*").eq("process_step_id", it.id).order("ordem");
+                        setPreview({ step: it, requirements: reqs ?? [] });
+                      }}>
+                      <Eye className="h-3.5 w-3.5" /> Ver como cliente
+                    </Button>
+                    {canEdit && (
+                      <>
+                        <label className="ml-1 flex items-center gap-1.5 rounded border bg-background px-2 py-1 text-[11px]" title="Mostrar esta etapa no Portal do Cliente">
+                          <Switch checked={!!it.visivel_cliente}
+                            onCheckedChange={(v) => patchStep.mutate({ id: it.id, patch: { visivel_cliente: v } })} />
+                          Mostrar
+                        </label>
+                        <PublicTextsPopover
+                          title="Textos públicos da etapa"
+                          values={{ nome_publico: it.nome_publico, descricao_publica: it.descricao_publica, observacao_publica: it.observacao_publica }}
+                          fields={[
+                            { key: "nome_publico", label: "Nome público", placeholder: it.nome },
+                            { key: "descricao_publica", label: "Descrição pública", textarea: true, placeholder: it.descricao ?? "" },
+                            { key: "observacao_publica", label: "Observação pública", textarea: true },
+                          ]}
+                          onSave={(patch) => patchStep.mutateAsync({ id: it.id, patch })}
+                        />
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0" disabled={idx === 0}
+                          onClick={() => { const prev = steps[idx - 1]; move.mutate({ id: it.id, ordem: prev.ordem }); move.mutate({ id: prev.id, ordem: it.ordem }); }}>
+                          <ArrowUp className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0" disabled={idx === steps.length - 1}
+                          onClick={() => { const next = steps[idx + 1]; move.mutate({ id: it.id, ordem: next.ordem }); move.mutate({ id: next.id, ordem: it.ordem }); }}>
+                          <ArrowDown className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => { setEditing(it); setOpen(true); }}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <DeleteButton onConfirm={() => remove.mutate(it.id)} />
+                      </>
+                    )}
+                  </div>
                 </div>
                 <StepRequirements stepId={it.id} canEdit={canEdit} />
               </li>
             ))}
           </ul>
         )}
+
+      {preview && (
+        <ClientPreviewSheet open={!!preview} onOpenChange={(v) => !v && setPreview(null)}
+          step={preview.step} requirements={preview.requirements} />
+      )}
+      {syncOpen && (
+        <SyncVisibilityDialog typeId={typeId} onClose={() => setSyncOpen(false)} />
+      )}
     </div>
   );
 }
+
+function PublicTextsPopover({ title, values, fields, onSave }: {
+  title: string;
+  values: Record<string, string | null>;
+  fields: { key: string; label: string; textarea?: boolean; placeholder?: string }[];
+  onSave: (patch: Record<string, string | null>) => Promise<any>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [state, setState] = useState<Record<string, string>>(() =>
+    Object.fromEntries(fields.map((f) => [f.key, (values[f.key] ?? "") as string]))
+  );
+  const [saving, setSaving] = useState(false);
+  const filled = fields.some((f) => (values[f.key] ?? "").toString().trim() !== "");
+  return (
+    <Popover open={open} onOpenChange={(v) => { setOpen(v); if (v) setState(Object.fromEntries(fields.map((f) => [f.key, (values[f.key] ?? "") as string]))); }}>
+      <PopoverTrigger asChild>
+        <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs" title="Editar textos exibidos ao cliente">
+          <Globe className={"h-3.5 w-3.5 " + (filled ? "text-blue-600" : "text-muted-foreground")} />
+          Textos
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-96 space-y-2">
+        <div className="text-sm font-medium">{title}</div>
+        <p className="text-[11px] text-muted-foreground">Deixe em branco para usar o texto interno padrão.</p>
+        {fields.map((f) => (
+          <div key={f.key} className="space-y-1">
+            <Label className="text-xs">{f.label}</Label>
+            {f.textarea
+              ? <Textarea rows={2} value={state[f.key] ?? ""} placeholder={f.placeholder}
+                  onChange={(e) => setState((s) => ({ ...s, [f.key]: e.target.value }))} />
+              : <Input value={state[f.key] ?? ""} placeholder={f.placeholder}
+                  onChange={(e) => setState((s) => ({ ...s, [f.key]: e.target.value }))} />}
+          </div>
+        ))}
+        <div className="flex justify-end gap-2 pt-1">
+          <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button size="sm" disabled={saving} onClick={async () => {
+            setSaving(true);
+            try {
+              const patch: Record<string, string | null> = {};
+              for (const f of fields) {
+                const v = (state[f.key] ?? "").trim();
+                patch[f.key] = v === "" ? null : v;
+              }
+              await onSave(patch);
+              toast.success("Textos públicos atualizados");
+              setOpen(false);
+            } catch (e: any) { toast.error(e.message ?? "Falha"); } finally { setSaving(false); }
+          }}>Salvar</Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function ClientPreviewSheet({ open, onOpenChange, step, requirements }: {
+  open: boolean; onOpenChange: (v: boolean) => void; step: any; requirements: any[];
+}) {
+  const nome = step.nome_publico?.trim() || step.nome;
+  const desc = step.descricao_publica?.trim() || step.descricao;
+  const obs = step.observacao_publica?.trim();
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
+            <Eye className="h-4 w-4" /> Visualização como cliente
+          </SheetTitle>
+          <SheetDescription>Prévia de como esta etapa aparecerá no Portal.</SheetDescription>
+        </SheetHeader>
+        {!step.visivel_cliente && (
+          <div className="mt-3 rounded border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
+            <AlertCircle className="mr-1 inline h-3 w-3" />
+            Esta etapa está marcada como <b>Interna</b>. O cliente não vai enxergá-la enquanto o interruptor "Mostrar" estiver desligado.
+          </div>
+        )}
+        <div className="mt-4 rounded border bg-muted/20 p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Etapa {step.ordem}</span>
+            <span className="text-sm font-medium">{nome}</span>
+            <Badge className="bg-zinc-100 text-zinc-700">Pendente</Badge>
+          </div>
+          {desc && <p className="mt-1 text-xs text-muted-foreground">{desc}</p>}
+          {obs && <p className="mt-1 text-xs italic text-muted-foreground">{obs}</p>}
+          {requirements.filter((r) => r.visivel_cliente).length > 0 && (
+            <ul className="mt-2 space-y-1">
+              {requirements.filter((r) => r.visivel_cliente).map((r) => (
+                <li key={r.id} className="flex flex-wrap items-center gap-2 rounded border bg-background p-2 text-xs">
+                  <AlertCircle className="h-3.5 w-3.5 text-amber-600" />
+                  <span className={r.obrigatorio ? "font-medium" : ""}>{r.nome_publico?.trim() || r.nome}</span>
+                  {r.obrigatorio && <Badge variant="secondary" className="text-[10px]">Obrigatório</Badge>}
+                  {(r.descricao_publica?.trim() || r.descricao) && (
+                    <span className="w-full text-[11px] text-muted-foreground">{r.descricao_publica?.trim() || r.descricao}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+          {requirements.filter((r) => r.visivel_cliente).length === 0 && requirements.length > 0 && (
+            <p className="mt-2 text-[11px] text-muted-foreground">Nenhum requisito visível ao cliente nesta etapa.</p>
+          )}
+        </div>
+        <div className="mt-3 text-[11px] text-muted-foreground">
+          <CheckCircle2 className="mr-1 inline h-3 w-3" /> Simulação — dados reais dependem do processo em andamento.
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function SyncVisibilityDialog({ typeId, onClose }: { typeId: string; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [mode, setMode] = useState<"only_missing" | "overwrite_all">("only_missing");
+  const previewQ = useQuery({
+    queryKey: ["sync-visibility-preview", typeId, mode],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("admin_sync_process_visibility", {
+        _process_type_id: typeId, _mode: mode, _dry_run: true,
+      });
+      if (error) throw error;
+      return data;
+    },
+  });
+  const apply = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await (supabase as any).rpc("admin_sync_process_visibility", {
+        _process_type_id: typeId, _mode: mode, _dry_run: false,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data: any) => {
+      toast.success(`Sincronizado: ${data.etapas_afetadas} etapas, ${data.requisitos_afetados} requisitos em ${data.clientes_afetados} cliente(s).`);
+      qc.invalidateQueries({ predicate: (q) => Array.isArray(q.queryKey) && (q.queryKey[0] === "client-process-detail" || q.queryKey[0] === "processos-list") });
+      onClose();
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha ao sincronizar"),
+  });
+  return (
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Sincronizar visibilidade com processos abertos</DialogTitle>
+          <DialogDescription>
+            Aplica as configurações públicas atuais do modelo aos processos em andamento (concluídos e cancelados são ignorados).
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-2 rounded border p-3">
+            <label className="flex cursor-pointer items-start gap-2 text-sm">
+              <input type="radio" checked={mode === "only_missing"} onChange={() => setMode("only_missing")} className="mt-0.5" />
+              <span>
+                <b>Somente campos vazios</b>
+                <span className="block text-xs text-muted-foreground">
+                  Preserva textos personalizados feitos direto no processo. Apenas promove etapas/requisitos a "visível" quando o modelo estiver marcado.
+                </span>
+              </span>
+            </label>
+            <label className="flex cursor-pointer items-start gap-2 text-sm">
+              <input type="radio" checked={mode === "overwrite_all"} onChange={() => setMode("overwrite_all")} className="mt-0.5" />
+              <span>
+                <b>Sobrescrever tudo</b>
+                <span className="block text-xs text-muted-foreground">
+                  Iguala 100% ao modelo. Textos e visibilidade personalizados serão substituídos.
+                </span>
+              </span>
+            </label>
+          </div>
+          <div className="rounded border bg-muted/30 p-3 text-sm">
+            {previewQ.isLoading ? "Calculando impacto…" : previewQ.error ? "Falha ao pré-visualizar." : (
+              <>
+                <div><b>{previewQ.data?.etapas_afetadas ?? 0}</b> etapa(s) serão alteradas</div>
+                <div><b>{previewQ.data?.requisitos_afetados ?? 0}</b> requisito(s) serão alterados</div>
+                <div><b>{previewQ.data?.clientes_afetados ?? 0}</b> cliente(s) receberão registro no histórico</div>
+              </>
+            )}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+          <Button disabled={apply.isPending || previewQ.isLoading} onClick={() => apply.mutate()}>
+            {apply.isPending ? "Aplicando…" : "Aplicar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 function StepDialog({ typeId, initial, nextOrdem, onDone }: { typeId: string; initial: any; nextOrdem: number; onDone: () => void }) {
   const isEdit = !!initial;
