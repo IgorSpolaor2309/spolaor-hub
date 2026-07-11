@@ -25,6 +25,8 @@ import {
 import { useServerFn } from "@tanstack/react-start";
 import { adminSetCollaboratorStatus } from "@/lib/admin-users.functions";
 import { getAdminCollaboratorsPage } from "@/lib/access-diagnostics.functions";
+import { DemoBadge } from "@/components/sc/DemoBadge";
+import { DemoFilter, matchesDemoFilter, type DemoFilterValue } from "@/components/sc/DemoFilter";
 
 
 export const Route = createFileRoute("/_authenticated/colaboradores")({
