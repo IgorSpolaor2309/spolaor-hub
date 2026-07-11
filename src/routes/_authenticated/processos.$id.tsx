@@ -221,7 +221,13 @@ function ProcessDetail() {
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label className="text-xs">Status</Label>
-              <Select value={p.status} onValueChange={(v) => updateProc.mutate({ status: v })}>
+              <Select value={p.status} onValueChange={(v) => {
+                if ((v === "aguardando_cliente" || v === "aguardando_orgao") && !((p.motivo_espera ?? "").trim())) {
+                  toast.error("Informe o motivo da espera antes de mudar o status.");
+                  return;
+                }
+                updateProc.mutate({ status: v });
+              }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
