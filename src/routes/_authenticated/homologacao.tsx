@@ -99,6 +99,17 @@ function HomologPage() {
     onError: (e: any) => toast.error(e?.message || "Falha ao recriar ambiente."),
   });
 
+  const purgeOrphanMut = useMutation({
+    mutationFn: () => purgeOrphanFn({}),
+    onSuccess: (r: any) => {
+      toast.success(
+        `Higienização concluída: ${r.deleted} conta(s) removida(s), ${r.failed} falha(s), ${r.candidates} candidato(s).`,
+      );
+      invalidateAll();
+    },
+    onError: (e: any) => toast.error(e?.message || "Falha ao higienizar contas órfãs."),
+  });
+
   const totalDemo = summary.data
     ? Object.entries(summary.data)
         .filter(([k]) => k !== "batches")
