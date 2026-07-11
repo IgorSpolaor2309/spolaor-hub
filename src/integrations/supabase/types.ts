@@ -139,9 +139,11 @@ export type Database = {
           deleted_by: string | null
           deleted_by_role: string | null
           deletion_reason: string | null
+          demo_batch_id: string | null
           document_id: string | null
           document_request_id: string | null
           id: string
+          is_demo: boolean
           observacao: string | null
           origem: string
           plan_item_id: string | null
@@ -165,9 +167,11 @@ export type Database = {
           deleted_by?: string | null
           deleted_by_role?: string | null
           deletion_reason?: string | null
+          demo_batch_id?: string | null
           document_id?: string | null
           document_request_id?: string | null
           id?: string
+          is_demo?: boolean
           observacao?: string | null
           origem?: string
           plan_item_id?: string | null
@@ -191,9 +195,11 @@ export type Database = {
           deleted_by?: string | null
           deleted_by_role?: string | null
           deletion_reason?: string | null
+          demo_batch_id?: string | null
           document_id?: string | null
           document_request_id?: string | null
           id?: string
+          is_demo?: boolean
           observacao?: string | null
           origem?: string
           plan_item_id?: string | null
@@ -232,6 +238,13 @@ export type Database = {
             columns: ["deleted_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_checklist_items_demo_batch_id_fkey"
+            columns: ["demo_batch_id"]
+            isOneToOne: false
+            referencedRelation: "demo_batches"
             referencedColumns: ["id"]
           },
           {
@@ -564,9 +577,11 @@ export type Database = {
           data_ultima_sincronizacao: string | null
           deleted_at: string | null
           deleted_by: string | null
+          demo_batch_id: string | null
           documento: string | null
           email: string | null
           id: string
+          is_demo: boolean
           logradouro: string | null
           mei: boolean | null
           natureza_juridica: string | null
@@ -604,9 +619,11 @@ export type Database = {
           data_ultima_sincronizacao?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          demo_batch_id?: string | null
           documento?: string | null
           email?: string | null
           id?: string
+          is_demo?: boolean
           logradouro?: string | null
           mei?: boolean | null
           natureza_juridica?: string | null
@@ -644,9 +661,11 @@ export type Database = {
           data_ultima_sincronizacao?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          demo_batch_id?: string | null
           documento?: string | null
           email?: string | null
           id?: string
+          is_demo?: boolean
           logradouro?: string | null
           mei?: boolean | null
           natureza_juridica?: string | null
@@ -670,6 +689,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "clients_demo_batch_id_fkey"
+            columns: ["demo_batch_id"]
+            isOneToOne: false
+            referencedRelation: "demo_batches"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "clients_owner_profile_id_fkey"
             columns: ["owner_profile_id"]
             isOneToOne: false
@@ -683,9 +709,11 @@ export type Database = {
           cargo: string | null
           created_at: string
           data_admissao: string | null
+          demo_batch_id: string | null
           departamento: string | null
           email: string | null
           id: string
+          is_demo: boolean
           nome: string
           observacoes: string | null
           status: string
@@ -697,9 +725,11 @@ export type Database = {
           cargo?: string | null
           created_at?: string
           data_admissao?: string | null
+          demo_batch_id?: string | null
           departamento?: string | null
           email?: string | null
           id?: string
+          is_demo?: boolean
           nome: string
           observacoes?: string | null
           status?: string
@@ -711,9 +741,11 @@ export type Database = {
           cargo?: string | null
           created_at?: string
           data_admissao?: string | null
+          demo_batch_id?: string | null
           departamento?: string | null
           email?: string | null
           id?: string
+          is_demo?: boolean
           nome?: string
           observacoes?: string | null
           status?: string
@@ -722,6 +754,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "collaborators_demo_batch_id_fkey"
+            columns: ["demo_batch_id"]
+            isOneToOne: false
+            referencedRelation: "demo_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "collaborators_profile_id_fkey"
             columns: ["user_id"]
@@ -870,11 +909,13 @@ export type Database = {
           created_at: string
           data_conclusao: string | null
           data_inicio: string | null
+          demo_batch_id: string | null
           departamento: string | null
           descricao: string | null
           descricao_publica: string | null
           exige_documento: boolean
           id: string
+          is_demo: boolean
           nome: string
           nome_publico: string | null
           notif_vence_em_breve_em: string | null
@@ -900,11 +941,13 @@ export type Database = {
           created_at?: string
           data_conclusao?: string | null
           data_inicio?: string | null
+          demo_batch_id?: string | null
           departamento?: string | null
           descricao?: string | null
           descricao_publica?: string | null
           exige_documento?: boolean
           id?: string
+          is_demo?: boolean
           nome: string
           nome_publico?: string | null
           notif_vence_em_breve_em?: string | null
@@ -930,11 +973,13 @@ export type Database = {
           created_at?: string
           data_conclusao?: string | null
           data_inicio?: string | null
+          demo_batch_id?: string | null
           departamento?: string | null
           descricao?: string | null
           descricao_publica?: string | null
           exige_documento?: boolean
           id?: string
+          is_demo?: boolean
           nome?: string
           nome_publico?: string | null
           notif_vence_em_breve_em?: string | null
@@ -962,6 +1007,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "company_process_steps_demo_batch_id_fkey"
+            columns: ["demo_batch_id"]
+            isOneToOne: false
+            referencedRelation: "demo_batches"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "company_process_steps_process_step_id_fkey"
             columns: ["process_step_id"]
             isOneToOne: false
@@ -977,8 +1029,10 @@ export type Database = {
           created_by: string | null
           data_abertura: string
           data_conclusao: string | null
+          demo_batch_id: string | null
           etapas_concluidas: number
           id: string
+          is_demo: boolean
           motivo_espera: string | null
           observacoes: string | null
           prazo_final: string | null
@@ -997,8 +1051,10 @@ export type Database = {
           created_by?: string | null
           data_abertura?: string
           data_conclusao?: string | null
+          demo_batch_id?: string | null
           etapas_concluidas?: number
           id?: string
+          is_demo?: boolean
           motivo_espera?: string | null
           observacoes?: string | null
           prazo_final?: string | null
@@ -1017,8 +1073,10 @@ export type Database = {
           created_by?: string | null
           data_abertura?: string
           data_conclusao?: string | null
+          demo_batch_id?: string | null
           etapas_concluidas?: number
           id?: string
+          is_demo?: boolean
           motivo_espera?: string | null
           observacoes?: string | null
           prazo_final?: string | null
@@ -1040,6 +1098,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "company_processes_demo_batch_id_fkey"
+            columns: ["demo_batch_id"]
+            isOneToOne: false
+            referencedRelation: "demo_batches"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "company_processes_process_type_id_fkey"
             columns: ["process_type_id"]
             isOneToOne: false
@@ -1047,6 +1112,71 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      demo_audit_log: {
+        Row: {
+          action: string
+          admin_id: string | null
+          batch_id: string | null
+          created_at: string
+          id: string
+          payload_json: Json
+        }
+        Insert: {
+          action: string
+          admin_id?: string | null
+          batch_id?: string | null
+          created_at?: string
+          id?: string
+          payload_json?: Json
+        }
+        Update: {
+          action?: string
+          admin_id?: string | null
+          batch_id?: string | null
+          created_at?: string
+          id?: string
+          payload_json?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_audit_log_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "demo_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      demo_batches: {
+        Row: {
+          counts_json: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          counts_json?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          counts_json?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       document_requests: {
         Row: {
@@ -1065,10 +1195,12 @@ export type Database = {
           deleted_by: string | null
           deleted_by_role: string | null
           deletion_reason: string | null
+          demo_batch_id: string | null
           departamento: string | null
           descricao: string | null
           document_id: string | null
           id: string
+          is_demo: boolean
           observacoes_internas: string | null
           omie_documento_id: string | null
           omie_last_synced_at: string | null
@@ -1098,10 +1230,12 @@ export type Database = {
           deleted_by?: string | null
           deleted_by_role?: string | null
           deletion_reason?: string | null
+          demo_batch_id?: string | null
           departamento?: string | null
           descricao?: string | null
           document_id?: string | null
           id?: string
+          is_demo?: boolean
           observacoes_internas?: string | null
           omie_documento_id?: string | null
           omie_last_synced_at?: string | null
@@ -1131,10 +1265,12 @@ export type Database = {
           deleted_by?: string | null
           deleted_by_role?: string | null
           deletion_reason?: string | null
+          demo_batch_id?: string | null
           departamento?: string | null
           descricao?: string | null
           document_id?: string | null
           id?: string
+          is_demo?: boolean
           observacoes_internas?: string | null
           omie_documento_id?: string | null
           omie_last_synced_at?: string | null
@@ -1175,6 +1311,13 @@ export type Database = {
             columns: ["company_process_step_requirement_id"]
             isOneToOne: false
             referencedRelation: "company_process_step_requirements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_requests_demo_batch_id_fkey"
+            columns: ["demo_batch_id"]
+            isOneToOne: false
+            referencedRelation: "demo_batches"
             referencedColumns: ["id"]
           },
           {
@@ -1243,7 +1386,9 @@ export type Database = {
           deleted_by: string | null
           deleted_by_role: string | null
           deletion_reason: string | null
+          demo_batch_id: string | null
           id: string
+          is_demo: boolean
           nome: string
           observacoes: string | null
           status: string
@@ -1263,7 +1408,9 @@ export type Database = {
           deleted_by?: string | null
           deleted_by_role?: string | null
           deletion_reason?: string | null
+          demo_batch_id?: string | null
           id?: string
+          is_demo?: boolean
           nome: string
           observacoes?: string | null
           status?: string
@@ -1283,7 +1430,9 @@ export type Database = {
           deleted_by?: string | null
           deleted_by_role?: string | null
           deletion_reason?: string | null
+          demo_batch_id?: string | null
           id?: string
+          is_demo?: boolean
           nome?: string
           observacoes?: string | null
           status?: string
@@ -1312,6 +1461,13 @@ export type Database = {
             columns: ["deleted_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_demo_batch_id_fkey"
+            columns: ["demo_batch_id"]
+            isOneToOne: false
+            referencedRelation: "demo_batches"
             referencedColumns: ["id"]
           },
           {
@@ -1413,7 +1569,9 @@ export type Database = {
       notifications: {
         Row: {
           created_at: string
+          demo_batch_id: string | null
           id: string
+          is_demo: boolean
           lida: boolean
           link: string | null
           mensagem: string | null
@@ -1423,7 +1581,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          demo_batch_id?: string | null
           id?: string
+          is_demo?: boolean
           lida?: boolean
           link?: string | null
           mensagem?: string | null
@@ -1433,7 +1593,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          demo_batch_id?: string | null
           id?: string
+          is_demo?: boolean
           lida?: boolean
           link?: string | null
           mensagem?: string | null
@@ -1441,7 +1603,15 @@ export type Database = {
           titulo?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notifications_demo_batch_id_fkey"
+            columns: ["demo_batch_id"]
+            isOneToOne: false
+            referencedRelation: "demo_batches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       omie_integration: {
         Row: {
@@ -1650,10 +1820,12 @@ export type Database = {
           categoria: string
           competencia_aplicavel: string
           created_at: string
+          demo_batch_id: string | null
           departamento: string | null
           descricao: string | null
           exige_documento: boolean
           id: string
+          is_demo: boolean
           obrigatorio: boolean
           ordem: number
           plan_id: string
@@ -1669,10 +1841,12 @@ export type Database = {
           categoria?: string
           competencia_aplicavel?: string
           created_at?: string
+          demo_batch_id?: string | null
           departamento?: string | null
           descricao?: string | null
           exige_documento?: boolean
           id?: string
+          is_demo?: boolean
           obrigatorio?: boolean
           ordem?: number
           plan_id: string
@@ -1688,10 +1862,12 @@ export type Database = {
           categoria?: string
           competencia_aplicavel?: string
           created_at?: string
+          demo_batch_id?: string | null
           departamento?: string | null
           descricao?: string | null
           exige_documento?: boolean
           id?: string
+          is_demo?: boolean
           obrigatorio?: boolean
           ordem?: number
           plan_id?: string
@@ -1703,6 +1879,13 @@ export type Database = {
           visivel_cliente?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "plan_items_demo_batch_id_fkey"
+            columns: ["demo_batch_id"]
+            isOneToOne: false
+            referencedRelation: "demo_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "plan_items_plan_id_fkey"
             columns: ["plan_id"]
@@ -1716,8 +1899,10 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          demo_batch_id: string | null
           descricao: string | null
           id: string
+          is_demo: boolean
           nome: string
           periodicidade: string
           status: string
@@ -1728,8 +1913,10 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          demo_batch_id?: string | null
           descricao?: string | null
           id?: string
+          is_demo?: boolean
           nome: string
           periodicidade?: string
           status?: string
@@ -1740,8 +1927,10 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          demo_batch_id?: string | null
           descricao?: string | null
           id?: string
+          is_demo?: boolean
           nome?: string
           periodicidade?: string
           status?: string
@@ -1749,7 +1938,15 @@ export type Database = {
           updated_at?: string
           valor_padrao?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "plans_demo_batch_id_fkey"
+            columns: ["demo_batch_id"]
+            isOneToOne: false
+            referencedRelation: "demo_batches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       process_step_requirements: {
         Row: {
@@ -1918,9 +2115,11 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          demo_batch_id: string | null
           email: string | null
           full_name: string
           id: string
+          is_demo: boolean
           must_change_password: boolean
           phone: string | null
           status: string
@@ -1929,9 +2128,11 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          demo_batch_id?: string | null
           email?: string | null
           full_name?: string
           id: string
+          is_demo?: boolean
           must_change_password?: boolean
           phone?: string | null
           status?: string
@@ -1940,15 +2141,25 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          demo_batch_id?: string | null
           email?: string | null
           full_name?: string
           id?: string
+          is_demo?: boolean
           must_change_password?: boolean
           phone?: string | null
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_demo_batch_id_fkey"
+            columns: ["demo_batch_id"]
+            isOneToOne: false
+            referencedRelation: "demo_batches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tax_guides: {
         Row: {
@@ -1963,7 +2174,9 @@ export type Database = {
           deleted_by: string | null
           deleted_by_role: string | null
           deletion_reason: string | null
+          demo_batch_id: string | null
           id: string
+          is_demo: boolean
           nome_arquivo: string | null
           observacoes_internas: string | null
           omie_last_synced_at: string | null
@@ -1989,7 +2202,9 @@ export type Database = {
           deleted_by?: string | null
           deleted_by_role?: string | null
           deletion_reason?: string | null
+          demo_batch_id?: string | null
           id?: string
+          is_demo?: boolean
           nome_arquivo?: string | null
           observacoes_internas?: string | null
           omie_last_synced_at?: string | null
@@ -2015,7 +2230,9 @@ export type Database = {
           deleted_by?: string | null
           deleted_by_role?: string | null
           deletion_reason?: string | null
+          demo_batch_id?: string | null
           id?: string
+          is_demo?: boolean
           nome_arquivo?: string | null
           observacoes_internas?: string | null
           omie_last_synced_at?: string | null
@@ -2051,6 +2268,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "tax_guides_demo_batch_id_fkey"
+            columns: ["demo_batch_id"]
+            isOneToOne: false
+            referencedRelation: "demo_batches"
+            referencedColumns: ["id"]
+          },
         ]
       }
       timeline_events: {
@@ -2058,8 +2282,10 @@ export type Database = {
           actor_profile_id: string | null
           client_id: string | null
           created_at: string
+          demo_batch_id: string | null
           descricao: string
           id: string
+          is_demo: boolean
           metadata: Json | null
           tipo: string
         }
@@ -2067,8 +2293,10 @@ export type Database = {
           actor_profile_id?: string | null
           client_id?: string | null
           created_at?: string
+          demo_batch_id?: string | null
           descricao: string
           id?: string
+          is_demo?: boolean
           metadata?: Json | null
           tipo: string
         }
@@ -2076,8 +2304,10 @@ export type Database = {
           actor_profile_id?: string | null
           client_id?: string | null
           created_at?: string
+          demo_batch_id?: string | null
           descricao?: string
           id?: string
+          is_demo?: boolean
           metadata?: Json | null
           tipo?: string
         }
@@ -2094,6 +2324,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timeline_events_demo_batch_id_fkey"
+            columns: ["demo_batch_id"]
+            isOneToOne: false
+            referencedRelation: "demo_batches"
             referencedColumns: ["id"]
           },
         ]
@@ -2146,6 +2383,13 @@ export type Database = {
             }
             Returns: string
           }
+      admin_demo_create_environment: {
+        Args: { _label?: string }
+        Returns: Json
+      }
+      admin_demo_reset: { Args: { _label?: string }; Returns: Json }
+      admin_demo_summary: { Args: never; Returns: Json }
+      admin_demo_wipe: { Args: { _batch_id?: string }; Returns: Json }
       admin_duplicate_process_type: {
         Args: {
           _descricao?: string
