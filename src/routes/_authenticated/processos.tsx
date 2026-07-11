@@ -15,8 +15,10 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { EmptyState } from "@/components/sc/EmptyState";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { clientLabel } from "@/lib/client-display";
+import { prazoKind, PRAZO_STYLE } from "@/lib/processo-prazo";
 import { toast } from "sonner";
-import { Workflow, Plus, Search } from "lucide-react";
+import { Workflow, Plus, Search, X } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/processos")({
   component: ProcessesPage,
