@@ -231,6 +231,68 @@ function ProcessesPage() {
         ))}
       </div>
 
+      {/* Indicadores agregados (RPC) */}
+      {indicQ.data && (
+        <div className="mb-3 grid gap-2 md:grid-cols-3">
+          <Card className="p-3">
+            <div className="mb-1 text-xs font-medium text-muted-foreground">Desempenho</div>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <div className="text-[10px] uppercase text-muted-foreground">Tempo médio</div>
+                <div className="text-lg font-semibold">
+                  {indicQ.data.totais?.tempo_medio_dias ? `${Number(indicQ.data.totais.tempo_medio_dias).toFixed(1)} d` : "—"}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase text-muted-foreground">SLA etapas</div>
+                <div className="text-lg font-semibold">
+                  {indicQ.data.sla?.percentual != null ? `${indicQ.data.sla.percentual}%` : "—"}
+                </div>
+                <div className="text-[10px] text-muted-foreground">
+                  {indicQ.data.sla?.dentro_prazo ?? 0}/{indicQ.data.sla?.total_etapas_avaliadas ?? 0} dentro do prazo
+                </div>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-3">
+            <div className="mb-1 text-xs font-medium text-muted-foreground">Por responsável</div>
+            <ul className="max-h-40 space-y-1 overflow-y-auto text-sm">
+              {(indicQ.data.por_responsavel ?? []).length === 0 && (
+                <li className="text-xs text-muted-foreground">Sem dados.</li>
+              )}
+              {(indicQ.data.por_responsavel ?? []).map((r: any) => (
+                <li key={r.responsavel_id ?? "sem"} className="flex items-center justify-between gap-2 border-b pb-1 last:border-b-0">
+                  <span className="truncate">{r.full_name ?? "— sem responsável —"}</span>
+                  <span className="whitespace-nowrap text-xs text-muted-foreground">
+                    {r.abertos} abertos · {r.concluidos} concl. {r.vencidos > 0 && <span className="text-red-700">· {r.vencidos} venc.</span>}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+          <Card className="p-3">
+            <div className="mb-1 text-xs font-medium text-muted-foreground">Por tipo</div>
+            <ul className="max-h-40 space-y-1 overflow-y-auto text-sm">
+              {(indicQ.data.por_tipo ?? []).length === 0 && (
+                <li className="text-xs text-muted-foreground">Sem dados.</li>
+              )}
+              {(indicQ.data.por_tipo ?? []).map((t: any) => (
+                <li key={t.process_type_id} className="flex items-center justify-between gap-2 border-b pb-1 last:border-b-0">
+                  <span className="flex min-w-0 items-center gap-2 truncate">
+                    {t.cor && <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full border" style={{ background: t.cor }} />}
+                    <span className="truncate">{t.nome}</span>
+                  </span>
+                  <span className="whitespace-nowrap text-xs text-muted-foreground">
+                    {t.abertos} abertos · {t.concluidos} concl. {t.vencidos > 0 && <span className="text-red-700">· {t.vencidos} venc.</span>}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </div>
+      )}
+
+
       <Card className="mb-3 p-3">
         <div className="grid gap-2 md:grid-cols-6">
           <div className="relative md:col-span-2">
