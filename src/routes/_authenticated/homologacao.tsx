@@ -44,11 +44,14 @@ function HomologPage() {
   const batchesFn = useServerFn(homologListBatches);
   const auditFn = useServerFn(homologListAudit);
   const diagnosticFn = useServerFn(homologAccessDiagnostic);
+  const contaminationFn = useServerFn(homologContaminationReport);
+  const repairFn = useServerFn(homologRepairCaseA);
 
   const summary = useQuery({ queryKey: ["homolog-summary"], queryFn: () => summaryFn({}) });
   const batches = useQuery({ queryKey: ["homolog-batches"], queryFn: () => batchesFn({}) });
   const audit = useQuery({ queryKey: ["homolog-audit"], queryFn: () => auditFn({}) });
   const diagnostic = useQuery({ queryKey: ["homolog-access-diagnostic"], queryFn: () => diagnosticFn({}) });
+  const contamination = useQuery({ queryKey: ["homolog-contamination"], queryFn: () => contaminationFn({}) });
 
   const invalidateAll = () => {
     qc.invalidateQueries({ queryKey: ["homolog-summary"] });
