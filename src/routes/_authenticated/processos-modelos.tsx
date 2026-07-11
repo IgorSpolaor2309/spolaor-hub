@@ -722,7 +722,7 @@ function StepsSection({ typeId, canEdit }: { typeId: string; canEdit: boolean })
                 </div>
                 <StepRequirements stepId={it.id} canEdit={canEdit} />
               </li>
-            ))}
+            );})}
           </ul>
         )}
 
