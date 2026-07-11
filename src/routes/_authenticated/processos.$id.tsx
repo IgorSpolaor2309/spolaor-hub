@@ -17,7 +17,8 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { clientLabel } from "@/lib/client-display";
 import { prazoKind, PRAZO_STYLE } from "@/lib/processo-prazo";
 import { toast } from "sonner";
-import { Workflow, ArrowLeft, Check, RotateCcw, FilePlus2, Activity, UserRound, CalendarClock, CheckCircle2, PauseCircle, PlayCircle, XCircle, ChevronDown, ChevronRight } from "lucide-react";
+import { Workflow, ArrowLeft, Check, RotateCcw, FilePlus2, Activity, UserRound, CalendarClock, CheckCircle2, PauseCircle, PlayCircle, XCircle, ChevronDown, ChevronRight, Paperclip } from "lucide-react";
+import { ProcessDocumentsSection } from "@/components/sc/ProcessDocumentsSection";
 
 
 
@@ -51,6 +52,8 @@ const STEP_STATUS_MAP = Object.fromEntries(STEP_STATUSES.map((s) => [s.value, s]
 const TIMELINE_TIPOS = new Set([
   "processo_aberto", "processo_status", "processo_responsavel", "processo_prazo",
   "processo_etapa_status", "processo_etapa_responsavel", "processo_etapa_prazo",
+  "processo_documento_vinculado", "processo_etapa_documento_vinculado", "processo_documento_desvinculado",
+  "processo_requisito_atendido", "processo_requisito_substituido", "processo_requisito_removido",
 ]);
 const TIMELINE_ICON: Record<string, any> = {
   processo_aberto: FilePlus2,
@@ -60,6 +63,12 @@ const TIMELINE_ICON: Record<string, any> = {
   processo_etapa_status: CheckCircle2,
   processo_etapa_responsavel: UserRound,
   processo_etapa_prazo: CalendarClock,
+  processo_documento_vinculado: Paperclip,
+  processo_etapa_documento_vinculado: Paperclip,
+  processo_documento_desvinculado: Paperclip,
+  processo_requisito_atendido: CheckCircle2,
+  processo_requisito_substituido: Paperclip,
+  processo_requisito_removido: XCircle,
 };
 const STATUS_LABEL: Record<string, string> = {
   nao_iniciado: "não iniciado", em_andamento: "em andamento",
@@ -438,6 +447,13 @@ function ProcessDetail() {
             </ul>
           )}
       </Card>
+
+      <ProcessDocumentsSection
+        processId={id}
+        clientId={p.client_id}
+        steps={steps.map((s: any) => ({ id: s.id, ordem: s.ordem, nome: s.nome }))}
+        canEdit={isAdmin || role === "collaborator"}
+      />
 
       {isAdmin && (
         <Card className="mt-3 p-2">

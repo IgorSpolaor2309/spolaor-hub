@@ -731,6 +731,128 @@ export type Database = {
           },
         ]
       }
+      company_process_documents: {
+        Row: {
+          company_process_id: string
+          company_process_step_id: string | null
+          created_at: string
+          created_by: string | null
+          document_id: string
+          id: string
+          observacao: string | null
+        }
+        Insert: {
+          company_process_id: string
+          company_process_step_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          document_id: string
+          id?: string
+          observacao?: string | null
+        }
+        Update: {
+          company_process_id?: string
+          company_process_step_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          document_id?: string
+          id?: string
+          observacao?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_process_documents_company_process_id_fkey"
+            columns: ["company_process_id"]
+            isOneToOne: false
+            referencedRelation: "company_processes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_process_documents_company_process_step_id_fkey"
+            columns: ["company_process_step_id"]
+            isOneToOne: false
+            referencedRelation: "company_process_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_process_documents_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_process_step_requirements: {
+        Row: {
+          company_process_step_id: string
+          created_at: string
+          descricao: string | null
+          document_id: string | null
+          fulfilled_at: string | null
+          fulfilled_by: string | null
+          id: string
+          nome: string
+          obrigatorio: boolean
+          observacao: string | null
+          ordem: number
+          source_requirement_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_process_step_id: string
+          created_at?: string
+          descricao?: string | null
+          document_id?: string | null
+          fulfilled_at?: string | null
+          fulfilled_by?: string | null
+          id?: string
+          nome: string
+          obrigatorio?: boolean
+          observacao?: string | null
+          ordem?: number
+          source_requirement_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_process_step_id?: string
+          created_at?: string
+          descricao?: string | null
+          document_id?: string | null
+          fulfilled_at?: string | null
+          fulfilled_by?: string | null
+          id?: string
+          nome?: string
+          obrigatorio?: boolean
+          observacao?: string | null
+          ordem?: number
+          source_requirement_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_process_step_requirements_company_process_step_id_fkey"
+            columns: ["company_process_step_id"]
+            isOneToOne: false
+            referencedRelation: "company_process_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_process_step_requirements_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_process_step_requirements_source_requirement_id_fkey"
+            columns: ["source_requirement_id"]
+            isOneToOne: false
+            referencedRelation: "process_step_requirements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_process_steps: {
         Row: {
           company_process_id: string
@@ -1580,6 +1702,50 @@ export type Database = {
           valor_padrao?: number | null
         }
         Relationships: []
+      }
+      process_step_requirements: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          obrigatorio: boolean
+          observacao: string | null
+          ordem: number
+          process_step_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          obrigatorio?: boolean
+          observacao?: string | null
+          ordem?: number
+          process_step_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          obrigatorio?: boolean
+          observacao?: string | null
+          ordem?: number
+          process_step_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "process_step_requirements_process_step_id_fkey"
+            columns: ["process_step_id"]
+            isOneToOne: false
+            referencedRelation: "process_steps"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       process_steps: {
         Row: {
