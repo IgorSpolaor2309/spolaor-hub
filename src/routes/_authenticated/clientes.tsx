@@ -128,6 +128,7 @@ function ClientsPage() {
     if (fStatusCom !== "all" && (c.client_commercial?.status_comercial ?? "") !== fStatusCom) return false;
     if (fPeriodicidade !== "all" && (c.client_commercial?.periodicidade ?? "") !== fPeriodicidade) return false;
     if (!inRange(c.data_entrada ?? c.created_at, range)) return false;
+    if (!matchesDemoFilter(c, demoFilter)) return false;
     return true;
   });
   const clearFilters = () => {
