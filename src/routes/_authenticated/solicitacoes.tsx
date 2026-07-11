@@ -384,6 +384,12 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
             {item.departamento && <Badge variant="outline">{labelDep(item.departamento)}</Badge>}
             {item.categoria && <Badge variant="outline">{item.categoria}</Badge>}
             {prazoVencido && <Badge className="bg-orange-100 text-orange-800">prazo vencido</Badge>}
+            {item.company_process_id && (
+              <Badge className="bg-purple-100 text-purple-800">
+                Processo{item.company_processes?.process_types?.nome ? `: ${item.company_processes.process_types.nome}` : ""}
+                {item.company_process_steps?.nome ? ` · etapa ${item.company_process_steps.ordem ?? ""} ${item.company_process_steps.nome}` : ""}
+              </Badge>
+            )}
           </div>
           {item.descricao && <div className="mt-1 text-sm text-muted-foreground">{item.descricao}</div>}
           <div className="mt-1 text-xs text-muted-foreground">
