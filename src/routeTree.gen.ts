@@ -28,6 +28,7 @@ import { Route as AuthenticatedMeusProcessosRouteImport } from './routes/_authen
 import { Route as AuthenticatedMeusDocumentosRouteImport } from './routes/_authenticated/meus-documentos'
 import { Route as AuthenticatedKanbanRouteImport } from './routes/_authenticated/kanban'
 import { Route as AuthenticatedInteracoesRouteImport } from './routes/_authenticated/interacoes'
+import { Route as AuthenticatedHomologacaoRouteImport } from './routes/_authenticated/homologacao'
 import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
 import { Route as AuthenticatedGuiasRouteImport } from './routes/_authenticated/guias'
 import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authenticated/documentos'
@@ -141,6 +142,12 @@ const AuthenticatedInteracoesRoute = AuthenticatedInteracoesRouteImport.update({
   path: '/interacoes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedHomologacaoRoute =
+  AuthenticatedHomologacaoRouteImport.update({
+    id: '/homologacao',
+    path: '/homologacao',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedHistoricoRoute = AuthenticatedHistoricoRouteImport.update({
   id: '/historico',
   path: '/historico',
@@ -213,6 +220,7 @@ export interface FileRoutesByFullPath {
   '/documentos': typeof AuthenticatedDocumentosRoute
   '/guias': typeof AuthenticatedGuiasRoute
   '/historico': typeof AuthenticatedHistoricoRoute
+  '/homologacao': typeof AuthenticatedHomologacaoRoute
   '/interacoes': typeof AuthenticatedInteracoesRoute
   '/kanban': typeof AuthenticatedKanbanRoute
   '/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
@@ -243,6 +251,7 @@ export interface FileRoutesByTo {
   '/documentos': typeof AuthenticatedDocumentosRoute
   '/guias': typeof AuthenticatedGuiasRoute
   '/historico': typeof AuthenticatedHistoricoRoute
+  '/homologacao': typeof AuthenticatedHomologacaoRoute
   '/interacoes': typeof AuthenticatedInteracoesRoute
   '/kanban': typeof AuthenticatedKanbanRoute
   '/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
@@ -276,6 +285,7 @@ export interface FileRoutesById {
   '/_authenticated/documentos': typeof AuthenticatedDocumentosRoute
   '/_authenticated/guias': typeof AuthenticatedGuiasRoute
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
+  '/_authenticated/homologacao': typeof AuthenticatedHomologacaoRoute
   '/_authenticated/interacoes': typeof AuthenticatedInteracoesRoute
   '/_authenticated/kanban': typeof AuthenticatedKanbanRoute
   '/_authenticated/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
@@ -310,6 +320,7 @@ export interface FileRouteTypes {
     | '/documentos'
     | '/guias'
     | '/historico'
+    | '/homologacao'
     | '/interacoes'
     | '/kanban'
     | '/meus-documentos'
@@ -340,6 +351,7 @@ export interface FileRouteTypes {
     | '/documentos'
     | '/guias'
     | '/historico'
+    | '/homologacao'
     | '/interacoes'
     | '/kanban'
     | '/meus-documentos'
@@ -372,6 +384,7 @@ export interface FileRouteTypes {
     | '/_authenticated/documentos'
     | '/_authenticated/guias'
     | '/_authenticated/historico'
+    | '/_authenticated/homologacao'
     | '/_authenticated/interacoes'
     | '/_authenticated/kanban'
     | '/_authenticated/meus-documentos'
@@ -535,6 +548,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInteracoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/homologacao': {
+      id: '/_authenticated/homologacao'
+      path: '/homologacao'
+      fullPath: '/homologacao'
+      preLoaderRoute: typeof AuthenticatedHomologacaoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/historico': {
       id: '/_authenticated/historico'
       path: '/historico'
@@ -664,6 +684,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRoute
   AuthenticatedGuiasRoute: typeof AuthenticatedGuiasRoute
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
+  AuthenticatedHomologacaoRoute: typeof AuthenticatedHomologacaoRoute
   AuthenticatedInteracoesRoute: typeof AuthenticatedInteracoesRoute
   AuthenticatedKanbanRoute: typeof AuthenticatedKanbanRoute
   AuthenticatedMeusDocumentosRoute: typeof AuthenticatedMeusDocumentosRoute
@@ -691,6 +712,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDocumentosRoute: AuthenticatedDocumentosRoute,
   AuthenticatedGuiasRoute: AuthenticatedGuiasRoute,
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
+  AuthenticatedHomologacaoRoute: AuthenticatedHomologacaoRoute,
   AuthenticatedInteracoesRoute: AuthenticatedInteracoesRoute,
   AuthenticatedKanbanRoute: AuthenticatedKanbanRoute,
   AuthenticatedMeusDocumentosRoute: AuthenticatedMeusDocumentosRoute,
@@ -722,13 +744,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
