@@ -42,6 +42,9 @@ function ProcessTypesPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [sortBy, setSortBy] = useState<"nome" | "mais_usados" | "recentes" | "antigos" | "etapas">("nome");
+  const [dupOf, setDupOf] = useState<any>(null);
+  const [importInto, setImportInto] = useState<any>(null);
 
   const typesQ = useQuery({
     queryKey: ["process-types"],
@@ -56,11 +59,57 @@ function ProcessTypesPage() {
     },
   });
 
+  const statsQ = useQuery({
+    queryKey: ["process-models-stats"],
+    enabled: !loading && (role === "admin" || role === "collaborator"),
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("admin_process_models_stats");
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
   if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
   if (role !== "admin" && role !== "collaborator") {
     return <EmptyState icon={<GitBranch className="h-6 w-6" />} title="Acesso restrito" description="Apenas administradores e colaboradores." />;
   }
   const isAdmin = role === "admin";
+
+  const statsMap = useMemo(() => {
+    const m = new Map<string, any>();
+    (statsQ.data ?? []).forEach((s: any) => m.set(s.process_type_id, s));
+    return m;
+  }, [statsQ.data]);
+
+  const sortedTypes = useMemo(() => {
+    const arr = [...(typesQ.data ?? [])];
+    const get = (t: any) => statsMap.get(t.id) ?? {};
+    switch (sortBy) {
+      case "mais_usados": arr.sort((a, b) => (get(b).processos_ativos ?? 0) - (get(a).processos_ativos ?? 0)); break;
+      case "recentes": arr.sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? "")); break;
+      case "antigos": arr.sort((a, b) => (a.created_at ?? "").localeCompare(b.created_at ?? "")); break;
+      case "etapas": arr.sort((a, b) => (get(b).etapas_total ?? 0) - (get(a).etapas_total ?? 0)); break;
+      default: arr.sort((a, b) => (a.nome ?? "").localeCompare(b.nome ?? ""));
+    }
+    return arr;
+  }, [typesQ.data, statsMap, sortBy]);
+
+  // Totais agregados para o dashboard
+  const totals = useMemo(() => {
+    const types = typesQ.data ?? [];
+    const stats = statsQ.data ?? [];
+    const sum = (k: string) => stats.reduce((a: number, s: any) => a + (s[k] ?? 0), 0);
+    return {
+      modelos: types.length,
+      ativos: types.filter((t: any) => t.status === "ativo").length,
+      inativos: types.filter((t: any) => t.status !== "ativo").length,
+      etapas: sum("etapas_total"),
+      etapas_publicas: sum("etapas_publicas"),
+      requisitos: sum("requisitos_total"),
+      requisitos_publicos: sum("requisitos_publicos"),
+      processos_ativos: sum("processos_ativos"),
+    };
+  }, [typesQ.data, statsQ.data]);
 
   return (
     <div>
@@ -72,17 +121,45 @@ function ProcessTypesPage() {
             <DialogTrigger asChild>
               <Button><Plus className="mr-2 h-4 w-4" /> Novo modelo</Button>
             </DialogTrigger>
-            {open && <TypeDialog initial={editing} onDone={() => { setOpen(false); setEditing(null); qc.invalidateQueries({ queryKey: ["process-types"] }); }} />}
+            {open && <TypeDialog initial={editing} onDone={() => { setOpen(false); setEditing(null); qc.invalidateQueries({ queryKey: ["process-types"] }); qc.invalidateQueries({ queryKey: ["process-models-stats"] }); }} />}
           </Dialog>
         )}
       />
 
+      {/* Dashboard administrativo */}
+      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+        <StatCard label="Modelos" value={totals.modelos} />
+        <StatCard label="Ativos" value={totals.ativos} tone="emerald" />
+        <StatCard label="Inativos" value={totals.inativos} tone="zinc" />
+        <StatCard label="Etapas" value={totals.etapas} />
+        <StatCard label="Etapas públicas" value={totals.etapas_publicas} tone="blue" />
+        <StatCard label="Requisitos" value={totals.requisitos} />
+        <StatCard label="Requisitos públicos" value={totals.requisitos_publicos} tone="blue" />
+        <StatCard label="Processos ativos" value={totals.processos_ativos} tone="indigo" />
+      </div>
+
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <Label className="text-xs text-muted-foreground">Ordenar por</Label>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+          <SelectTrigger className="h-8 w-56"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="nome">Nome (A→Z)</SelectItem>
+            <SelectItem value="mais_usados">Mais utilizados</SelectItem>
+            <SelectItem value="etapas">Maior nº de etapas</SelectItem>
+            <SelectItem value="recentes">Mais recentes</SelectItem>
+            <SelectItem value="antigos">Mais antigos</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <Card className="p-2">
         {typesQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
-          : (typesQ.data ?? []).length === 0 ? <EmptyState icon={<GitBranch className="h-6 w-6" />} title="Nenhum modelo cadastrado" description="Crie o primeiro tipo de processo." />
+          : sortedTypes.length === 0 ? <EmptyState icon={<GitBranch className="h-6 w-6" />} title="Nenhum modelo cadastrado" description="Crie o primeiro tipo de processo." />
           : (
             <ul className="divide-y">
-              {(typesQ.data ?? []).map((t: any) => (
+              {sortedTypes.map((t: any) => {
+                const st = statsMap.get(t.id) ?? {};
+                return (
                 <li key={t.id} className="p-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <Button variant="ghost" size="sm" className="h-7 w-7 p-0"
@@ -95,24 +172,197 @@ function ProcessTypesPage() {
                     <Badge className={t.status === "ativo" ? "bg-emerald-100 text-emerald-800" : "bg-zinc-200 text-zinc-700"}>
                       {t.status === "ativo" ? "Ativo" : "Inativo"}
                     </Badge>
-                    <span className="text-xs text-muted-foreground">· {t.process_steps?.length ?? 0} etapas</span>
+                    <span className="text-xs text-muted-foreground">
+                      · {st.etapas_total ?? t.process_steps?.length ?? 0} etapas
+                      {st.etapas_publicas != null && ` (${st.etapas_publicas} públicas)`}
+                      {" · "}{st.processos_ativos ?? 0} processos ativos
+                    </span>
+                    {st.ultima_sincronizacao && (
+                      <span className="text-[10px] text-muted-foreground" title="Última sincronização com processos">
+                        · sync {new Date(st.ultima_sincronizacao).toLocaleDateString("pt-BR")}
+                      </span>
+                    )}
                     <div className="ml-auto flex items-center gap-1">
                       {isAdmin && (
                         <>
+                          <Button size="sm" variant="ghost" title="Duplicar modelo"
+                            onClick={() => setDupOf(t)}>
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" variant="ghost" title="Importar visibilidade de outro modelo"
+                            onClick={() => setImportInto(t)}>
+                            <Download className="h-4 w-4" />
+                          </Button>
                           <Button size="sm" variant="ghost" onClick={() => { setEditing(t); setOpen(true); }}>
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          <DeleteTypeButton id={t.id} onDone={() => qc.invalidateQueries({ queryKey: ["process-types"] })} />
+                          <DeleteTypeButton id={t.id} onDone={() => { qc.invalidateQueries({ queryKey: ["process-types"] }); qc.invalidateQueries({ queryKey: ["process-models-stats"] }); }} />
                         </>
                       )}
                     </div>
                   </div>
                   {expanded[t.id] && <StepsSection typeId={t.id} canEdit={isAdmin} />}
                 </li>
-              ))}
+              );})}
             </ul>
           )}
       </Card>
+
+      {dupOf && <DuplicateModelDialog source={dupOf} onClose={(newId) => {
+        setDupOf(null);
+        qc.invalidateQueries({ queryKey: ["process-types"] });
+        qc.invalidateQueries({ queryKey: ["process-models-stats"] });
+        if (newId) setExpanded((e) => ({ ...e, [newId]: true }));
+      }} />}
+      {importInto && <ImportConfigDialog target={importInto} allTypes={typesQ.data ?? []} onClose={() => {
+        setImportInto(null);
+        qc.invalidateQueries({ predicate: (q) => Array.isArray(q.queryKey) && (q.queryKey[0] === "process-steps" || q.queryKey[0] === "process-step-requirements" || q.queryKey[0] === "process-models-stats") });
+      }} />}
+    </div>
+  );
+}
+
+function StatCard({ label, value, tone }: { label: string; value: number; tone?: "emerald" | "zinc" | "blue" | "indigo" }) {
+  const toneCls = tone === "emerald" ? "text-emerald-700"
+    : tone === "blue" ? "text-blue-700"
+    : tone === "indigo" ? "text-indigo-700"
+    : tone === "zinc" ? "text-zinc-600"
+    : "text-foreground";
+  return (
+    <Card className="p-2">
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className={"text-xl font-semibold " + toneCls}>{value}</div>
+    </Card>
+  );
+}
+
+function DuplicateModelDialog({ source, onClose }: { source: any; onClose: (newId?: string) => void }) {
+  const [nome, setNome] = useState(source.nome + " (cópia)");
+  const [descricao, setDescricao] = useState<string>(source.descricao ?? "");
+  const [status, setStatus] = useState<string>("ativo");
+  const [openAfter, setOpenAfter] = useState(true);
+  const m = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await (supabase as any).rpc("admin_duplicate_process_type", {
+        _source: source.id, _nome: nome, _descricao: descricao || null, _status: status,
+      });
+      if (error) throw error;
+      return data as string;
+    },
+    onSuccess: (newId: string) => { toast.success("Modelo duplicado com sucesso"); onClose(openAfter ? newId : undefined); },
+    onError: (e: any) => toast.error(e.message ?? "Falha ao duplicar"),
+  });
+  return (
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Duplicar modelo</DialogTitle>
+          <DialogDescription>
+            Cria uma cópia independente de "{source.nome}", incluindo etapas, prazos, responsáveis, textos públicos e requisitos. Processos, documentos e histórico não são copiados.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2">
+          <div className="space-y-1"><Label>Nome do novo modelo *</Label><Input value={nome} onChange={(e) => setNome(e.target.value)} /></div>
+          <div className="space-y-1"><Label>Descrição</Label><Textarea rows={2} value={descricao} onChange={(e) => setDescricao(e.target.value)} /></div>
+          <div className="space-y-1"><Label>Status inicial</Label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ativo">Ativo</SelectItem>
+                <SelectItem value="inativo">Inativo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox checked={openAfter} onCheckedChange={(v) => setOpenAfter(!!v)} />
+            Abrir o novo modelo automaticamente
+          </label>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onClose()}>Cancelar</Button>
+          <Button disabled={!nome.trim() || m.isPending} onClick={() => m.mutate()}>
+            {m.isPending ? "Duplicando…" : "Duplicar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ImportConfigDialog({ target, allTypes, onClose }: { target: any; allTypes: any[]; onClose: () => void }) {
+  const [sourceId, setSourceId] = useState<string>("");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const preview = useQuery({
+    queryKey: ["import-config-preview", sourceId, target.id],
+    enabled: false, // Só usamos a mesma RPC no aplicar (não há dry_run); mostramos resumo pós-aplicação
+    queryFn: async () => null,
+  });
+  const apply = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await (supabase as any).rpc("admin_import_model_config", {
+        _source: sourceId, _target: target.id,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data: any) => {
+      toast.success(`Importado: ${data.etapas_atualizadas} etapas e ${data.requisitos_atualizados} requisitos.${data.etapas_sem_correspondencia ? ` ${data.etapas_sem_correspondencia} etapa(s) sem correspondência foram ignoradas.` : ""}`);
+      onClose();
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha ao importar"),
+  });
+  void preview;
+  const options = allTypes.filter((t: any) => t.id !== target.id);
+  return (
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Importar configuração pública</DialogTitle>
+          <DialogDescription>
+            Copia apenas visibilidade e textos públicos (nome, descrição, observação) das etapas e requisitos de outro modelo para "{target.nome}". Ordem, prazos, responsáveis e etapas sem correspondência não são alterados.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2">
+          <Label>Modelo de origem</Label>
+          <Select value={sourceId} onValueChange={setSourceId}>
+            <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+            <SelectContent>
+              {options.map((t: any) => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <p className="text-[11px] text-muted-foreground">
+            O casamento é feito pelo nome da etapa e do requisito (sem diferenciar maiúsculas). Nenhuma etapa é adicionada, removida ou reordenada.
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+          <Button disabled={!sourceId || apply.isPending} onClick={() => setConfirmOpen(true)}>
+            Importar
+          </Button>
+        </DialogFooter>
+        {confirmOpen && (
+          <Dialog open onOpenChange={(v) => !v && setConfirmOpen(false)}>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <DialogTitle>Confirmar importação</DialogTitle>
+                <DialogDescription>
+                  Isso vai sobrescrever a visibilidade e os textos públicos das etapas e requisitos de "{target.nome}" que tiverem nome equivalente no modelo de origem. Continuar?
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setConfirmOpen(false)}>Cancelar</Button>
+                <Button disabled={apply.isPending} onClick={() => { setConfirmOpen(false); apply.mutate(); }}>
+                  {apply.isPending ? "Aplicando…" : "Confirmar"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
     </div>
   );
 }
