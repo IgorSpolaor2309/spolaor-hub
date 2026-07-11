@@ -2410,10 +2410,12 @@ export type Database = {
             }
             Returns: string
           }
+      admin_demo_contamination_report: { Args: never; Returns: Json }
       admin_demo_create_environment: {
         Args: { _label?: string }
         Returns: Json
       }
+      admin_demo_repair_case_a: { Args: never; Returns: Json }
       admin_demo_reset: { Args: { _label?: string }; Returns: Json }
       admin_demo_summary: { Args: never; Returns: Json }
       admin_demo_wipe: { Args: { _batch_id?: string }; Returns: Json }
@@ -2533,17 +2535,31 @@ export type Database = {
         }
         Returns: undefined
       }
-      open_company_process: {
-        Args: {
-          _client_id: string
-          _observacoes?: string
-          _prazo_final?: string
-          _prioridade?: string
-          _process_type_id: string
-          _responsavel_id?: string
-        }
-        Returns: string
-      }
+      open_company_process:
+        | {
+            Args: {
+              _client_id: string
+              _observacoes?: string
+              _prazo_final?: string
+              _prioridade?: string
+              _process_type_id: string
+              _responsavel_id?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _client_id: string
+              _demo_batch_id?: string
+              _is_demo?: boolean
+              _observacoes?: string
+              _prazo_final?: string
+              _prioridade?: string
+              _process_type_id: string
+              _responsavel_id?: string
+            }
+            Returns: string
+          }
       preview_plan_change: {
         Args: { _client_id: string; _competencia: string; _new_plan_id: string }
         Returns: Json

@@ -17,7 +17,7 @@ import { useState } from "react";
 import { AlertTriangle, FlaskConical, RotateCw, Trash2, Sparkles } from "lucide-react";
 import {
   homologSummary, homologCreateEnvironment, homologWipe, homologWipePreview, homologReset,
-  homologListBatches, homologListAudit,
+  homologListBatches, homologListAudit, homologContaminationReport, homologRepairCaseA,
 } from "@/lib/homologacao.functions";
 import { homologAccessDiagnostic } from "@/lib/access-diagnostics.functions";
 
@@ -44,18 +44,31 @@ function HomologPage() {
   const batchesFn = useServerFn(homologListBatches);
   const auditFn = useServerFn(homologListAudit);
   const diagnosticFn = useServerFn(homologAccessDiagnostic);
+  const contaminationFn = useServerFn(homologContaminationReport);
+  const repairFn = useServerFn(homologRepairCaseA);
 
   const summary = useQuery({ queryKey: ["homolog-summary"], queryFn: () => summaryFn({}) });
   const batches = useQuery({ queryKey: ["homolog-batches"], queryFn: () => batchesFn({}) });
   const audit = useQuery({ queryKey: ["homolog-audit"], queryFn: () => auditFn({}) });
   const diagnostic = useQuery({ queryKey: ["homolog-access-diagnostic"], queryFn: () => diagnosticFn({}) });
+  const contamination = useQuery({ queryKey: ["homolog-contamination"], queryFn: () => contaminationFn({}) });
 
   const invalidateAll = () => {
     qc.invalidateQueries({ queryKey: ["homolog-summary"] });
     qc.invalidateQueries({ queryKey: ["homolog-batches"] });
     qc.invalidateQueries({ queryKey: ["homolog-audit"] });
     qc.invalidateQueries({ queryKey: ["homolog-access-diagnostic"] });
+    qc.invalidateQueries({ queryKey: ["homolog-contamination"] });
   };
+
+  const repairMut = useMutation({
+    mutationFn: () => repairFn({}),
+    onSuccess: (r: any) => {
+      toast.success(`Caso A corrigido: ${r.processes_fixed} processo(s), ${r.steps_fixed} etapa(s).`);
+      invalidateAll();
+    },
+    onError: (e: any) => toast.error(e?.message || "Falha ao corrigir contaminação."),
+  });
 
   const createMut = useMutation({
     mutationFn: () => createFn({ data: { label } }),
@@ -210,6 +223,56 @@ function HomologPage() {
                   </div>
                 ))}
             </div>
+          </div>
+        )}
+      </Card>
+
+      {/* Contaminação */}
+      <Card className="p-4 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold">Verificar contaminação</h2>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => contamination.refetch()} disabled={contamination.isFetching}>
+              Atualizar
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => repairMut.mutate()}
+              disabled={repairMut.isPending}
+            >
+              Corrigir Caso A
+            </Button>
+          </div>
+        </div>
+        {contamination.isLoading ? (
+          <div className="text-sm text-muted-foreground">Carregando…</div>
+        ) : contamination.error ? (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+            {(contamination.error as Error).message}
+          </div>
+        ) : contamination.data && (
+          <div className="space-y-3 text-sm">
+            {Object.entries(contamination.data).map(([key, rows]) => {
+              const list = (rows as any[]) ?? [];
+              return (
+                <div key={key} className="rounded-md border p-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-medium uppercase text-muted-foreground">{key}</span>
+                    <Badge variant={list.length ? "destructive" : "outline"}>{list.length}</Badge>
+                  </div>
+                  {list.length > 0 && (
+                    <pre className="whitespace-pre-wrap break-all text-xs text-muted-foreground">
+                      {JSON.stringify(list, null, 2)}
+                    </pre>
+                  )}
+                </div>
+              );
+            })}
+            <p className="text-xs text-muted-foreground">
+              <strong>Caso A</strong>: processo criado dentro do lote demo mas sem a marcação — corrigível automaticamente.
+              <br />
+              <strong>Caso B</strong> (empresa real vinculada a tipo demo): requer intervenção administrativa manual — reatribuir a um tipo real equivalente. A limpeza permanece bloqueada enquanto houver Caso B.
+            </p>
           </div>
         )}
       </Card>
