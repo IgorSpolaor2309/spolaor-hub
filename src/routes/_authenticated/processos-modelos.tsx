@@ -363,9 +363,7 @@ function ImportConfigDialog({ target, allTypes, onClose }: { target: any; allTyp
   );
 }
 
-    </div>
-  );
-}
+
 
 function DeleteTypeButton({ id, onDone }: { id: string; onDone: () => void }) {
   const m = useMutation({
