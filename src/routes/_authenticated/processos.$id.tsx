@@ -258,14 +258,15 @@ function ProcessDetail() {
               <Input type="date" defaultValue={p.prazo_final ?? ""}
                 onBlur={(e) => { const v = e.target.value || null; if (v !== p.prazo_final) updateProc.mutate({ prazo_final: v }); }} />
             </div>
-            {(p.status === "aguardando_cliente" || p.status === "aguardando_orgao") && (
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label className="text-xs">Motivo da espera</Label>
-                <Input defaultValue={p.motivo_espera ?? ""}
-                  placeholder="Ex.: aguardando envio de documento pelo cliente"
-                  onBlur={(e) => { if (e.target.value !== (p.motivo_espera ?? "")) updateProc.mutate({ motivo_espera: e.target.value || null }); }} />
-              </div>
-            )}
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label className="text-xs">
+                Motivo da espera
+                {(p.status === "aguardando_cliente" || p.status === "aguardando_orgao") && <span className="text-red-600"> *</span>}
+              </Label>
+              <Input defaultValue={p.motivo_espera ?? ""}
+                placeholder="Obrigatório para status de espera (cliente/órgão)"
+                onBlur={(e) => { if (e.target.value !== (p.motivo_espera ?? "")) updateProc.mutate({ motivo_espera: e.target.value || null }); }} />
+            </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label className="text-xs">Observações</Label>
               <Textarea rows={2} defaultValue={p.observacoes ?? ""}
