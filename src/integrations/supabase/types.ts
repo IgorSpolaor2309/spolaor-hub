@@ -1647,6 +1647,42 @@ export type Database = {
           },
         ]
       }
+      mcp_audit_log: {
+        Row: {
+          created_at: string
+          duration_ms: number
+          error_message: string | null
+          id: string
+          result_count: number | null
+          success: boolean
+          tool_name: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_ms: number
+          error_message?: string | null
+          id?: string
+          result_count?: number | null
+          success: boolean
+          tool_name: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number
+          error_message?: string | null
+          id?: string
+          result_count?: number | null
+          success?: boolean
+          tool_name?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       message_templates: {
         Row: {
           assunto: string | null
