@@ -1,4 +1,5 @@
 import { defineTool } from "@lovable.dev/mcp-js";
+import { withMcpAudit, sanitizeError } from "../audit";
 
 export default defineTool({
   name: "whoami",
@@ -7,33 +8,27 @@ export default defineTool({
     "Retorna o perfil e o papel (admin, collaborator, client) do usuário do SC Central autenticado nesta sessão MCP.",
   inputSchema: {},
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async (_input, ctx) => {
-    if (!ctx.isAuthenticated()) {
-      return { content: [{ type: "text", text: "Não autenticado." }], isError: true };
-    }
-    const { createClient } = await import("@supabase/supabase-js");
-    const supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_PUBLISHABLE_KEY!,
-      {
-        global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-        auth: { persistSession: false, autoRefreshToken: false },
-      },
-    );
-    const userId = ctx.getUserId();
-    const [{ data: profile }, { data: roles }] = await Promise.all([
-      supabase.from("profiles").select("id, full_name, email").eq("id", userId!).maybeSingle(),
-      supabase.from("user_roles").select("role").eq("user_id", userId!),
+  handler: withMcpAudit("whoami", async (ctx, supabase) => {
+    const userId = ctx.getUserId()!;
+    const [profileRes, rolesRes] = await Promise.all([
+      supabase.from("profiles").select("id, full_name, email, status").eq("id", userId).maybeSingle(),
+      supabase.from("user_roles").select("role").eq("user_id", userId),
     ]);
-    const roleList = (roles ?? []).map((r: any) => r.role);
+    if (profileRes.error) {
+      return { result: { content: [{ type: "text", text: sanitizeError(profileRes.error) }], isError: true }, count: 0 };
+    }
+    const roleList = (rolesRes.data ?? []).map((r: { role: string }) => r.role);
     const role =
       roleList.includes("admin") ? "admin" :
       roleList.includes("collaborator") ? "collaborator" :
       roleList.includes("client") ? "client" : null;
-    const payload = { userId, email: ctx.getUserEmail(), profile, role, roles: roleList };
+    const payload = { userId, email: ctx.getUserEmail(), profile: profileRes.data, role, roles: roleList };
     return {
-      content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
-      structuredContent: payload,
+      result: {
+        content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+        structuredContent: payload,
+      },
+      count: 1,
     };
-  },
+  }),
 });
