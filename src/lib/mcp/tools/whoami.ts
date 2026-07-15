@@ -8,7 +8,7 @@ export default defineTool({
     "Retorna o perfil e o papel (admin, collaborator, client) do usuário do SC Central autenticado nesta sessão MCP.",
   inputSchema: {},
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: withMcpAudit("whoami", async (ctx, supabase) => {
+  handler: withMcpAudit("whoami", async (_input, ctx, supabase) => {
     const userId = ctx.getUserId()!;
     const [profileRes, rolesRes] = await Promise.all([
       supabase.from("profiles").select("id, full_name, email, status").eq("id", userId).maybeSingle(),
