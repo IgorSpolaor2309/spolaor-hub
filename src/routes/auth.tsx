@@ -9,11 +9,20 @@ import { SpolaorLogo } from "@/components/sc/Logo";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
+function safeNext(raw: unknown): string | undefined {
+  if (typeof raw !== "string" || !raw.startsWith("/") || raw.startsWith("//")) return undefined;
+  return raw;
+}
+
 export const Route = createFileRoute("/auth")({
   ssr: false,
-  beforeLoad: async () => {
+  validateSearch: (s: Record<string, unknown>) => ({ next: safeNext(s.next) }),
+  beforeLoad: async ({ search }) => {
     const { data } = await supabase.auth.getSession();
-    if (data.session) throw redirect({ to: "/" });
+    if (data.session) {
+      if (search.next) throw redirect({ href: search.next });
+      throw redirect({ to: "/" });
+    }
   },
   component: AuthPage,
 });
@@ -21,6 +30,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -41,6 +51,10 @@ function AuthPage() {
       }
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      if (next) {
+        window.location.replace(next);
+        return;
+      }
       navigate({ to: "/", replace: true });
     } catch (err) {
       const raw = err instanceof Error ? err.message : "";
