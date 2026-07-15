@@ -52,9 +52,17 @@
               "minimum": 1,
               "maximum": 100
             },
+            "offset": {
+              "default": 0,
+              "description": "Deslocamento para paginação.",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            },
             "search": {
-              "description": "Busca por nome/razão social (opcional).",
-              "type": "string"
+              "description": "Busca por razão social (opcional).",
+              "type": "string",
+              "maxLength": 120
             }
           }
         },
