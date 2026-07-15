@@ -51,11 +51,11 @@ type ToolResult = {
  * - registra em mcp_audit_log (sem tokens, sem payloads sensíveis);
  * - sanitiza erros.
  */
-export function withMcpAudit(
+export function withMcpAudit<TInput = unknown>(
   toolName: string,
-  run: (ctx: ToolContext, supabase: SupabaseClient) => Promise<{ result: ToolResult; count: number }>,
+  run: (input: TInput, ctx: ToolContext, supabase: SupabaseClient) => Promise<{ result: ToolResult; count: number }>,
 ) {
-  return async (_input: unknown, ctx: ToolContext): Promise<ToolResult> => {
+  return async (input: TInput, ctx: ToolContext): Promise<ToolResult> => {
     const startedAt = Date.now();
     let success = false;
     let count: number | null = null;
@@ -80,7 +80,7 @@ export function withMcpAudit(
     }
 
     try {
-      const out = await run(ctx, supabase);
+      const out = await run(input, ctx, supabase);
       result = out.result;
       count = out.count;
       success = !out.result.isError;
