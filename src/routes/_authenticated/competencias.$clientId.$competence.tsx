@@ -12,6 +12,7 @@ import { clientLabel } from "@/lib/client-display";
 import { formatCompetenciaLong, isValidCompetencia, competenciaBounds } from "@/lib/competencia";
 import { formatBR } from "@/lib/dates";
 import { computeProgress, computeSituacao } from "./competencias";
+import { CompetenceCyclePanel } from "@/components/sc/CompetenceCyclePanel";
 import {
   Layers, AlertTriangle, ClipboardList, ListChecks, Inbox, FileText, Receipt, Workflow,
   ArrowLeft, ArrowRight, Info, History,
