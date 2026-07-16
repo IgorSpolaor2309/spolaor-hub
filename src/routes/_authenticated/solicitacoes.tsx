@@ -24,8 +24,13 @@ import { normalizeDocTipo, normalizeSlug } from "@/lib/sc-types";
 
 export const Route = createFileRoute("/_authenticated/solicitacoes")({
   component: RequestsPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    client: typeof search.client === "string" ? search.client : undefined,
+    comp: typeof search.comp === "string" ? search.comp : undefined,
+  }),
   errorComponent: () => <EmptyState icon={<FileText className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />,
 });
+
 
 // Tipos de solicitação disponíveis para o cliente
 const TIPOS: { value: string; label: string }[] = [
@@ -117,11 +122,13 @@ function RequestsPage() {
   const isStaff = role === "admin" || role === "collaborator";
   const ready = !loading && !!userId && !!role;
 
-  const [fClient, setFClient] = useState<string>("all");
+  const routeSearch = Route.useSearch();
+  const [fClient, setFClient] = useState<string>(routeSearch.client ?? "all");
   const [fStatus, setFStatus] = useState<string>("all");
   const [fCategoria, setFCategoria] = useState<string>("all");
   const [fOrigem, setFOrigem] = useState<string>("all");
-  const [fComp, setFComp] = useState("");
+  const [fComp, setFComp] = useState(routeSearch.comp ?? "");
+
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const [open, setOpen] = useState(false);
 

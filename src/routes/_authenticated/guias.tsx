@@ -23,8 +23,13 @@ import { formatBR, isPastEndOfDay } from "@/lib/dates";
 
 export const Route = createFileRoute("/_authenticated/guias")({
   component: GuidesPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    client: typeof search.client === "string" ? search.client : undefined,
+    comp: typeof search.comp === "string" ? search.comp : undefined,
+  }),
   errorComponent: () => <EmptyState icon={<Receipt className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />,
 });
+
 
 const TIPOS = ["DAS", "DARF", "GPS/INSS", "FGTS", "ISS", "IRRF", "pró-labore", "parcelamento", "outro"];
 const STATUSES = ["gerada", "enviada ao cliente", "visualizada", "paga", "vencida", "cancelada"];
@@ -42,11 +47,13 @@ function GuidesPage() {
   const isStaff = role === "admin" || role === "collaborator";
   const ready = !loading && !!userId && !!role;
   const qc = useQueryClient();
-  const [fClient, setFClient] = useState("all");
+  const routeSearch = Route.useSearch();
+  const [fClient, setFClient] = useState(routeSearch.client ?? "all");
   const [fStatus, setFStatus] = useState("all");
   const [fTipo, setFTipo] = useState("all");
-  const [fComp, setFComp] = useState("");
+  const [fComp, setFComp] = useState(routeSearch.comp ?? "");
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
+
   const [open, setOpen] = useState(false);
 
   const { data: clients = [], error: clientsError } = useQuery({

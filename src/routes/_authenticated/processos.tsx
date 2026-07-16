@@ -22,7 +22,11 @@ import { Workflow, Plus, Search, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/processos")({
   component: ProcessesPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    client: typeof search.client === "string" ? search.client : undefined,
+  }),
 });
+
 
 const STATUSES = [
   { value: "nao_iniciado", label: "Não iniciado", cls: "bg-zinc-200 text-zinc-700" },
@@ -46,12 +50,14 @@ type TabKey = "todos" | "meus" | "aguardando" | "atrasados" | "concluidos";
 function ProcessesPage() {
   const { role, userId, loading } = useCurrentUser();
   const qc = useQueryClient();
+  const routeSearch = Route.useSearch();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [fClient, setFClient] = useState<string>("all");
+  const [fClient, setFClient] = useState<string>(routeSearch.client ?? "all");
   const [fType, setFType] = useState<string>("all");
   const [fStatus, setFStatus] = useState<string>("all");
   const [fPrio, setFPrio] = useState<string>("all");
+
   const [fResp, setFResp] = useState<string>("all");
   const [fPrazo, setFPrazo] = useState<string>("all"); // all | vencido | hoje | em_breve | sem_prazo
   const [sortBy, setSortBy] = useState<string>("prazo");
