@@ -19,8 +19,12 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/pendencias")({
   component: TasksPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    client: typeof search.client === "string" ? search.client : undefined,
+  }),
   errorComponent: () => <EmptyState icon={<AlertTriangle className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />,
 });
+
 
 type Tipo = "tarefa" | "solicitacao" | "guia" | "validade";
 
