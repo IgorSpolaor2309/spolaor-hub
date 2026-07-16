@@ -5,9 +5,12 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { PageHeader } from "@/components/sc/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { EmptyState } from "@/components/sc/EmptyState";
-import { Briefcase, FileText, Receipt, ClipboardList, MessageSquare } from "lucide-react";
+import { Briefcase, FileText, Receipt, ClipboardList, MessageSquare, CalendarClock, ArrowRight } from "lucide-react";
 import { clientLabel, clientSubLabel } from "@/lib/client-display";
+import { currentCompetencia, formatCompetenciaLong } from "@/lib/competencia";
+import { clientStatusLabel, clientStatusTone } from "@/lib/competence-client-labels";
 
 export const Route = createFileRoute("/_authenticated/minha-area")({
   component: MyAreaPage,
