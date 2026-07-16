@@ -38,8 +38,10 @@ const SECTIONS: Section[] = [
   {
     title: "Operação",
     items: [
+      { to: "/competencias", label: "Competências", icon: Layers, roles: ["admin", "collaborator"] },
       { to: "/pendencias", label: "Pendências", icon: ClipboardList, roles: ["admin", "collaborator"] },
       { to: "/checklist", label: "Checklist do Cliente", icon: ListChecks, roles: ["admin", "collaborator"] },
+
       { to: "/processos", label: "Processos", icon: Workflow, roles: ["admin", "collaborator"] },
       { to: "/kanban", label: "Kanban", icon: KanbanSquare, roles: ["admin", "collaborator"] },
       { to: "/documentos", label: "Documentos", icon: FileText, roles: ["admin", "collaborator"] },
