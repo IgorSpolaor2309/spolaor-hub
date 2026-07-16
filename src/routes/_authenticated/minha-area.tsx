@@ -61,6 +61,9 @@ function MyAreaPage() {
                     </Badge>
                   )}
                 </div>
+
+                <CurrentCompetenceBlock clientId={c.id} />
+
                 <div className="mt-4 flex flex-wrap gap-3 text-sm">
                   <Link to="/solicitacoes" className="inline-flex items-center gap-1 text-primary hover:underline">
                     <FileText className="h-3.5 w-3.5" /> Solicitações
