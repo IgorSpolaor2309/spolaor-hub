@@ -33,7 +33,7 @@ type OverviewRow = Parameters<typeof computeProgress>[0];
 
 function CompetenciaDetailPage() {
   const { clientId, competence } = Route.useParams();
-  const { role, loading } = useCurrentUser();
+  const { role, loading, userId } = useCurrentUser();
   const router = useRouter();
 
   const isStaff = role === "admin" || role === "collaborator";
