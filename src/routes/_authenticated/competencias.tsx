@@ -211,7 +211,7 @@ function CompetenciasPage() {
 
   const setCompetencia = (next: string) => {
     setComp(next);
-    navigate({ search: (prev) => ({ ...prev, comp: next }) });
+    navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, comp: next }) });
   };
 
   const overviewQuery = useQuery({
