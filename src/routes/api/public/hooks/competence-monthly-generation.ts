@@ -44,7 +44,7 @@ export const Route = createFileRoute("/api/public/hooks/competence-monthly-gener
 
           const { data, error } = await admin.rpc("admin_generate_monthly_competences", {
             p_competence: comp,
-            p_include_demo: false,
+            p_scope: "real", // cron nunca opera fora do escopo real
             p_source: "cron",
           });
           if (error) {
