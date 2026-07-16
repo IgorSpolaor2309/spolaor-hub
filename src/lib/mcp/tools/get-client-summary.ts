@@ -114,9 +114,9 @@ export default defineTool({
 
     const responsaveis =
       (collabs.data ?? [])
-        .map((r: any) => r?.collaborators?.profiles)
+        .map((r: any) => r?.collaborators)
         .filter(Boolean)
-        .map((p: any) => ({ full_name: p.full_name, email: p.email })) ?? [];
+        .map((c: any) => ({ nome: c.nome, email: c.email, cargo: c.cargo, departamento: c.departamento }));
 
     const total = chkTotal.count ?? 0;
     const done = chkDone.count ?? 0;
