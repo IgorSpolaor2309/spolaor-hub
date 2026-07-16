@@ -41,8 +41,10 @@ const PRIORIDADES = [
 ];
 const PRIO_MAP = Object.fromEntries(PRIORIDADES.map((p) => [p.value, p]));
 
+type TabKey = "todos" | "meus" | "aguardando" | "atrasados" | "concluidos";
+
 function ProcessesPage() {
-  const { role, loading } = useCurrentUser();
+  const { role, userId, loading } = useCurrentUser();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -53,6 +55,8 @@ function ProcessesPage() {
   const [fResp, setFResp] = useState<string>("all");
   const [fPrazo, setFPrazo] = useState<string>("all"); // all | vencido | hoje | em_breve | sem_prazo
   const [sortBy, setSortBy] = useState<string>("prazo");
+  const [tab, setTab] = useState<TabKey>(role === "collaborator" ? "meus" : "todos");
+
 
 
   const ready = !loading && (role === "admin" || role === "collaborator");
