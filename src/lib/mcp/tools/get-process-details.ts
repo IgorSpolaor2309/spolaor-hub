@@ -75,10 +75,20 @@ export default defineTool({
       requirements = reqData ?? [];
     }
 
+    // Buscas auxiliares (tipo do processo e responsável) — evitar depender de FK PostgREST.
+    const [typeRes, respRes] = await Promise.all([
+      (proc as any).process_type_id
+        ? supabase.from("process_types").select("id, nome, categoria").eq("id", (proc as any).process_type_id).maybeSingle()
+        : Promise.resolve({ data: null }),
+      !isClient && (proc as any).responsavel_id
+        ? supabase.from("profiles").select("id, full_name, email").eq("id", (proc as any).responsavel_id).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
+
     const payload = {
       id: proc.id,
       empresa: (proc as any).clients,
-      tipo: (proc as any).process_types,
+      tipo: typeRes.data,
       status: proc.status,
       prioridade: proc.prioridade,
       progresso: proc.progresso,
