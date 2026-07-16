@@ -19,47 +19,32 @@ export default defineTool({
 
     const today = new Date().toISOString().slice(0, 10);
     const in30 = new Date(Date.now() + 30 * 86400_000).toISOString().slice(0, 10);
-    const c = (q: any) => q.select("id", { count: "exact", head: true });
+    const head = (t: string) => supabase.from(t).select("id", { count: "exact", head: true });
 
-    const empresasP = c(supabase.from("clients").is("deleted_at", null));
-    const pendAbertasP = c(
-      supabase.from("pending_tasks")
-        .neq("status", "concluida")
-        .neq("status", "cancelada"),
-    );
-    const pendVencidasP = c(
-      supabase.from("pending_tasks")
-        .neq("status", "concluida")
-        .neq("status", "cancelada")
-        .lt("prazo", today),
-    );
-    const procAtivosP = c(
-      supabase.from("company_processes").in("status", ["em_andamento", "aguardando", "aberto", "pendente"]),
-    );
-    const procAtrasadosP = c(
-      supabase.from("company_processes")
-        .in("status", ["em_andamento", "aguardando", "aberto", "pendente"])
-        .lt("prazo_final", today),
-    );
-    const solicP = c(
-      supabase.from("document_requests")
-        .is("deleted_at", null)
-        .in("status", ["pendente", "aguardando", "em_andamento"]),
-    );
-    const guiasP = c(
-      supabase.from("tax_guides")
-        .is("deleted_at", null)
-        .gte("vencimento", today)
-        .lte("vencimento", in30),
-    );
-    const checkPendP = c(
-      supabase.from("client_checklist_items")
-        .is("deleted_at", null)
-        .eq("status", "pendente"),
-    );
-    const notifNaoLidasP = supabase
-      .from("notifications")
-      .select("id", { count: "exact", head: true })
+    const empresasP = head("clients").is("deleted_at", null);
+    const pendAbertasP = head("pending_tasks")
+      .neq("status", "concluida")
+      .neq("status", "cancelada");
+    const pendVencidasP = head("pending_tasks")
+      .neq("status", "concluida")
+      .neq("status", "cancelada")
+      .lt("prazo", today);
+    const procAtivosP = head("company_processes")
+      .in("status", ["em_andamento", "aguardando", "aberto", "pendente"]);
+    const procAtrasadosP = head("company_processes")
+      .in("status", ["em_andamento", "aguardando", "aberto", "pendente"])
+      .lt("prazo_final", today);
+    const solicP = head("document_requests")
+      .is("deleted_at", null)
+      .in("status", ["pendente", "aguardando", "em_andamento"]);
+    const guiasP = head("tax_guides")
+      .is("deleted_at", null)
+      .gte("vencimento", today)
+      .lte("vencimento", in30);
+    const checkPendP = head("client_checklist_items")
+      .is("deleted_at", null)
+      .eq("status", "pendente");
+    const notifNaoLidasP = head("notifications")
       .eq("user_id", userId)
       .eq("lida", false);
 
