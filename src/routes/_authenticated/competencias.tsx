@@ -287,7 +287,20 @@ function CompetenciasPage() {
           if (fProg === "50_75" && !(percent >= 50 && percent < 75)) return false;
           if (fProg === "75_100" && !(percent >= 75)) return false;
         }
-        void r;
+        // Filtros administrativos (Fase 4)
+        const persisted = persistedQuery.data?.get(r.client_id);
+        if (fAdmin === "sem_competencia" && persisted) return false;
+        if (fAdmin === "sem_responsavel" && (persisted?.responsible_profile_id ?? null)) return false;
+        if (fAdmin === "divergencia") {
+          // Divergência: status oficial "completed" mas ainda há atrasos/pendências,
+          // ou "open" com atividade significativa.
+          const status = persisted?.status;
+          const temAtividade = percent > 0 || situacao === "com_atrasos" || situacao === "aguardando_cliente";
+          const divergente =
+            (status === "completed" && (situacao === "com_atrasos" || situacao === "aguardando_cliente")) ||
+            ((!status || status === "open") && temAtividade);
+          if (!divergente) return false;
+        }
         return true;
       });
 
