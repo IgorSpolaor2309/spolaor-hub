@@ -5,9 +5,12 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { PageHeader } from "@/components/sc/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { EmptyState } from "@/components/sc/EmptyState";
-import { Briefcase, FileText, Receipt, ClipboardList, MessageSquare } from "lucide-react";
+import { Briefcase, FileText, Receipt, ClipboardList, MessageSquare, CalendarClock, ArrowRight } from "lucide-react";
 import { clientLabel, clientSubLabel } from "@/lib/client-display";
+import { currentCompetencia, formatCompetenciaLong } from "@/lib/competencia";
+import { clientStatusLabel, clientStatusTone } from "@/lib/competence-client-labels";
 
 export const Route = createFileRoute("/_authenticated/minha-area")({
   component: MyAreaPage,
@@ -58,6 +61,9 @@ function MyAreaPage() {
                     </Badge>
                   )}
                 </div>
+
+                <CurrentCompetenceBlock clientId={c.id} />
+
                 <div className="mt-4 flex flex-wrap gap-3 text-sm">
                   <Link to="/solicitacoes" className="inline-flex items-center gap-1 text-primary hover:underline">
                     <FileText className="h-3.5 w-3.5" /> Solicitações
@@ -77,6 +83,69 @@ function MyAreaPage() {
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+function CurrentCompetenceBlock({ clientId }: { clientId: string }) {
+  const comp = currentCompetencia();
+  const q = useQuery({
+    queryKey: ["portal-competence-card", clientId, comp],
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("get_client_competence_portal", {
+        p_client_id: clientId,
+        p_competence: comp,
+      });
+      if (error) throw error;
+      return data as {
+        has_competence: boolean;
+        status: string | null;
+        progresso: number;
+        updated_at: string | null;
+        reopened: boolean;
+      };
+    },
+  });
+
+  return (
+    <div className="mt-4 rounded-md border bg-muted/30 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+          <CalendarClock className="h-3.5 w-3.5" /> {formatCompetenciaLong(comp)}
+        </div>
+        {q.data && (
+          <Badge className={clientStatusTone(q.data.status)}>{clientStatusLabel(q.data.status)}</Badge>
+        )}
+      </div>
+      {q.isLoading ? (
+        <div className="mt-2 text-xs text-muted-foreground">Carregando…</div>
+      ) : q.data && !q.data.has_competence ? (
+        <div className="mt-2 text-xs text-muted-foreground">
+          Esta competência ainda não foi iniciada pelo escritório.
+        </div>
+      ) : q.data ? (
+        <>
+          <div className="mt-2 flex items-center gap-2">
+            <Progress value={q.data.progresso} className="h-2 flex-1" />
+            <div className="text-sm font-semibold">{q.data.progresso}%</div>
+          </div>
+          {q.data.reopened && (
+            <div className="mt-1 text-[11px] text-orange-700">
+              Esta competência foi reaberta para ajustes.
+            </div>
+          )}
+        </>
+      ) : null}
+      <div className="mt-2 text-right">
+        <Link
+          to="/meu-mes/$clientId/$competence"
+          params={{ clientId, competence: comp }}
+          className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+        >
+          Ver detalhes <ArrowRight className="h-3 w-3" />
+        </Link>
+      </div>
     </div>
   );
 }
