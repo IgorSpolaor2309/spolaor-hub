@@ -50,15 +50,20 @@ export function CompetenceCyclePanel({ clientId, competence, role, userId }: Pro
   const collabsQ = useQuery({
     queryKey: ["competence-collabs", clientId],
     queryFn: async () => {
-      // Colaboradores vinculados + owner.
-      const { data: links } = await (supabase as any)
+      // Colaboradores vinculados (via collaborators.user_id) + owner do cliente.
+      const { data: links, error: linksErr } = await (supabase as any)
         .from("client_collaborators")
-        .select("collaborator_profile_id")
+        .select("collaborator_id, collaborators:collaborator_id(user_id, status)")
         .eq("client_id", clientId);
+      if (linksErr) throw linksErr;
       const { data: client } = await (supabase as any)
         .from("clients").select("owner_profile_id").eq("id", clientId).maybeSingle();
       const ids = new Set<string>();
-      (links ?? []).forEach((r: any) => r.collaborator_profile_id && ids.add(r.collaborator_profile_id));
+      (links ?? []).forEach((r: any) => {
+        const uid = r?.collaborators?.user_id;
+        const st = r?.collaborators?.status ?? "active";
+        if (uid && st === "active") ids.add(uid);
+      });
       if (client?.owner_profile_id) ids.add(client.owner_profile_id);
       if (ids.size === 0) return [];
       const { data: profs } = await (supabase as any)
