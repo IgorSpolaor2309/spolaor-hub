@@ -131,9 +131,24 @@ function ProcessesPage() {
   });
 
 
+  // Sincroniza a aba padrão quando o papel do usuário fica disponível.
+  useEffect(() => {
+    if (role === "collaborator") setTab((t) => (t === "todos" ? "meus" : t));
+  }, [role]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const openStatus = (s: string) => s !== "concluido" && s !== "cancelado";
     const arr = (listQ.data ?? []).filter((r: any) => {
+      // Filtro por aba (não sobrescreve os selects abaixo).
+      if (tab === "meus" && userId && r.responsavel_id !== userId) return false;
+      if (tab === "aguardando" && r.status !== "aguardando_cliente" && r.status !== "aguardando_orgao") return false;
+      if (tab === "atrasados") {
+        if (!openStatus(r.status)) return false;
+        if (prazoKind(r.prazo_final) !== "vencido") return false;
+      }
+      if (tab === "concluidos" && r.status !== "concluido") return false;
+
       if (fClient !== "all" && r.client_id !== fClient) return false;
       if (fType !== "all" && r.process_type_id !== fType) return false;
       if (fStatus !== "all" && r.status !== fStatus) return false;
@@ -166,7 +181,8 @@ function ProcessesPage() {
       }
     });
     return arr;
-  }, [listQ.data, search, fClient, fType, fStatus, fPrio, fResp, fPrazo, sortBy]);
+  }, [listQ.data, search, fClient, fType, fStatus, fPrio, fResp, fPrazo, sortBy, tab, userId]);
+
 
   const kpis = useMemo(() => {
     const arr = listQ.data ?? [];
