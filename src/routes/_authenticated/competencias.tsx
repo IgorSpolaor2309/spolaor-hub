@@ -325,16 +325,16 @@ function CompetenciasPage() {
       }
     });
     return list;
-  }, [overviewQuery.data, q, fResp, fSituacao, fProg, fAtraso, fAgCliente, fDemo, sortBy]);
+  }, [overviewQuery.data, persistedQuery.data, q, fResp, fSituacao, fProg, fAtraso, fAgCliente, fDemo, fAdmin, sortBy]);
 
   const activeFilters =
     (q ? 1 : 0) + (fResp !== "all" ? 1 : 0) + (fSituacao !== "all" ? 1 : 0) +
     (fProg !== "all" ? 1 : 0) + (fAtraso ? 1 : 0) + (fAgCliente ? 1 : 0) +
-    (fDemo !== "all" ? 1 : 0);
+    (fDemo !== "all" ? 1 : 0) + (fAdmin !== "all" ? 1 : 0);
 
   const clearFilters = () => {
     setQ(""); setFResp("all"); setFSituacao("all"); setFProg("all");
-    setFAtraso(false); setFAgCliente(false); setFDemo("all"); setSortBy("padrao");
+    setFAtraso(false); setFAgCliente(false); setFDemo("all"); setFAdmin("all"); setSortBy("padrao");
   };
 
   if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
