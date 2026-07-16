@@ -55,6 +55,7 @@ const SECTIONS: Section[] = [
     title: "Portal do cliente",
     items: [
       { to: "/minha-area", label: "Minha área", icon: Briefcase, roles: ["client"] },
+      { to: "/meu-mes", label: "Meu mês", icon: CalendarClock, roles: ["client"] },
       { to: "/portal-processos", label: "Processos", icon: Workflow, roles: ["client"] },
       { to: "/minhas-pendencias", label: "Minhas pendências", icon: ClipboardList, roles: ["client"] },
       { to: "/meus-documentos", label: "Meus documentos", icon: FileText, roles: ["client"] },
