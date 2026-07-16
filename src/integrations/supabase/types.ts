@@ -3117,6 +3117,19 @@ export type Database = {
       cron_generate_current_plan_checklist: { Args: never; Returns: Json }
       current_actor_role: { Args: never; Returns: string }
       generate_plan_checklist: { Args: { _competencia: string }; Returns: Json }
+      get_client_competence_history: {
+        Args: { p_client_id: string; p_limit?: number }
+        Returns: {
+          competence: string
+          reopened: boolean
+          status: string
+          updated_at: string
+        }[]
+      }
+      get_client_competence_portal: {
+        Args: { p_client_id: string; p_competence: string }
+        Returns: Json
+      }
       get_competence_overview: {
         Args: { p_competence: string }
         Returns: {
