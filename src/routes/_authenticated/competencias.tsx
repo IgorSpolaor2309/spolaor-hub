@@ -475,7 +475,7 @@ function CompetenciasPage() {
                     <span className="text-xs text-muted-foreground">Responsável: {r.responsavel_nome ?? "—"}</span>
                   </div>
                   <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-3 lg:grid-cols-6">
-                    <ModuleStat label="Checklist" value={`${r.checklist_concluido + r.checklist_recebido} de ${Math.max(0, r.checklist_total - r.checklist_cancelado)}`} />
+                    <ModuleStat label="Checklist" value={`${r.checklist_concluido} de ${Math.max(0, r.checklist_total - r.checklist_cancelado)}`} sub={r.checklist_recebido > 0 ? `${r.checklist_recebido} recebidos` : undefined} />
                     <ModuleStat label="Pendências" value={`${r.pend_abertas} abertas`} tone={r.pend_vencidas > 0 ? "danger" : undefined} sub={r.pend_vencidas > 0 ? `${r.pend_vencidas} venc.` : undefined} />
                     <ModuleStat label="Solicitações" value={`${r.sol_aguardando_cliente} aguardando`} sub={`de ${r.sol_total}`} />
                     <ModuleStat label="Documentos" value={`${r.doc_total} no período`} />
