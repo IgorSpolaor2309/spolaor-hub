@@ -112,7 +112,7 @@ export function CompetenceCyclePanel({ clientId, competence, role, userId }: Pro
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Competência iniciada"); invalidateAll(); },
-    onError: (e: any) => toast.error("Erro" + ": " + e.message),
+    onError: (e: any) => toast.error(sanitizeError(e)),
   });
 
   const statusM = useMutation({
@@ -123,7 +123,7 @@ export function CompetenceCyclePanel({ clientId, competence, role, userId }: Pro
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Status atualizado"); invalidateAll(); },
-    onError: (e: any) => toast.error("Erro" + ": " + e.message),
+    onError: (e: any) => toast.error(sanitizeError(e)),
   });
 
   const responsibleM = useMutation({
@@ -134,7 +134,7 @@ export function CompetenceCyclePanel({ clientId, competence, role, userId }: Pro
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Responsável atualizado"); invalidateAll(); },
-    onError: (e: any) => toast.error("Erro" + ": " + e.message),
+    onError: (e: any) => toast.error(sanitizeError(e)),
   });
 
   const reviewM = useMutation({
@@ -147,7 +147,7 @@ export function CompetenceCyclePanel({ clientId, competence, role, userId }: Pro
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Enviado para revisão"); invalidateAll(); },
-    onError: (e: any) => toast.error("Erro" + ": " + e.message),
+    onError: (e: any) => toast.error(sanitizeError(e)),
   });
 
   const completeM = useMutation({
@@ -161,7 +161,7 @@ export function CompetenceCyclePanel({ clientId, competence, role, userId }: Pro
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Competência concluída"); invalidateAll(); },
-    onError: (e: any) => toast.error("Erro" + ": " + e.message),
+    onError: (e: any) => toast.error(sanitizeError(e)),
   });
 
   const reopenM = useMutation({
@@ -172,7 +172,7 @@ export function CompetenceCyclePanel({ clientId, competence, role, userId }: Pro
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Competência reaberta"); invalidateAll(); },
-    onError: (e: any) => toast.error("Erro" + ": " + e.message),
+    onError: (e: any) => toast.error(sanitizeError(e)),
   });
 
   const [awaitingOpen, setAwaitingOpen] = useState(false);
@@ -191,7 +191,7 @@ export function CompetenceCyclePanel({ clientId, competence, role, userId }: Pro
     const { data, error } = await (supabase as any).rpc("competence_evaluate", {
       p_client_id: clientId, p_competence: competence, p_phase: "review",
     });
-    if (error) { toast.error("Erro" + ": " + error.message); return; }
+    if (error) { toast.error(sanitizeError(error)); return; }
     setReviewEval(data as EvalResult);
     setReviewJust("");
     setReviewOpen(true);
@@ -201,7 +201,7 @@ export function CompetenceCyclePanel({ clientId, competence, role, userId }: Pro
     const { data, error } = await (supabase as any).rpc("competence_evaluate", {
       p_client_id: clientId, p_competence: competence, p_phase: "complete",
     });
-    if (error) { toast.error("Erro" + ": " + error.message); return; }
+    if (error) { toast.error(sanitizeError(error)); return; }
     setCompleteEval(data as EvalResult);
     setCompleteNotes("");
     setCompleteJust("");
