@@ -487,7 +487,7 @@ function CompetenciasPage() {
                 </SelectContent>
               </Select>
             </div>
-          )
+          )}
           {activeFilters > 0 && (
             <button className="ml-auto text-muted-foreground underline" onClick={clearFilters}>
               <X className="mr-1 inline h-3 w-3" />limpar filtros
