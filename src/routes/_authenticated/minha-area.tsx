@@ -139,7 +139,7 @@ function CurrentCompetenceBlock({ clientId }: { clientId: string }) {
       ) : null}
       <div className="mt-2 text-right">
         <Link
-          to="/meu-mes/$clientId/$competence"
+          to="/meu-mes_/$clientId/$competence"
           params={{ clientId, competence: comp }}
           className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
         >

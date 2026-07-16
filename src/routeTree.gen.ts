@@ -48,7 +48,7 @@ import { Route as AuthenticatedClientesIdRouteImport } from './routes/_authentic
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicHooksCompetenceMonthlyGenerationRouteImport } from './routes/api/public/hooks/competence-monthly-generation'
-import { Route as AuthenticatedMeuMesClientIdCompetenceRouteImport } from './routes/_authenticated/meu-mes.$clientId.$competence'
+import { Route as AuthenticatedMeuMesClientIdCompetenceRouteImport } from './routes/_authenticated/meu-mes_.$clientId.$competence'
 import { Route as AuthenticatedCompetenciasClientIdCompetenceRouteImport } from './routes/_authenticated/competencias_.$clientId.$competence'
 
 const SegurancaRoute = SegurancaRouteImport.update({
@@ -265,9 +265,9 @@ const ApiPublicHooksCompetenceMonthlyGenerationRoute =
   } as any)
 const AuthenticatedMeuMesClientIdCompetenceRoute =
   AuthenticatedMeuMesClientIdCompetenceRouteImport.update({
-    id: '/$clientId/$competence',
-    path: '/$clientId/$competence',
-    getParentRoute: () => AuthenticatedMeuMesRoute,
+    id: '/meu-mes_/$clientId/$competence',
+    path: '/meu-mes/$clientId/$competence',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedCompetenciasClientIdCompetenceRoute =
   AuthenticatedCompetenciasClientIdCompetenceRouteImport.update({
@@ -294,7 +294,7 @@ export interface FileRoutesByFullPath {
   '/homologacao': typeof AuthenticatedHomologacaoRoute
   '/interacoes': typeof AuthenticatedInteracoesRoute
   '/kanban': typeof AuthenticatedKanbanRoute
-  '/meu-mes': typeof AuthenticatedMeuMesRouteWithChildren
+  '/meu-mes': typeof AuthenticatedMeuMesRoute
   '/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
   '/meus-processos': typeof AuthenticatedMeusProcessosRoute
   '/minha-area': typeof AuthenticatedMinhaAreaRoute
@@ -335,7 +335,7 @@ export interface FileRoutesByTo {
   '/homologacao': typeof AuthenticatedHomologacaoRoute
   '/interacoes': typeof AuthenticatedInteracoesRoute
   '/kanban': typeof AuthenticatedKanbanRoute
-  '/meu-mes': typeof AuthenticatedMeuMesRouteWithChildren
+  '/meu-mes': typeof AuthenticatedMeuMesRoute
   '/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
   '/meus-processos': typeof AuthenticatedMeusProcessosRoute
   '/minha-area': typeof AuthenticatedMinhaAreaRoute
@@ -379,7 +379,7 @@ export interface FileRoutesById {
   '/_authenticated/homologacao': typeof AuthenticatedHomologacaoRoute
   '/_authenticated/interacoes': typeof AuthenticatedInteracoesRoute
   '/_authenticated/kanban': typeof AuthenticatedKanbanRoute
-  '/_authenticated/meu-mes': typeof AuthenticatedMeuMesRouteWithChildren
+  '/_authenticated/meu-mes': typeof AuthenticatedMeuMesRoute
   '/_authenticated/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
   '/_authenticated/meus-processos': typeof AuthenticatedMeusProcessosRoute
   '/_authenticated/minha-area': typeof AuthenticatedMinhaAreaRoute
@@ -401,7 +401,7 @@ export interface FileRoutesById {
   '/_authenticated/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/_authenticated/processos/$id': typeof AuthenticatedProcessosIdRoute
   '/_authenticated/competencias_/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
-  '/_authenticated/meu-mes/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
+  '/_authenticated/meu-mes_/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
   '/api/public/hooks/competence-monthly-generation': typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
 }
 export interface FileRouteTypes {
@@ -530,7 +530,7 @@ export interface FileRouteTypes {
     | '/_authenticated/portal-processos/$id'
     | '/_authenticated/processos/$id'
     | '/_authenticated/competencias_/$clientId/$competence'
-    | '/_authenticated/meu-mes/$clientId/$competence'
+    | '/_authenticated/meu-mes_/$clientId/$competence'
     | '/api/public/hooks/competence-monthly-generation'
   fileRoutesById: FileRoutesById
 }
@@ -821,12 +821,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksCompetenceMonthlyGenerationRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/meu-mes/$clientId/$competence': {
-      id: '/_authenticated/meu-mes/$clientId/$competence'
-      path: '/$clientId/$competence'
+    '/_authenticated/meu-mes_/$clientId/$competence': {
+      id: '/_authenticated/meu-mes_/$clientId/$competence'
+      path: '/meu-mes/$clientId/$competence'
       fullPath: '/meu-mes/$clientId/$competence'
       preLoaderRoute: typeof AuthenticatedMeuMesClientIdCompetenceRouteImport
-      parentRoute: typeof AuthenticatedMeuMesRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/competencias_/$clientId/$competence': {
       id: '/_authenticated/competencias_/$clientId/$competence'
@@ -850,18 +850,6 @@ const AuthenticatedClientesRouteWithChildren =
   AuthenticatedClientesRoute._addFileChildren(
     AuthenticatedClientesRouteChildren,
   )
-
-interface AuthenticatedMeuMesRouteChildren {
-  AuthenticatedMeuMesClientIdCompetenceRoute: typeof AuthenticatedMeuMesClientIdCompetenceRoute
-}
-
-const AuthenticatedMeuMesRouteChildren: AuthenticatedMeuMesRouteChildren = {
-  AuthenticatedMeuMesClientIdCompetenceRoute:
-    AuthenticatedMeuMesClientIdCompetenceRoute,
-}
-
-const AuthenticatedMeuMesRouteWithChildren =
-  AuthenticatedMeuMesRoute._addFileChildren(AuthenticatedMeuMesRouteChildren)
 
 interface AuthenticatedPortalProcessosRouteChildren {
   AuthenticatedPortalProcessosIdRoute: typeof AuthenticatedPortalProcessosIdRoute
@@ -903,7 +891,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHomologacaoRoute: typeof AuthenticatedHomologacaoRoute
   AuthenticatedInteracoesRoute: typeof AuthenticatedInteracoesRoute
   AuthenticatedKanbanRoute: typeof AuthenticatedKanbanRoute
-  AuthenticatedMeuMesRoute: typeof AuthenticatedMeuMesRouteWithChildren
+  AuthenticatedMeuMesRoute: typeof AuthenticatedMeuMesRoute
   AuthenticatedMeusDocumentosRoute: typeof AuthenticatedMeusDocumentosRoute
   AuthenticatedMeusProcessosRoute: typeof AuthenticatedMeusProcessosRoute
   AuthenticatedMinhaAreaRoute: typeof AuthenticatedMinhaAreaRoute
@@ -920,6 +908,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedIntegracoesOmieRoute: typeof AuthenticatedIntegracoesOmieRoute
   AuthenticatedCompetenciasClientIdCompetenceRoute: typeof AuthenticatedCompetenciasClientIdCompetenceRoute
+  AuthenticatedMeuMesClientIdCompetenceRoute: typeof AuthenticatedMeuMesClientIdCompetenceRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -934,7 +923,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHomologacaoRoute: AuthenticatedHomologacaoRoute,
   AuthenticatedInteracoesRoute: AuthenticatedInteracoesRoute,
   AuthenticatedKanbanRoute: AuthenticatedKanbanRoute,
-  AuthenticatedMeuMesRoute: AuthenticatedMeuMesRouteWithChildren,
+  AuthenticatedMeuMesRoute: AuthenticatedMeuMesRoute,
   AuthenticatedMeusDocumentosRoute: AuthenticatedMeusDocumentosRoute,
   AuthenticatedMeusProcessosRoute: AuthenticatedMeusProcessosRoute,
   AuthenticatedMinhaAreaRoute: AuthenticatedMinhaAreaRoute,
@@ -953,6 +942,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedIntegracoesOmieRoute: AuthenticatedIntegracoesOmieRoute,
   AuthenticatedCompetenciasClientIdCompetenceRoute:
     AuthenticatedCompetenciasClientIdCompetenceRoute,
+  AuthenticatedMeuMesClientIdCompetenceRoute:
+    AuthenticatedMeuMesClientIdCompetenceRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

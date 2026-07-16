@@ -19,7 +19,7 @@ import {
   Receipt, Workflow, CalendarClock, AlertTriangle,
 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/meu-mes/$clientId/$competence")({
+export const Route = createFileRoute("/_authenticated/meu-mes_/$clientId/$competence")({
   component: MyMonthDetailPage,
   errorComponent: () => (
     <EmptyState
