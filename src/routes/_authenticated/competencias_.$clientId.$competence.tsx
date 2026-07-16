@@ -18,7 +18,7 @@ import {
   ArrowLeft, ArrowRight, Info, History,
 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/competencias/$clientId/$competence")({
+export const Route = createFileRoute("/_authenticated/competencias_/$clientId/$competence")({
   component: CompetenciaDetailPage,
   errorComponent: () => (
     <EmptyState

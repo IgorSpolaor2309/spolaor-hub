@@ -49,7 +49,7 @@ import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicHooksCompetenceMonthlyGenerationRouteImport } from './routes/api/public/hooks/competence-monthly-generation'
 import { Route as AuthenticatedMeuMesClientIdCompetenceRouteImport } from './routes/_authenticated/meu-mes.$clientId.$competence'
-import { Route as AuthenticatedCompetenciasClientIdCompetenceRouteImport } from './routes/_authenticated/competencias.$clientId.$competence'
+import { Route as AuthenticatedCompetenciasClientIdCompetenceRouteImport } from './routes/_authenticated/competencias_.$clientId.$competence'
 
 const SegurancaRoute = SegurancaRouteImport.update({
   id: '/seguranca',
@@ -271,9 +271,9 @@ const AuthenticatedMeuMesClientIdCompetenceRoute =
   } as any)
 const AuthenticatedCompetenciasClientIdCompetenceRoute =
   AuthenticatedCompetenciasClientIdCompetenceRouteImport.update({
-    id: '/$clientId/$competence',
-    path: '/$clientId/$competence',
-    getParentRoute: () => AuthenticatedCompetenciasRoute,
+    id: '/competencias_/$clientId/$competence',
+    path: '/competencias/$clientId/$competence',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -286,7 +286,7 @@ export interface FileRoutesByFullPath {
   '/checklist': typeof AuthenticatedChecklistRoute
   '/clientes': typeof AuthenticatedClientesRouteWithChildren
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
-  '/competencias': typeof AuthenticatedCompetenciasRouteWithChildren
+  '/competencias': typeof AuthenticatedCompetenciasRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/documentos': typeof AuthenticatedDocumentosRoute
   '/guias': typeof AuthenticatedGuiasRoute
@@ -327,7 +327,7 @@ export interface FileRoutesByTo {
   '/checklist': typeof AuthenticatedChecklistRoute
   '/clientes': typeof AuthenticatedClientesRouteWithChildren
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
-  '/competencias': typeof AuthenticatedCompetenciasRouteWithChildren
+  '/competencias': typeof AuthenticatedCompetenciasRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/documentos': typeof AuthenticatedDocumentosRoute
   '/guias': typeof AuthenticatedGuiasRoute
@@ -371,7 +371,7 @@ export interface FileRoutesById {
   '/_authenticated/checklist': typeof AuthenticatedChecklistRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRouteWithChildren
   '/_authenticated/colaboradores': typeof AuthenticatedColaboradoresRoute
-  '/_authenticated/competencias': typeof AuthenticatedCompetenciasRouteWithChildren
+  '/_authenticated/competencias': typeof AuthenticatedCompetenciasRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/documentos': typeof AuthenticatedDocumentosRoute
   '/_authenticated/guias': typeof AuthenticatedGuiasRoute
@@ -400,7 +400,7 @@ export interface FileRoutesById {
   '/_authenticated/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
   '/_authenticated/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/_authenticated/processos/$id': typeof AuthenticatedProcessosIdRoute
-  '/_authenticated/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
+  '/_authenticated/competencias_/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/_authenticated/meu-mes/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
   '/api/public/hooks/competence-monthly-generation': typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
 }
@@ -529,7 +529,7 @@ export interface FileRouteTypes {
     | '/_authenticated/integracoes/omie'
     | '/_authenticated/portal-processos/$id'
     | '/_authenticated/processos/$id'
-    | '/_authenticated/competencias/$clientId/$competence'
+    | '/_authenticated/competencias_/$clientId/$competence'
     | '/_authenticated/meu-mes/$clientId/$competence'
     | '/api/public/hooks/competence-monthly-generation'
   fileRoutesById: FileRoutesById
@@ -828,12 +828,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMeuMesClientIdCompetenceRouteImport
       parentRoute: typeof AuthenticatedMeuMesRoute
     }
-    '/_authenticated/competencias/$clientId/$competence': {
-      id: '/_authenticated/competencias/$clientId/$competence'
-      path: '/$clientId/$competence'
+    '/_authenticated/competencias_/$clientId/$competence': {
+      id: '/_authenticated/competencias_/$clientId/$competence'
+      path: '/competencias/$clientId/$competence'
       fullPath: '/competencias/$clientId/$competence'
       preLoaderRoute: typeof AuthenticatedCompetenciasClientIdCompetenceRouteImport
-      parentRoute: typeof AuthenticatedCompetenciasRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
@@ -849,21 +849,6 @@ const AuthenticatedClientesRouteChildren: AuthenticatedClientesRouteChildren = {
 const AuthenticatedClientesRouteWithChildren =
   AuthenticatedClientesRoute._addFileChildren(
     AuthenticatedClientesRouteChildren,
-  )
-
-interface AuthenticatedCompetenciasRouteChildren {
-  AuthenticatedCompetenciasClientIdCompetenceRoute: typeof AuthenticatedCompetenciasClientIdCompetenceRoute
-}
-
-const AuthenticatedCompetenciasRouteChildren: AuthenticatedCompetenciasRouteChildren =
-  {
-    AuthenticatedCompetenciasClientIdCompetenceRoute:
-      AuthenticatedCompetenciasClientIdCompetenceRoute,
-  }
-
-const AuthenticatedCompetenciasRouteWithChildren =
-  AuthenticatedCompetenciasRoute._addFileChildren(
-    AuthenticatedCompetenciasRouteChildren,
   )
 
 interface AuthenticatedMeuMesRouteChildren {
@@ -910,7 +895,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChecklistRoute: typeof AuthenticatedChecklistRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRouteWithChildren
   AuthenticatedColaboradoresRoute: typeof AuthenticatedColaboradoresRoute
-  AuthenticatedCompetenciasRoute: typeof AuthenticatedCompetenciasRouteWithChildren
+  AuthenticatedCompetenciasRoute: typeof AuthenticatedCompetenciasRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRoute
   AuthenticatedGuiasRoute: typeof AuthenticatedGuiasRoute
@@ -934,13 +919,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedValidadesRoute: typeof AuthenticatedValidadesRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedIntegracoesOmieRoute: typeof AuthenticatedIntegracoesOmieRoute
+  AuthenticatedCompetenciasClientIdCompetenceRoute: typeof AuthenticatedCompetenciasClientIdCompetenceRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChecklistRoute: AuthenticatedChecklistRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRouteWithChildren,
   AuthenticatedColaboradoresRoute: AuthenticatedColaboradoresRoute,
-  AuthenticatedCompetenciasRoute: AuthenticatedCompetenciasRouteWithChildren,
+  AuthenticatedCompetenciasRoute: AuthenticatedCompetenciasRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedDocumentosRoute: AuthenticatedDocumentosRoute,
   AuthenticatedGuiasRoute: AuthenticatedGuiasRoute,
@@ -965,6 +951,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedValidadesRoute: AuthenticatedValidadesRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedIntegracoesOmieRoute: AuthenticatedIntegracoesOmieRoute,
+  AuthenticatedCompetenciasClientIdCompetenceRoute:
+    AuthenticatedCompetenciasClientIdCompetenceRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
