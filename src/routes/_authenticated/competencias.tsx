@@ -206,7 +206,10 @@ function CompetenciasPage() {
   const [fAtraso, setFAtraso] = useState(false);
   const [fAgCliente, setFAgCliente] = useState(false);
   const [fDemo, setFDemo] = useState<"all" | "real" | "demo">("all");
+  const [fAdmin, setFAdmin] = useState<"all" | "sem_competencia" | "sem_responsavel" | "divergencia">("all");
   const [sortBy, setSortBy] = useState<"padrao" | "nome" | "prog_asc" | "prog_desc" | "atrasos" | "pendencias" | "revisao">("padrao");
+
+  const isAdmin = role === "admin";
 
   const isStaff = role === "admin" || role === "collaborator";
   const ready = !loading && isStaff;
