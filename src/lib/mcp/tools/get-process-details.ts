@@ -97,7 +97,7 @@ export default defineTool({
       data_abertura: proc.data_abertura,
       prazo_final: proc.prazo_final,
       data_conclusao: proc.data_conclusao,
-      responsavel: isClient ? null : (proc as any).responsavel,
+      responsavel: isClient ? null : respRes.data ?? null,
       motivo_espera: isClient ? null : proc.motivo_espera,
       observacoes: isClient ? null : proc.observacoes,
       etapas: (steps ?? []).map((s: any) => ({
