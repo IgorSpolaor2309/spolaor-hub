@@ -45,7 +45,7 @@ export default defineTool({
     // 3) Colaboradores responsáveis permitidos.
     const collabsP = supabase
       .from("client_collaborators")
-      .select("collaborator_id, collaborators(profile_id, profiles:profile_id(full_name, email))")
+      .select("collaborator_id, collaborators(nome, email, cargo, departamento)")
       .eq("client_id", client_id);
 
     // 4) Contagens em paralelo (todas com RLS).
