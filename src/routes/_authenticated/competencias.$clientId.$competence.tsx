@@ -118,7 +118,8 @@ function CompetenciaDetailPage() {
   if (r.sol_aguardando_cliente > 0) alerts.push(`${r.sol_aguardando_cliente} solicitação(ões) aguardando cliente`);
 
   const checklistAplic = Math.max(0, r.checklist_total - r.checklist_cancelado);
-  const checklistFeito = r.checklist_concluido + r.checklist_recebido;
+  // "recebido" = aguardando conclusão da contabilidade — não conta como concluído.
+  const checklistFeito = r.checklist_concluido;
 
   return (
     <div>
