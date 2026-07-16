@@ -198,6 +198,16 @@ function CompetenciaDetailPage() {
         </Card>
       )}
 
+      {/* Ciclo da competência (Fase 2) */}
+      <div className="mb-3">
+        <CompetenceCyclePanel
+          clientId={clientId}
+          competence={competence}
+          role={role}
+          userId={userId}
+        />
+      </div>
+
       {/* Cards dos módulos */}
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         <ModuleCard
