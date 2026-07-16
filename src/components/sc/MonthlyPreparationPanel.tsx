@@ -51,16 +51,16 @@ export function MonthlyPreparationPanel({
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [previewComp, setPreviewComp] = useState(competence);
-  const [includeDemo, setIncludeDemo] = useState(false);
+  const [scope, setScope] = useState<"real" | "demo" | "all">("real");
 
   // Preview
   const previewQ = useQuery({
-    queryKey: ["comp-generation-preview", previewComp, includeDemo],
+    queryKey: ["comp-generation-preview", previewComp, scope],
     enabled: open,
     queryFn: async () => {
       const { data, error } = await (supabase as any).rpc(
         "admin_generate_monthly_competences_preview",
-        { p_competence: previewComp, p_include_demo: includeDemo },
+        { p_competence: previewComp, p_scope: scope },
       );
       if (error) throw error;
       return (data ?? []) as PreviewRow[];
@@ -79,7 +79,7 @@ export function MonthlyPreparationPanel({
     mutationFn: async () => {
       const { data, error } = await (supabase as any).rpc("admin_generate_monthly_competences", {
         p_competence: previewComp,
-        p_include_demo: includeDemo,
+        p_scope: scope,
         p_source: "manual",
       });
       if (error) throw error;
@@ -163,8 +163,16 @@ export function MonthlyPreparationPanel({
               })}
             </select>
             <label className="ml-4 flex items-center gap-2 text-xs">
-              <input type="checkbox" checked={includeDemo} onChange={(e) => setIncludeDemo(e.target.checked)} />
-              Incluir empresas demo
+              <span className="text-muted-foreground">Escopo</span>
+              <select
+                className="rounded-md border bg-background px-2 py-1 text-sm"
+                value={scope}
+                onChange={(e) => setScope(e.target.value as "real" | "demo" | "all")}
+              >
+                <option value="real">Somente empresas reais</option>
+                <option value="demo">Somente empresas demo (lote ativo)</option>
+                <option value="all">Empresas reais e demo</option>
+              </select>
             </label>
           </div>
 
