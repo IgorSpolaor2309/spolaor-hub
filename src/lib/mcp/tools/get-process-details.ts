@@ -24,10 +24,8 @@ export default defineTool({
       .select(
         `id, client_id, status, prioridade, progresso, total_etapas, etapas_concluidas,
          data_abertura, prazo_final, data_conclusao, created_at, updated_at,
-         motivo_espera, observacoes, responsavel_id,
-         clients:client_id(id, razao_social, nome_fantasia),
-         process_types:process_type_id(id, nome, categoria),
-         responsavel:responsavel_id(id, full_name, email)`,
+         motivo_espera, observacoes, responsavel_id, process_type_id,
+         clients:client_id(id, razao_social, nome_fantasia)`,
       )
       .eq("id", process_id)
       .maybeSingle();
