@@ -19,6 +19,7 @@ import {
 } from "@/lib/competencia";
 import { OFFICIAL_LABEL, OFFICIAL_TONE, type CompetenceRow, type OfficialStatus } from "@/lib/competence-status";
 import { ChevronLeft, ChevronRight, CalendarClock, Search, X, ArrowRight, Layers, Info, AlertTriangle } from "lucide-react";
+import { MonthlyPreparationPanel } from "@/components/sc/MonthlyPreparationPanel";
 
 // ----- Tipos ---------------------------------------------------------------
 
