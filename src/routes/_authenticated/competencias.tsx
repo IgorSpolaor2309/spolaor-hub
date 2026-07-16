@@ -19,6 +19,7 @@ import {
 } from "@/lib/competencia";
 import { OFFICIAL_LABEL, OFFICIAL_TONE, type CompetenceRow, type OfficialStatus } from "@/lib/competence-status";
 import { ChevronLeft, ChevronRight, CalendarClock, Search, X, ArrowRight, Layers, Info, AlertTriangle } from "lucide-react";
+import { MonthlyPreparationPanel } from "@/components/sc/MonthlyPreparationPanel";
 
 // ----- Tipos ---------------------------------------------------------------
 
@@ -206,7 +207,10 @@ function CompetenciasPage() {
   const [fAtraso, setFAtraso] = useState(false);
   const [fAgCliente, setFAgCliente] = useState(false);
   const [fDemo, setFDemo] = useState<"all" | "real" | "demo">("all");
+  const [fAdmin, setFAdmin] = useState<"all" | "sem_competencia" | "sem_responsavel" | "divergencia">("all");
   const [sortBy, setSortBy] = useState<"padrao" | "nome" | "prog_asc" | "prog_desc" | "atrasos" | "pendencias" | "revisao">("padrao");
+
+  const isAdmin = role === "admin";
 
   const isStaff = role === "admin" || role === "collaborator";
   const ready = !loading && isStaff;
@@ -283,7 +287,20 @@ function CompetenciasPage() {
           if (fProg === "50_75" && !(percent >= 50 && percent < 75)) return false;
           if (fProg === "75_100" && !(percent >= 75)) return false;
         }
-        void r;
+        // Filtros administrativos (Fase 4)
+        const persisted = persistedQuery.data?.get(r.client_id);
+        if (fAdmin === "sem_competencia" && persisted) return false;
+        if (fAdmin === "sem_responsavel" && (persisted?.responsible_profile_id ?? null)) return false;
+        if (fAdmin === "divergencia") {
+          // Divergência: status oficial "completed" mas ainda há atrasos/pendências,
+          // ou "open" com atividade significativa.
+          const status = persisted?.status;
+          const temAtividade = percent > 0 || situacao === "com_atrasos" || situacao === "aguardando_cliente";
+          const divergente =
+            (status === "completed" && (situacao === "com_atrasos" || situacao === "aguardando_cliente")) ||
+            ((!status || status === "open") && temAtividade);
+          if (!divergente) return false;
+        }
         return true;
       });
 
@@ -308,16 +325,16 @@ function CompetenciasPage() {
       }
     });
     return list;
-  }, [overviewQuery.data, q, fResp, fSituacao, fProg, fAtraso, fAgCliente, fDemo, sortBy]);
+  }, [overviewQuery.data, persistedQuery.data, q, fResp, fSituacao, fProg, fAtraso, fAgCliente, fDemo, fAdmin, sortBy]);
 
   const activeFilters =
     (q ? 1 : 0) + (fResp !== "all" ? 1 : 0) + (fSituacao !== "all" ? 1 : 0) +
     (fProg !== "all" ? 1 : 0) + (fAtraso ? 1 : 0) + (fAgCliente ? 1 : 0) +
-    (fDemo !== "all" ? 1 : 0);
+    (fDemo !== "all" ? 1 : 0) + (fAdmin !== "all" ? 1 : 0);
 
   const clearFilters = () => {
     setQ(""); setFResp("all"); setFSituacao("all"); setFProg("all");
-    setFAtraso(false); setFAgCliente(false); setFDemo("all"); setSortBy("padrao");
+    setFAtraso(false); setFAgCliente(false); setFDemo("all"); setFAdmin("all"); setSortBy("padrao");
   };
 
   if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
@@ -337,6 +354,11 @@ function CompetenciasPage() {
         title="Competências"
         description="Visão mensal consolidada por empresa. Os indicadores são calculados a partir dos módulos existentes — não há duplicação de dados."
       />
+
+      {isAdmin && (
+        <MonthlyPreparationPanel competence={comp} onChangeCompetence={setCompetencia} />
+      )}
+
 
       {/* Seletor de mês */}
       <Card className="mb-3 flex flex-wrap items-center gap-2 p-3">
@@ -448,6 +470,20 @@ function CompetenciasPage() {
                   <SelectItem value="all">Todas</SelectItem>
                   <SelectItem value="real">Reais</SelectItem>
                   <SelectItem value="demo">Demo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          {isAdmin && (
+            <div className="flex items-center gap-1.5">
+              <Label className="text-xs">Preparação</Label>
+              <Select value={fAdmin} onValueChange={(v: any) => setFAdmin(v)}>
+                <SelectTrigger className="h-8 w-[190px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="sem_competencia">Sem competência criada</SelectItem>
+                  <SelectItem value="sem_responsavel">Sem responsável</SelectItem>
+                  <SelectItem value="divergencia">Com divergência</SelectItem>
                 </SelectContent>
               </Select>
             </div>
