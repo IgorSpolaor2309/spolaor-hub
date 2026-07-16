@@ -481,16 +481,36 @@ function CompetenciasPage() {
         />
       ) : (
         <div className="grid gap-2">
-          {rows.map(({ r, percent, situacao }) => (
+          {rows.map(({ r, percent, situacao }) => {
+            const persisted = persistedQuery.data?.get(r.client_id) as Partial<CompetenceRow> | undefined;
+            const official = persisted?.status as OfficialStatus | undefined;
+            const mismatch =
+              official && official !== "completed" &&
+              (situacao === "com_atrasos" || situacao === "aguardando_cliente");
+            return (
             <Card key={r.client_id} className="p-3">
               <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_260px]">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="truncate font-medium">{clientLabel({ razao_social: r.razao_social, nome_fantasia: r.nome_fantasia, documento: null })}</span>
                     {r.is_demo && <Badge variant="outline" className="border-dashed">DEMO</Badge>}
-                    <Badge className={SITUACAO_TONE[situacao]}>{SITUACAO_LABEL[situacao]}</Badge>
+                    {official ? (
+                      <Badge className={OFFICIAL_TONE[official]}>Status oficial: {OFFICIAL_LABEL[official]}</Badge>
+                    ) : (
+                      <Badge variant="outline">Sem competência oficial</Badge>
+                    )}
+                    <Badge variant="outline" className={SITUACAO_TONE[situacao]}>Situação: {SITUACAO_LABEL[situacao]}</Badge>
                     <span className="text-xs text-muted-foreground">Responsável: {r.responsavel_nome ?? "—"}</span>
+                    {persisted?.completed_at && (
+                      <span className="text-xs text-emerald-700">Concluída em {new Date(persisted.completed_at as string).toLocaleDateString("pt-BR")}</span>
+                    )}
                   </div>
+                  {mismatch && (
+                    <div className="mt-1 flex items-center gap-1 text-[11px] text-amber-800">
+                      <AlertTriangle className="h-3 w-3" />
+                      Divergência: status oficial "{OFFICIAL_LABEL[official!]}" x situação calculada "{SITUACAO_LABEL[situacao]}"
+                    </div>
+                  )}
                   <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-3 lg:grid-cols-6">
                     <ModuleStat label="Checklist" value={`${r.checklist_concluido} de ${Math.max(0, r.checklist_total - r.checklist_cancelado)}`} sub={r.checklist_recebido > 0 ? `${r.checklist_recebido} recebidos` : undefined} />
                     <ModuleStat label="Pendências" value={`${r.pend_abertas} abertas`} tone={r.pend_vencidas > 0 ? "danger" : undefined} sub={r.pend_vencidas > 0 ? `${r.pend_vencidas} venc.` : undefined} />
@@ -519,7 +539,8 @@ function CompetenciasPage() {
                 </div>
               </div>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
