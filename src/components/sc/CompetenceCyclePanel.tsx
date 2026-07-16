@@ -28,6 +28,16 @@ type EvalResult = {
   phase: "review" | "complete";
 };
 
+function sanitizeError(e: any): string {
+  const msg = String(e?.message ?? e ?? "");
+  // Não expor mensagens SQL cruas (ex.: column "..." does not exist).
+  if (/column .* does not exist/i.test(msg) || /relation .* does not exist/i.test(msg)) {
+    console.error("[CompetenceCyclePanel] erro técnico:", msg);
+    return "Não foi possível carregar a competência.";
+  }
+  return msg || "Não foi possível carregar a competência.";
+}
+
 export function CompetenceCyclePanel({ clientId, competence, role, userId }: Props) {
   const qc = useQueryClient();
   
