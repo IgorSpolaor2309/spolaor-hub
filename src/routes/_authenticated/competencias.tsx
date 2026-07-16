@@ -230,6 +230,22 @@ function CompetenciasPage() {
     },
   });
 
+  const persistedQuery = useQuery({
+    queryKey: ["competences-persisted", comp],
+    enabled: ready && isValidCompetencia(comp),
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("client_competences")
+        .select("id, client_id, competence, status, responsible_profile_id, completed_at, completed_by")
+        .eq("competence", comp);
+      if (error) throw error;
+      const map = new Map<string, Partial<CompetenceRow>>();
+      (data ?? []).forEach((c: any) => map.set(c.client_id, c));
+      return map;
+    },
+  });
+
   const responsaveis = useMemo(() => {
     const set = new Set<string>();
     (overviewQuery.data ?? []).forEach((r) => {
