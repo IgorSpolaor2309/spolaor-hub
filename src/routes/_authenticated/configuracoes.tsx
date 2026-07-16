@@ -19,7 +19,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { useState } from "react";
-import { Plus, Trash2, Pencil, ShieldCheck } from "lucide-react";
+import { Plus, Trash2, Pencil, ShieldCheck, Package, GitBranch, MessagesSquare, FlaskConical, Plug, ArrowRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+
 import {
   adminCreateUser, adminSetUserRole, adminDeleteUser, adminUpdateUser,
   adminVerifyLinks, adminDiagnoseUser, adminLinkClientAccount,
@@ -117,7 +119,42 @@ function SettingsPage() {
         }
       />
 
+      <Card className="mb-4 p-5">
+        <h3 className="font-display text-lg">Módulos administrativos</h3>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Áreas de configuração e catálogos usados pelo SC Central. Não fazem parte da rotina
+          diária e ficam concentrados aqui para não poluir o menu operacional.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            { to: "/planos", label: "Planos e Checklist", desc: "Catálogo de planos e itens mensais do checklist.", icon: Package },
+            { to: "/processos-modelos", label: "Modelos de processos", desc: "Modelos e etapas padrão para novos processos.", icon: GitBranch },
+            { to: "/modelos", label: "Modelos de mensagens", desc: "Modelos reutilizáveis para comunicação.", icon: MessagesSquare },
+            { to: "/homologacao", label: "Central de Homologação", desc: "Ambiente de homologação e testes.", icon: FlaskConical },
+            { to: "/integracoes/omie", label: "Integração OMIE", desc: "Configuração da integração com o OMIE.", icon: Plug },
+          ].map((m) => (
+            <Link
+              key={m.to}
+              to={m.to}
+              className="group flex items-start gap-3 rounded-md border p-3 transition hover:border-primary hover:bg-muted/40"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                <m.icon className="h-4 w-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1 font-medium">
+                  {m.label}
+                  <ArrowRight className="h-3.5 w-3.5 opacity-0 transition group-hover:opacity-100" />
+                </div>
+                <div className="truncate text-xs text-muted-foreground">{m.desc}</div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </Card>
+
       <Card className="p-5">
+
         <h3 className="font-display text-lg">Contas de acesso</h3>
         <p className="mb-4 text-sm text-muted-foreground">
           Apenas administradores podem criar novas contas e alterar perfis de acesso. O cadastro

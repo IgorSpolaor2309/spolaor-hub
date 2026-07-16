@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/sc/PageHeader";
@@ -41,8 +41,10 @@ const PRIORIDADES = [
 ];
 const PRIO_MAP = Object.fromEntries(PRIORIDADES.map((p) => [p.value, p]));
 
+type TabKey = "todos" | "meus" | "aguardando" | "atrasados" | "concluidos";
+
 function ProcessesPage() {
-  const { role, loading } = useCurrentUser();
+  const { role, userId, loading } = useCurrentUser();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -53,6 +55,8 @@ function ProcessesPage() {
   const [fResp, setFResp] = useState<string>("all");
   const [fPrazo, setFPrazo] = useState<string>("all"); // all | vencido | hoje | em_breve | sem_prazo
   const [sortBy, setSortBy] = useState<string>("prazo");
+  const [tab, setTab] = useState<TabKey>(role === "collaborator" ? "meus" : "todos");
+
 
 
   const ready = !loading && (role === "admin" || role === "collaborator");
@@ -127,9 +131,24 @@ function ProcessesPage() {
   });
 
 
+  // Sincroniza a aba padrão quando o papel do usuário fica disponível.
+  useEffect(() => {
+    if (role === "collaborator") setTab((t) => (t === "todos" ? "meus" : t));
+  }, [role]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const openStatus = (s: string) => s !== "concluido" && s !== "cancelado";
     const arr = (listQ.data ?? []).filter((r: any) => {
+      // Filtro por aba (não sobrescreve os selects abaixo).
+      if (tab === "meus" && userId && r.responsavel_id !== userId) return false;
+      if (tab === "aguardando" && r.status !== "aguardando_cliente" && r.status !== "aguardando_orgao") return false;
+      if (tab === "atrasados") {
+        if (!openStatus(r.status)) return false;
+        if (prazoKind(r.prazo_final) !== "vencido") return false;
+      }
+      if (tab === "concluidos" && r.status !== "concluido") return false;
+
       if (fClient !== "all" && r.client_id !== fClient) return false;
       if (fType !== "all" && r.process_type_id !== fType) return false;
       if (fStatus !== "all" && r.status !== fStatus) return false;
@@ -162,7 +181,8 @@ function ProcessesPage() {
       }
     });
     return arr;
-  }, [listQ.data, search, fClient, fType, fStatus, fPrio, fResp, fPrazo, sortBy]);
+  }, [listQ.data, search, fClient, fType, fStatus, fPrio, fResp, fPrazo, sortBy, tab, userId]);
+
 
   const kpis = useMemo(() => {
     const arr = listQ.data ?? [];
@@ -211,7 +231,34 @@ function ProcessesPage() {
         }
       />
 
+      {/* Abas de visão (unifica "Meus processos" na página principal) */}
+      <div className="mb-3 flex flex-wrap gap-1 border-b">
+        {([
+          { k: "todos", label: "Todos" },
+          { k: "meus", label: "Meus processos" },
+          { k: "aguardando", label: "Aguardando cliente" },
+          { k: "atrasados", label: "Atrasados" },
+          { k: "concluidos", label: "Concluídos" },
+        ] as { k: TabKey; label: string }[]).map((t) => {
+          const active = tab === t.k;
+          return (
+            <button
+              key={t.k}
+              onClick={() => setTab(t.k)}
+              className={`-mb-px border-b-2 px-3 py-2 text-sm transition ${
+                active
+                  ? "border-primary font-medium text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Indicadores rápidos */}
+
       <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
         {[
           { k: "total", label: "Total", v: kpis.total, cls: "bg-muted" },
