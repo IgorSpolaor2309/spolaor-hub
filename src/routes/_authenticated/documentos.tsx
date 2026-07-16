@@ -21,16 +21,24 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 
 export const Route = createFileRoute("/_authenticated/documentos")({
   component: DocsPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    client: typeof search.client === "string" ? search.client : undefined,
+    comp: typeof search.comp === "string" ? search.comp : undefined,
+  }),
   errorComponent: () => <EmptyState icon={<FileText className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />,
 });
+
 
 function DocsPage() {
   const { role, userId, loading } = useCurrentUser();
   const qc = useQueryClient();
   const ready = !loading && !!userId && !!role;
+  const routeSearch = Route.useSearch();
   const [q, setQ] = useState(""); const [tipo, setTipo] = useState("all"); const [status, setStatus] = useState("all");
-  const [fClient, setFClient] = useState<string>("all");
+  const [fClient, setFClient] = useState<string>(routeSearch.client ?? "all");
+  const [fComp, setFComp] = useState<string>(routeSearch.comp ?? "");
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
+
 
   const { data: clients = [] } = useQuery({
     queryKey: ["docs-clients", userId, role],
@@ -78,13 +86,15 @@ function DocsPage() {
   const qLower = q.trim().toLowerCase();
   const filtered = list.filter((d: any) => {
     if (fClient !== "all" && d.client_id !== fClient) return false;
+    if (fComp && d.competencia !== fComp) return false;
     if (tipo !== "all" && normalizeDocTipo(d.tipo) !== normalizeDocTipo(tipo)) return false;
     if (status !== "all" && d.status !== status) return false;
     if (qLower && !`${d.nome ?? ""} ${d.clients?.razao_social ?? ""} ${d.clients?.nome_fantasia ?? ""}`.toLowerCase().includes(qLower)) return false;
     if (!inRange(d.created_at, range)) return false;
     return true;
   });
-  const clearFilters = () => { setQ(""); setTipo("all"); setStatus("all"); setFClient("all"); setDateF(EMPTY_DATE_FILTER); };
+  const clearFilters = () => { setQ(""); setTipo("all"); setStatus("all"); setFClient("all"); setFComp(""); setDateF(EMPTY_DATE_FILTER); };
+
 
   if (!ready) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
