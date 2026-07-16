@@ -30,7 +30,7 @@ type EvalResult = {
 
 export function CompetenceCyclePanel({ clientId, competence, role, userId }: Props) {
   const qc = useQueryClient();
-  const { toast } = useToast();
+  
   const isAdmin = role === "admin";
 
   const competenceQ = useQuery({
@@ -96,8 +96,8 @@ export function CompetenceCyclePanel({ clientId, competence, role, userId }: Pro
       });
       if (error) throw error;
     },
-    onSuccess: () => { toast({ title: "Competência iniciada" }); invalidateAll(); },
-    onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onSuccess: () => { toast.success("Competência iniciada"); invalidateAll(); },
+    onError: (e: any) => toast.error("Erro" + ": " + e.message),
   });
 
   const statusM = useMutation({
@@ -107,8 +107,8 @@ export function CompetenceCyclePanel({ clientId, competence, role, userId }: Pro
       });
       if (error) throw error;
     },
-    onSuccess: () => { toast({ title: "Status atualizado" }); invalidateAll(); },
-    onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onSuccess: () => { toast.success("Status atualizado"); invalidateAll(); },
+    onError: (e: any) => toast.error("Erro" + ": " + e.message),
   });
 
   const responsibleM = useMutation({
@@ -118,8 +118,8 @@ export function CompetenceCyclePanel({ clientId, competence, role, userId }: Pro
       });
       if (error) throw error;
     },
-    onSuccess: () => { toast({ title: "Responsável atualizado" }); invalidateAll(); },
-    onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onSuccess: () => { toast.success("Responsável atualizado"); invalidateAll(); },
+    onError: (e: any) => toast.error("Erro" + ": " + e.message),
   });
 
   const reviewM = useMutation({
@@ -131,8 +131,8 @@ export function CompetenceCyclePanel({ clientId, competence, role, userId }: Pro
       });
       if (error) throw error;
     },
-    onSuccess: () => { toast({ title: "Enviado para revisão" }); invalidateAll(); },
-    onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onSuccess: () => { toast.success("Enviado para revisão"); invalidateAll(); },
+    onError: (e: any) => toast.error("Erro" + ": " + e.message),
   });
 
   const completeM = useMutation({
@@ -145,8 +145,8 @@ export function CompetenceCyclePanel({ clientId, competence, role, userId }: Pro
       });
       if (error) throw error;
     },
-    onSuccess: () => { toast({ title: "Competência concluída" }); invalidateAll(); },
-    onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onSuccess: () => { toast.success("Competência concluída"); invalidateAll(); },
+    onError: (e: any) => toast.error("Erro" + ": " + e.message),
   });
 
   const reopenM = useMutation({
@@ -156,8 +156,8 @@ export function CompetenceCyclePanel({ clientId, competence, role, userId }: Pro
       });
       if (error) throw error;
     },
-    onSuccess: () => { toast({ title: "Competência reaberta" }); invalidateAll(); },
-    onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onSuccess: () => { toast.success("Competência reaberta"); invalidateAll(); },
+    onError: (e: any) => toast.error("Erro" + ": " + e.message),
   });
 
   const [awaitingOpen, setAwaitingOpen] = useState(false);
@@ -176,7 +176,7 @@ export function CompetenceCyclePanel({ clientId, competence, role, userId }: Pro
     const { data, error } = await (supabase as any).rpc("competence_evaluate", {
       p_client_id: clientId, p_competence: competence, p_phase: "review",
     });
-    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    if (error) { toast.error("Erro" + ": " + error.message); return; }
     setReviewEval(data as EvalResult);
     setReviewJust("");
     setReviewOpen(true);
@@ -186,7 +186,7 @@ export function CompetenceCyclePanel({ clientId, competence, role, userId }: Pro
     const { data, error } = await (supabase as any).rpc("competence_evaluate", {
       p_client_id: clientId, p_competence: competence, p_phase: "complete",
     });
-    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    if (error) { toast.error("Erro" + ": " + error.message); return; }
     setCompleteEval(data as EvalResult);
     setCompleteNotes("");
     setCompleteJust("");
