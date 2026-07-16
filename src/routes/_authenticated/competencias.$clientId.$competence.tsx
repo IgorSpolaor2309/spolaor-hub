@@ -12,6 +12,7 @@ import { clientLabel } from "@/lib/client-display";
 import { formatCompetenciaLong, isValidCompetencia, competenciaBounds } from "@/lib/competencia";
 import { formatBR } from "@/lib/dates";
 import { computeProgress, computeSituacao } from "./competencias";
+import { CompetenceCyclePanel } from "@/components/sc/CompetenceCyclePanel";
 import {
   Layers, AlertTriangle, ClipboardList, ListChecks, Inbox, FileText, Receipt, Workflow,
   ArrowLeft, ArrowRight, Info, History,
@@ -32,7 +33,7 @@ type OverviewRow = Parameters<typeof computeProgress>[0];
 
 function CompetenciaDetailPage() {
   const { clientId, competence } = Route.useParams();
-  const { role, loading } = useCurrentUser();
+  const { role, loading, userId } = useCurrentUser();
   const router = useRouter();
 
   const isStaff = role === "admin" || role === "collaborator";
@@ -196,6 +197,16 @@ function CompetenciaDetailPage() {
           </div>
         </Card>
       )}
+
+      {/* Ciclo da competência (Fase 2) */}
+      <div className="mb-3">
+        <CompetenceCyclePanel
+          clientId={clientId}
+          competence={competence}
+          role={role}
+          userId={userId}
+        />
+      </div>
 
       {/* Cards dos módulos */}
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">

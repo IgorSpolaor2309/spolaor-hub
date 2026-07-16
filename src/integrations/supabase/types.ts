@@ -395,6 +395,121 @@ export type Database = {
           },
         ]
       }
+      client_competences: {
+        Row: {
+          awaiting_client_note: string | null
+          awaiting_client_since: string | null
+          client_id: string
+          competence: string
+          completed_at: string | null
+          completed_by: string | null
+          completion_notes: string | null
+          completion_summary: Json | null
+          created_at: string
+          created_by: string | null
+          demo_batch_id: string | null
+          id: string
+          is_demo: boolean
+          reopen_reason: string | null
+          reopened_at: string | null
+          reopened_by: string | null
+          responsible_profile_id: string | null
+          review_requested_at: string | null
+          review_requested_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          awaiting_client_note?: string | null
+          awaiting_client_since?: string | null
+          client_id: string
+          competence: string
+          completed_at?: string | null
+          completed_by?: string | null
+          completion_notes?: string | null
+          completion_summary?: Json | null
+          created_at?: string
+          created_by?: string | null
+          demo_batch_id?: string | null
+          id?: string
+          is_demo?: boolean
+          reopen_reason?: string | null
+          reopened_at?: string | null
+          reopened_by?: string | null
+          responsible_profile_id?: string | null
+          review_requested_at?: string | null
+          review_requested_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          awaiting_client_note?: string | null
+          awaiting_client_since?: string | null
+          client_id?: string
+          competence?: string
+          completed_at?: string | null
+          completed_by?: string | null
+          completion_notes?: string | null
+          completion_summary?: Json | null
+          created_at?: string
+          created_by?: string | null
+          demo_batch_id?: string | null
+          id?: string
+          is_demo?: boolean
+          reopen_reason?: string | null
+          reopened_at?: string | null
+          reopened_by?: string | null
+          responsible_profile_id?: string | null
+          review_requested_at?: string | null
+          review_requested_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_competences_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_competences_completed_by_fkey"
+            columns: ["completed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_competences_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_competences_reopened_by_fkey"
+            columns: ["reopened_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_competences_responsible_profile_id_fkey"
+            columns: ["responsible_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_competences_review_requested_by_fkey"
+            columns: ["review_requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_fiscal_data: {
         Row: {
           client_id: string
@@ -2558,6 +2673,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _competence_check_transition: {
+        Args: { p_from: string; p_to: string }
+        Returns: boolean
+      }
+      _competence_log: {
+        Args: {
+          p_actor: string
+          p_client_id: string
+          p_descricao: string
+          p_meta: Json
+          p_tipo: string
+        }
+        Returns: undefined
+      }
+      _competence_validate_responsible: {
+        Args: { p_client_id: string; p_profile_id: string }
+        Returns: undefined
+      }
       admin_bulk_set_model_visibility: {
         Args: {
           _include_requirements?: boolean
@@ -2771,6 +2904,215 @@ export type Database = {
       collaborator_visible_to_user: {
         Args: { _collab_id: string; _user_id: string }
         Returns: boolean
+      }
+      competence_change_responsible: {
+        Args: { p_id: string; p_new_responsible: string }
+        Returns: {
+          awaiting_client_note: string | null
+          awaiting_client_since: string | null
+          client_id: string
+          competence: string
+          completed_at: string | null
+          completed_by: string | null
+          completion_notes: string | null
+          completion_summary: Json | null
+          created_at: string
+          created_by: string | null
+          demo_batch_id: string | null
+          id: string
+          is_demo: boolean
+          reopen_reason: string | null
+          reopened_at: string | null
+          reopened_by: string | null
+          responsible_profile_id: string | null
+          review_requested_at: string | null
+          review_requested_by: string | null
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "client_competences"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      competence_change_status: {
+        Args: { p_id: string; p_new_status: string; p_note?: string }
+        Returns: {
+          awaiting_client_note: string | null
+          awaiting_client_since: string | null
+          client_id: string
+          competence: string
+          completed_at: string | null
+          completed_by: string | null
+          completion_notes: string | null
+          completion_summary: Json | null
+          created_at: string
+          created_by: string | null
+          demo_batch_id: string | null
+          id: string
+          is_demo: boolean
+          reopen_reason: string | null
+          reopened_at: string | null
+          reopened_by: string | null
+          responsible_profile_id: string | null
+          review_requested_at: string | null
+          review_requested_by: string | null
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "client_competences"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      competence_complete: {
+        Args: {
+          p_accepted_alerts?: Json
+          p_id: string
+          p_justification?: string
+          p_notes?: string
+        }
+        Returns: {
+          awaiting_client_note: string | null
+          awaiting_client_since: string | null
+          client_id: string
+          competence: string
+          completed_at: string | null
+          completed_by: string | null
+          completion_notes: string | null
+          completion_summary: Json | null
+          created_at: string
+          created_by: string | null
+          demo_batch_id: string | null
+          id: string
+          is_demo: boolean
+          reopen_reason: string | null
+          reopened_at: string | null
+          reopened_by: string | null
+          responsible_profile_id: string | null
+          review_requested_at: string | null
+          review_requested_by: string | null
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "client_competences"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      competence_evaluate: {
+        Args: { p_client_id: string; p_competence: string; p_phase: string }
+        Returns: Json
+      }
+      competence_reopen: {
+        Args: { p_id: string; p_reason: string }
+        Returns: {
+          awaiting_client_note: string | null
+          awaiting_client_since: string | null
+          client_id: string
+          competence: string
+          completed_at: string | null
+          completed_by: string | null
+          completion_notes: string | null
+          completion_summary: Json | null
+          created_at: string
+          created_by: string | null
+          demo_batch_id: string | null
+          id: string
+          is_demo: boolean
+          reopen_reason: string | null
+          reopened_at: string | null
+          reopened_by: string | null
+          responsible_profile_id: string | null
+          review_requested_at: string | null
+          review_requested_by: string | null
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "client_competences"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      competence_send_to_review: {
+        Args: {
+          p_accepted_alerts?: Json
+          p_id: string
+          p_justification?: string
+        }
+        Returns: {
+          awaiting_client_note: string | null
+          awaiting_client_since: string | null
+          client_id: string
+          competence: string
+          completed_at: string | null
+          completed_by: string | null
+          completion_notes: string | null
+          completion_summary: Json | null
+          created_at: string
+          created_by: string | null
+          demo_batch_id: string | null
+          id: string
+          is_demo: boolean
+          reopen_reason: string | null
+          reopened_at: string | null
+          reopened_by: string | null
+          responsible_profile_id: string | null
+          review_requested_at: string | null
+          review_requested_by: string | null
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "client_competences"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      competence_start: {
+        Args: {
+          p_client_id: string
+          p_competence: string
+          p_responsible?: string
+        }
+        Returns: {
+          awaiting_client_note: string | null
+          awaiting_client_since: string | null
+          client_id: string
+          competence: string
+          completed_at: string | null
+          completed_by: string | null
+          completion_notes: string | null
+          completion_summary: Json | null
+          created_at: string
+          created_by: string | null
+          demo_batch_id: string | null
+          id: string
+          is_demo: boolean
+          reopen_reason: string | null
+          reopened_at: string | null
+          reopened_by: string | null
+          responsible_profile_id: string | null
+          review_requested_at: string | null
+          review_requested_by: string | null
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "client_competences"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       cron_generate_current_plan_checklist: { Args: never; Returns: Json }
       current_actor_role: { Args: never; Returns: string }
