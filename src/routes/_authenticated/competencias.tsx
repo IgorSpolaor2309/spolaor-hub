@@ -342,6 +342,11 @@ function CompetenciasPage() {
         description="Visão mensal consolidada por empresa. Os indicadores são calculados a partir dos módulos existentes — não há duplicação de dados."
       />
 
+      {isAdmin && (
+        <MonthlyPreparationPanel competence={comp} onChangeCompetence={setCompetencia} />
+      )}
+
+
       {/* Seletor de mês */}
       <Card className="mb-3 flex flex-wrap items-center gap-2 p-3">
         <Button variant="outline" size="icon" aria-label="Mês anterior"
