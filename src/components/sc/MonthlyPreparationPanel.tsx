@@ -79,7 +79,7 @@ export function MonthlyPreparationPanel({
     mutationFn: async () => {
       const { data, error } = await (supabase as any).rpc("admin_generate_monthly_competences", {
         p_competence: previewComp,
-        p_include_demo: includeDemo,
+        p_scope: scope,
         p_source: "manual",
       });
       if (error) throw error;
