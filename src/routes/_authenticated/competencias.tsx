@@ -474,6 +474,20 @@ function CompetenciasPage() {
               </Select>
             </div>
           )}
+          {isAdmin && (
+            <div className="flex items-center gap-1.5">
+              <Label className="text-xs">Preparação</Label>
+              <Select value={fAdmin} onValueChange={(v: any) => setFAdmin(v)}>
+                <SelectTrigger className="h-8 w-[190px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="sem_competencia">Sem competência criada</SelectItem>
+                  <SelectItem value="sem_responsavel">Sem responsável</SelectItem>
+                  <SelectItem value="divergencia">Com divergência</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )
           {activeFilters > 0 && (
             <button className="ml-auto text-muted-foreground underline" onClick={clearFilters}>
               <X className="mr-1 inline h-3 w-3" />limpar filtros
