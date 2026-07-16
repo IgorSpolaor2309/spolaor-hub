@@ -231,7 +231,34 @@ function ProcessesPage() {
         }
       />
 
+      {/* Abas de visão (unifica "Meus processos" na página principal) */}
+      <div className="mb-3 flex flex-wrap gap-1 border-b">
+        {([
+          { k: "todos", label: "Todos" },
+          { k: "meus", label: "Meus processos" },
+          { k: "aguardando", label: "Aguardando cliente" },
+          { k: "atrasados", label: "Atrasados" },
+          { k: "concluidos", label: "Concluídos" },
+        ] as { k: TabKey; label: string }[]).map((t) => {
+          const active = tab === t.k;
+          return (
+            <button
+              key={t.k}
+              onClick={() => setTab(t.k)}
+              className={`-mb-px border-b-2 px-3 py-2 text-sm transition ${
+                active
+                  ? "border-primary font-medium text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Indicadores rápidos */}
+
       <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
         {[
           { k: "total", label: "Total", v: kpis.total, cls: "bg-muted" },
