@@ -46,6 +46,7 @@ import { Route as AuthenticatedIntegracoesOmieRouteImport } from './routes/_auth
 import { Route as AuthenticatedClientesIdRouteImport } from './routes/_authenticated/clientes.$id'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as AuthenticatedCompetenciasClientIdCompetenceRouteImport } from './routes/_authenticated/competencias.$clientId.$competence'
 
 const SegurancaRoute = SegurancaRouteImport.update({
   id: '/seguranca',
@@ -248,6 +249,12 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedCompetenciasClientIdCompetenceRoute =
+  AuthenticatedCompetenciasClientIdCompetenceRouteImport.update({
+    id: '/$clientId/$competence',
+    path: '/$clientId/$competence',
+    getParentRoute: () => AuthenticatedCompetenciasRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -259,7 +266,7 @@ export interface FileRoutesByFullPath {
   '/checklist': typeof AuthenticatedChecklistRoute
   '/clientes': typeof AuthenticatedClientesRouteWithChildren
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
-  '/competencias': typeof AuthenticatedCompetenciasRoute
+  '/competencias': typeof AuthenticatedCompetenciasRouteWithChildren
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/documentos': typeof AuthenticatedDocumentosRoute
   '/guias': typeof AuthenticatedGuiasRoute
@@ -286,6 +293,7 @@ export interface FileRoutesByFullPath {
   '/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
   '/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
+  '/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -296,7 +304,7 @@ export interface FileRoutesByTo {
   '/checklist': typeof AuthenticatedChecklistRoute
   '/clientes': typeof AuthenticatedClientesRouteWithChildren
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
-  '/competencias': typeof AuthenticatedCompetenciasRoute
+  '/competencias': typeof AuthenticatedCompetenciasRouteWithChildren
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/documentos': typeof AuthenticatedDocumentosRoute
   '/guias': typeof AuthenticatedGuiasRoute
@@ -324,6 +332,7 @@ export interface FileRoutesByTo {
   '/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
   '/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
+  '/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -336,7 +345,7 @@ export interface FileRoutesById {
   '/_authenticated/checklist': typeof AuthenticatedChecklistRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRouteWithChildren
   '/_authenticated/colaboradores': typeof AuthenticatedColaboradoresRoute
-  '/_authenticated/competencias': typeof AuthenticatedCompetenciasRoute
+  '/_authenticated/competencias': typeof AuthenticatedCompetenciasRouteWithChildren
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/documentos': typeof AuthenticatedDocumentosRoute
   '/_authenticated/guias': typeof AuthenticatedGuiasRoute
@@ -364,6 +373,7 @@ export interface FileRoutesById {
   '/_authenticated/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
   '/_authenticated/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/_authenticated/processos/$id': typeof AuthenticatedProcessosIdRoute
+  '/_authenticated/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -404,6 +414,7 @@ export interface FileRouteTypes {
     | '/integracoes/omie'
     | '/portal-processos/$id'
     | '/processos/$id'
+    | '/competencias/$clientId/$competence'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -442,6 +453,7 @@ export interface FileRouteTypes {
     | '/integracoes/omie'
     | '/portal-processos/$id'
     | '/processos/$id'
+    | '/competencias/$clientId/$competence'
   id:
     | '__root__'
     | '/_authenticated'
@@ -481,6 +493,7 @@ export interface FileRouteTypes {
     | '/_authenticated/integracoes/omie'
     | '/_authenticated/portal-processos/$id'
     | '/_authenticated/processos/$id'
+    | '/_authenticated/competencias/$clientId/$competence'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -755,6 +768,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/competencias/$clientId/$competence': {
+      id: '/_authenticated/competencias/$clientId/$competence'
+      path: '/$clientId/$competence'
+      fullPath: '/competencias/$clientId/$competence'
+      preLoaderRoute: typeof AuthenticatedCompetenciasClientIdCompetenceRouteImport
+      parentRoute: typeof AuthenticatedCompetenciasRoute
+    }
   }
 }
 
@@ -769,6 +789,21 @@ const AuthenticatedClientesRouteChildren: AuthenticatedClientesRouteChildren = {
 const AuthenticatedClientesRouteWithChildren =
   AuthenticatedClientesRoute._addFileChildren(
     AuthenticatedClientesRouteChildren,
+  )
+
+interface AuthenticatedCompetenciasRouteChildren {
+  AuthenticatedCompetenciasClientIdCompetenceRoute: typeof AuthenticatedCompetenciasClientIdCompetenceRoute
+}
+
+const AuthenticatedCompetenciasRouteChildren: AuthenticatedCompetenciasRouteChildren =
+  {
+    AuthenticatedCompetenciasClientIdCompetenceRoute:
+      AuthenticatedCompetenciasClientIdCompetenceRoute,
+  }
+
+const AuthenticatedCompetenciasRouteWithChildren =
+  AuthenticatedCompetenciasRoute._addFileChildren(
+    AuthenticatedCompetenciasRouteChildren,
   )
 
 interface AuthenticatedPortalProcessosRouteChildren {
@@ -803,7 +838,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChecklistRoute: typeof AuthenticatedChecklistRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRouteWithChildren
   AuthenticatedColaboradoresRoute: typeof AuthenticatedColaboradoresRoute
-  AuthenticatedCompetenciasRoute: typeof AuthenticatedCompetenciasRoute
+  AuthenticatedCompetenciasRoute: typeof AuthenticatedCompetenciasRouteWithChildren
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRoute
   AuthenticatedGuiasRoute: typeof AuthenticatedGuiasRoute
@@ -832,7 +867,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChecklistRoute: AuthenticatedChecklistRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRouteWithChildren,
   AuthenticatedColaboradoresRoute: AuthenticatedColaboradoresRoute,
-  AuthenticatedCompetenciasRoute: AuthenticatedCompetenciasRoute,
+  AuthenticatedCompetenciasRoute: AuthenticatedCompetenciasRouteWithChildren,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedDocumentosRoute: AuthenticatedDocumentosRoute,
   AuthenticatedGuiasRoute: AuthenticatedGuiasRoute,
