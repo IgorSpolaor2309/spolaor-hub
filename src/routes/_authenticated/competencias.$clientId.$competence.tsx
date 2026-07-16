@@ -96,7 +96,7 @@ function CompetenciaDetailPage() {
     return (
       <div>
         <div className="mb-3">
-          <Button variant="ghost" size="sm" onClick={() => router.navigate({ to: "/competencias" })}>
+          <Button variant="ghost" size="sm" onClick={() => router.navigate({ to: "/competencias", search: (prev: Record<string, unknown>) => prev })}>
             <ArrowLeft className="mr-1 h-3.5 w-3.5" /> Voltar
           </Button>
         </div>
