@@ -1254,6 +1254,68 @@ export type Database = {
           },
         ]
       }
+      competence_generation_runs: {
+        Row: {
+          analyzed: number
+          competence: string
+          created: number
+          created_ids: string[]
+          duration_ms: number | null
+          errors: Json
+          executor_profile_id: string | null
+          existed: number
+          finished_at: string | null
+          id: string
+          include_demo: boolean
+          missing_responsible: number
+          skipped: number
+          source: string
+          started_at: string
+        }
+        Insert: {
+          analyzed?: number
+          competence: string
+          created?: number
+          created_ids?: string[]
+          duration_ms?: number | null
+          errors?: Json
+          executor_profile_id?: string | null
+          existed?: number
+          finished_at?: string | null
+          id?: string
+          include_demo?: boolean
+          missing_responsible?: number
+          skipped?: number
+          source: string
+          started_at?: string
+        }
+        Update: {
+          analyzed?: number
+          competence?: string
+          created?: number
+          created_ids?: string[]
+          duration_ms?: number | null
+          errors?: Json
+          executor_profile_id?: string | null
+          existed?: number
+          finished_at?: string | null
+          id?: string
+          include_demo?: boolean
+          missing_responsible?: number
+          skipped?: number
+          source?: string
+          started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competence_generation_runs_executor_profile_id_fkey"
+            columns: ["executor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demo_audit_log: {
         Row: {
           action: string
@@ -2673,6 +2735,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _competence_admin_or_service: { Args: never; Returns: boolean }
       _competence_check_transition: {
         Args: { p_from: string; p_to: string }
         Returns: boolean
@@ -2691,6 +2754,11 @@ export type Database = {
         Args: { p_client_id: string; p_profile_id: string }
         Returns: undefined
       }
+      admin_bulk_assign_responsible: {
+        Args: { p_ids: string[]; p_profile_id: string }
+        Returns: Json
+      }
+      admin_bulk_competence_start: { Args: { p_ids: string[] }; Returns: Json }
       admin_bulk_set_model_visibility: {
         Args: {
           _include_requirements?: boolean
@@ -2823,6 +2891,25 @@ export type Database = {
           email: string
           full_name: string
           id: string
+        }[]
+      }
+      admin_generate_monthly_competences: {
+        Args: {
+          p_competence: string
+          p_include_demo?: boolean
+          p_source?: string
+        }
+        Returns: Json
+      }
+      admin_generate_monthly_competences_preview: {
+        Args: { p_competence: string; p_include_demo?: boolean }
+        Returns: {
+          client_id: string
+          is_demo: boolean
+          razao_social: string
+          responsible_name: string
+          responsible_profile_id: string
+          situacao: string
         }[]
       }
       admin_import_model_config: {
