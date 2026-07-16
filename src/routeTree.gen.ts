@@ -47,6 +47,7 @@ import { Route as AuthenticatedIntegracoesOmieRouteImport } from './routes/_auth
 import { Route as AuthenticatedClientesIdRouteImport } from './routes/_authenticated/clientes.$id'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as AuthenticatedMeuMesClientIdCompetenceRouteImport } from './routes/_authenticated/meu-mes.$clientId.$competence'
 import { Route as AuthenticatedCompetenciasClientIdCompetenceRouteImport } from './routes/_authenticated/competencias.$clientId.$competence'
 
 const SegurancaRoute = SegurancaRouteImport.update({
@@ -255,6 +256,12 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedMeuMesClientIdCompetenceRoute =
+  AuthenticatedMeuMesClientIdCompetenceRouteImport.update({
+    id: '/$clientId/$competence',
+    path: '/$clientId/$competence',
+    getParentRoute: () => AuthenticatedMeuMesRoute,
+  } as any)
 const AuthenticatedCompetenciasClientIdCompetenceRoute =
   AuthenticatedCompetenciasClientIdCompetenceRouteImport.update({
     id: '/$clientId/$competence',
@@ -280,7 +287,7 @@ export interface FileRoutesByFullPath {
   '/homologacao': typeof AuthenticatedHomologacaoRoute
   '/interacoes': typeof AuthenticatedInteracoesRoute
   '/kanban': typeof AuthenticatedKanbanRoute
-  '/meu-mes': typeof AuthenticatedMeuMesRoute
+  '/meu-mes': typeof AuthenticatedMeuMesRouteWithChildren
   '/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
   '/meus-processos': typeof AuthenticatedMeusProcessosRoute
   '/minha-area': typeof AuthenticatedMinhaAreaRoute
@@ -301,6 +308,7 @@ export interface FileRoutesByFullPath {
   '/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
   '/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
+  '/meu-mes/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -319,7 +327,7 @@ export interface FileRoutesByTo {
   '/homologacao': typeof AuthenticatedHomologacaoRoute
   '/interacoes': typeof AuthenticatedInteracoesRoute
   '/kanban': typeof AuthenticatedKanbanRoute
-  '/meu-mes': typeof AuthenticatedMeuMesRoute
+  '/meu-mes': typeof AuthenticatedMeuMesRouteWithChildren
   '/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
   '/meus-processos': typeof AuthenticatedMeusProcessosRoute
   '/minha-area': typeof AuthenticatedMinhaAreaRoute
@@ -341,6 +349,7 @@ export interface FileRoutesByTo {
   '/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
   '/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
+  '/meu-mes/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -361,7 +370,7 @@ export interface FileRoutesById {
   '/_authenticated/homologacao': typeof AuthenticatedHomologacaoRoute
   '/_authenticated/interacoes': typeof AuthenticatedInteracoesRoute
   '/_authenticated/kanban': typeof AuthenticatedKanbanRoute
-  '/_authenticated/meu-mes': typeof AuthenticatedMeuMesRoute
+  '/_authenticated/meu-mes': typeof AuthenticatedMeuMesRouteWithChildren
   '/_authenticated/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
   '/_authenticated/meus-processos': typeof AuthenticatedMeusProcessosRoute
   '/_authenticated/minha-area': typeof AuthenticatedMinhaAreaRoute
@@ -383,6 +392,7 @@ export interface FileRoutesById {
   '/_authenticated/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/_authenticated/processos/$id': typeof AuthenticatedProcessosIdRoute
   '/_authenticated/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
+  '/_authenticated/meu-mes/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -425,6 +435,7 @@ export interface FileRouteTypes {
     | '/portal-processos/$id'
     | '/processos/$id'
     | '/competencias/$clientId/$competence'
+    | '/meu-mes/$clientId/$competence'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -465,6 +476,7 @@ export interface FileRouteTypes {
     | '/portal-processos/$id'
     | '/processos/$id'
     | '/competencias/$clientId/$competence'
+    | '/meu-mes/$clientId/$competence'
   id:
     | '__root__'
     | '/_authenticated'
@@ -506,6 +518,7 @@ export interface FileRouteTypes {
     | '/_authenticated/portal-processos/$id'
     | '/_authenticated/processos/$id'
     | '/_authenticated/competencias/$clientId/$competence'
+    | '/_authenticated/meu-mes/$clientId/$competence'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -787,6 +800,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/meu-mes/$clientId/$competence': {
+      id: '/_authenticated/meu-mes/$clientId/$competence'
+      path: '/$clientId/$competence'
+      fullPath: '/meu-mes/$clientId/$competence'
+      preLoaderRoute: typeof AuthenticatedMeuMesClientIdCompetenceRouteImport
+      parentRoute: typeof AuthenticatedMeuMesRoute
+    }
     '/_authenticated/competencias/$clientId/$competence': {
       id: '/_authenticated/competencias/$clientId/$competence'
       path: '/$clientId/$competence'
@@ -824,6 +844,18 @@ const AuthenticatedCompetenciasRouteWithChildren =
   AuthenticatedCompetenciasRoute._addFileChildren(
     AuthenticatedCompetenciasRouteChildren,
   )
+
+interface AuthenticatedMeuMesRouteChildren {
+  AuthenticatedMeuMesClientIdCompetenceRoute: typeof AuthenticatedMeuMesClientIdCompetenceRoute
+}
+
+const AuthenticatedMeuMesRouteChildren: AuthenticatedMeuMesRouteChildren = {
+  AuthenticatedMeuMesClientIdCompetenceRoute:
+    AuthenticatedMeuMesClientIdCompetenceRoute,
+}
+
+const AuthenticatedMeuMesRouteWithChildren =
+  AuthenticatedMeuMesRoute._addFileChildren(AuthenticatedMeuMesRouteChildren)
 
 interface AuthenticatedPortalProcessosRouteChildren {
   AuthenticatedPortalProcessosIdRoute: typeof AuthenticatedPortalProcessosIdRoute
@@ -865,7 +897,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHomologacaoRoute: typeof AuthenticatedHomologacaoRoute
   AuthenticatedInteracoesRoute: typeof AuthenticatedInteracoesRoute
   AuthenticatedKanbanRoute: typeof AuthenticatedKanbanRoute
-  AuthenticatedMeuMesRoute: typeof AuthenticatedMeuMesRoute
+  AuthenticatedMeuMesRoute: typeof AuthenticatedMeuMesRouteWithChildren
   AuthenticatedMeusDocumentosRoute: typeof AuthenticatedMeusDocumentosRoute
   AuthenticatedMeusProcessosRoute: typeof AuthenticatedMeusProcessosRoute
   AuthenticatedMinhaAreaRoute: typeof AuthenticatedMinhaAreaRoute
@@ -895,7 +927,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHomologacaoRoute: AuthenticatedHomologacaoRoute,
   AuthenticatedInteracoesRoute: AuthenticatedInteracoesRoute,
   AuthenticatedKanbanRoute: AuthenticatedKanbanRoute,
-  AuthenticatedMeuMesRoute: AuthenticatedMeuMesRoute,
+  AuthenticatedMeuMesRoute: AuthenticatedMeuMesRouteWithChildren,
   AuthenticatedMeusDocumentosRoute: AuthenticatedMeusDocumentosRoute,
   AuthenticatedMeusProcessosRoute: AuthenticatedMeusProcessosRoute,
   AuthenticatedMinhaAreaRoute: AuthenticatedMinhaAreaRoute,
