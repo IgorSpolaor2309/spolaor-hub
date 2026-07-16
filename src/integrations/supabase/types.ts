@@ -2775,6 +2775,39 @@ export type Database = {
       cron_generate_current_plan_checklist: { Args: never; Returns: Json }
       current_actor_role: { Args: never; Returns: string }
       generate_plan_checklist: { Args: { _competencia: string }; Returns: Json }
+      get_competence_overview: {
+        Args: { p_competence: string }
+        Returns: {
+          checklist_cancelado: number
+          checklist_concluido: number
+          checklist_pendente: number
+          checklist_recebido: number
+          checklist_total: number
+          client_id: string
+          doc_total: number
+          guias_com_comprovante: number
+          guias_proximas: number
+          guias_sem_comprovante: number
+          guias_total: number
+          guias_vencidas: number
+          is_demo: boolean
+          nome_fantasia: string
+          pend_abertas: number
+          pend_aguardando_cliente: number
+          pend_concluidas: number
+          pend_vencidas: number
+          proc_aguardando_cliente: number
+          proc_ativos: number
+          proc_atrasados: number
+          proc_concluidos: number
+          razao_social: string
+          responsavel_nome: string
+          sol_aguardando_cliente: number
+          sol_concluidas: number
+          sol_em_analise: number
+          sol_total: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
