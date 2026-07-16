@@ -85,11 +85,13 @@ function TasksPage() {
   const ready = !loading && !!userId && !!role;
   const qc = useQueryClient();
 
+  const routeSearch = Route.useSearch();
   const [q, setQ] = useState("");
   const [tipo, setTipo] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
-  const [empresa, setEmpresa] = useState<string>("all");
+  const [empresa, setEmpresa] = useState<string>(routeSearch.client ?? "all");
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
+
 
   const { data: combined, isLoading, error } = useQuery({
     queryKey: ["pendencias-consolidadas", userId, role],
