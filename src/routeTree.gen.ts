@@ -47,6 +47,7 @@ import { Route as AuthenticatedIntegracoesOmieRouteImport } from './routes/_auth
 import { Route as AuthenticatedClientesIdRouteImport } from './routes/_authenticated/clientes.$id'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as ApiPublicHooksCompetenceMonthlyGenerationRouteImport } from './routes/api/public/hooks/competence-monthly-generation'
 import { Route as AuthenticatedMeuMesClientIdCompetenceRouteImport } from './routes/_authenticated/meu-mes.$clientId.$competence'
 import { Route as AuthenticatedCompetenciasClientIdCompetenceRouteImport } from './routes/_authenticated/competencias.$clientId.$competence'
 
@@ -256,6 +257,12 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksCompetenceMonthlyGenerationRoute =
+  ApiPublicHooksCompetenceMonthlyGenerationRouteImport.update({
+    id: '/api/public/hooks/competence-monthly-generation',
+    path: '/api/public/hooks/competence-monthly-generation',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedMeuMesClientIdCompetenceRoute =
   AuthenticatedMeuMesClientIdCompetenceRouteImport.update({
     id: '/$clientId/$competence',
@@ -309,6 +316,7 @@ export interface FileRoutesByFullPath {
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
   '/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/meu-mes/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
+  '/api/public/hooks/competence-monthly-generation': typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -350,6 +358,7 @@ export interface FileRoutesByTo {
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
   '/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/meu-mes/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
+  '/api/public/hooks/competence-monthly-generation': typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -393,6 +402,7 @@ export interface FileRoutesById {
   '/_authenticated/processos/$id': typeof AuthenticatedProcessosIdRoute
   '/_authenticated/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/_authenticated/meu-mes/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
+  '/api/public/hooks/competence-monthly-generation': typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -436,6 +446,7 @@ export interface FileRouteTypes {
     | '/processos/$id'
     | '/competencias/$clientId/$competence'
     | '/meu-mes/$clientId/$competence'
+    | '/api/public/hooks/competence-monthly-generation'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -477,6 +488,7 @@ export interface FileRouteTypes {
     | '/processos/$id'
     | '/competencias/$clientId/$competence'
     | '/meu-mes/$clientId/$competence'
+    | '/api/public/hooks/competence-monthly-generation'
   id:
     | '__root__'
     | '/_authenticated'
@@ -519,6 +531,7 @@ export interface FileRouteTypes {
     | '/_authenticated/processos/$id'
     | '/_authenticated/competencias/$clientId/$competence'
     | '/_authenticated/meu-mes/$clientId/$competence'
+    | '/api/public/hooks/competence-monthly-generation'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -530,6 +543,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiPublicHooksCompetenceMonthlyGenerationRoute: typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -800,6 +814,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/competence-monthly-generation': {
+      id: '/api/public/hooks/competence-monthly-generation'
+      path: '/api/public/hooks/competence-monthly-generation'
+      fullPath: '/api/public/hooks/competence-monthly-generation'
+      preLoaderRoute: typeof ApiPublicHooksCompetenceMonthlyGenerationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/meu-mes/$clientId/$competence': {
       id: '/_authenticated/meu-mes/$clientId/$competence'
       path: '/$clientId/$competence'
@@ -959,6 +980,8 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiPublicHooksCompetenceMonthlyGenerationRoute:
+    ApiPublicHooksCompetenceMonthlyGenerationRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
