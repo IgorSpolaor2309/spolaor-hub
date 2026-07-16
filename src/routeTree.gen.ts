@@ -27,6 +27,7 @@ import { Route as AuthenticatedMinhasPendenciasRouteImport } from './routes/_aut
 import { Route as AuthenticatedMinhaAreaRouteImport } from './routes/_authenticated/minha-area'
 import { Route as AuthenticatedMeusProcessosRouteImport } from './routes/_authenticated/meus-processos'
 import { Route as AuthenticatedMeusDocumentosRouteImport } from './routes/_authenticated/meus-documentos'
+import { Route as AuthenticatedMeuMesRouteImport } from './routes/_authenticated/meu-mes'
 import { Route as AuthenticatedKanbanRouteImport } from './routes/_authenticated/kanban'
 import { Route as AuthenticatedInteracoesRouteImport } from './routes/_authenticated/interacoes'
 import { Route as AuthenticatedHomologacaoRouteImport } from './routes/_authenticated/homologacao'
@@ -144,6 +145,11 @@ const AuthenticatedMeusDocumentosRoute =
     path: '/meus-documentos',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedMeuMesRoute = AuthenticatedMeuMesRouteImport.update({
+  id: '/meu-mes',
+  path: '/meu-mes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedKanbanRoute = AuthenticatedKanbanRouteImport.update({
   id: '/kanban',
   path: '/kanban',
@@ -274,6 +280,7 @@ export interface FileRoutesByFullPath {
   '/homologacao': typeof AuthenticatedHomologacaoRoute
   '/interacoes': typeof AuthenticatedInteracoesRoute
   '/kanban': typeof AuthenticatedKanbanRoute
+  '/meu-mes': typeof AuthenticatedMeuMesRoute
   '/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
   '/meus-processos': typeof AuthenticatedMeusProcessosRoute
   '/minha-area': typeof AuthenticatedMinhaAreaRoute
@@ -312,6 +319,7 @@ export interface FileRoutesByTo {
   '/homologacao': typeof AuthenticatedHomologacaoRoute
   '/interacoes': typeof AuthenticatedInteracoesRoute
   '/kanban': typeof AuthenticatedKanbanRoute
+  '/meu-mes': typeof AuthenticatedMeuMesRoute
   '/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
   '/meus-processos': typeof AuthenticatedMeusProcessosRoute
   '/minha-area': typeof AuthenticatedMinhaAreaRoute
@@ -353,6 +361,7 @@ export interface FileRoutesById {
   '/_authenticated/homologacao': typeof AuthenticatedHomologacaoRoute
   '/_authenticated/interacoes': typeof AuthenticatedInteracoesRoute
   '/_authenticated/kanban': typeof AuthenticatedKanbanRoute
+  '/_authenticated/meu-mes': typeof AuthenticatedMeuMesRoute
   '/_authenticated/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
   '/_authenticated/meus-processos': typeof AuthenticatedMeusProcessosRoute
   '/_authenticated/minha-area': typeof AuthenticatedMinhaAreaRoute
@@ -395,6 +404,7 @@ export interface FileRouteTypes {
     | '/homologacao'
     | '/interacoes'
     | '/kanban'
+    | '/meu-mes'
     | '/meus-documentos'
     | '/meus-processos'
     | '/minha-area'
@@ -433,6 +443,7 @@ export interface FileRouteTypes {
     | '/homologacao'
     | '/interacoes'
     | '/kanban'
+    | '/meu-mes'
     | '/meus-documentos'
     | '/meus-processos'
     | '/minha-area'
@@ -473,6 +484,7 @@ export interface FileRouteTypes {
     | '/_authenticated/homologacao'
     | '/_authenticated/interacoes'
     | '/_authenticated/kanban'
+    | '/_authenticated/meu-mes'
     | '/_authenticated/meus-documentos'
     | '/_authenticated/meus-processos'
     | '/_authenticated/minha-area'
@@ -633,6 +645,13 @@ declare module '@tanstack/react-router' {
       path: '/meus-documentos'
       fullPath: '/meus-documentos'
       preLoaderRoute: typeof AuthenticatedMeusDocumentosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/meu-mes': {
+      id: '/_authenticated/meu-mes'
+      path: '/meu-mes'
+      fullPath: '/meu-mes'
+      preLoaderRoute: typeof AuthenticatedMeuMesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/kanban': {
@@ -846,6 +865,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHomologacaoRoute: typeof AuthenticatedHomologacaoRoute
   AuthenticatedInteracoesRoute: typeof AuthenticatedInteracoesRoute
   AuthenticatedKanbanRoute: typeof AuthenticatedKanbanRoute
+  AuthenticatedMeuMesRoute: typeof AuthenticatedMeuMesRoute
   AuthenticatedMeusDocumentosRoute: typeof AuthenticatedMeusDocumentosRoute
   AuthenticatedMeusProcessosRoute: typeof AuthenticatedMeusProcessosRoute
   AuthenticatedMinhaAreaRoute: typeof AuthenticatedMinhaAreaRoute
@@ -875,6 +895,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHomologacaoRoute: AuthenticatedHomologacaoRoute,
   AuthenticatedInteracoesRoute: AuthenticatedInteracoesRoute,
   AuthenticatedKanbanRoute: AuthenticatedKanbanRoute,
+  AuthenticatedMeuMesRoute: AuthenticatedMeuMesRoute,
   AuthenticatedMeusDocumentosRoute: AuthenticatedMeusDocumentosRoute,
   AuthenticatedMeusProcessosRoute: AuthenticatedMeusProcessosRoute,
   AuthenticatedMinhaAreaRoute: AuthenticatedMinhaAreaRoute,
