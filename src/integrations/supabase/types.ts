@@ -1268,6 +1268,7 @@ export type Database = {
           id: string
           include_demo: boolean
           missing_responsible: number
+          scope: string
           skipped: number
           source: string
           started_at: string
@@ -1285,6 +1286,7 @@ export type Database = {
           id?: string
           include_demo?: boolean
           missing_responsible?: number
+          scope?: string
           skipped?: number
           source: string
           started_at?: string
@@ -1302,6 +1304,7 @@ export type Database = {
           id?: string
           include_demo?: boolean
           missing_responsible?: number
+          scope?: string
           skipped?: number
           source?: string
           started_at?: string
@@ -2894,15 +2897,11 @@ export type Database = {
         }[]
       }
       admin_generate_monthly_competences: {
-        Args: {
-          p_competence: string
-          p_include_demo?: boolean
-          p_source?: string
-        }
+        Args: { p_competence: string; p_scope?: string; p_source?: string }
         Returns: Json
       }
       admin_generate_monthly_competences_preview: {
-        Args: { p_competence: string; p_include_demo?: boolean }
+        Args: { p_competence: string; p_scope?: string }
         Returns: {
           client_id: string
           is_demo: boolean
