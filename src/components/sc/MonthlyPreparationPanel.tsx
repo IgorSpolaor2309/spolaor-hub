@@ -51,16 +51,16 @@ export function MonthlyPreparationPanel({
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [previewComp, setPreviewComp] = useState(competence);
-  const [includeDemo, setIncludeDemo] = useState(false);
+  const [scope, setScope] = useState<"real" | "demo" | "all">("real");
 
   // Preview
   const previewQ = useQuery({
-    queryKey: ["comp-generation-preview", previewComp, includeDemo],
+    queryKey: ["comp-generation-preview", previewComp, scope],
     enabled: open,
     queryFn: async () => {
       const { data, error } = await (supabase as any).rpc(
         "admin_generate_monthly_competences_preview",
-        { p_competence: previewComp, p_include_demo: includeDemo },
+        { p_competence: previewComp, p_scope: scope },
       );
       if (error) throw error;
       return (data ?? []) as PreviewRow[];
