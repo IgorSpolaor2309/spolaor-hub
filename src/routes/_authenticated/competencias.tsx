@@ -66,7 +66,8 @@ export function computeProgress(r: OverviewRow): { percent: number; applicable: 
       value: (() => {
         const aplicaveis = r.checklist_total - r.checklist_cancelado;
         if (aplicaveis <= 0) return null;
-        const feitos = r.checklist_concluido + r.checklist_recebido;
+        // "recebido" = documento enviado, aguardando conclusão da contabilidade — NÃO conta como concluído.
+        const feitos = r.checklist_concluido;
         return Math.max(0, Math.min(1, feitos / aplicaveis));
       })(),
     },
