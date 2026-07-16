@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { formatBR } from "@/lib/dates";
 import { OFFICIAL_LABEL, OFFICIAL_TONE, canTransition, type CompetenceRow, type OfficialStatus } from "@/lib/competence-status";
 import { AlertCircle, CheckCircle2, Clock, History, PlayCircle, RotateCcw, Send, UserCog, PauseCircle } from "lucide-react";
