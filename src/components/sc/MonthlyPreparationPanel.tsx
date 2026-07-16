@@ -163,8 +163,16 @@ export function MonthlyPreparationPanel({
               })}
             </select>
             <label className="ml-4 flex items-center gap-2 text-xs">
-              <input type="checkbox" checked={includeDemo} onChange={(e) => setIncludeDemo(e.target.checked)} />
-              Incluir empresas demo
+              <span className="text-muted-foreground">Escopo</span>
+              <select
+                className="rounded-md border bg-background px-2 py-1 text-sm"
+                value={scope}
+                onChange={(e) => setScope(e.target.value as "real" | "demo" | "all")}
+              >
+                <option value="real">Somente empresas reais</option>
+                <option value="demo">Somente empresas demo (lote ativo)</option>
+                <option value="all">Empresas reais e demo</option>
+              </select>
             </label>
           </div>
 
