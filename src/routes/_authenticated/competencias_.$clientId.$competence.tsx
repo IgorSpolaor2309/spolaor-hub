@@ -18,7 +18,7 @@ import {
   ArrowLeft, ArrowRight, Info, History,
 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/competencias/$clientId/$competence")({
+export const Route = createFileRoute("/_authenticated/competencias_/$clientId/$competence")({
   component: CompetenciaDetailPage,
   errorComponent: () => (
     <EmptyState
@@ -96,7 +96,7 @@ function CompetenciaDetailPage() {
     return (
       <div>
         <div className="mb-3">
-          <Button variant="ghost" size="sm" onClick={() => router.navigate({ to: "/competencias", search: (prev: Record<string, unknown>) => prev })}>
+          <Button variant="ghost" size="sm" onClick={() => router.navigate({ to: "/competencias", search: { comp: undefined } })}>
             <ArrowLeft className="mr-1 h-3.5 w-3.5" /> Voltar
           </Button>
         </div>
