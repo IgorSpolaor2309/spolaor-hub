@@ -502,6 +502,8 @@ function NewProcessDialog({ clients, types, collabs, onDone }: { clients: any[];
         _prazo_final: f.prazo_final || null,
         _prioridade: f.prioridade,
         _observacoes: f.observacoes || null,
+        _is_demo: false,
+        _demo_batch_id: null,
       });
       if (error) throw error;
       return data as string;

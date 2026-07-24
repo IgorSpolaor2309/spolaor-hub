@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.open_company_process(uuid, uuid, uuid, date, text, text);
