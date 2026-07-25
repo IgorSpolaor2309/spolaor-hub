@@ -159,7 +159,6 @@ function MeusProcessosPage() {
             <ul className="divide-y">
               {rows.map((r: any) => {
                 const cp = r.company_processes;
-                const ss = STEP_STATUS[r.status];
                 const pk = prazoKind(r.prazo, { status: r.status, concluidaDentroPrazo: r.concluida_dentro_prazo });
                 const pkBadge = pk === "no_prazo" || pk === "sem_prazo" ? null : PRAZO_STYLE[pk];
                 return (
@@ -170,7 +169,7 @@ function MeusProcessosPage() {
                         <span className="font-medium">{clientLabel(cp.clients)}</span>
                         <Badge variant="outline">{cp.process_types?.nome}</Badge>
                         <span className="text-sm">· {r.nome}</span>
-                        {ss && <Badge className={ss.cls}>{ss.label}</Badge>}
+                        <Badge className={getStepStatusTone(r.status, "staff")}>{getStepStatusLabel(r.status, "staff")}</Badge>
                         {pkBadge && <Badge className={pkBadge.cls}>{pkBadge.label}</Badge>}
                         {r.prazo && <span className="ml-auto text-xs text-muted-foreground">prazo {new Date(r.prazo).toLocaleDateString("pt-BR")}</span>}
                       </div>
