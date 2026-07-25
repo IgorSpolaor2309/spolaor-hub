@@ -93,7 +93,7 @@ async function seed() {
     process_type_id: state.processTypeId,
     nome: "Etapa 1", ordem: 1, obrigatoria: true, exige_documento: false,
     visivel_cliente: false, pode_concluir_manual: true, departamento: "geral",
-    prazo_tipo: "fixo", prazo_dias: null,
+    prazo_tipo: "abertura", prazo_dias: 30,
   }).select("id").single();
 
   if (psIns.error) throw psIns.error;
