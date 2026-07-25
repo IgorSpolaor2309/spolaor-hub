@@ -219,7 +219,7 @@ function ProcessDetail() {
   if (!procQ.data) return <EmptyState icon={<Workflow className="h-6 w-6" />} title="Processo não encontrado" />;
 
   const p = proc as any;
-  const isAdmin_dummy = null; void isAdmin_dummy;
+  
   const isAdmin = role === "admin";
 
   return (
