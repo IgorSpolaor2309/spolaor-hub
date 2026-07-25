@@ -86,7 +86,20 @@ it("isProcessOpen só considera concluído/cancelado como fechados", () => {
 });
 
 // ─── 2) processo-timeline-labels ────────────────────────────────────────────
-const T = await importTs("../../src/lib/processo-timeline-labels.ts");
+const T = await importTs("../../src/lib/processo-timeline-labels.ts", (src) => {
+  // Substitui import de lucide-react por stubs — evita resolução no node runtime.
+  return src
+    .replace(/import\s*\{[\s\S]*?\}\s*from\s*"lucide-react";?/, "")
+    .replace(/type\s+LucideIcon/g, "any")
+    .replace(/:\s*LucideIcon/g, "")
+    .replace(/Activity|CalendarClock|CheckCircle2|FilePlus2|Paperclip|UserRound|XCircle/g, "(()=>null)")
+    .replace(/import\s*\{[\s\S]*?\}\s*from\s*"\.\/processos-constants";?/,
+      // inline os símbolos que precisamos
+      `const isProcessStatus = (v) => !!v && ["nao_iniciado","em_andamento","aguardando_cliente","aguardando_orgao","concluido","cancelado"].includes(v);
+       const isStepStatus = (v) => !!v && ["pendente","em_andamento","concluida","cancelada"].includes(v);
+       const PROCESS_STATUS_LOWER = { nao_iniciado:"não iniciado", em_andamento:"em andamento", aguardando_cliente:"aguardando cliente", aguardando_orgao:"aguardando órgão", concluido:"concluído", cancelado:"cancelado" };
+       const STEP_STATUS_LOWER = { pendente:"pendente", em_andamento:"em andamento", concluida:"concluída", cancelada:"cancelada" };`);
+});
 
 it("evento visível ao cliente aparece para staff e cliente", () => {
   assert.ok(T.isTimelineVisible("processo_aberto", "staff"));
