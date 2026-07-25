@@ -16,6 +16,7 @@ import { FileText, Link2, Paperclip, CheckCircle2, AlertCircle, XCircle, Send, E
 import { Link } from "@tanstack/react-router";
 import { Textarea } from "@/components/ui/textarea";
 import { formatBR } from "@/lib/dates";
+import { getRequestStatusLabel, getRequestStatusTone } from "@/lib/processos-constants";
 
 type Props = {
   processId: string;
