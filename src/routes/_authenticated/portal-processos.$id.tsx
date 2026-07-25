@@ -8,34 +8,21 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { Workflow, ArrowLeft, CheckCircle2, Clock, AlertCircle, ExternalLink, FileText } from "lucide-react";
 import { formatBR } from "@/lib/dates";
+import {
+  getProcessStatusLabel,
+  getProcessStatusTone,
+  getStepStatusLabel,
+  getStepStatusTone,
+  getRequestStatusLabel,
+  getRequestStatusTone,
+} from "@/lib/processos-constants";
+import { getTimelineLabel } from "@/lib/processo-timeline-labels";
 
 export const Route = createFileRoute("/_authenticated/portal-processos/$id")({
   component: ClientProcessoDetail,
   errorComponent: () => <EmptyState icon={<Workflow className="h-6 w-6" />} title="Processo indisponível" description="Verifique o link ou volte para a lista." />,
   notFoundComponent: () => <EmptyState icon={<Workflow className="h-6 w-6" />} title="Processo não encontrado" />,
 });
-
-const STATUS_LABEL: Record<string, string> = {
-  nao_iniciado: "Ainda não iniciado", em_andamento: "Em andamento",
-  aguardando_cliente: "Aguardando sua ação", aguardando_orgao: "Aguardando análise externa",
-  concluido: "Concluído", cancelado: "Cancelado",
-  pendente: "Pendente", concluida: "Concluída",
-};
-const STATUS_TONE: Record<string, string> = {
-  nao_iniciado: "bg-zinc-100 text-zinc-700",
-  em_andamento: "bg-indigo-100 text-indigo-800",
-  aguardando_cliente: "bg-amber-100 text-amber-800",
-  aguardando_orgao: "bg-sky-100 text-sky-800",
-  concluido: "bg-emerald-100 text-emerald-800",
-  cancelado: "bg-zinc-200 text-zinc-700",
-  pendente: "bg-amber-100 text-amber-800",
-  concluida: "bg-emerald-100 text-emerald-800",
-};
-const REQ_STATUS_LABEL: Record<string, string> = {
-  pendente: "Pendente", solicitado: "Solicitado", em_andamento: "Em andamento",
-  aguardando_cliente: "Aguardando você", reenviar: "Reenviar",
-  recebido: "Recebido", concluido: "Concluído", recusado: "Recusado", cancelado: "Cancelado",
-};
 
 function ClientProcessoDetail() {
   const { id } = useParams({ from: "/_authenticated/portal-processos/$id" });
