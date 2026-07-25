@@ -337,7 +337,7 @@ async function run() {
       rows.push({
         client_id: ctx.cA,
         process_type_id: ctx.ptype ?? created.ptype,
-        status: i % 2 === 0 ? "em_andamento" : "aguardando_cliente",
+        status: i % 2 === 0 ? "em_andamento" : "nao_iniciado",
         prioridade: i % 3 === 0 ? "alta" : "media",
         prazo_final: "2099-12-31",
         observacoes: `${uniqTag}-${i.toString().padStart(2, "0")}`,
