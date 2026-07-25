@@ -171,7 +171,7 @@ function ProcessDetail() {
   // Resolve todos os nomes de profiles (responsável principal + responsáveis
   // de etapas + concluída_por + autores da timeline) em UMA única consulta.
   const stepRows = stepsQ.data ?? [];
-  const histRows = history;
+  const histRows = historyQ.data ?? [];
   const profileIds = [
     procQ.data?.responsavel_id ?? null,
     ...stepRows.flatMap((r: any) => [r.responsavel_id, r.concluida_por]),
