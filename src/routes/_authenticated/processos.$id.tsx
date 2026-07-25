@@ -351,7 +351,6 @@ function ProcessDetail() {
           : (
             <ul className="divide-y">
               {steps.map((s: any) => {
-                const ss = STEP_STATUS_MAP[s.status];
                 const isDone = s.status === "concluida";
                 const pk = prazoKind(s.prazo, { status: s.status, concluidaDentroPrazo: s.concluida_dentro_prazo });
                 const pkBadge = pk === "sem_prazo" || pk === "no_prazo" ? null : PRAZO_STYLE[pk];
@@ -360,7 +359,7 @@ function ProcessDetail() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="w-8 text-xs text-muted-foreground">#{s.ordem}</span>
                       <span className={`font-medium ${isDone ? "line-through text-muted-foreground" : ""}`}>{s.nome}</span>
-                      {ss && <Badge className={ss.cls}>{ss.label}</Badge>}
+                      <Badge className={getStepStatusTone(s.status, "staff")}>{getStepStatusLabel(s.status, "staff")}</Badge>
                       {pkBadge && <Badge className={pkBadge.cls}>{pkBadge.label}</Badge>}
                       {s.departamento && <Badge variant="outline">{s.departamento}</Badge>}
                       {s.obrigatoria && <Badge variant="secondary">Obrigatória</Badge>}
