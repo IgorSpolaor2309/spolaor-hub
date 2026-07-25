@@ -171,7 +171,7 @@ function ClientProcessoDetail() {
                 {(timelineQ.data ?? []).map((t: any) => (
                   <li key={t.id} className="rounded border p-2 text-xs">
                     <div className="text-muted-foreground">{formatBR(t.created_at)}</div>
-                    <div>{friendlyEvent(t)}</div>
+                    <div>{getTimelineLabel(t, "client")}</div>
                   </li>
                 ))}
               </ul>
