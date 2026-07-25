@@ -3257,6 +3257,34 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      list_company_processes_paginated: {
+        Args: {
+          _client_id?: string
+          _include_demo?: boolean
+          _only_demo?: boolean
+          _page?: number
+          _page_size?: number
+          _prazo?: string
+          _prioridade?: string
+          _process_type_id?: string
+          _responsavel_id?: string
+          _search?: string
+          _sort_by?: string
+          _status?: string
+          _tab?: string
+        }
+        Returns: Json
+      }
+      list_my_process_steps_paginated: {
+        Args: {
+          _page?: number
+          _page_size?: number
+          _prazo?: string
+          _search?: string
+          _status_group?: string
+        }
+        Returns: Json
+      }
       mark_password_changed: { Args: never; Returns: undefined }
       notify_user: {
         Args: {
