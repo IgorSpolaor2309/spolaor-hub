@@ -446,11 +446,11 @@ async function run() {
   // 8g) Filtro por status
   {
     const { data } = await A.rpc("list_company_processes_paginated", {
-      _client_id: ctx.cA, _search: `PAG-${TAG}`, _status: "aguardando_cliente", _page: 1, _page_size: 100,
+      _client_id: ctx.cA, _search: `PAG-${TAG}`, _status: "nao_iniciado", _page: 1, _page_size: 100,
     });
-    const allAg = data.rows.every((r) => r.status === "aguardando_cliente");
+    const allNI = data.rows.every((r) => r.status === "nao_iniciado");
     assert("paginated: filtro por status aplicado antes da paginação",
-      allAg && data.rows.length > 0 && data.rows.length < EXTRA_N, { count: data.rows.length, allAg });
+      allNI && data.rows.length > 0 && data.rows.length < EXTRA_N, { count: data.rows.length, allNI });
   }
 
   // 8h) Filtro por prioridade
