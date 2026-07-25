@@ -402,7 +402,7 @@ function ProcessesPage() {
         </div>
         {activeFilters > 0 && (
           <div className="mt-2 flex items-center gap-2 text-xs">
-            <span className="text-muted-foreground">{activeFilters} filtro(s) ativo(s) · exibindo {filtered.length}</span>
+            <span className="text-muted-foreground">{activeFilters} filtro(s) ativo(s) · {totalRows} resultado(s)</span>
             <Button variant="ghost" size="sm" onClick={clearFilters}>
               <X className="mr-1 h-3.5 w-3.5" /> Limpar
             </Button>
@@ -412,10 +412,10 @@ function ProcessesPage() {
 
       <Card className="p-2">
         {listQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
-          : filtered.length === 0 ? <EmptyState icon={<Workflow className="h-6 w-6" />} title="Nenhum processo" description="Ajuste os filtros ou crie um novo processo." />
+          : rows.length === 0 ? <EmptyState icon={<Workflow className="h-6 w-6" />} title="Nenhum processo" description="Ajuste os filtros ou crie um novo processo." />
           : (
             <ul className="divide-y">
-              {filtered.map((p: any) => {
+              {rows.map((p: any) => {
                 const total = p.total_etapas ?? 0;
                 const done = p.etapas_concluidas ?? 0;
                 const pct = p.progresso ?? 0;
@@ -448,10 +448,22 @@ function ProcessesPage() {
               })}
             </ul>
           )}
+        {totalRows > 0 && (
+          <div className="mt-2 flex items-center justify-between gap-2 border-t px-2 py-2 text-xs text-muted-foreground">
+            <span>
+              Página {page} de {totalPages} · {totalRows} processo(s)
+            </span>
+            <div className="flex gap-1">
+              <Button variant="outline" size="sm" disabled={page <= 1 || listQ.isFetching} onClick={() => setPage((p) => Math.max(1, p - 1))}>Anterior</Button>
+              <Button variant="outline" size="sm" disabled={page >= totalPages || listQ.isFetching} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Próxima</Button>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );
 }
+
 
 
 
