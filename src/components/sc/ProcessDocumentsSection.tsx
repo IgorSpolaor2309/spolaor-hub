@@ -237,8 +237,8 @@ function RequirementRow({ req, clientId, canEdit, onSet, processId, stepId, step
       {removed && <Badge className="bg-red-100 text-red-800">Documento removido</Badge>}
       {met && <span className="text-xs text-muted-foreground">· {doc?.nome}</span>}
       {activeRequest && (
-        <Badge className={REQ_STATUS_TONE[activeRequest.status] ?? "bg-zinc-100 text-zinc-700"}>
-          Solicitação: {REQ_STATUS_LABEL[activeRequest.status] ?? activeRequest.status}
+        <Badge className={getRequestStatusTone(activeRequest.status)}>
+          Solicitação: {getRequestStatusLabel(activeRequest.status, "staff")}
           {activeRequest.prazo ? ` · prazo ${formatBR(activeRequest.prazo)}` : ""}
         </Badge>
       )}
