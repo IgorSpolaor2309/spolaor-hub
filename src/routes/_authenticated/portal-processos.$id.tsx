@@ -68,8 +68,8 @@ function ClientProcessoDetail() {
 
       <Card className="mb-4 p-4">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge className={STATUS_TONE[proc.status] ?? "bg-zinc-100 text-zinc-700"}>
-            {STATUS_LABEL[proc.status] ?? proc.status}
+          <Badge className={getProcessStatusTone(proc.status, "client")}>
+            {getProcessStatusLabel(proc.status, "client")}
           </Badge>
           {proc.created_at && <span className="text-xs text-muted-foreground">Aberto em {formatBR(proc.created_at)}</span>}
           {proc.prazo_final && <span className="text-xs text-muted-foreground">· Previsão {formatBR(proc.prazo_final)}</span>}
