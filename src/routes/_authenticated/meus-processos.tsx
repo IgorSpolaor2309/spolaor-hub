@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/sc/PageHeader";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -25,61 +26,68 @@ const STEP_STATUS: Record<string, { label: string; cls: string }> = {
   cancelada:    { label: "Cancelada",    cls: "bg-red-100 text-red-800" },
 };
 
+const PAGE_SIZE = 30;
+
 function MeusProcessosPage() {
   const { userId, role, loading } = useCurrentUser();
   const ready = !loading && !!userId && (role === "admin" || role === "collaborator");
   const [search, setSearch] = useState("");
   const [fPrazo, setFPrazo] = useState<string>("all");
   const [fStatus, setFStatus] = useState<string>("open");
+  const [page, setPage] = useState<number>(1);
+
+  useEffect(() => { setPage(1); }, [search, fStatus, fPrazo]);
 
   const stepsQ = useQuery({
-    queryKey: ["meus-processos-steps", userId],
+    queryKey: ["meus-processos-steps", userId, { search, fStatus, fPrazo, page }],
     enabled: ready,
     staleTime: 30_000,
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("company_process_steps")
-        .select("id, nome, status, prazo, concluida_dentro_prazo, data_conclusao, company_process_id, ordem, company_processes!inner(id, status, prioridade, client_id, process_type_id, clients(razao_social, nome_fantasia, documento), process_types(nome, cor))")
-        .eq("responsavel_id", userId!)
-        .order("prazo", { ascending: true, nullsFirst: false })
-        .limit(500);
+      const { data, error } = await (supabase as any).rpc("list_my_process_steps_paginated", {
+        _search: search.trim() || null,
+        _status_group: fStatus,
+        _prazo: fPrazo !== "all" ? fPrazo : null,
+        _page: page,
+        _page_size: PAGE_SIZE,
+      });
       if (error) throw error;
-      return data ?? [];
+      return data as { rows: any[]; total: number };
     },
   });
 
-  const rows = stepsQ.data ?? [];
+  const rows = stepsQ.data?.rows ?? [];
+  const totalRows = stepsQ.data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return rows.filter((r: any) => {
-      const cp = r.company_processes;
-      if (!cp) return false;
-      if (fStatus === "open" && (r.status === "concluida" || r.status === "cancelada")) return false;
-      if (fStatus === "done" && r.status !== "concluida") return false;
-      if (fPrazo !== "all") {
-        const k = prazoKind(r.prazo, { status: r.status, concluidaDentroPrazo: r.concluida_dentro_prazo });
-        if (k !== fPrazo) return false;
-      }
-      if (q) {
-        const hay = `${cp.clients?.razao_social ?? ""} ${cp.clients?.nome_fantasia ?? ""} ${cp.process_types?.nome ?? ""} ${r.nome}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      return true;
-    });
-  }, [rows, search, fStatus, fPrazo]);
+  // KPIs em cima do RPC de indicadores (não recarrega tudo).
+  const kpisQ = useQuery({
+    queryKey: ["meus-processos-kpis", userId],
+    enabled: ready,
+    staleTime: 60_000,
+    queryFn: async () => {
+      // 6 chamadas rápidas com count exact, sem hidratar rows.
+      const base = (supabase as any).from("company_process_steps").select("id", { count: "exact", head: true }).eq("responsavel_id", userId!);
+      const today = new Date().toISOString().slice(0, 10);
+      const [abertas, vencidas, hoje, em_breve, sem_prazo, concluidas] = await Promise.all([
+        base.not("status", "in", "(concluida,cancelada)"),
+        base.not("status", "in", "(concluida,cancelada)").lt("prazo", today),
+        base.not("status", "in", "(concluida,cancelada)").eq("prazo", today),
+        base.not("status", "in", "(concluida,cancelada)").gt("prazo", today).lte("prazo", new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)),
+        base.not("status", "in", "(concluida,cancelada)").is("prazo", null),
+        (supabase as any).from("company_process_steps").select("id", { count: "exact", head: true }).eq("responsavel_id", userId!).eq("status", "concluida"),
+      ]);
+      return {
+        abertas: abertas.count ?? 0,
+        vencidas: vencidas.count ?? 0,
+        hoje: hoje.count ?? 0,
+        em_breve: em_breve.count ?? 0,
+        sem_prazo: sem_prazo.count ?? 0,
+        concluidas: concluidas.count ?? 0,
+      };
+    },
+  });
 
-  const kpis = useMemo(() => {
-    const abertas = rows.filter((r: any) => r.status !== "concluida" && r.status !== "cancelada");
-    return {
-      abertas: abertas.length,
-      vencidas: abertas.filter((r: any) => prazoKind(r.prazo) === "vencido").length,
-      hoje: abertas.filter((r: any) => prazoKind(r.prazo) === "hoje").length,
-      em_breve: abertas.filter((r: any) => prazoKind(r.prazo) === "em_breve").length,
-      sem_prazo: abertas.filter((r: any) => !r.prazo).length,
-      concluidas: rows.filter((r: any) => r.status === "concluida").length,
-    };
-  }, [rows]);
+  const kpis = kpisQ.data ?? { abertas: 0, vencidas: 0, hoje: 0, em_breve: 0, sem_prazo: 0, concluidas: 0 };
 
   if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
   if (role !== "admin" && role !== "collaborator") {
@@ -142,7 +150,7 @@ function MeusProcessosPage() {
         </div>
         {activeFilters > 0 && (
           <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{filtered.length} etapa(s)</span>
+            <span>{totalRows} etapa(s)</span>
             <button className="underline" onClick={() => { setSearch(""); setFStatus("open"); setFPrazo("all"); }}>
               <X className="mr-1 inline h-3 w-3" />limpar filtros
             </button>
@@ -152,10 +160,10 @@ function MeusProcessosPage() {
 
       <Card className="p-2">
         {stepsQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
-          : filtered.length === 0 ? <EmptyState icon={<Briefcase className="h-6 w-6" />} title="Nada para você" description="Nenhuma etapa corresponde aos filtros." />
+          : rows.length === 0 ? <EmptyState icon={<Briefcase className="h-6 w-6" />} title="Nada para você" description="Nenhuma etapa corresponde aos filtros." />
           : (
             <ul className="divide-y">
-              {filtered.map((r: any) => {
+              {rows.map((r: any) => {
                 const cp = r.company_processes;
                 const ss = STEP_STATUS[r.status];
                 const pk = prazoKind(r.prazo, { status: r.status, concluidaDentroPrazo: r.concluida_dentro_prazo });
@@ -178,7 +186,20 @@ function MeusProcessosPage() {
               })}
             </ul>
           )}
+        {totalRows > 0 && (
+          <div className="mt-2 flex items-center justify-between gap-2 border-t px-2 py-2 text-xs text-muted-foreground">
+            <span>Página {page} de {totalPages} · {totalRows} etapa(s)</span>
+            <div className="flex gap-1">
+              <Button variant="outline" size="sm" disabled={page <= 1 || stepsQ.isFetching} onClick={() => setPage((p) => Math.max(1, p - 1))}>Anterior</Button>
+              <Button variant="outline" size="sm" disabled={page >= totalPages || stepsQ.isFetching} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Próxima</Button>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );
 }
+
+// Manter compatibilidade caso algo importe useMemo indiretamente
+export const __UNUSED__ = useMemo;
+
