@@ -313,7 +313,7 @@ async function run() {
       razao_social: `Demo ${TAG}`, nome_fantasia: `D ${TAG}`,
       documento: `d${TAG.replace(/-/g,"").slice(0,13)}`, is_demo: true,
     }).select("id").single();
-    const cpDemo = await admin.rpc("open_company_process", {
+    const cpDemo = await state.seedClient.rpc("open_company_process", {
       _client_id: cDemo.data.id, _process_type_id: state.processTypeId,
       _responsavel_id: state.userIds[0], _prioridade: "media",
       _prazo_final: null, _observacoes: null, _is_demo: true, _demo_batch_id: null,
