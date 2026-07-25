@@ -230,12 +230,12 @@ function ProcessDetail() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const steps = stepsQ.data ?? [];
   const { total, done, pct } = useMemo(() => {
     const t = steps.length;
     const d = steps.filter((s: any) => s.status === "concluida").length;
     return { total: t, done: d, pct: t ? Math.round((d / t) * 100) : 0 };
   }, [steps]);
+
 
   if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
   if (role !== "admin" && role !== "collaborator") {
