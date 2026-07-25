@@ -96,8 +96,8 @@ function ClientProcessoDetail() {
                       {e.status === "concluida" ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <Clock className="h-4 w-4 text-muted-foreground" />}
                       <span className="text-xs text-muted-foreground">Etapa {e.ordem}</span>
                       <span className="text-sm font-medium">{e.nome}</span>
-                      <Badge className={STATUS_TONE[e.status] ?? "bg-zinc-100 text-zinc-700"}>
-                        {STATUS_LABEL[e.status] ?? e.status}
+                      <Badge className={getStepStatusTone(e.status, "client")}>
+                        {getStepStatusLabel(e.status, "client")}
                       </Badge>
                       {e.prazo && e.status !== "concluida" && (
                         <span className="text-[11px] text-muted-foreground">Prazo {formatBR(e.prazo)}</span>
