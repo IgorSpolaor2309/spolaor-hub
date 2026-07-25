@@ -15,7 +15,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { EmptyState } from "@/components/sc/EmptyState";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { clientLabel } from "@/lib/client-display";
-import { prazoKind, PRAZO_STYLE } from "@/lib/processo-prazo";
+import { PROCESS_STATUS_OPTIONS, PROCESS_PRIORITY_OPTIONS } from "@/lib/processos-constants";
+import { ProcessListItem } from "@/components/sc/ProcessListItem";
 import { toast } from "sonner";
 import { Workflow, Plus, Search, X } from "lucide-react";
 
@@ -26,24 +27,6 @@ export const Route = createFileRoute("/_authenticated/processos")({
     client: typeof search.client === "string" ? search.client : undefined,
   }),
 });
-
-
-const STATUSES = [
-  { value: "nao_iniciado", label: "Não iniciado", cls: "bg-zinc-200 text-zinc-700" },
-  { value: "em_andamento", label: "Em andamento", cls: "bg-blue-100 text-blue-800" },
-  { value: "aguardando_cliente", label: "Aguardando cliente", cls: "bg-amber-100 text-amber-800" },
-  { value: "aguardando_orgao", label: "Aguardando órgão", cls: "bg-orange-100 text-orange-800" },
-  { value: "concluido", label: "Concluído", cls: "bg-emerald-100 text-emerald-800" },
-  { value: "cancelado", label: "Cancelado", cls: "bg-red-100 text-red-800" },
-];
-const STATUS_MAP = Object.fromEntries(STATUSES.map((s) => [s.value, s]));
-const PRIORIDADES = [
-  { value: "baixa", label: "Baixa", cls: "bg-zinc-100 text-zinc-700" },
-  { value: "media", label: "Média", cls: "bg-blue-100 text-blue-700" },
-  { value: "alta", label: "Alta", cls: "bg-amber-100 text-amber-700" },
-  { value: "urgente", label: "Urgente", cls: "bg-red-100 text-red-700" },
-];
-const PRIO_MAP = Object.fromEntries(PRIORIDADES.map((p) => [p.value, p]));
 
 type TabKey = "todos" | "meus" | "aguardando" | "atrasados" | "concluidos";
 
