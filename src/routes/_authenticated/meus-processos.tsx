@@ -13,18 +13,12 @@ import { EmptyState } from "@/components/sc/EmptyState";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { clientLabel } from "@/lib/client-display";
 import { prazoKind, PRAZO_STYLE } from "@/lib/processo-prazo";
+import { getStepStatusLabel, getStepStatusTone } from "@/lib/processos-constants";
 import { Briefcase, Search, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/meus-processos")({
   component: MeusProcessosPage,
 });
-
-const STEP_STATUS: Record<string, { label: string; cls: string }> = {
-  pendente:     { label: "Pendente",     cls: "bg-zinc-100 text-zinc-700" },
-  em_andamento: { label: "Em andamento", cls: "bg-blue-100 text-blue-800" },
-  concluida:    { label: "Concluída",    cls: "bg-emerald-100 text-emerald-800" },
-  cancelada:    { label: "Cancelada",    cls: "bg-red-100 text-red-800" },
-};
 
 const PAGE_SIZE = 30;
 
