@@ -244,7 +244,7 @@ function ProcessDetail() {
   if (procQ.isLoading) return <p className="text-sm text-muted-foreground">Carregando processo…</p>;
   if (!procQ.data) return <EmptyState icon={<Workflow className="h-6 w-6" />} title="Processo não encontrado" />;
 
-  const p = procQ.data as any;
+  const p = proc as any;
   const st = STATUS_MAP[p.status];
   const isAdmin = role === "admin";
 
