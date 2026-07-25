@@ -71,7 +71,7 @@
       {
         "name": "list_processes",
         "title": "Listar processos",
-        "description": "Lista os processos (company_processes) visíveis ao usuário autenticado, respeitando as políticas de acesso do SC Central.",
+        "description": "Lista processos visíveis ao usuário autenticado. Admin vê todos; colaborador vê apenas clientes vinculados; cliente vê apenas seus processos com dados públicos.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
