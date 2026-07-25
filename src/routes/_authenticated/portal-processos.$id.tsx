@@ -115,7 +115,7 @@ function ClientProcessoDetail() {
                             {r.solicitacao ? (
                               <>
                                 <Badge className="bg-amber-100 text-amber-800">
-                                  Solicitação: {REQ_STATUS_LABEL[r.solicitacao.status] ?? r.solicitacao.status}
+                                  Solicitação: {getRequestStatusLabel(r.solicitacao.status, "client")}
                                   {r.solicitacao.prazo ? ` · prazo ${formatBR(r.solicitacao.prazo)}` : ""}
                                 </Badge>
                                 <Button asChild size="sm" variant="outline" className="ml-auto h-7">
