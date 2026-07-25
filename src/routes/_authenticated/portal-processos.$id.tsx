@@ -148,7 +148,7 @@ function ClientProcessoDetail() {
                 {solicitacoes.map((s: any) => (
                   <li key={s.id} className="flex flex-wrap items-center gap-2 rounded border p-2 text-sm">
                     <span className="font-medium">{s.titulo}</span>
-                    <Badge className={getRequestStatusTone(s.status, "client")}>
+                    <Badge className={getRequestStatusTone(s.status)}>
                       {getRequestStatusLabel(s.status, "client")}
                     </Badge>
                     {s.prazo && <span className="text-[11px] text-muted-foreground">Prazo {formatBR(s.prazo)}</span>}
