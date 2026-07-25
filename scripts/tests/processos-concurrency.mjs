@@ -100,17 +100,18 @@ async function seed() {
 
   // process (open via RPC to trigger step materialization)
   const cpIns = await admin.rpc("open_company_process", {
-    p_client_id: state.clientId,
-    p_process_type_id: state.processTypeId,
-    p_responsavel_id: userId,
-    p_status: "nao_iniciado",
-    p_prioridade: "media",
-    p_prazo_final: null,
-    p_observacoes: null,
-    p_is_demo: false,
+    _client_id: state.clientId,
+    _process_type_id: state.processTypeId,
+    _responsavel_id: userId,
+    _prazo_final: null,
+    _prioridade: "media",
+    _observacoes: null,
+    _is_demo: false,
+    _demo_batch_id: null,
   });
   if (cpIns.error) throw cpIns.error;
   state.processId = cpIns.data;
+
 
   const step = await admin.from("company_process_steps")
     .select("id").eq("company_process_id", state.processId).order("ordem").limit(1).single();
