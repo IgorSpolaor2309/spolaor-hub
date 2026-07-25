@@ -326,7 +326,7 @@ function ProcessDetail() {
                   toast.error("Informe o motivo da espera antes de mudar o status.");
                   return;
                 }
-                updateProc.mutate({ status: v });
+                updateProc.mutate({ patch: { status: v }, expectedVersion: p.updated_at });
               }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -336,7 +336,7 @@ function ProcessDetail() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Prioridade</Label>
-              <Select value={p.prioridade} onValueChange={(v) => updateProc.mutate({ prioridade: v })}>
+              <Select value={p.prioridade} onValueChange={(v) => updateProc.mutate({ patch: { prioridade: v }, expectedVersion: p.updated_at })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {PRIORIDADES.map((x) => <SelectItem key={x.value} value={x.value}>{x.label}</SelectItem>)}
@@ -345,7 +345,7 @@ function ProcessDetail() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Responsável</Label>
-              <Select value={p.responsavel_id ?? "__none__"} onValueChange={(v) => updateProc.mutate({ responsavel_id: v === "__none__" ? null : v })}>
+              <Select value={p.responsavel_id ?? "__none__"} onValueChange={(v) => updateProc.mutate({ patch: { responsavel_id: v === "__none__" ? null : v }, expectedVersion: p.updated_at })}>
                 <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">— Nenhum —</SelectItem>
@@ -355,23 +355,25 @@ function ProcessDetail() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Prazo final</Label>
-              <Input type="date" defaultValue={p.prazo_final ?? ""}
-                onBlur={(e) => { const v = e.target.value || null; if (v !== p.prazo_final) updateProc.mutate({ prazo_final: v }); }} />
+              {/* key={updated_at} força remount após conflito/atualização, restaurando o defaultValue com o valor do servidor. */}
+              <Input key={`prazo:${p.updated_at}`} type="date" defaultValue={p.prazo_final ?? ""}
+                onBlur={(e) => { const v = e.target.value || null; if (v !== p.prazo_final) updateProc.mutate({ patch: { prazo_final: v }, expectedVersion: p.updated_at }); }} />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label className="text-xs">
                 Motivo da espera
                 {(p.status === "aguardando_cliente" || p.status === "aguardando_orgao") && <span className="text-red-600"> *</span>}
               </Label>
-              <Input defaultValue={p.motivo_espera ?? ""}
+              <Input key={`motivo:${p.updated_at}`} defaultValue={p.motivo_espera ?? ""}
                 placeholder="Obrigatório para status de espera (cliente/órgão)"
-                onBlur={(e) => { if (e.target.value !== (p.motivo_espera ?? "")) updateProc.mutate({ motivo_espera: e.target.value || null }); }} />
+                onBlur={(e) => { if (e.target.value !== (p.motivo_espera ?? "")) updateProc.mutate({ patch: { motivo_espera: e.target.value || null }, expectedVersion: p.updated_at }); }} />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label className="text-xs">Observações</Label>
-              <Textarea rows={2} defaultValue={p.observacoes ?? ""}
-                onBlur={(e) => { if (e.target.value !== (p.observacoes ?? "")) updateProc.mutate({ observacoes: e.target.value || null }); }} />
+              <Textarea key={`obs:${p.updated_at}`} rows={2} defaultValue={p.observacoes ?? ""}
+                onBlur={(e) => { if (e.target.value !== (p.observacoes ?? "")) updateProc.mutate({ patch: { observacoes: e.target.value || null }, expectedVersion: p.updated_at }); }} />
             </div>
+
           </div>
         </Card>
 
