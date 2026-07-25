@@ -171,7 +171,7 @@ function ProcessDetail() {
   // Resolve todos os nomes de profiles (responsável principal + responsáveis
   // de etapas + concluída_por + autores da timeline) em UMA única consulta.
   const stepRows = stepsQ.data ?? [];
-  const histRows = historyQ.data ?? [];
+  const histRows = history;
   const profileIds = [
     procQ.data?.responsavel_id ?? null,
     ...stepRows.flatMap((r: any) => [r.responsavel_id, r.concluida_por]),
@@ -341,11 +341,11 @@ function ProcessDetail() {
         <Card className="p-4">
           <div className="mb-2 text-sm font-medium">Timeline</div>
           {historyQ.isLoading ? <p className="text-xs text-muted-foreground">Carregando…</p>
-            : (historyQ.data ?? []).filter((e: any) => TIMELINE_TIPOS.has(e.tipo)).length === 0
+            : (history).filter((e: any) => TIMELINE_TIPOS.has(e.tipo)).length === 0
               ? <p className="text-xs text-muted-foreground">Nenhum evento registrado.</p>
               : (
                 <ol className="relative space-y-3 border-l pl-4">
-                  {(historyQ.data ?? [])
+                  {(history)
                     .filter((e: any) => TIMELINE_TIPOS.has(e.tipo))
                     .slice(0, 30)
                     .map((e: any) => {
@@ -468,10 +468,10 @@ function ProcessDetail() {
             <span className="ml-2 text-xs font-normal text-muted-foreground">técnico · somente administradores</span>
           </div>
           {historyQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
-            : (historyQ.data ?? []).length === 0 ? <p className="p-3 text-sm text-muted-foreground">Sem eventos registrados.</p>
+            : (history).length === 0 ? <p className="p-3 text-sm text-muted-foreground">Sem eventos registrados.</p>
             : (
               <ul className="divide-y">
-                {(historyQ.data ?? []).map((h: any) => (
+                {(history).map((h: any) => (
                   <AuditRow key={h.id} event={h} />
                 ))}
               </ul>
