@@ -182,16 +182,3 @@ function ClientProcessoDetail() {
   );
 }
 
-function friendlyEvent(t: any): string {
-  switch (t.tipo) {
-    case "processo_aberto": return "Processo aberto.";
-    case "processo_status": {
-      const s = t.metadata?.new;
-      return `Status: ${STATUS_LABEL[s] ?? s ?? "atualizado"}.`;
-    }
-    case "processo_solicitacao_criada": return "Uma solicitação de documento foi enviada a você.";
-    case "processo_solicitacao_cancelada": return "Uma solicitação vinculada foi cancelada.";
-    case "processo_requisito_atendido_solicitacao": return "Um documento enviado foi vinculado ao processo.";
-    default: return t.descricao ?? "";
-  }
-}
