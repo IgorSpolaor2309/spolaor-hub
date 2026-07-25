@@ -192,33 +192,71 @@ function ProcessDetail() {
 
 
 
+  // Sentinela para sinalizar conflito de concorrência (row-version por updated_at)
+  const CONCURRENCY_CONFLICT = "__concurrency_conflict__";
+  const conflictToast = () =>
+    toast.error("Este processo foi alterado enquanto você editava. Os dados mais recentes foram recarregados.");
+
   const updateProc = useMutation({
-    mutationFn: async (patch: any) => {
-      const { error } = await (supabase as any).from("company_processes").update(patch).eq("id", id);
+    // Serializa gravações do detalhe deste processo (evita out-of-order).
+    scope: { id: `processo:${id}` },
+    mutationFn: async ({ patch, expectedVersion }: { patch: any; expectedVersion: string | null | undefined }) => {
+      let q = (supabase as any).from("company_processes").update(patch).eq("id", id);
+      if (expectedVersion) q = q.eq("updated_at", expectedVersion);
+      const { data, error } = await q.select("updated_at").maybeSingle();
       if (error) throw error;
+      if (!data) throw new Error(CONCURRENCY_CONFLICT);
+      return data.updated_at as string;
     },
-    onSuccess: () => {
+    onSuccess: (newVersion) => {
+      // Aplica nova versão no cache sem esperar refetch, evitando falso conflito na próxima edição.
+      qc.setQueryData(["company-process", id], (prev: any) => prev ? { ...prev, updated_at: newVersion } : prev);
       qc.invalidateQueries({ queryKey: ["company-process", id] });
       qc.invalidateQueries({ queryKey: ["company-processes"] });
       qc.invalidateQueries({ queryKey: ["company-process-history", id] });
       qc.invalidateQueries({ queryKey: ["processos-indicadores"] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Falha ao atualizar"),
+    onError: (e: any) => {
+      if (e?.message === CONCURRENCY_CONFLICT) {
+        conflictToast();
+        qc.invalidateQueries({ queryKey: ["company-process", id] });
+        qc.invalidateQueries({ queryKey: ["company-process-history", id] });
+        return;
+      }
+      toast.error(e.message ?? "Falha ao atualizar");
+    },
   });
 
   const updateStep = useMutation({
-    mutationFn: async ({ stepId, patch }: { stepId: string; patch: any }) => {
-      const { error } = await (supabase as any).from("company_process_steps").update(patch).eq("id", stepId);
+    scope: { id: `processo:${id}` },
+    mutationFn: async ({ stepId, patch, expectedVersion }: { stepId: string; patch: any; expectedVersion: string | null | undefined }) => {
+      let q = (supabase as any).from("company_process_steps").update(patch).eq("id", stepId);
+      if (expectedVersion) q = q.eq("updated_at", expectedVersion);
+      const { data, error } = await q.select("id, updated_at").maybeSingle();
       if (error) throw error;
+      if (!data) throw new Error(CONCURRENCY_CONFLICT);
+      return { stepId: data.id as string, updated_at: data.updated_at as string };
     },
-    onSuccess: () => {
+    onSuccess: ({ stepId, updated_at }) => {
+      qc.setQueryData(["company-process-steps", id], (prev: any[] | undefined) =>
+        prev ? prev.map((r) => (r.id === stepId ? { ...r, updated_at } : r)) : prev,
+      );
       qc.invalidateQueries({ queryKey: ["company-process-steps", id] });
       qc.invalidateQueries({ queryKey: ["company-processes"] });
       qc.invalidateQueries({ queryKey: ["company-process-history", id] });
       qc.invalidateQueries({ queryKey: ["processos-indicadores"] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Falha ao atualizar etapa"),
+    onError: (e: any) => {
+      if (e?.message === CONCURRENCY_CONFLICT) {
+        conflictToast();
+        qc.invalidateQueries({ queryKey: ["company-process-steps", id] });
+        qc.invalidateQueries({ queryKey: ["company-process-history", id] });
+        return;
+      }
+      toast.error(e.message ?? "Falha ao atualizar etapa");
+    },
   });
+
 
 
   const removeProc = useMutation({
@@ -288,7 +326,7 @@ function ProcessDetail() {
                   toast.error("Informe o motivo da espera antes de mudar o status.");
                   return;
                 }
-                updateProc.mutate({ status: v });
+                updateProc.mutate({ patch: { status: v }, expectedVersion: p.updated_at });
               }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -298,7 +336,7 @@ function ProcessDetail() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Prioridade</Label>
-              <Select value={p.prioridade} onValueChange={(v) => updateProc.mutate({ prioridade: v })}>
+              <Select value={p.prioridade} onValueChange={(v) => updateProc.mutate({ patch: { prioridade: v }, expectedVersion: p.updated_at })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {PRIORIDADES.map((x) => <SelectItem key={x.value} value={x.value}>{x.label}</SelectItem>)}
@@ -307,7 +345,7 @@ function ProcessDetail() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Responsável</Label>
-              <Select value={p.responsavel_id ?? "__none__"} onValueChange={(v) => updateProc.mutate({ responsavel_id: v === "__none__" ? null : v })}>
+              <Select value={p.responsavel_id ?? "__none__"} onValueChange={(v) => updateProc.mutate({ patch: { responsavel_id: v === "__none__" ? null : v }, expectedVersion: p.updated_at })}>
                 <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">— Nenhum —</SelectItem>
@@ -317,23 +355,25 @@ function ProcessDetail() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Prazo final</Label>
-              <Input type="date" defaultValue={p.prazo_final ?? ""}
-                onBlur={(e) => { const v = e.target.value || null; if (v !== p.prazo_final) updateProc.mutate({ prazo_final: v }); }} />
+              {/* key={updated_at} força remount após conflito/atualização, restaurando o defaultValue com o valor do servidor. */}
+              <Input key={`prazo:${p.updated_at}`} type="date" defaultValue={p.prazo_final ?? ""}
+                onBlur={(e) => { const v = e.target.value || null; if (v !== p.prazo_final) updateProc.mutate({ patch: { prazo_final: v }, expectedVersion: p.updated_at }); }} />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label className="text-xs">
                 Motivo da espera
                 {(p.status === "aguardando_cliente" || p.status === "aguardando_orgao") && <span className="text-red-600"> *</span>}
               </Label>
-              <Input defaultValue={p.motivo_espera ?? ""}
+              <Input key={`motivo:${p.updated_at}`} defaultValue={p.motivo_espera ?? ""}
                 placeholder="Obrigatório para status de espera (cliente/órgão)"
-                onBlur={(e) => { if (e.target.value !== (p.motivo_espera ?? "")) updateProc.mutate({ motivo_espera: e.target.value || null }); }} />
+                onBlur={(e) => { if (e.target.value !== (p.motivo_espera ?? "")) updateProc.mutate({ patch: { motivo_espera: e.target.value || null }, expectedVersion: p.updated_at }); }} />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label className="text-xs">Observações</Label>
-              <Textarea rows={2} defaultValue={p.observacoes ?? ""}
-                onBlur={(e) => { if (e.target.value !== (p.observacoes ?? "")) updateProc.mutate({ observacoes: e.target.value || null }); }} />
+              <Textarea key={`obs:${p.updated_at}`} rows={2} defaultValue={p.observacoes ?? ""}
+                onBlur={(e) => { if (e.target.value !== (p.observacoes ?? "")) updateProc.mutate({ patch: { observacoes: e.target.value || null }, expectedVersion: p.updated_at }); }} />
             </div>
+
           </div>
         </Card>
 
@@ -397,12 +437,12 @@ function ProcessDetail() {
 
                         {!isDone ? (
                           <Button size="sm" variant="outline" disabled={!s.pode_concluir_manual}
-                            onClick={() => updateStep.mutate({ stepId: s.id, patch: { status: "concluida", data_conclusao: new Date().toISOString(), concluida_por: userId } })}>
+                            onClick={() => updateStep.mutate({ stepId: s.id, patch: { status: "concluida", data_conclusao: new Date().toISOString(), concluida_por: userId }, expectedVersion: s.updated_at })}>
                             <Check className="mr-1 h-3.5 w-3.5" /> Concluir
                           </Button>
                         ) : (
                           <Button size="sm" variant="ghost"
-                            onClick={() => updateStep.mutate({ stepId: s.id, patch: { status: "pendente", data_conclusao: null, concluida_por: null } })}>
+                            onClick={() => updateStep.mutate({ stepId: s.id, patch: { status: "pendente", data_conclusao: null, concluida_por: null }, expectedVersion: s.updated_at })}>
                             <RotateCcw className="mr-1 h-3.5 w-3.5" /> Reabrir
                           </Button>
                         )}
@@ -416,7 +456,7 @@ function ProcessDetail() {
                             status: v,
                             data_conclusao: v === "concluida" ? new Date().toISOString() : null,
                             concluida_por: v === "concluida" ? userId : null,
-                          } })
+                          }, expectedVersion: s.updated_at })
                         }>
                           <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
                           <SelectContent>
@@ -427,7 +467,7 @@ function ProcessDetail() {
                       <div>
                         <Label className="text-[10px] uppercase">Responsável</Label>
                         <Select value={s.responsavel_id ?? "__none__"} onValueChange={(v) =>
-                          updateStep.mutate({ stepId: s.id, patch: { responsavel_id: v === "__none__" ? null : v } })
+                          updateStep.mutate({ stepId: s.id, patch: { responsavel_id: v === "__none__" ? null : v }, expectedVersion: s.updated_at })
                         }>
                           <SelectTrigger className="h-8"><SelectValue placeholder="—" /></SelectTrigger>
                           <SelectContent>
@@ -438,14 +478,15 @@ function ProcessDetail() {
                       </div>
                       <div>
                         <Label className="text-[10px] uppercase">Prazo</Label>
-                        <Input className="h-8" type="date" defaultValue={s.prazo ?? ""}
-                          onBlur={(e) => { const v = e.target.value || null; if (v !== s.prazo) updateStep.mutate({ stepId: s.id, patch: { prazo: v } }); }} />
+                        <Input key={`step-prazo:${s.id}:${s.updated_at}`} className="h-8" type="date" defaultValue={s.prazo ?? ""}
+                          onBlur={(e) => { const v = e.target.value || null; if (v !== s.prazo) updateStep.mutate({ stepId: s.id, patch: { prazo: v }, expectedVersion: s.updated_at }); }} />
                       </div>
                       <div className="sm:col-span-4">
                         <Label className="text-[10px] uppercase">Observações</Label>
-                        <Textarea rows={2} defaultValue={s.observacoes ?? ""}
-                          onBlur={(e) => { if (e.target.value !== (s.observacoes ?? "")) updateStep.mutate({ stepId: s.id, patch: { observacoes: e.target.value || null } }); }} />
+                        <Textarea key={`step-obs:${s.id}:${s.updated_at}`} rows={2} defaultValue={s.observacoes ?? ""}
+                          onBlur={(e) => { if (e.target.value !== (s.observacoes ?? "")) updateStep.mutate({ stepId: s.id, patch: { observacoes: e.target.value || null }, expectedVersion: s.updated_at }); }} />
                       </div>
+
                     </div>
                   </li>
                 );
