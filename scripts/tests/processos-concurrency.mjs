@@ -318,6 +318,9 @@ async function run() {
       _responsavel_id: state.userIds[0], _prioridade: "media",
       _prazo_final: null, _observacoes: null, _is_demo: true, _demo_batch_id: null,
     });
+    if (cpDemo.error || !cpDemo.data) {
+      assert("demo: processo demo criado via RPC", false, { err: cpDemo.error?.message, data: cpDemo.data });
+    } else {
     const demoId = cpDemo.data;
     const row = await admin.from("company_processes").select("is_demo, updated_at").eq("id", demoId).single();
     assert("demo: processo criado como is_demo", row.data.is_demo === true);
