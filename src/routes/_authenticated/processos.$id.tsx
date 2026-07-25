@@ -437,12 +437,12 @@ function ProcessDetail() {
 
                         {!isDone ? (
                           <Button size="sm" variant="outline" disabled={!s.pode_concluir_manual}
-                            onClick={() => updateStep.mutate({ stepId: s.id, patch: { status: "concluida", data_conclusao: new Date().toISOString(), concluida_por: userId } })}>
+                            onClick={() => updateStep.mutate({ stepId: s.id, patch: { status: "concluida", data_conclusao: new Date().toISOString(), concluida_por: userId }, expectedVersion: s.updated_at })}>
                             <Check className="mr-1 h-3.5 w-3.5" /> Concluir
                           </Button>
                         ) : (
                           <Button size="sm" variant="ghost"
-                            onClick={() => updateStep.mutate({ stepId: s.id, patch: { status: "pendente", data_conclusao: null, concluida_por: null } })}>
+                            onClick={() => updateStep.mutate({ stepId: s.id, patch: { status: "pendente", data_conclusao: null, concluida_por: null }, expectedVersion: s.updated_at })}>
                             <RotateCcw className="mr-1 h-3.5 w-3.5" /> Reabrir
                           </Button>
                         )}
@@ -456,7 +456,7 @@ function ProcessDetail() {
                             status: v,
                             data_conclusao: v === "concluida" ? new Date().toISOString() : null,
                             concluida_por: v === "concluida" ? userId : null,
-                          } })
+                          }, expectedVersion: s.updated_at })
                         }>
                           <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
                           <SelectContent>
@@ -467,7 +467,7 @@ function ProcessDetail() {
                       <div>
                         <Label className="text-[10px] uppercase">Responsável</Label>
                         <Select value={s.responsavel_id ?? "__none__"} onValueChange={(v) =>
-                          updateStep.mutate({ stepId: s.id, patch: { responsavel_id: v === "__none__" ? null : v } })
+                          updateStep.mutate({ stepId: s.id, patch: { responsavel_id: v === "__none__" ? null : v }, expectedVersion: s.updated_at })
                         }>
                           <SelectTrigger className="h-8"><SelectValue placeholder="—" /></SelectTrigger>
                           <SelectContent>
@@ -478,14 +478,15 @@ function ProcessDetail() {
                       </div>
                       <div>
                         <Label className="text-[10px] uppercase">Prazo</Label>
-                        <Input className="h-8" type="date" defaultValue={s.prazo ?? ""}
-                          onBlur={(e) => { const v = e.target.value || null; if (v !== s.prazo) updateStep.mutate({ stepId: s.id, patch: { prazo: v } }); }} />
+                        <Input key={`step-prazo:${s.id}:${s.updated_at}`} className="h-8" type="date" defaultValue={s.prazo ?? ""}
+                          onBlur={(e) => { const v = e.target.value || null; if (v !== s.prazo) updateStep.mutate({ stepId: s.id, patch: { prazo: v }, expectedVersion: s.updated_at }); }} />
                       </div>
                       <div className="sm:col-span-4">
                         <Label className="text-[10px] uppercase">Observações</Label>
-                        <Textarea rows={2} defaultValue={s.observacoes ?? ""}
-                          onBlur={(e) => { if (e.target.value !== (s.observacoes ?? "")) updateStep.mutate({ stepId: s.id, patch: { observacoes: e.target.value || null } }); }} />
+                        <Textarea key={`step-obs:${s.id}:${s.updated_at}`} rows={2} defaultValue={s.observacoes ?? ""}
+                          onBlur={(e) => { if (e.target.value !== (s.observacoes ?? "")) updateStep.mutate({ stepId: s.id, patch: { observacoes: e.target.value || null }, expectedVersion: s.updated_at }); }} />
                       </div>
+
                     </div>
                   </li>
                 );
