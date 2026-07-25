@@ -319,6 +319,409 @@ async function run() {
     const { data } = await A.from("company_processes").select("id, is_demo").in("id", [ctx.pA, ctx.pB]);
     assert("processos de teste são reais (is_demo=false)", (data ?? []).every((r) => r.is_demo === false), data);
   }
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // 8) PAGINAÇÃO — list_company_processes_paginated
+  // ═════════════════════════════════════════════════════════════════════════
+  //
+  // Cria 12 processos extras no cliente A com metadados uniformes (mesmo
+  // prazo_final e mesmo created_at conceitual) para expor instabilidade de
+  // ordenação. O desempate final é `id DESC`, portanto a paginação deve
+  // ser determinística mesmo com valores idênticos no campo principal.
+  const EXTRA_N = 12;
+  const extraIds = [];
+  {
+    const rows = [];
+    const uniqTag = `PAG-${TAG}`;
+    for (let i = 0; i < EXTRA_N; i++) {
+      rows.push({
+        client_id: ctx.cA,
+        process_type_id: ctx.ptype ?? created.ptype,
+        status: i % 2 === 0 ? "em_andamento" : "nao_iniciado",
+        prioridade: i % 3 === 0 ? "alta" : "media",
+        prazo_final: "2099-12-31",
+        observacoes: `${uniqTag}-${i.toString().padStart(2, "0")}`,
+      });
+    }
+    const { data, error } = await admin.from("company_processes").insert(rows).select("id");
+    if (error) throw new Error(`extra insert: ${error.message}`);
+    extraIds.push(...data.map((r) => r.id));
+    created.processes.push(...extraIds);
+  }
+
+  const pageAll = async (opts) => {
+    // Percorre até esgotar; retorna união e metadados por página.
+    const all = [];
+    const totals = new Set();
+    const pageSizes = new Set();
+    const pageEchoes = new Set();
+    let page = 1;
+    for (;;) {
+      const { data, error } = await A.rpc("list_company_processes_paginated", { ...opts, _page: page });
+      if (error) throw new Error(`rpc page=${page}: ${error.message}`);
+      totals.add(Number(data.total));
+      pageSizes.add(Number(data.page_size));
+      pageEchoes.add(Number(data.page));
+      all.push({ page, rows: data.rows });
+      if (data.rows.length < Number(data.page_size)) break;
+      page++;
+      if (page > 200) throw new Error("safety-break: >200 pages");
+    }
+    return { pages: all, totals: [...totals], pageSizes: [...pageSizes], pageEchoes: [...pageEchoes] };
+  };
+
+  // 8a) page=1 com _page_size=5, restringido ao cliente A + observacoes começa com PAG-
+  {
+    const { data, error } = await A.rpc("list_company_processes_paginated", {
+      _client_id: ctx.cA, _search: `PAG-${TAG}`, _page: 1, _page_size: 5, _sort_by: "abertura",
+    });
+    assert("paginated: rpc responde sem erro", !error, error);
+    assert("paginated: page=1 retorna 5 linhas", (data?.rows ?? []).length === 5, { got: data?.rows?.length, total: data?.total });
+    assert("paginated: page (echo) = 1", data?.page === 1, data);
+    assert("paginated: page_size (echo) = 5", data?.page_size === 5, data);
+    assert("paginated: total refletindo os 12 extras", Number(data?.total) === EXTRA_N, data);
+  }
+
+  // 8b) page=2 e page=3 — sem duplicação e cobrindo todos os 12
+  {
+    const p1 = await A.rpc("list_company_processes_paginated", { _client_id: ctx.cA, _search: `PAG-${TAG}`, _page: 1, _page_size: 5, _sort_by: "abertura" });
+    const p2 = await A.rpc("list_company_processes_paginated", { _client_id: ctx.cA, _search: `PAG-${TAG}`, _page: 2, _page_size: 5, _sort_by: "abertura" });
+    const p3 = await A.rpc("list_company_processes_paginated", { _client_id: ctx.cA, _search: `PAG-${TAG}`, _page: 3, _page_size: 5, _sort_by: "abertura" });
+    const ids1 = p1.data.rows.map((r) => r.id);
+    const ids2 = p2.data.rows.map((r) => r.id);
+    const ids3 = p3.data.rows.map((r) => r.id);
+    const union = new Set([...ids1, ...ids2, ...ids3]);
+    const intersects12 = ids1.some((x) => ids2.includes(x));
+    const intersects23 = ids2.some((x) => ids3.includes(x));
+    assert("paginated: page=2 retorna 5 linhas seguintes", ids2.length === 5, ids2);
+    assert("paginated: page=3 retorna as 2 restantes", ids3.length === 2, ids3);
+    assert("paginated: sem interseção entre página 1 e 2", !intersects12, { ids1, ids2 });
+    assert("paginated: sem interseção entre página 2 e 3", !intersects23, { ids2, ids3 });
+    assert("paginated: união cobre exatamente os 12 registros esperados",
+      union.size === EXTRA_N && extraIds.every((id) => union.has(id)),
+      { unionSize: union.size, missing: extraIds.filter((id) => !union.has(id)) });
+    assert("paginated: total idêntico em todas as páginas",
+      p1.data.total === p2.data.total && p2.data.total === p3.data.total,
+      { t1: p1.data.total, t2: p2.data.total, t3: p3.data.total });
+  }
+
+  // 8c) Determinismo com valores idênticos: repetir a mesma consulta 3x deve
+  //     produzir a mesma sequência (fica evidente porque prazo_final é igual)
+  {
+    const seqs = [];
+    for (let i = 0; i < 3; i++) {
+      const { data } = await A.rpc("list_company_processes_paginated", {
+        _client_id: ctx.cA, _search: `PAG-${TAG}`, _page: 1, _page_size: EXTRA_N, _sort_by: "prazo",
+      });
+      seqs.push(data.rows.map((r) => r.id).join("|"));
+    }
+    assert("paginated: ordenação determinística (id como desempate)",
+      seqs[0] === seqs[1] && seqs[1] === seqs[2], seqs);
+  }
+
+  // 8d) page acima do total — rows vazio, total preservado
+  {
+    const { data } = await A.rpc("list_company_processes_paginated", {
+      _client_id: ctx.cA, _search: `PAG-${TAG}`, _page: 99, _page_size: 5,
+    });
+    assert("paginated: página vazia devolve rows=[]", Array.isArray(data.rows) && data.rows.length === 0, data);
+    assert("paginated: página vazia preserva total correto", Number(data.total) === EXTRA_N, data);
+    assert("paginated: página vazia ecoa page/page_size solicitados",
+      data.page === 99 && data.page_size === 5, data);
+  }
+
+  // 8e) page_size > 100 é limitado a 100
+  {
+    const { data } = await A.rpc("list_company_processes_paginated", { _client_id: ctx.cA, _page: 1, _page_size: 500 });
+    assert("paginated: page_size >100 é limitado a 100", data.page_size === 100, data.page_size);
+  }
+
+  // 8f) page < 1 normalizada para 1
+  {
+    const { data } = await A.rpc("list_company_processes_paginated", { _client_id: ctx.cA, _search: `PAG-${TAG}`, _page: 0, _page_size: 5 });
+    assert("paginated: page<1 normalizada (mesmo conjunto que page=1)",
+      Array.isArray(data.rows) && data.rows.length === 5, { rows: data.rows.length });
+  }
+
+  // 8g) Filtro por status
+  {
+    const { data } = await A.rpc("list_company_processes_paginated", {
+      _client_id: ctx.cA, _search: `PAG-${TAG}`, _status: "nao_iniciado", _page: 1, _page_size: 100,
+    });
+    const allNI = data.rows.every((r) => r.status === "nao_iniciado");
+    assert("paginated: filtro por status aplicado antes da paginação",
+      allNI && data.rows.length > 0 && data.rows.length < EXTRA_N, { count: data.rows.length, allNI });
+  }
+
+  // 8h) Filtro por prioridade
+  {
+    const { data } = await A.rpc("list_company_processes_paginated", {
+      _client_id: ctx.cA, _search: `PAG-${TAG}`, _prioridade: "alta", _page: 1, _page_size: 100,
+    });
+    const allAlta = data.rows.every((r) => r.prioridade === "alta");
+    assert("paginated: filtro por prioridade aplicado", allAlta && data.rows.length > 0, data.rows.map((r) => r.prioridade));
+  }
+
+  // 8i) Filtro por tipo de processo
+  {
+    const { data } = await A.rpc("list_company_processes_paginated", {
+      _process_type_id: ctx.ptype ?? created.ptype, _search: `PAG-${TAG}`, _page: 1, _page_size: 100,
+    });
+    assert("paginated: filtro por process_type_id aplicado",
+      data.rows.length === EXTRA_N && data.rows.every((r) => r.process_type_id === (ctx.ptype ?? created.ptype)),
+      { count: data.rows.length });
+  }
+
+  // 8j) Filtro por responsável — nossos extras têm responsavel_id NULL
+  {
+    const { data } = await A.rpc("list_company_processes_paginated", {
+      _client_id: ctx.cA, _search: `PAG-${TAG}`, _responsavel_id: ctx.adminId, _page: 1, _page_size: 100,
+    });
+    assert("paginated: filtro por responsável não retorna extras (responsavel=null)",
+      data.rows.length === 0, { rows: data.rows.length });
+  }
+
+  // 8k) Filtro por prazo — nossos extras têm prazo_final=2099-12-31 (nem vencido, nem hoje, nem em_breve)
+  {
+    const { data } = await A.rpc("list_company_processes_paginated", {
+      _client_id: ctx.cA, _search: `PAG-${TAG}`, _prazo: "vencido", _page: 1, _page_size: 100,
+    });
+    assert("paginated: filtro _prazo=vencido exclui extras com prazo em 2099",
+      data.rows.length === 0, { rows: data.rows.length });
+  }
+
+  // 8l) Filtro Real/Demo — nossos extras são reais (is_demo=false por default)
+  {
+    const { data: onlyDemo } = await A.rpc("list_company_processes_paginated", {
+      _client_id: ctx.cA, _search: `PAG-${TAG}`, _only_demo: true, _include_demo: true, _page: 1, _page_size: 100,
+    });
+    assert("paginated: _only_demo=true não retorna processos reais",
+      onlyDemo.rows.length === 0, { rows: onlyDemo.rows.length });
+    const { data: noDemo } = await A.rpc("list_company_processes_paginated", {
+      _client_id: ctx.cA, _search: `PAG-${TAG}`, _include_demo: false, _page: 1, _page_size: 100,
+    });
+    assert("paginated: _include_demo=false ainda retorna os reais",
+      noDemo.rows.length === EXTRA_N, { rows: noDemo.rows.length });
+  }
+
+  // 8m) Combinação de filtros
+  {
+    const { data } = await A.rpc("list_company_processes_paginated", {
+      _client_id: ctx.cA, _search: `PAG-${TAG}`, _status: "em_andamento", _prioridade: "alta",
+      _page: 1, _page_size: 100,
+    });
+    const ok = data.rows.every((r) => r.status === "em_andamento" && r.prioridade === "alta");
+    assert("paginated: combinação status + prioridade aplicada",
+      ok && data.rows.length > 0 && data.rows.length < EXTRA_N, { count: data.rows.length });
+  }
+
+  // 8n) Busca textual em observacoes
+  {
+    const { data } = await A.rpc("list_company_processes_paginated", {
+      _search: `PAG-${TAG}-03`, _page: 1, _page_size: 10,
+    });
+    assert("paginated: busca textual retorna somente o registro correspondente",
+      data.rows.length === 1 && (data.rows[0].observacoes || "").includes(`PAG-${TAG}-03`),
+      data.rows.map((r) => r.observacoes));
+  }
+
+  // 8o) Isolamento por papel: colaborador vinculado a A vê extras; sem vínculo não vê nada
+  {
+    const { data } = await CW.rpc("list_company_processes_paginated", {
+      _search: `PAG-${TAG}`, _page: 1, _page_size: 100,
+    });
+    assert("paginated: colaborador vinculado vê os 12 extras do cliente A",
+      data.rows.length === EXTRA_N && Number(data.total) === EXTRA_N, { rows: data.rows.length, total: data.total });
+  }
+  {
+    const { data } = await CS.rpc("list_company_processes_paginated", {
+      _search: `PAG-${TAG}`, _page: 1, _page_size: 100,
+    });
+    assert("paginated: colaborador SEM vínculo não vê os extras",
+      data.rows.length === 0 && Number(data.total) === 0, data);
+  }
+
+  // 8p) Admin vê registros de clientes distintos (sem filtro _client_id)
+  {
+    const { data } = await A.rpc("list_company_processes_paginated", { _page: 1, _page_size: 100 });
+    const clientIds = new Set(data.rows.map((r) => r.client_id));
+    assert("paginated: admin recebe registros de múltiplos clientes",
+      clientIds.size >= 2, { distinctClients: clientIds.size });
+  }
+
+  // 8q) Aba "meus" respeita o usuário autenticado (admin sem processos atribuídos → vazio)
+  {
+    const { data } = await A.rpc("list_company_processes_paginated", { _tab: "meus", _search: `PAG-${TAG}`, _page: 1, _page_size: 100 });
+    assert("paginated: aba 'meus' filtra por responsavel_id = auth.uid()",
+      data.rows.length === 0, { rows: data.rows.length });
+  }
+
+  // 8r) Anon é bloqueado
+  {
+    const { error } = await anonClient.rpc("list_company_processes_paginated", { _page: 1, _page_size: 5 });
+    assert("paginated: anon NÃO executa list_company_processes_paginated", !!error, error);
+  }
+
+  // 8s) União completa via loop
+  {
+    const walk = await pageAll({ _client_id: ctx.cA, _search: `PAG-${TAG}`, _page_size: 5, _sort_by: "abertura" });
+    const seen = new Set();
+    let dup = null;
+    for (const p of walk.pages) for (const r of p.rows) { if (seen.has(r.id)) dup = r.id; seen.add(r.id); }
+    assert("paginated: walk-through — sem duplicação entre páginas", !dup, dup);
+    assert("paginated: walk-through — união = 12 esperados", seen.size === EXTRA_N, { seen: seen.size });
+    assert("paginated: walk-through — total consistente entre páginas",
+      walk.totals.length === 1 && walk.totals[0] === EXTRA_N, walk.totals);
+  }
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // 9) PAGINAÇÃO — list_my_process_steps_paginated (prova >500)
+  // ═════════════════════════════════════════════════════════════════════════
+  //
+  // Cria 505 etapas atribuídas ao colaborador vinculado (cwId), pendentes,
+  // dentro de um dos processos extras do cliente A (que ele já enxerga por
+  // RLS). Também cria 1 etapa com responsavel_id=NULL para provar que a RPC
+  // não quebra e que a etapa nula não aparece na listagem do colaborador.
+
+  const STEPS_N = 505;
+  const stepsHostProcess = extraIds[0];
+  {
+    const rows = [];
+    for (let i = 0; i < STEPS_N; i++) {
+      rows.push({
+        company_process_id: stepsHostProcess,
+        nome: `PAG-STEP-${TAG}-${i.toString().padStart(4, "0")}`,
+        ordem: i + 100, // fora do range das etapas de setup
+        status: "pendente",
+        responsavel_id: ctx.cwId,
+        prazo: "2099-12-31",
+      });
+    }
+    // Insert em batches para não estourar payload
+    const CHUNK = 200;
+    for (let i = 0; i < rows.length; i += CHUNK) {
+      const { error } = await admin.from("company_process_steps").insert(rows.slice(i, i + CHUNK));
+      if (error) throw new Error(`bulk steps insert@${i}: ${error.message}`);
+    }
+    // Etapa com responsavel_id=NULL para o cenário 26 (não deve quebrar).
+    const { error: eNull } = await admin.from("company_process_steps").insert({
+      company_process_id: stepsHostProcess, nome: `PAG-STEP-NULL-${TAG}`,
+      ordem: 5000, status: "pendente", responsavel_id: null,
+    });
+    if (eNull) throw new Error(`null responsavel step: ${eNull.message}`);
+  }
+
+  // 9a) Total > 500 e page_size 100 respeitados
+  {
+    const { data, error } = await CW.rpc("list_my_process_steps_paginated", {
+      _status_group: "open", _page: 1, _page_size: 100,
+    });
+    assert("meus-steps: rpc responde sem erro", !error, error);
+    assert("meus-steps: total > 500 (prova de que o limite de 500 sumiu)",
+      Number(data.total) > 500, { total: data.total });
+    assert("meus-steps: total inclui as 505 etapas criadas", Number(data.total) >= STEPS_N, data.total);
+    assert("meus-steps: page_size respeitado (100)", data.page_size === 100 && data.rows.length === 100, {
+      pageSize: data.page_size, rows: data.rows.length,
+    });
+  }
+
+  // 9b) Percorrer todas as páginas e provar união == total, sem duplicação
+  {
+    const seen = new Set();
+    let dup = null;
+    let totalEcho = null;
+    let page = 1;
+    for (;;) {
+      const { data } = await CW.rpc("list_my_process_steps_paginated", {
+        _status_group: "open", _page: page, _page_size: 100,
+      });
+      if (totalEcho === null) totalEcho = Number(data.total);
+      for (const r of data.rows) { if (seen.has(r.id)) dup = r.id; seen.add(r.id); }
+      if (data.rows.length < data.page_size) break;
+      page++;
+      if (page > 50) throw new Error("safety-break");
+    }
+    assert("meus-steps: walk-through sem duplicação", !dup, dup);
+    assert("meus-steps: soma das páginas = total anunciado", seen.size === totalEcho, { seen: seen.size, totalEcho });
+
+    // 9c) Prova de que registros ALÉM da posição 500 aparecem
+    const beyondPage = Math.ceil(501 / 100); // = 6ª página com page_size=100
+    const { data: pBeyond } = await CW.rpc("list_my_process_steps_paginated", {
+      _status_group: "open", _page: beyondPage, _page_size: 100,
+    });
+    assert("meus-steps: registros após a posição 500 são acessíveis via paginação",
+      pBeyond.rows.length > 0, { page: beyondPage, rows: pBeyond.rows.length });
+  }
+
+  // 9d) Página vazia (além do total) — rows=[], total preservado
+  {
+    const { data } = await CW.rpc("list_my_process_steps_paginated", { _page: 999, _page_size: 100 });
+    assert("meus-steps: página vazia devolve rows=[] com total > 0",
+      data.rows.length === 0 && Number(data.total) > 500, data);
+  }
+
+  // 9e) Isolamento — colaborador sem vínculo não recebe etapas
+  {
+    const { data } = await CS.rpc("list_my_process_steps_paginated", { _page: 1, _page_size: 100 });
+    assert("meus-steps: colaborador sem vínculo → total=0", Number(data.total) === 0, data);
+  }
+
+  // 9f) Escopo — outra sessão não vê etapas do CW
+  {
+    const { data } = await A.rpc("list_my_process_steps_paginated", { _page: 1, _page_size: 100 });
+    // Admin não é responsável de nenhuma dessas etapas: não devem aparecer aqui.
+    const anyCwOwned = data.rows.some((r) => (r.nome || "").startsWith(`PAG-STEP-${TAG}-`));
+    assert("meus-steps: admin não recebe etapas atribuídas a outro usuário",
+      !anyCwOwned, { peek: data.rows.slice(0, 3).map((r) => r.nome) });
+  }
+
+  // 9g) Filtro por status_group
+  {
+    const { data } = await CW.rpc("list_my_process_steps_paginated", { _status_group: "done", _page: 1, _page_size: 100 });
+    // Nada foi concluído: esperado 0 (ou apenas conclusões pré-existentes fora deste teste)
+    const allDone = data.rows.every((r) => r.status === "concluida");
+    assert("meus-steps: filtro status_group=done retorna apenas 'concluida'", allDone, data.rows.map((r) => r.status));
+  }
+
+  // 9h) Filtro por prazo
+  {
+    const { data } = await CW.rpc("list_my_process_steps_paginated", { _prazo: "vencido", _page: 1, _page_size: 100 });
+    const anyOurs = data.rows.some((r) => (r.nome || "").startsWith(`PAG-STEP-${TAG}-`));
+    assert("meus-steps: _prazo=vencido não retorna as etapas com prazo em 2099", !anyOurs, {
+      sample: data.rows.slice(0, 3).map((r) => r.nome),
+    });
+  }
+
+  // 9i) Busca textual
+  {
+    const { data } = await CW.rpc("list_my_process_steps_paginated", {
+      _search: `PAG-STEP-${TAG}-0007`, _page: 1, _page_size: 10,
+    });
+    assert("meus-steps: busca textual retorna somente o registro correspondente",
+      data.rows.length === 1 && data.rows[0].nome.endsWith("-0007"), data.rows.map((r) => r.nome));
+  }
+
+  // 9j) Responsável NULL não quebra a query (a etapa PAG-STEP-NULL não aparece
+  //     porque o filtro é responsavel_id = auth.uid()); confirma ausência de erro.
+  {
+    const { data, error } = await CW.rpc("list_my_process_steps_paginated", { _search: `PAG-STEP-NULL-${TAG}`, _page: 1, _page_size: 10 });
+    assert("meus-steps: responsavel_id NULL não quebra a RPC", !error && data.rows.length === 0, { error, rows: data?.rows?.length });
+  }
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // 10) GRANTS & SECURITY INVOKER (asserções estruturais)
+  // ═════════════════════════════════════════════════════════════════════════
+  // Confirmação indireta: as duas RPCs foram exercitadas com sucesso por
+  // authenticated e falharam para anon (asserts 8r acima e abaixo). Também
+  // asseguramos aqui que o campo `page_size` retornado nunca ultrapassa 100.
+  {
+    const { data } = await CW.rpc("list_my_process_steps_paginated", { _page: 1, _page_size: 999 });
+    assert("meus-steps: page_size limitado a 100 mesmo com input abusivo", data.page_size === 100, data.page_size);
+  }
+  {
+    const { error } = await anonClient.rpc("list_my_process_steps_paginated", { _page: 1, _page_size: 5 });
+    assert("meus-steps: anon NÃO executa list_my_process_steps_paginated", !!error, error);
+  }
 }
 
 let exitCode = 0;
