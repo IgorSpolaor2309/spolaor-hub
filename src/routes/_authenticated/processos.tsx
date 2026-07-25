@@ -398,37 +398,24 @@ function ProcessesPage() {
           : rows.length === 0 ? <EmptyState icon={<Workflow className="h-6 w-6" />} title="Nenhum processo" description="Ajuste os filtros ou crie um novo processo." />
           : (
             <ul className="divide-y">
-              {rows.map((p: any) => {
-                const total = p.total_etapas ?? 0;
-                const done = p.etapas_concluidas ?? 0;
-                const pct = p.progresso ?? 0;
-                const st = STATUS_MAP[p.status];
-                const pr = PRIO_MAP[p.prioridade];
-                const isOpen = p.status !== "concluido" && p.status !== "cancelado";
-                const pk = isOpen ? prazoKind(p.prazo_final) : null;
-                const pkBadge = pk && (pk === "vencido" || pk === "hoje" || pk === "em_breve") ? PRAZO_STYLE[pk] : null;
-                return (
-                  <li key={p.id}>
-                    <Link to="/processos/$id" params={{ id: p.id }} search={{}} className="block p-3 hover:bg-muted/40">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {p.process_types?.cor && <span className="h-3 w-3 rounded-full border" style={{ background: p.process_types.cor }} />}
-                        <span className="font-medium">{clientLabel(p.clients)}</span>
-                        <Badge variant="outline">{p.process_types?.nome}</Badge>
-                        {st && <Badge className={st.cls}>{st.label}</Badge>}
-                        {pr && <Badge className={pr.cls}>{pr.label}</Badge>}
-                        {pkBadge && <Badge className={pkBadge.cls}>{pkBadge.label}</Badge>}
-                        {p.responsavel?.full_name && <span className="text-xs text-muted-foreground">· {p.responsavel.full_name}</span>}
-                        {p.prazo_final && <span className="text-xs text-muted-foreground">· prazo {new Date(p.prazo_final).toLocaleDateString("pt-BR")}</span>}
-                        <span className="ml-auto text-xs text-muted-foreground">{done}/{total} etapas</span>
-                      </div>
-                      <div className="mt-2 flex items-center gap-2">
-                        <Progress value={pct} className="h-1.5" />
-                        <span className="w-10 text-right text-xs text-muted-foreground">{pct}%</span>
-                      </div>
-                    </Link>
-                  </li>
-                );
-              })}
+              {rows.map((p: any) => (
+                <li key={p.id}>
+                  <ProcessListItem
+                    audience="staff"
+                    processId={p.id}
+                    empresa={clientLabel(p.clients)}
+                    tipoNome={p.process_types?.nome}
+                    tipoCor={p.process_types?.cor}
+                    status={p.status}
+                    prioridade={p.prioridade}
+                    responsavelNome={p.responsavel?.full_name}
+                    prazoFinal={p.prazo_final}
+                    totalEtapas={p.total_etapas}
+                    etapasConcluidas={p.etapas_concluidas}
+                    progresso={p.progresso}
+                  />
+                </li>
+              ))}
             </ul>
           )}
         {totalRows > 0 && (
