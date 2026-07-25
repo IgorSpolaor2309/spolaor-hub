@@ -16,6 +16,7 @@ import { FileText, Link2, Paperclip, CheckCircle2, AlertCircle, XCircle, Send, E
 import { Link } from "@tanstack/react-router";
 import { Textarea } from "@/components/ui/textarea";
 import { formatBR } from "@/lib/dates";
+import { getRequestStatusLabel, getRequestStatusTone } from "@/lib/processos-constants";
 
 type Props = {
   processId: string;
@@ -214,22 +215,6 @@ export function ProcessDocumentsSection({ processId, clientId, steps, canEdit }:
   );
 }
 
-const REQ_STATUS_TONE: Record<string, string> = {
-  pendente: "bg-amber-100 text-amber-800",
-  solicitado: "bg-sky-100 text-sky-800",
-  em_andamento: "bg-indigo-100 text-indigo-800",
-  aguardando_cliente: "bg-amber-100 text-amber-800",
-  reenviar: "bg-amber-100 text-amber-800",
-  recebido: "bg-emerald-100 text-emerald-800",
-  concluido: "bg-emerald-100 text-emerald-800",
-  recusado: "bg-rose-100 text-rose-800",
-  cancelado: "bg-zinc-200 text-zinc-700",
-};
-const REQ_STATUS_LABEL: Record<string, string> = {
-  pendente: "Pendente", solicitado: "Solicitado", em_andamento: "Em andamento",
-  aguardando_cliente: "Aguardando cliente", reenviar: "Reenviar",
-  recebido: "Recebido", concluido: "Concluído", recusado: "Recusado", cancelado: "Cancelado",
-};
 
 function RequirementRow({ req, clientId, canEdit, onSet, processId, stepId, stepNome, activeRequest, onChanged }:
   { req: any; clientId: string; canEdit: boolean; onSet: (docId: string | null) => void;
@@ -252,8 +237,8 @@ function RequirementRow({ req, clientId, canEdit, onSet, processId, stepId, step
       {removed && <Badge className="bg-red-100 text-red-800">Documento removido</Badge>}
       {met && <span className="text-xs text-muted-foreground">· {doc?.nome}</span>}
       {activeRequest && (
-        <Badge className={REQ_STATUS_TONE[activeRequest.status] ?? "bg-zinc-100 text-zinc-700"}>
-          Solicitação: {REQ_STATUS_LABEL[activeRequest.status] ?? activeRequest.status}
+        <Badge className={getRequestStatusTone(activeRequest.status)}>
+          Solicitação: {getRequestStatusLabel(activeRequest.status, "staff")}
           {activeRequest.prazo ? ` · prazo ${formatBR(activeRequest.prazo)}` : ""}
         </Badge>
       )}

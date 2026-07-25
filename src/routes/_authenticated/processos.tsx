@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,14 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { clientLabel } from "@/lib/client-display";
-import { prazoKind, PRAZO_STYLE } from "@/lib/processo-prazo";
+import { PROCESS_STATUS_OPTIONS, PROCESS_PRIORITY_OPTIONS } from "@/lib/processos-constants";
+import { ProcessListItem } from "@/components/sc/ProcessListItem";
 import { toast } from "sonner";
 import { Workflow, Plus, Search, X } from "lucide-react";
 
@@ -26,24 +25,6 @@ export const Route = createFileRoute("/_authenticated/processos")({
     client: typeof search.client === "string" ? search.client : undefined,
   }),
 });
-
-
-const STATUSES = [
-  { value: "nao_iniciado", label: "Não iniciado", cls: "bg-zinc-200 text-zinc-700" },
-  { value: "em_andamento", label: "Em andamento", cls: "bg-blue-100 text-blue-800" },
-  { value: "aguardando_cliente", label: "Aguardando cliente", cls: "bg-amber-100 text-amber-800" },
-  { value: "aguardando_orgao", label: "Aguardando órgão", cls: "bg-orange-100 text-orange-800" },
-  { value: "concluido", label: "Concluído", cls: "bg-emerald-100 text-emerald-800" },
-  { value: "cancelado", label: "Cancelado", cls: "bg-red-100 text-red-800" },
-];
-const STATUS_MAP = Object.fromEntries(STATUSES.map((s) => [s.value, s]));
-const PRIORIDADES = [
-  { value: "baixa", label: "Baixa", cls: "bg-zinc-100 text-zinc-700" },
-  { value: "media", label: "Média", cls: "bg-blue-100 text-blue-700" },
-  { value: "alta", label: "Alta", cls: "bg-amber-100 text-amber-700" },
-  { value: "urgente", label: "Urgente", cls: "bg-red-100 text-red-700" },
-];
-const PRIO_MAP = Object.fromEntries(PRIORIDADES.map((p) => [p.value, p]));
 
 type TabKey = "todos" | "meus" | "aguardando" | "atrasados" | "concluidos";
 
@@ -346,7 +327,7 @@ function ProcessesPage() {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
-                {STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                {PROCESS_STATUS_OPTIONS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -356,7 +337,7 @@ function ProcessesPage() {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
-                {PRIORIDADES.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                {PROCESS_PRIORITY_OPTIONS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -415,37 +396,24 @@ function ProcessesPage() {
           : rows.length === 0 ? <EmptyState icon={<Workflow className="h-6 w-6" />} title="Nenhum processo" description="Ajuste os filtros ou crie um novo processo." />
           : (
             <ul className="divide-y">
-              {rows.map((p: any) => {
-                const total = p.total_etapas ?? 0;
-                const done = p.etapas_concluidas ?? 0;
-                const pct = p.progresso ?? 0;
-                const st = STATUS_MAP[p.status];
-                const pr = PRIO_MAP[p.prioridade];
-                const isOpen = p.status !== "concluido" && p.status !== "cancelado";
-                const pk = isOpen ? prazoKind(p.prazo_final) : null;
-                const pkBadge = pk && (pk === "vencido" || pk === "hoje" || pk === "em_breve") ? PRAZO_STYLE[pk] : null;
-                return (
-                  <li key={p.id}>
-                    <Link to="/processos/$id" params={{ id: p.id }} search={{}} className="block p-3 hover:bg-muted/40">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {p.process_types?.cor && <span className="h-3 w-3 rounded-full border" style={{ background: p.process_types.cor }} />}
-                        <span className="font-medium">{clientLabel(p.clients)}</span>
-                        <Badge variant="outline">{p.process_types?.nome}</Badge>
-                        {st && <Badge className={st.cls}>{st.label}</Badge>}
-                        {pr && <Badge className={pr.cls}>{pr.label}</Badge>}
-                        {pkBadge && <Badge className={pkBadge.cls}>{pkBadge.label}</Badge>}
-                        {p.responsavel?.full_name && <span className="text-xs text-muted-foreground">· {p.responsavel.full_name}</span>}
-                        {p.prazo_final && <span className="text-xs text-muted-foreground">· prazo {new Date(p.prazo_final).toLocaleDateString("pt-BR")}</span>}
-                        <span className="ml-auto text-xs text-muted-foreground">{done}/{total} etapas</span>
-                      </div>
-                      <div className="mt-2 flex items-center gap-2">
-                        <Progress value={pct} className="h-1.5" />
-                        <span className="w-10 text-right text-xs text-muted-foreground">{pct}%</span>
-                      </div>
-                    </Link>
-                  </li>
-                );
-              })}
+              {rows.map((p: any) => (
+                <li key={p.id}>
+                  <ProcessListItem
+                    audience="staff"
+                    processId={p.id}
+                    empresa={clientLabel(p.clients)}
+                    tipoNome={p.process_types?.nome}
+                    tipoCor={p.process_types?.cor}
+                    status={p.status}
+                    prioridade={p.prioridade}
+                    responsavelNome={p.responsavel?.full_name}
+                    prazoFinal={p.prazo_final}
+                    totalEtapas={p.total_etapas}
+                    etapasConcluidas={p.etapas_concluidas}
+                    progresso={p.progresso}
+                  />
+                </li>
+              ))}
             </ul>
           )}
         {totalRows > 0 && (
@@ -527,7 +495,7 @@ function NewProcessDialog({ clients, types, collabs, onDone }: { clients: any[];
             <Select value={f.prioridade} onValueChange={(v) => setF({ ...f, prioridade: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {PRIORIDADES.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                {PROCESS_PRIORITY_OPTIONS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>

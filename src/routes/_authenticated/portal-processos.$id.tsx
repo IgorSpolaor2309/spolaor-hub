@@ -8,34 +8,21 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { Workflow, ArrowLeft, CheckCircle2, Clock, AlertCircle, ExternalLink, FileText } from "lucide-react";
 import { formatBR } from "@/lib/dates";
+import {
+  getProcessStatusLabel,
+  getProcessStatusTone,
+  getStepStatusLabel,
+  getStepStatusTone,
+  getRequestStatusLabel,
+  getRequestStatusTone,
+} from "@/lib/processos-constants";
+import { getTimelineLabel } from "@/lib/processo-timeline-labels";
 
 export const Route = createFileRoute("/_authenticated/portal-processos/$id")({
   component: ClientProcessoDetail,
   errorComponent: () => <EmptyState icon={<Workflow className="h-6 w-6" />} title="Processo indisponível" description="Verifique o link ou volte para a lista." />,
   notFoundComponent: () => <EmptyState icon={<Workflow className="h-6 w-6" />} title="Processo não encontrado" />,
 });
-
-const STATUS_LABEL: Record<string, string> = {
-  nao_iniciado: "Ainda não iniciado", em_andamento: "Em andamento",
-  aguardando_cliente: "Aguardando sua ação", aguardando_orgao: "Aguardando análise externa",
-  concluido: "Concluído", cancelado: "Cancelado",
-  pendente: "Pendente", concluida: "Concluída",
-};
-const STATUS_TONE: Record<string, string> = {
-  nao_iniciado: "bg-zinc-100 text-zinc-700",
-  em_andamento: "bg-indigo-100 text-indigo-800",
-  aguardando_cliente: "bg-amber-100 text-amber-800",
-  aguardando_orgao: "bg-sky-100 text-sky-800",
-  concluido: "bg-emerald-100 text-emerald-800",
-  cancelado: "bg-zinc-200 text-zinc-700",
-  pendente: "bg-amber-100 text-amber-800",
-  concluida: "bg-emerald-100 text-emerald-800",
-};
-const REQ_STATUS_LABEL: Record<string, string> = {
-  pendente: "Pendente", solicitado: "Solicitado", em_andamento: "Em andamento",
-  aguardando_cliente: "Aguardando você", reenviar: "Reenviar",
-  recebido: "Recebido", concluido: "Concluído", recusado: "Recusado", cancelado: "Cancelado",
-};
 
 function ClientProcessoDetail() {
   const { id } = useParams({ from: "/_authenticated/portal-processos/$id" });
@@ -81,8 +68,8 @@ function ClientProcessoDetail() {
 
       <Card className="mb-4 p-4">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge className={STATUS_TONE[proc.status] ?? "bg-zinc-100 text-zinc-700"}>
-            {STATUS_LABEL[proc.status] ?? proc.status}
+          <Badge className={getProcessStatusTone(proc.status, "client")}>
+            {getProcessStatusLabel(proc.status, "client")}
           </Badge>
           {proc.created_at && <span className="text-xs text-muted-foreground">Aberto em {formatBR(proc.created_at)}</span>}
           {proc.prazo_final && <span className="text-xs text-muted-foreground">· Previsão {formatBR(proc.prazo_final)}</span>}
@@ -109,8 +96,8 @@ function ClientProcessoDetail() {
                       {e.status === "concluida" ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <Clock className="h-4 w-4 text-muted-foreground" />}
                       <span className="text-xs text-muted-foreground">Etapa {e.ordem}</span>
                       <span className="text-sm font-medium">{e.nome}</span>
-                      <Badge className={STATUS_TONE[e.status] ?? "bg-zinc-100 text-zinc-700"}>
-                        {STATUS_LABEL[e.status] ?? e.status}
+                      <Badge className={getStepStatusTone(e.status, "client")}>
+                        {getStepStatusLabel(e.status, "client")}
                       </Badge>
                       {e.prazo && e.status !== "concluida" && (
                         <span className="text-[11px] text-muted-foreground">Prazo {formatBR(e.prazo)}</span>
@@ -128,7 +115,7 @@ function ClientProcessoDetail() {
                             {r.solicitacao ? (
                               <>
                                 <Badge className="bg-amber-100 text-amber-800">
-                                  Solicitação: {REQ_STATUS_LABEL[r.solicitacao.status] ?? r.solicitacao.status}
+                                  Solicitação: {getRequestStatusLabel(r.solicitacao.status, "client")}
                                   {r.solicitacao.prazo ? ` · prazo ${formatBR(r.solicitacao.prazo)}` : ""}
                                 </Badge>
                                 <Button asChild size="sm" variant="outline" className="ml-auto h-7">
@@ -161,8 +148,8 @@ function ClientProcessoDetail() {
                 {solicitacoes.map((s: any) => (
                   <li key={s.id} className="flex flex-wrap items-center gap-2 rounded border p-2 text-sm">
                     <span className="font-medium">{s.titulo}</span>
-                    <Badge className={STATUS_TONE[s.status] ?? "bg-zinc-100 text-zinc-700"}>
-                      {REQ_STATUS_LABEL[s.status] ?? s.status}
+                    <Badge className={getRequestStatusTone(s.status)}>
+                      {getRequestStatusLabel(s.status, "client")}
                     </Badge>
                     {s.prazo && <span className="text-[11px] text-muted-foreground">Prazo {formatBR(s.prazo)}</span>}
                     <Button asChild size="sm" variant="outline" className="ml-auto h-7">
@@ -184,7 +171,7 @@ function ClientProcessoDetail() {
                 {(timelineQ.data ?? []).map((t: any) => (
                   <li key={t.id} className="rounded border p-2 text-xs">
                     <div className="text-muted-foreground">{formatBR(t.created_at)}</div>
-                    <div>{friendlyEvent(t)}</div>
+                    <div>{getTimelineLabel(t, "client")}</div>
                   </li>
                 ))}
               </ul>
@@ -195,16 +182,3 @@ function ClientProcessoDetail() {
   );
 }
 
-function friendlyEvent(t: any): string {
-  switch (t.tipo) {
-    case "processo_aberto": return "Processo aberto.";
-    case "processo_status": {
-      const s = t.metadata?.new;
-      return `Status: ${STATUS_LABEL[s] ?? s ?? "atualizado"}.`;
-    }
-    case "processo_solicitacao_criada": return "Uma solicitação de documento foi enviada a você.";
-    case "processo_solicitacao_cancelada": return "Uma solicitação vinculada foi cancelada.";
-    case "processo_requisito_atendido_solicitacao": return "Um documento enviado foi vinculado ao processo.";
-    default: return t.descricao ?? "";
-  }
-}
