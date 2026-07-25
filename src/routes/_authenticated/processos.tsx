@@ -47,6 +47,8 @@ const PRIO_MAP = Object.fromEntries(PRIORIDADES.map((p) => [p.value, p]));
 
 type TabKey = "todos" | "meus" | "aguardando" | "atrasados" | "concluidos";
 
+const PAGE_SIZE = 30;
+
 function ProcessesPage() {
   const { role, userId, loading } = useCurrentUser();
   const qc = useQueryClient();
@@ -62,29 +64,35 @@ function ProcessesPage() {
   const [fPrazo, setFPrazo] = useState<string>("all"); // all | vencido | hoje | em_breve | sem_prazo
   const [sortBy, setSortBy] = useState<string>("prazo");
   const [tab, setTab] = useState<TabKey>(role === "collaborator" ? "meus" : "todos");
-
-
+  const [page, setPage] = useState<number>(1);
 
   const ready = !loading && (role === "admin" || role === "collaborator");
 
+  // Reset página quando filtros/aba/ordem mudam.
+  useEffect(() => { setPage(1); }, [search, fClient, fType, fStatus, fPrio, fResp, fPrazo, sortBy, tab]);
+
   const listQ = useQuery({
-    queryKey: ["company-processes"],
+    queryKey: ["company-processes", { search, fClient, fType, fStatus, fPrio, fResp, fPrazo, sortBy, tab, page }],
     enabled: ready,
-    staleTime: 60_000,
+    staleTime: 30_000,
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("company_processes")
-        .select("id, client_id, process_type_id, responsavel_id, data_abertura, prazo_final, prioridade, status, observacoes, progresso, total_etapas, etapas_concluidas, motivo_espera, clients(razao_social, nome_fantasia, documento), process_types(nome, cor, categoria)")
-        .order("created_at", { ascending: false });
+      const { data, error } = await (supabase as any).rpc("list_company_processes_paginated", {
+        _search: search.trim() || null,
+        _client_id: fClient !== "all" ? fClient : null,
+        _process_type_id: fType !== "all" ? fType : null,
+        _status: fStatus !== "all" ? fStatus : null,
+        _prioridade: fPrio !== "all" ? fPrio : null,
+        _responsavel_id: fResp !== "all" ? fResp : null,
+        _prazo: fPrazo !== "all" ? fPrazo : null,
+        _tab: tab,
+        _sort_by: sortBy,
+        _include_demo: true,
+        _only_demo: false,
+        _page: page,
+        _page_size: PAGE_SIZE,
+      });
       if (error) throw error;
-      const rows = data ?? [];
-      const ids = Array.from(new Set(rows.map((r: any) => r.responsavel_id).filter(Boolean)));
-      let profMap: Record<string, string> = {};
-      if (ids.length) {
-        const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids as string[]);
-        (profs ?? []).forEach((p: any) => { profMap[p.id] = p.full_name; });
-      }
-      return rows.map((r: any) => ({ ...r, responsavel: r.responsavel_id ? { full_name: profMap[r.responsavel_id] ?? null } : null }));
+      return data as { rows: any[]; total: number; page: number; page_size: number };
     },
   });
 
@@ -142,74 +150,32 @@ function ProcessesPage() {
     if (role === "collaborator") setTab((t) => (t === "todos" ? "meus" : t));
   }, [role]);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const openStatus = (s: string) => s !== "concluido" && s !== "cancelado";
-    const arr = (listQ.data ?? []).filter((r: any) => {
-      // Filtro por aba (não sobrescreve os selects abaixo).
-      if (tab === "meus" && userId && r.responsavel_id !== userId) return false;
-      if (tab === "aguardando" && r.status !== "aguardando_cliente" && r.status !== "aguardando_orgao") return false;
-      if (tab === "atrasados") {
-        if (!openStatus(r.status)) return false;
-        if (prazoKind(r.prazo_final) !== "vencido") return false;
-      }
-      if (tab === "concluidos" && r.status !== "concluido") return false;
-
-      if (fClient !== "all" && r.client_id !== fClient) return false;
-      if (fType !== "all" && r.process_type_id !== fType) return false;
-      if (fStatus !== "all" && r.status !== fStatus) return false;
-      if (fPrio !== "all" && r.prioridade !== fPrio) return false;
-      if (fResp !== "all" && r.responsavel_id !== fResp) return false;
-      if (fPrazo !== "all") {
-        if (r.status === "concluido" || r.status === "cancelado") return false;
-        const k = prazoKind(r.prazo_final);
-        if (k !== fPrazo) return false;
-      }
-      if (q) {
-        const hay = `${r.clients?.razao_social ?? ""} ${r.clients?.nome_fantasia ?? ""} ${r.process_types?.nome ?? ""} ${r.observacoes ?? ""}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      return true;
-    });
-    arr.sort((a: any, b: any) => {
-      switch (sortBy) {
-        case "empresa": return (a.clients?.razao_social ?? "").localeCompare(b.clients?.razao_social ?? "");
-        case "responsavel": return (a.responsavel?.full_name ?? "~").localeCompare(b.responsavel?.full_name ?? "~");
-        case "status": return (a.status ?? "").localeCompare(b.status ?? "");
-        case "abertura": return (b.data_abertura ?? "").localeCompare(a.data_abertura ?? "");
-        case "progresso": return (b.progresso ?? 0) - (a.progresso ?? 0);
-        case "prazo":
-        default: {
-          const av = a.prazo_final ?? "9999-99-99";
-          const bv = b.prazo_final ?? "9999-99-99";
-          return av.localeCompare(bv);
-        }
-      }
-    });
-    return arr;
-  }, [listQ.data, search, fClient, fType, fStatus, fPrio, fResp, fPrazo, sortBy, tab, userId]);
-
+  const rows = listQ.data?.rows ?? [];
+  const totalRows = listQ.data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
 
   const kpis = useMemo(() => {
-    const arr = listQ.data ?? [];
-    const abertos = arr.filter((r: any) => r.status !== "concluido" && r.status !== "cancelado");
+    // Indicadores globais usam RPC própria (processos_indicadores).
+    const d = indicQ.data?.totais ?? {};
     return {
-      total: arr.length,
-      abertos: abertos.length,
-      em_andamento: arr.filter((r: any) => r.status === "em_andamento").length,
-      aguardando: arr.filter((r: any) => r.status === "aguardando_cliente" || r.status === "aguardando_orgao").length,
-      vencidos: abertos.filter((r: any) => prazoKind(r.prazo_final) === "vencido").length,
-      hoje: abertos.filter((r: any) => prazoKind(r.prazo_final) === "hoje").length,
-      em_breve: abertos.filter((r: any) => prazoKind(r.prazo_final) === "em_breve").length,
-      concluidos: arr.filter((r: any) => r.status === "concluido").length,
+      total: d.total ?? 0,
+      abertos: d.abertos ?? 0,
+      em_andamento: d.em_andamento ?? 0,
+      aguardando: d.aguardando ?? 0,
+      vencidos: d.vencidos ?? 0,
+      hoje: d.hoje ?? 0,
+      em_breve: d.em_breve ?? 0,
+      concluidos: d.concluidos ?? 0,
     };
-  }, [listQ.data]);
+  }, [indicQ.data]);
 
   const activeFilters = [fClient, fType, fStatus, fPrio, fResp, fPrazo].filter((v) => v !== "all").length + (search ? 1 : 0);
   const clearFilters = () => {
     setSearch(""); setFClient("all"); setFType("all"); setFStatus("all");
     setFPrio("all"); setFResp("all"); setFPrazo("all");
   };
+
+
 
 
   if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
@@ -436,7 +402,7 @@ function ProcessesPage() {
         </div>
         {activeFilters > 0 && (
           <div className="mt-2 flex items-center gap-2 text-xs">
-            <span className="text-muted-foreground">{activeFilters} filtro(s) ativo(s) · exibindo {filtered.length}</span>
+            <span className="text-muted-foreground">{activeFilters} filtro(s) ativo(s) · {totalRows} resultado(s)</span>
             <Button variant="ghost" size="sm" onClick={clearFilters}>
               <X className="mr-1 h-3.5 w-3.5" /> Limpar
             </Button>
@@ -446,10 +412,10 @@ function ProcessesPage() {
 
       <Card className="p-2">
         {listQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
-          : filtered.length === 0 ? <EmptyState icon={<Workflow className="h-6 w-6" />} title="Nenhum processo" description="Ajuste os filtros ou crie um novo processo." />
+          : rows.length === 0 ? <EmptyState icon={<Workflow className="h-6 w-6" />} title="Nenhum processo" description="Ajuste os filtros ou crie um novo processo." />
           : (
             <ul className="divide-y">
-              {filtered.map((p: any) => {
+              {rows.map((p: any) => {
                 const total = p.total_etapas ?? 0;
                 const done = p.etapas_concluidas ?? 0;
                 const pct = p.progresso ?? 0;
@@ -482,10 +448,22 @@ function ProcessesPage() {
               })}
             </ul>
           )}
+        {totalRows > 0 && (
+          <div className="mt-2 flex items-center justify-between gap-2 border-t px-2 py-2 text-xs text-muted-foreground">
+            <span>
+              Página {page} de {totalPages} · {totalRows} processo(s)
+            </span>
+            <div className="flex gap-1">
+              <Button variant="outline" size="sm" disabled={page <= 1 || listQ.isFetching} onClick={() => setPage((p) => Math.max(1, p - 1))}>Anterior</Button>
+              <Button variant="outline" size="sm" disabled={page >= totalPages || listQ.isFetching} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Próxima</Button>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );
 }
+
 
 
 

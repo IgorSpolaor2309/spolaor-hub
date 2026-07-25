@@ -19,6 +19,7 @@ import { prazoKind, PRAZO_STYLE } from "@/lib/processo-prazo";
 import { toast } from "sonner";
 import { Workflow, ArrowLeft, Check, RotateCcw, FilePlus2, Activity, UserRound, CalendarClock, CheckCircle2, PauseCircle, PlayCircle, XCircle, ChevronDown, ChevronRight, Paperclip } from "lucide-react";
 import { ProcessDocumentsSection } from "@/components/sc/ProcessDocumentsSection";
+import { useProfilesMap } from "@/hooks/use-profiles-map";
 
 
 
@@ -121,10 +122,6 @@ function ProcessDetail() {
         )
         .eq("id", id).maybeSingle();
       if (error) throw error;
-      if (data?.responsavel_id) {
-        const { data: prof } = await supabase.from("profiles").select("full_name").eq("id", data.responsavel_id).maybeSingle();
-        (data as any).responsavel = prof ?? null;
-      }
       return data;
     },
   });
@@ -140,18 +137,7 @@ function ProcessDetail() {
         )
         .eq("company_process_id", id).order("ordem").order("created_at");
       if (error) throw error;
-      const rows = data ?? [];
-      const ids = Array.from(new Set(rows.flatMap((r: any) => [r.responsavel_id, r.concluida_por]).filter(Boolean)));
-      let profMap: Record<string, string> = {};
-      if (ids.length) {
-        const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids as string[]);
-        (profs ?? []).forEach((p: any) => { profMap[p.id] = p.full_name; });
-      }
-      return rows.map((r: any) => ({
-        ...r,
-        responsavel: r.responsavel_id ? { full_name: profMap[r.responsavel_id] ?? null } : null,
-        concluida: r.concluida_por ? { full_name: profMap[r.concluida_por] ?? null } : null,
-      }));
+      return data ?? [];
     },
   });
 
@@ -178,16 +164,32 @@ function ProcessDetail() {
         .order("created_at", { ascending: false })
         .limit(200);
       if (error) throw error;
-      const rows = data ?? [];
-      const ids = Array.from(new Set(rows.map((r: any) => r.actor_profile_id).filter(Boolean)));
-      let profMap: Record<string, string> = {};
-      if (ids.length) {
-        const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids as string[]);
-        (profs ?? []).forEach((p: any) => { profMap[p.id] = p.full_name; });
-      }
-      return rows.map((r: any) => ({ ...r, actor_name: r.actor_profile_id ? profMap[r.actor_profile_id] ?? null : null }));
+      return data ?? [];
     },
   });
+
+  // Resolve todos os nomes de profiles (responsável principal + responsáveis
+  // de etapas + concluída_por + autores da timeline) em UMA única consulta.
+  const stepRows = stepsQ.data ?? [];
+  const histRows = historyQ.data ?? [];
+  const profileIds = [
+    procQ.data?.responsavel_id ?? null,
+    ...stepRows.flatMap((r: any) => [r.responsavel_id, r.concluida_por]),
+    ...histRows.map((r: any) => r.actor_profile_id),
+  ];
+  const profilesMap = useProfilesMap(profileIds);
+  const nameOf = (uid?: string | null) => (uid ? profilesMap.data?.[uid] ?? null : null);
+
+  const proc = procQ.data
+    ? { ...procQ.data, responsavel: procQ.data.responsavel_id ? { full_name: nameOf(procQ.data.responsavel_id) } : null }
+    : null;
+  const steps = stepRows.map((r: any) => ({
+    ...r,
+    responsavel: r.responsavel_id ? { full_name: nameOf(r.responsavel_id) } : null,
+    concluida: r.concluida_por ? { full_name: nameOf(r.concluida_por) } : null,
+  }));
+  const history = histRows.map((r: any) => ({ ...r, actor_name: nameOf(r.actor_profile_id) }));
+
 
 
   const updateProc = useMutation({
@@ -228,12 +230,12 @@ function ProcessDetail() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const steps = stepsQ.data ?? [];
   const { total, done, pct } = useMemo(() => {
     const t = steps.length;
     const d = steps.filter((s: any) => s.status === "concluida").length;
     return { total: t, done: d, pct: t ? Math.round((d / t) * 100) : 0 };
   }, [steps]);
+
 
   if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
   if (role !== "admin" && role !== "collaborator") {
@@ -242,7 +244,7 @@ function ProcessDetail() {
   if (procQ.isLoading) return <p className="text-sm text-muted-foreground">Carregando processo…</p>;
   if (!procQ.data) return <EmptyState icon={<Workflow className="h-6 w-6" />} title="Processo não encontrado" />;
 
-  const p = procQ.data as any;
+  const p = proc as any;
   const st = STATUS_MAP[p.status];
   const isAdmin = role === "admin";
 
@@ -339,11 +341,11 @@ function ProcessDetail() {
         <Card className="p-4">
           <div className="mb-2 text-sm font-medium">Timeline</div>
           {historyQ.isLoading ? <p className="text-xs text-muted-foreground">Carregando…</p>
-            : (historyQ.data ?? []).filter((e: any) => TIMELINE_TIPOS.has(e.tipo)).length === 0
+            : (history).filter((e: any) => TIMELINE_TIPOS.has(e.tipo)).length === 0
               ? <p className="text-xs text-muted-foreground">Nenhum evento registrado.</p>
               : (
                 <ol className="relative space-y-3 border-l pl-4">
-                  {(historyQ.data ?? [])
+                  {(history)
                     .filter((e: any) => TIMELINE_TIPOS.has(e.tipo))
                     .slice(0, 30)
                     .map((e: any) => {
@@ -466,10 +468,10 @@ function ProcessDetail() {
             <span className="ml-2 text-xs font-normal text-muted-foreground">técnico · somente administradores</span>
           </div>
           {historyQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
-            : (historyQ.data ?? []).length === 0 ? <p className="p-3 text-sm text-muted-foreground">Sem eventos registrados.</p>
+            : (history).length === 0 ? <p className="p-3 text-sm text-muted-foreground">Sem eventos registrados.</p>
             : (
               <ul className="divide-y">
-                {(historyQ.data ?? []).map((h: any) => (
+                {(history).map((h: any) => (
                   <AuditRow key={h.id} event={h} />
                 ))}
               </ul>
