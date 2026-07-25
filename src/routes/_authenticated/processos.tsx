@@ -339,7 +339,7 @@ function ProcessesPage() {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
-                {PRIORIDADES.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                {PROCESS_PRIORITY_OPTIONS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -510,7 +510,7 @@ function NewProcessDialog({ clients, types, collabs, onDone }: { clients: any[];
             <Select value={f.prioridade} onValueChange={(v) => setF({ ...f, prioridade: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {PRIORIDADES.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                {PROCESS_PRIORITY_OPTIONS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
