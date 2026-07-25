@@ -331,8 +331,10 @@ async function run() {
     assert("demo: atualização preserva flag is_demo", up.data && up.data.is_demo === true);
     // cleanup
     await admin.from("company_processes").delete().eq("id", demoId);
+    }
     await admin.from("clients").delete().eq("id", cDemo.data.id);
   }
+
 }
 
 /* -------------------------------------------------- main */
