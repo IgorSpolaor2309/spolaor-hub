@@ -19,6 +19,7 @@ import { prazoKind, PRAZO_STYLE } from "@/lib/processo-prazo";
 import { toast } from "sonner";
 import { Workflow, ArrowLeft, Check, RotateCcw, FilePlus2, Activity, UserRound, CalendarClock, CheckCircle2, PauseCircle, PlayCircle, XCircle, ChevronDown, ChevronRight, Paperclip } from "lucide-react";
 import { ProcessDocumentsSection } from "@/components/sc/ProcessDocumentsSection";
+import { useProfilesMap } from "@/hooks/use-profiles-map";
 
 
 
