@@ -310,9 +310,9 @@ async function run() {
       documento: `d${TAG.replace(/-/g,"").slice(0,13)}`, is_demo: true,
     }).select("id").single();
     const cpDemo = await admin.rpc("open_company_process", {
-      p_client_id: cDemo.data.id, p_process_type_id: state.processTypeId,
-      p_responsavel_id: state.userIds[0], p_status: "nao_iniciado", p_prioridade: "media",
-      p_prazo_final: null, p_observacoes: null, p_is_demo: true,
+      _client_id: cDemo.data.id, _process_type_id: state.processTypeId,
+      _responsavel_id: state.userIds[0], _prioridade: "media",
+      _prazo_final: null, _observacoes: null, _is_demo: true, _demo_batch_id: null,
     });
     const demoId = cpDemo.data;
     const row = await admin.from("company_processes").select("is_demo, updated_at").eq("id", demoId).single();
