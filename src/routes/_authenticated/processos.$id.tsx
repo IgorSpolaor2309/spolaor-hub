@@ -116,7 +116,9 @@ function ProcessDetail() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("company_processes")
-        .select("*, clients(id, razao_social, nome_fantasia, documento), process_types(nome, categoria, cor)")
+        .select(
+          "id, client_id, process_type_id, responsavel_id, status, prioridade, progresso, total_etapas, etapas_concluidas, data_abertura, prazo_final, data_conclusao, motivo_espera, observacoes, is_demo, demo_batch_id, created_at, updated_at, clients(id, razao_social, nome_fantasia, documento), process_types(nome, categoria, cor)",
+        )
         .eq("id", id).maybeSingle();
       if (error) throw error;
       if (data?.responsavel_id) {
@@ -133,7 +135,9 @@ function ProcessDetail() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("company_process_steps")
-        .select("*")
+        .select(
+          "id, company_process_id, process_step_id, nome, descricao, ordem, departamento, obrigatoria, exige_documento, visivel_cliente, pode_concluir_manual, responsavel_id, prazo, prazo_tipo, prazo_dias, status, data_inicio, data_conclusao, concluida_por, concluida_dentro_prazo, observacoes, nome_publico, descricao_publica, observacao_publica, created_at, updated_at",
+        )
         .eq("company_process_id", id).order("ordem").order("created_at");
       if (error) throw error;
       const rows = data ?? [];
