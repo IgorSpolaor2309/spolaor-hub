@@ -313,8 +313,11 @@ async function run() {
       razao_social: `Demo ${TAG}`, nome_fantasia: `D ${TAG}`,
       documento: `d${TAG.replace(/-/g,"").slice(0,13)}`, is_demo: true,
     }).select("id").single();
+    const ptDemo = await admin.from("process_types").insert({
+      nome: `TipoD ${TAG}`, categoria: "geral", cor: "#000000", status: "ativo", is_demo: true,
+    }).select("id").single();
     const cpDemo = await state.seedClient.rpc("open_company_process", {
-      _client_id: cDemo.data.id, _process_type_id: state.processTypeId,
+      _client_id: cDemo.data.id, _process_type_id: ptDemo.data.id,
       _responsavel_id: state.userIds[0], _prioridade: "media",
       _prazo_final: null, _observacoes: null, _is_demo: true, _demo_batch_id: null,
     });
@@ -333,6 +336,7 @@ async function run() {
     await admin.from("company_processes").delete().eq("id", demoId);
     }
     await admin.from("clients").delete().eq("id", cDemo.data.id);
+    await admin.from("process_types").delete().eq("id", ptDemo.data.id);
   }
 
 }
