@@ -241,7 +241,7 @@ function ProcessDetail() {
       <div className="grid gap-3 md:grid-cols-3">
         <Card className="p-4 md:col-span-2">
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            {st && <Badge className={st.cls}>{st.label}</Badge>}
+            <Badge className={getProcessStatusTone(p.status, "staff")}>{getProcessStatusLabel(p.status, "staff")}</Badge>
             <Badge variant="outline">{p.prioridade}</Badge>
             <span className="text-xs text-muted-foreground">
               Aberto em {new Date(p.data_abertura).toLocaleDateString("pt-BR")}
