@@ -84,7 +84,7 @@ async function seed() {
 
   // process type + step template (minimal viable graph)
   const ptIns = await admin.from("process_types").insert({
-    nome: `Tipo ${TAG}`, categoria: "geral", cor: "#000000", ativo: true,
+    nome: `Tipo ${TAG}`, categoria: "geral", cor: "#000000", status: "ativo",
   }).select("id").single();
   if (ptIns.error) throw ptIns.error;
   state.processTypeId = ptIns.data.id;
@@ -92,9 +92,10 @@ async function seed() {
   const psIns = await admin.from("process_steps").insert({
     process_type_id: state.processTypeId,
     nome: "Etapa 1", ordem: 1, obrigatoria: true, exige_documento: false,
-    visivel_cliente: false, pode_concluir_manual: true, ativo: true, departamento: "geral",
+    visivel_cliente: false, pode_concluir_manual: true, departamento: "geral",
     prazo_tipo: "fixo", prazo_dias: null,
   }).select("id").single();
+
   if (psIns.error) throw psIns.error;
 
   // process (open via RPC to trigger step materialization)
