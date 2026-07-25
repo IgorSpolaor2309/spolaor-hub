@@ -98,8 +98,10 @@ async function seed() {
 
   if (psIns.error) throw psIns.error;
 
-  // process (open via RPC to trigger step materialization)
-  const cpIns = await admin.rpc("open_company_process", {
+  // process (RPC exige auth.uid() → chamado com JWT do admin recém-criado)
+  const seedJwt = await signIn(email);
+  const seedClient = client(seedJwt);
+  const cpIns = await seedClient.rpc("open_company_process", {
     _client_id: state.clientId,
     _process_type_id: state.processTypeId,
     _responsavel_id: userId,
@@ -111,6 +113,8 @@ async function seed() {
   });
   if (cpIns.error) throw cpIns.error;
   state.processId = cpIns.data;
+  state.seedClient = seedClient;
+
 
 
   const step = await admin.from("company_process_steps")
