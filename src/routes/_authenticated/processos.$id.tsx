@@ -192,33 +192,71 @@ function ProcessDetail() {
 
 
 
+  // Sentinela para sinalizar conflito de concorrência (row-version por updated_at)
+  const CONCURRENCY_CONFLICT = "__concurrency_conflict__";
+  const conflictToast = () =>
+    toast.error("Este processo foi alterado enquanto você editava. Os dados mais recentes foram recarregados.");
+
   const updateProc = useMutation({
-    mutationFn: async (patch: any) => {
-      const { error } = await (supabase as any).from("company_processes").update(patch).eq("id", id);
+    // Serializa gravações do detalhe deste processo (evita out-of-order).
+    scope: { id: `processo:${id}` },
+    mutationFn: async ({ patch, expectedVersion }: { patch: any; expectedVersion: string | null | undefined }) => {
+      let q = (supabase as any).from("company_processes").update(patch).eq("id", id);
+      if (expectedVersion) q = q.eq("updated_at", expectedVersion);
+      const { data, error } = await q.select("updated_at").maybeSingle();
       if (error) throw error;
+      if (!data) throw new Error(CONCURRENCY_CONFLICT);
+      return data.updated_at as string;
     },
-    onSuccess: () => {
+    onSuccess: (newVersion) => {
+      // Aplica nova versão no cache sem esperar refetch, evitando falso conflito na próxima edição.
+      qc.setQueryData(["company-process", id], (prev: any) => prev ? { ...prev, updated_at: newVersion } : prev);
       qc.invalidateQueries({ queryKey: ["company-process", id] });
       qc.invalidateQueries({ queryKey: ["company-processes"] });
       qc.invalidateQueries({ queryKey: ["company-process-history", id] });
       qc.invalidateQueries({ queryKey: ["processos-indicadores"] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Falha ao atualizar"),
+    onError: (e: any) => {
+      if (e?.message === CONCURRENCY_CONFLICT) {
+        conflictToast();
+        qc.invalidateQueries({ queryKey: ["company-process", id] });
+        qc.invalidateQueries({ queryKey: ["company-process-history", id] });
+        return;
+      }
+      toast.error(e.message ?? "Falha ao atualizar");
+    },
   });
 
   const updateStep = useMutation({
-    mutationFn: async ({ stepId, patch }: { stepId: string; patch: any }) => {
-      const { error } = await (supabase as any).from("company_process_steps").update(patch).eq("id", stepId);
+    scope: { id: `processo:${id}` },
+    mutationFn: async ({ stepId, patch, expectedVersion }: { stepId: string; patch: any; expectedVersion: string | null | undefined }) => {
+      let q = (supabase as any).from("company_process_steps").update(patch).eq("id", stepId);
+      if (expectedVersion) q = q.eq("updated_at", expectedVersion);
+      const { data, error } = await q.select("id, updated_at").maybeSingle();
       if (error) throw error;
+      if (!data) throw new Error(CONCURRENCY_CONFLICT);
+      return { stepId: data.id as string, updated_at: data.updated_at as string };
     },
-    onSuccess: () => {
+    onSuccess: ({ stepId, updated_at }) => {
+      qc.setQueryData(["company-process-steps", id], (prev: any[] | undefined) =>
+        prev ? prev.map((r) => (r.id === stepId ? { ...r, updated_at } : r)) : prev,
+      );
       qc.invalidateQueries({ queryKey: ["company-process-steps", id] });
       qc.invalidateQueries({ queryKey: ["company-processes"] });
       qc.invalidateQueries({ queryKey: ["company-process-history", id] });
       qc.invalidateQueries({ queryKey: ["processos-indicadores"] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Falha ao atualizar etapa"),
+    onError: (e: any) => {
+      if (e?.message === CONCURRENCY_CONFLICT) {
+        conflictToast();
+        qc.invalidateQueries({ queryKey: ["company-process-steps", id] });
+        qc.invalidateQueries({ queryKey: ["company-process-history", id] });
+        return;
+      }
+      toast.error(e.message ?? "Falha ao atualizar etapa");
+    },
   });
+
 
 
   const removeProc = useMutation({
