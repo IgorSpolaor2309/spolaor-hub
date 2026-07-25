@@ -253,8 +253,50 @@ async function run() {
     assert("anon NÃO executa client_list_processes", !!error, error);
   }
   {
-    const { error } = await A.rpc("client_list_processes");
-    assert("admin executa client_list_processes (grant authenticated) — retorno pode ser vazio", !error, error);
+    const { data, error } = await A.rpc("client_list_processes");
+    assert("admin executa client_list_processes sem erro 42702", !error, error);
+    // Admin também é acesso total via is_admin → deve ver ambos os processos.
+    const ids = (data ?? []).map((r) => r.id);
+    assert("client_list_processes(admin) retorna A e B",
+      ids.includes(ctx.pA) && ids.includes(ctx.pB), ids);
+    // Contrato: RETURNS TABLE não expõe observacoes internas
+    const keys = (data && data[0]) ? Object.keys(data[0]) : [];
+    assert("client_list_processes não expõe observacoes",
+      keys.length === 0 || !keys.includes("observacoes"), keys);
+  }
+  // Cliente real (client_users) vinculado ao cliente A: recebe apenas A.
+  {
+    const clientUserId = await createUser(`cu-${TAG}@test.local`);
+    await grantRole(clientUserId, "client");
+    const { error: cuErr } = await admin.from("client_users").insert({
+      client_id: ctx.cA, user_id: clientUserId, ativo: true,
+    });
+    if (cuErr) throw new Error(`client_users link: ${cuErr.message}`);
+    const clientTok = await signInPassword(`cu-${TAG}@test.local`, PWD);
+    const CU = userClient(clientTok);
+
+    const { data, error } = await CU.rpc("client_list_processes");
+    assert("client_list_processes(client vinculado) sem erro", !error, error);
+    const ids = (data ?? []).map((r) => r.id);
+    assert("client_list_processes(client vinculado) retorna somente A",
+      ids.length === 1 && ids[0] === ctx.pA, ids);
+
+    // client não vinculado
+    const otherId = await createUser(`cx-${TAG}@test.local`);
+    await grantRole(otherId, "client");
+    const otherTok = await signInPassword(`cx-${TAG}@test.local`, PWD);
+    const CX = userClient(otherTok);
+    const { data: d2, error: e2 } = await CX.rpc("client_list_processes");
+    assert("client_list_processes(client sem vínculo) sem erro e vazio",
+      !e2 && (d2 ?? []).length === 0, { d2, e2 });
+
+    // Colaborador com vínculo também tem acesso ao cliente A via user_has_client_access.
+    // Verificamos que a RPC responde sem erro nesse papel (comportamento esperado).
+    const { data: dCW, error: eCW } = await CW.rpc("client_list_processes");
+    assert("client_list_processes(colaborador vinculado) sem erro 42702", !eCW, eCW);
+    const cwIds = (dCW ?? []).map((r) => r.id);
+    assert("client_list_processes(colaborador vinculado) retorna somente A",
+      cwIds.length === 1 && cwIds[0] === ctx.pA, cwIds);
   }
   {
     const { error } = await A.rpc("processos_indicadores");
