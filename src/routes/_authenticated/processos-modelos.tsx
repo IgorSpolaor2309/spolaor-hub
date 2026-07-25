@@ -1076,7 +1076,10 @@ function StepRequirements({ stepId, canEdit }: { stepId: string; canEdit: boolea
     queryKey: ["process-step-requirements", stepId],
     queryFn: async () => {
       const { data, error } = await (supabase as any).from("process_step_requirements")
-        .select("*").eq("process_step_id", stepId).order("ordem").order("created_at");
+        .select(
+          "id, process_step_id, nome, descricao, observacao, obrigatorio, ordem, visivel_cliente, nome_publico, descricao_publica, created_at, updated_at",
+        )
+        .eq("process_step_id", stepId).order("ordem").order("created_at");
       if (error) throw error;
       return data ?? [];
     },
