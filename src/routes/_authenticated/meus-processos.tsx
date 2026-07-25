@@ -200,6 +200,5 @@ function MeusProcessosPage() {
   );
 }
 
-// Manter compatibilidade caso algo importe useMemo indiretamente
-export const __UNUSED__ = useMemo;
+
 
