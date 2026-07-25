@@ -17,93 +17,29 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { clientLabel } from "@/lib/client-display";
 import { prazoKind, PRAZO_STYLE } from "@/lib/processo-prazo";
 import { toast } from "sonner";
-import { Workflow, ArrowLeft, Check, RotateCcw, FilePlus2, Activity, UserRound, CalendarClock, CheckCircle2, PauseCircle, PlayCircle, XCircle, ChevronDown, ChevronRight, Paperclip } from "lucide-react";
+import { Workflow, ArrowLeft, Check, RotateCcw, PauseCircle, PlayCircle, ChevronDown, ChevronRight, Activity } from "lucide-react";
 import { ProcessDocumentsSection } from "@/components/sc/ProcessDocumentsSection";
 import { useProfilesMap } from "@/hooks/use-profiles-map";
+import {
+  PROCESS_STATUS_OPTIONS,
+  PROCESS_PRIORITY_OPTIONS,
+  STEP_STATUS_OPTIONS,
+  getProcessStatusLabel,
+  getProcessStatusTone,
+  getStepStatusLabel,
+  getStepStatusTone,
+} from "@/lib/processos-constants";
+import {
+  getTimelineLabel,
+  getTimelineIcon,
+  isTimelineVisible,
+} from "@/lib/processo-timeline-labels";
 
 
 
 export const Route = createFileRoute("/_authenticated/processos/$id")({
   component: ProcessDetail,
 });
-
-const STATUSES = [
-  { value: "nao_iniciado", label: "Não iniciado", cls: "bg-zinc-200 text-zinc-700" },
-  { value: "em_andamento", label: "Em andamento", cls: "bg-blue-100 text-blue-800" },
-  { value: "aguardando_cliente", label: "Aguardando cliente", cls: "bg-amber-100 text-amber-800" },
-  { value: "aguardando_orgao", label: "Aguardando órgão", cls: "bg-orange-100 text-orange-800" },
-  { value: "concluido", label: "Concluído", cls: "bg-emerald-100 text-emerald-800" },
-  { value: "cancelado", label: "Cancelado", cls: "bg-red-100 text-red-800" },
-];
-const STATUS_MAP = Object.fromEntries(STATUSES.map((s) => [s.value, s]));
-const PRIORIDADES = [
-  { value: "baixa", label: "Baixa" },
-  { value: "media", label: "Média" },
-  { value: "alta", label: "Alta" },
-  { value: "urgente", label: "Urgente" },
-];
-const STEP_STATUSES = [
-  { value: "pendente", label: "Pendente", cls: "bg-zinc-100 text-zinc-700" },
-  { value: "em_andamento", label: "Em andamento", cls: "bg-blue-100 text-blue-800" },
-  { value: "concluida", label: "Concluída", cls: "bg-emerald-100 text-emerald-800" },
-  { value: "cancelada", label: "Cancelada", cls: "bg-red-100 text-red-800" },
-];
-const STEP_STATUS_MAP = Object.fromEntries(STEP_STATUSES.map((s) => [s.value, s]));
-
-const TIMELINE_TIPOS = new Set([
-  "processo_aberto", "processo_status", "processo_responsavel", "processo_prazo",
-  "processo_etapa_status", "processo_etapa_responsavel", "processo_etapa_prazo",
-  "processo_documento_vinculado", "processo_etapa_documento_vinculado", "processo_documento_desvinculado",
-  "processo_requisito_atendido", "processo_requisito_substituido", "processo_requisito_removido",
-]);
-const TIMELINE_ICON: Record<string, any> = {
-  processo_aberto: FilePlus2,
-  processo_status: Activity,
-  processo_responsavel: UserRound,
-  processo_prazo: CalendarClock,
-  processo_etapa_status: CheckCircle2,
-  processo_etapa_responsavel: UserRound,
-  processo_etapa_prazo: CalendarClock,
-  processo_documento_vinculado: Paperclip,
-  processo_etapa_documento_vinculado: Paperclip,
-  processo_documento_desvinculado: Paperclip,
-  processo_requisito_atendido: CheckCircle2,
-  processo_requisito_substituido: Paperclip,
-  processo_requisito_removido: XCircle,
-};
-const STATUS_LABEL: Record<string, string> = {
-  nao_iniciado: "não iniciado", em_andamento: "em andamento",
-  aguardando_cliente: "aguardando cliente", aguardando_orgao: "aguardando órgão",
-  concluido: "concluído", cancelado: "cancelado",
-  pendente: "pendente", concluida: "concluída", cancelada: "cancelada",
-};
-const fmtDate = (v: any) => v ? new Date(v).toLocaleDateString("pt-BR") : "—";
-function friendlyTimeline(tipo: string, descricao: string, meta: any): string {
-  const oldL = STATUS_LABEL[meta?.old] ?? meta?.old;
-  const newL = STATUS_LABEL[meta?.new] ?? meta?.new;
-  switch (tipo) {
-    case "processo_aberto": return "Processo aberto.";
-    case "processo_status":
-      if (newL === "aguardando cliente" || newL === "aguardando órgão")
-        return `Processo em espera (${newL})${meta?.motivo_espera ? `: ${meta.motivo_espera}` : ""}.`;
-      if (newL === "em andamento" && (oldL === "aguardando cliente" || oldL === "aguardando órgão"))
-        return "Processo retomado.";
-      return `Status → ${newL ?? "—"}.`;
-    case "processo_responsavel": return "Responsável do processo alterado.";
-    case "processo_prazo": return `Prazo alterado (${fmtDate(meta?.old)} → ${fmtDate(meta?.new)}).`;
-    case "processo_etapa_status": {
-      const stepName = descricao?.match(/"([^"]+)"/)?.[1];
-      const nm = stepName ? `"${stepName}"` : "etapa";
-      if (newL === "concluída") return `Etapa ${nm} concluída.`;
-      if (oldL === "concluída" && newL !== "concluída") return `Etapa ${nm} reaberta.`;
-      if (newL === "em andamento") return `Etapa ${nm} iniciada.`;
-      return `Etapa ${nm} → ${newL ?? "—"}.`;
-    }
-    case "processo_etapa_responsavel": return descricao ?? "Responsável de etapa alterado.";
-    case "processo_etapa_prazo": return `${descricao} (${fmtDate(meta?.old)} → ${fmtDate(meta?.new)}).`;
-    default: return descricao ?? tipo;
-  }
-}
 
 function ProcessDetail() {
   const { id } = Route.useParams();
