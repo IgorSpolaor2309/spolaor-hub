@@ -90,7 +90,7 @@ async function grantRole(userId, role) {
 }
 async function ensureCollaboratorRow(userId, nome) {
   const { data, error } = await admin.from("collaborators").insert({
-    user_id: userId, nome_completo: nome, email: `${TAG}-${nome}@test.local`, status: "active",
+    user_id: userId, nome, email: `${TAG}-${nome}@test.local`, status: "active",
   }).select("id").single();
   if (error) throw new Error(`collab row: ${error.message}`);
   return data.id;
