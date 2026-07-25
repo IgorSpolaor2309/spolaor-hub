@@ -266,7 +266,7 @@ function ProcessDetail() {
               }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                  {PROCESS_STATUS_OPTIONS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -275,7 +275,7 @@ function ProcessDetail() {
               <Select value={p.prioridade} onValueChange={(v) => updateProc.mutate({ patch: { prioridade: v }, expectedVersion: p.updated_at })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {PRIORIDADES.map((x) => <SelectItem key={x.value} value={x.value}>{x.label}</SelectItem>)}
+                  {PROCESS_PRIORITY_OPTIONS.map((x) => <SelectItem key={x.value} value={x.value}>{x.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -396,7 +396,7 @@ function ProcessDetail() {
                         }>
                           <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            {STEP_STATUSES.map((x) => <SelectItem key={x.value} value={x.value}>{x.label}</SelectItem>)}
+                            {STEP_STATUS_OPTIONS.map((x) => <SelectItem key={x.value} value={x.value}>{x.label}</SelectItem>)}
                           </SelectContent>
                         </Select>
                       </div>
