@@ -55,7 +55,9 @@ function ProcessTypesPage() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("process_types")
-        .select("*, process_steps(id)")
+        .select(
+          "id, nome, categoria, descricao, cor, icone, status, ordem, is_demo, demo_batch_id, created_at, updated_at, process_steps(id)",
+        )
         .order("ordem").order("nome");
       if (error) throw error;
       return data ?? [];
@@ -483,7 +485,10 @@ function StepsSection({ typeId, canEdit }: { typeId: string; canEdit: boolean })
     queryKey: ["process-steps", typeId],
     queryFn: async () => {
       const { data, error } = await (supabase as any).from("process_steps")
-        .select("*").eq("process_type_id", typeId).order("ordem").order("created_at");
+        .select(
+          "id, process_type_id, nome, descricao, ordem, departamento, prazo_dias, prazo_tipo, obrigatoria, exige_documento, visivel_cliente, pode_concluir_manual, responsavel_padrao_id, nome_publico, descricao_publica, observacao_publica, is_demo, demo_batch_id, created_at, updated_at",
+        )
+        .eq("process_type_id", typeId).order("ordem").order("created_at");
       if (error) throw error;
       return data ?? [];
     },
@@ -688,7 +693,10 @@ function StepsSection({ typeId, canEdit }: { typeId: string; canEdit: boolean })
                     <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs"
                       onClick={async () => {
                         const { data: reqs } = await (supabase as any).from("process_step_requirements")
-                          .select("*").eq("process_step_id", it.id).order("ordem");
+                          .select(
+                            "id, process_step_id, nome, descricao, observacao, obrigatorio, ordem, visivel_cliente, nome_publico, descricao_publica",
+                          )
+                          .eq("process_step_id", it.id).order("ordem");
                         setPreview({ step: it, requirements: reqs ?? [] });
                       }}>
                       <Eye className="h-3.5 w-3.5" /> Ver como cliente
