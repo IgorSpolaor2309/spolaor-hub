@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
-import { Plus, Upload, ArrowLeft, Pencil, Inbox, Receipt, CalendarClock, KanbanSquare, MessagesSquare, MessageSquare } from "lucide-react";
+import { Plus, Upload, ArrowLeft, Pencil, Inbox, Receipt, CalendarClock, MessagesSquare, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -160,7 +160,7 @@ function ClientDetail() {
             <Button asChild variant="outline" size="sm"><Link to="/solicitacoes"><Inbox className="mr-2 h-4 w-4" /> Solicitar documento</Link></Button>
             <Button asChild variant="outline" size="sm"><Link to="/guias"><Receipt className="mr-2 h-4 w-4" /> Criar guia/imposto</Link></Button>
             <Button asChild variant="outline" size="sm"><Link to="/validades"><CalendarClock className="mr-2 h-4 w-4" /> Documentos com validade</Link></Button>
-            <Button asChild variant="outline" size="sm"><Link to="/kanban"><KanbanSquare className="mr-2 h-4 w-4" /> Abrir Kanban</Link></Button>
+            
             <Button asChild variant="outline" size="sm"><Link to="/modelos"><MessagesSquare className="mr-2 h-4 w-4" /> Usar modelo de mensagem</Link></Button>
           </div>
         </Card>
@@ -637,7 +637,7 @@ function TeamTab({ clientId, current, onChange }: any) {
                     <AlertDialogTitle>Remover colaborador?</AlertDialogTitle>
                     <AlertDialogDescription>
                       {c.collaborators?.nome ?? "Este colaborador"} deixará de acessar esta empresa
-                      (documentos, solicitações, pendências, guias, histórico, Kanban e chat) e não
+                      (documentos, solicitações, pendências, guias, histórico e chat) e não
                       receberá mais notificações relacionadas a ela.
                     </AlertDialogDescription>
                   </AlertDialogHeader>

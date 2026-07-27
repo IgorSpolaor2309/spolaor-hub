@@ -10,13 +10,6 @@ export const TASK_STATUSES = [
   { value: "cancelada", label: "Cancelada" },
 ] as const;
 
-export const KANBAN_COLUMNS = [
-  { value: "aberta", label: "A fazer" },
-  { value: "aguardando_cliente", label: "Aguardando cliente" },
-  { value: "em_andamento", label: "Em execução" },
-  { value: "em_revisao", label: "Em revisão" },
-  { value: "concluida", label: "Concluído" },
-] as const;
 
 export const DEPARTMENTS = [
   { value: "contabil", label: "Contábil" },
