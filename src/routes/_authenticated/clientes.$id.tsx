@@ -637,7 +637,7 @@ function TeamTab({ clientId, current, onChange }: any) {
                     <AlertDialogTitle>Remover colaborador?</AlertDialogTitle>
                     <AlertDialogDescription>
                       {c.collaborators?.nome ?? "Este colaborador"} deixará de acessar esta empresa
-                      (documentos, solicitações, pendências, guias, histórico, Kanban e chat) e não
+                      (documentos, solicitações, pendências, guias, histórico e chat) e não
                       receberá mais notificações relacionadas a ela.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
