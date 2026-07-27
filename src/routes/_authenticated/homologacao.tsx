@@ -490,22 +490,6 @@ function HomologPage() {
               </div>
             </div>
 
-            <div className="rounded-md border p-3">
-              <div className="mb-2 text-xs font-medium uppercase text-muted-foreground">Bruno e Igor</div>
-              <div className="space-y-2">
-                {(diagnostic.data.target_accounts ?? []).map((account: any) => (
-                  <div key={account.user_id} className="rounded border bg-muted/30 p-2 text-xs">
-                    <div className="font-medium">{account.profile?.full_name || account.auth_email || account.user_id}</div>
-                    <div className="text-muted-foreground">
-                      Auth: {account.auth_email || "—"} · Papel: {(account.roles ?? []).join(", ") || "—"} · Colaborador: {account.collaborator?.nome || "—"} · Status: {account.collaborator?.status || account.profile?.status || "—"}
-                    </div>
-                    <div className="mt-1 text-muted-foreground">
-                      Empresas vinculadas: {(account.linked_clients ?? []).map((client: any) => client.razao_social).join("; ") || "nenhuma"}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         )}
       </Card>
