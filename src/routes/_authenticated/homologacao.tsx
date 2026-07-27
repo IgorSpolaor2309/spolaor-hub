@@ -20,6 +20,7 @@ import {
   homologListBatches, homologListAudit, homologContaminationReport, homologRepairCaseA,
   homologPurgeOrphanAuthUsers, homologValidateBatch,
   homologListValidationRuns, homologListManualSteps, homologUpdateManualStep,
+  homologListPersonas, homologGeneratePersonaLink,
 } from "@/lib/homologacao.functions";
 import { homologAccessDiagnostic } from "@/lib/access-diagnostics.functions";
 
