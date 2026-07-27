@@ -160,7 +160,7 @@ function ClientDetail() {
             <Button asChild variant="outline" size="sm"><Link to="/solicitacoes"><Inbox className="mr-2 h-4 w-4" /> Solicitar documento</Link></Button>
             <Button asChild variant="outline" size="sm"><Link to="/guias"><Receipt className="mr-2 h-4 w-4" /> Criar guia/imposto</Link></Button>
             <Button asChild variant="outline" size="sm"><Link to="/validades"><CalendarClock className="mr-2 h-4 w-4" /> Documentos com validade</Link></Button>
-            <Button asChild variant="outline" size="sm"><Link to="/kanban"><KanbanSquare className="mr-2 h-4 w-4" /> Abrir Kanban</Link></Button>
+            
             <Button asChild variant="outline" size="sm"><Link to="/modelos"><MessagesSquare className="mr-2 h-4 w-4" /> Usar modelo de mensagem</Link></Button>
           </div>
         </Card>
