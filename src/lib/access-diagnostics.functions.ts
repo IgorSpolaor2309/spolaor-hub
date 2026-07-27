@@ -178,6 +178,6 @@ export const homologAccessDiagnostic = createServerFn({ method: "GET" })
         empresas: pageClientsRes.data?.length ?? 0,
         colaboradores: visibleCollaboratorsRes.data?.length ?? 0,
       },
-      target_accounts: targetAccounts,
+      
     };
   });
