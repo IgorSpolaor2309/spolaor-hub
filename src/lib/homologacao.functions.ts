@@ -403,3 +403,102 @@ export const homologUpdateManualStep = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return row as any;
   });
+
+// -----------------------------------------------------------------------------
+// Persistent persona listing + on-demand magic link generation
+// -----------------------------------------------------------------------------
+
+export const homologListPersonas = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { batch_id?: string | null } | undefined) => input ?? {})
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context.supabase, context.userId);
+    const { data: rows, error } = await context.supabase.rpc("admin_demo_persona_user_ids", {
+      _batch_id: data?.batch_id ?? undefined,
+    } as any);
+    if (error) throw new Error(error.message);
+    const list = ((rows ?? []) as any[]);
+    if (list.length === 0) return [] as any[];
+    const ids = list.map((r) => r.user_id).filter(Boolean);
+    const { data: profs, error: pErr } = await context.supabase
+      .from("profiles")
+      .select("id, full_name, demo_batch_id, created_at")
+      .in("id", ids);
+    if (pErr) throw new Error(pErr.message);
+    const pmap = new Map<string, any>((profs ?? []).map((p: any) => [p.id, p]));
+    const roleOrder: Record<string, number> = { admin: 0, collaborator: 1, client: 2 };
+    const personas = list.map((r) => {
+      const p = pmap.get(r.user_id);
+      const full_name: string = p?.full_name ?? r.email ?? "";
+      const label = full_name.replace(/^\[DEMO\]\s*/i, "").trim() || full_name;
+      return {
+        user_id: r.user_id as string,
+        role: r.role as string,
+        email: r.email as string,
+        full_name,
+        label,
+        demo_batch_id: p?.demo_batch_id ?? null,
+        created_at: p?.created_at ?? null,
+      };
+    });
+    personas.sort((a, b) => {
+      const ra = roleOrder[a.role] ?? 9;
+      const rb = roleOrder[b.role] ?? 9;
+      if (ra !== rb) return ra - rb;
+      const ta = a.created_at ? Date.parse(a.created_at) : 0;
+      const tb = b.created_at ? Date.parse(b.created_at) : 0;
+      if (ta !== tb) return ta - tb;
+      return a.full_name.localeCompare(b.full_name);
+    });
+    return personas;
+  });
+
+export const homologGeneratePersonaLink = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { user_id: string }) => input)
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context.supabase, context.userId);
+    if (!data.user_id) throw new Error("user_id obrigatório.");
+
+    // 1. Validate persona is demo and linked to an active demo batch
+    const { data: prof, error: pErr } = await context.supabase
+      .from("profiles")
+      .select("id, is_demo, demo_batch_id, full_name")
+      .eq("id", data.user_id)
+      .maybeSingle();
+    if (pErr) throw new Error(pErr.message);
+    if (!prof || !prof.is_demo || !prof.demo_batch_id) {
+      throw new Error("Somente contas do ambiente de homologação podem gerar link.");
+    }
+
+    const { data: batch, error: bErr } = await context.supabase
+      .from("demo_batches")
+      .select("id, status")
+      .eq("id", prof.demo_batch_id)
+      .maybeSingle();
+    if (bErr) throw new Error(bErr.message);
+    if (!batch) throw new Error("Lote demo não encontrado ou já removido.");
+
+    // 2. Generate a fresh magic link — never persisted
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: u, error: uErr } = await supabaseAdmin.auth.admin.getUserById(data.user_id);
+    if (uErr || !u?.user?.email) throw new Error("Conta demo não localizada no Auth.");
+
+    const { data: link, error: lErr } = await supabaseAdmin.auth.admin.generateLink({
+      type: "magiclink",
+      email: u.user.email,
+    });
+    if (lErr || !link?.properties?.action_link) {
+      throw new Error(lErr?.message || "Não foi possível gerar link de acesso.");
+    }
+
+    // 3. Audit — do not store the link itself
+    await context.supabase.from("demo_audit_log").insert({
+      admin_id: context.userId,
+      action: "magic_link_generated",
+      batch_id: prof.demo_batch_id,
+      payload_json: { user_id: data.user_id },
+    });
+
+    return { action_link: link.properties.action_link as string };
+  });
