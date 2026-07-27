@@ -65,12 +65,18 @@ function HomologPage() {
   const repairFn = useServerFn(homologRepairCaseA);
   const purgeOrphanFn = useServerFn(homologPurgeOrphanAuthUsers);
   const validateFn = useServerFn(homologValidateBatch);
+  const personasFn = useServerFn(homologListPersonas);
+  const generateLinkFn = useServerFn(homologGeneratePersonaLink);
 
   const summary = useQuery({ queryKey: ["homolog-summary"], queryFn: () => summaryFn({}) });
   const batches = useQuery({ queryKey: ["homolog-batches"], queryFn: () => batchesFn({}) });
   const audit = useQuery({ queryKey: ["homolog-audit"], queryFn: () => auditFn({}) });
   const diagnostic = useQuery({ queryKey: ["homolog-access-diagnostic"], queryFn: () => diagnosticFn({}) });
   const contamination = useQuery({ queryKey: ["homolog-contamination"], queryFn: () => contaminationFn({}) });
+  const personas = useQuery({
+    queryKey: ["homolog-personas"],
+    queryFn: () => personasFn({ data: {} }) as Promise<Persona[]>,
+  });
 
   const invalidateAll = () => {
     qc.invalidateQueries({ queryKey: ["homolog-summary"] });
@@ -78,6 +84,7 @@ function HomologPage() {
     qc.invalidateQueries({ queryKey: ["homolog-audit"] });
     qc.invalidateQueries({ queryKey: ["homolog-access-diagnostic"] });
     qc.invalidateQueries({ queryKey: ["homolog-contamination"] });
+    qc.invalidateQueries({ queryKey: ["homolog-personas"] });
   };
 
   const repairMut = useMutation({
