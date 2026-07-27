@@ -153,45 +153,8 @@ export const homologAccessDiagnostic = createServerFn({ method: "GET" })
     const collaborators = allCollaboratorsRes.data ?? [];
     const links = allLinksRes.data ?? [];
     const authUsers = authUsersRes.data?.users ?? [];
-    const includesPerson = (value: string | null | undefined) => {
-      const s = (value ?? "").toLowerCase();
-      return s.includes("bruno") || s.includes("igor");
-    };
+    void adminClients; void profiles; void roles; void collaborators; void links; void authUsers;
 
-    const targetUserIds = new Set<string>();
-    for (const user of authUsers) {
-      if (includesPerson(user.email) || includesPerson((user.user_metadata as any)?.full_name)) targetUserIds.add(user.id);
-    }
-    for (const profile of profiles as any[]) {
-      if (includesPerson(profile.full_name) || includesPerson(profile.email)) targetUserIds.add(profile.id);
-    }
-    for (const collaborator of collaborators as any[]) {
-      if (includesPerson(collaborator.nome) || includesPerson(collaborator.email) || collaborator.user_id && targetUserIds.has(collaborator.user_id)) {
-        if (collaborator.user_id) targetUserIds.add(collaborator.user_id);
-      }
-    }
-
-    const targetAccounts = Array.from(targetUserIds).map((userId) => {
-      const authUser = authUsers.find((user) => user.id === userId);
-      const profile = (profiles as any[]).find((profile) => profile.id === userId) ?? null;
-      const userRoles = (roles as any[]).filter((role) => role.user_id === userId).map((role) => role.role);
-      const collaborator = (collaborators as any[]).find((collaborator) => collaborator.user_id === userId) ?? null;
-      const linkedClientIds = collaborator
-        ? (links as any[]).filter((link) => link.collaborator_id === collaborator.id).map((link) => link.client_id)
-        : [];
-      const linkedClients = (adminClients as any[])
-        .filter((client) => linkedClientIds.includes(client.id))
-        .map((client) => ({ id: client.id, razao_social: client.razao_social, status: client.status, is_demo: client.is_demo }));
-      return {
-        user_id: userId,
-        auth_email: authUser?.email ?? null,
-        profile,
-        roles: userRoles,
-        collaborator,
-        linked_clients: linkedClients,
-        accessible_clients_count: linkedClients.filter((client: any) => client.status !== "inactive").length,
-      };
-    });
 
     return {
       current_user: context.userId,
