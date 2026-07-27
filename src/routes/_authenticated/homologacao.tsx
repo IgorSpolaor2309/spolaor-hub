@@ -307,62 +307,93 @@ function HomologPage() {
         )}
       </Card>
 
-      {sessionPersonas && sessionPersonas.length > 0 && (
-        <Card className="p-4 space-y-3 border-amber-400/60 bg-amber-50/40">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h2 className="text-lg font-semibold">Credenciais desta sessão</h2>
-              <p className="text-xs text-muted-foreground">
-                Estes links de acesso são <strong>temporários</strong>, gerados apenas para esta sessão do administrador.
-                Não são gravados no banco. Ao recarregar a página eles somem — copie ou abra agora.
-                Recomendado: abrir em <strong>janela anônima</strong> para não conflitar com sua sessão real.
-              </p>
-            </div>
-            <Button size="sm" variant="outline" onClick={() => setSessionPersonas(null)}>
+      <Card className="p-4 space-y-3 border-amber-400/60 bg-amber-50/40">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="text-lg font-semibold">Contas de acesso do ambiente</h2>
+            <p className="text-xs text-muted-foreground">
+              Estas contas permanecem disponíveis enquanto o ambiente de homologação existir.
+              Os links de acesso são <strong>temporários</strong> e são gerados novamente
+              quando necessário. Recomendado: abrir em <strong>janela anônima</strong> para
+              não conflitar com sua sessão real.
+            </p>
+          </div>
+          {!personasHidden && (personas.data?.length ?? 0) > 0 && (
+            <Button size="sm" variant="outline" onClick={() => setPersonasHidden(true)}>
               <EyeOff className="mr-1 h-4 w-4" /> Ocultar
             </Button>
+          )}
+          {personasHidden && (
+            <Button size="sm" variant="outline" onClick={() => setPersonasHidden(false)}>
+              Mostrar contas
+            </Button>
+          )}
+        </div>
+
+        {personas.isLoading ? (
+          <div className="text-sm text-muted-foreground">Carregando contas…</div>
+        ) : personas.error ? (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+            {(personas.error as Error).message}
           </div>
+        ) : (personas.data?.length ?? 0) === 0 ? (
+          <div className="text-sm text-muted-foreground">
+            Nenhum ambiente de homologação ativo. Crie um ambiente acima para provisionar as contas.
+          </div>
+        ) : personasHidden ? null : (
           <div className="grid gap-2">
-            {sessionPersonas.map((p) => (
-              <div key={p.email} className="rounded-md border bg-background p-2 text-sm">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="secondary">{p.role}</Badge>
-                  <span className="font-medium">{p.label}</span>
-                  <code className="text-xs text-muted-foreground">{p.email}</code>
-                </div>
-                {p.magic_link ? (
+            {personas.data!.map((p) => {
+              const isPending = pendingLinkUserId === p.user_id;
+              const openLink = async () => {
+                if (pendingLinkUserId) return;
+                setPendingLinkUserId(p.user_id);
+                try {
+                  const r = await generateLinkFn({ data: { user_id: p.user_id } });
+                  window.open(r.action_link, "_blank", "noopener,noreferrer");
+                  toast.success("Link gerado. Aberto em nova aba.");
+                } catch (e: any) {
+                  toast.error(e?.message || "Não foi possível gerar o link.");
+                } finally {
+                  setPendingLinkUserId(null);
+                }
+              };
+              const copyLink = async () => {
+                if (pendingLinkUserId) return;
+                setPendingLinkUserId(p.user_id);
+                try {
+                  const r = await generateLinkFn({ data: { user_id: p.user_id } });
+                  await navigator.clipboard.writeText(r.action_link);
+                  toast.success("Link copiado para a área de transferência.");
+                } catch (e: any) {
+                  toast.error(e?.message || "Não foi possível gerar o link.");
+                } finally {
+                  setPendingLinkUserId(null);
+                }
+              };
+              return (
+                <div key={p.user_id} className="rounded-md border bg-background p-2 text-sm">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="secondary">{p.role}</Badge>
+                    <span className="font-medium">{p.label}</span>
+                    <code className="text-xs text-muted-foreground">{p.email}</code>
+                  </div>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={async () => {
-                        try { await navigator.clipboard.writeText(p.magic_link!); toast.success("Link copiado."); }
-                        catch { toast.error("Não foi possível copiar."); }
-                      }}
-                    >
-                      <Copy className="mr-1 h-3 w-3" /> Copiar link
+                    <Button size="sm" variant="outline" onClick={copyLink} disabled={isPending || !!pendingLinkUserId}>
+                      <Copy className="mr-1 h-3 w-3" /> {isPending ? "Gerando…" : "Copiar link"}
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => window.open(p.magic_link!, "_blank", "noopener,noreferrer")}
-                    >
-                      <ExternalLink className="mr-1 h-3 w-3" /> Abrir em nova aba
+                    <Button size="sm" variant="outline" onClick={openLink} disabled={isPending || !!pendingLinkUserId}>
+                      <ExternalLink className="mr-1 h-3 w-3" /> {isPending ? "Gerando…" : "Abrir em nova aba"}
                     </Button>
                     <span className="text-xs text-muted-foreground">
-                      Dica: abra em janela anônima para simular a persona.
+                      Cada clique gera um novo link temporário — não é armazenado no banco.
                     </span>
                   </div>
-                ) : (
-                  <div className="mt-2 text-xs text-destructive">
-                    Não foi possível gerar magic link para esta conta.
-                  </div>
-                )}
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
-        </Card>
-      )}
+        )}
+      </Card>
 
       {/* Contaminação */}
       <Card className="p-4 space-y-3">
