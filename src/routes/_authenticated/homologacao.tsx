@@ -34,13 +34,22 @@ function fmtDate(s?: string | null) {
   return d.toLocaleString("pt-BR");
 }
 
-type Persona = { label: string; role: string; email: string; magic_link: string | null };
+type Persona = {
+  user_id: string;
+  role: string;
+  email: string;
+  full_name: string;
+  label: string;
+  demo_batch_id: string | null;
+  created_at: string | null;
+};
 
 function HomologPage() {
   const qc = useQueryClient();
   const [label, setLabel] = useState("Ambiente demo");
   const [wipePreview, setWipePreview] = useState<Record<string, number> | null>(null);
-  const [sessionPersonas, setSessionPersonas] = useState<Persona[] | null>(null);
+  const [personasHidden, setPersonasHidden] = useState(false);
+  const [pendingLinkUserId, setPendingLinkUserId] = useState<string | null>(null);
   const [validateBatchId, setValidateBatchId] = useState<string>("");
   const [validation, setValidation] = useState<any>(null);
 
