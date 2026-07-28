@@ -1,201 +1,247 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { PageHeader } from "@/components/sc/PageHeader";
+import { EmptyState } from "@/components/sc/EmptyState";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { StatusBadge } from "@/components/sc/StatusBadge";
-import { EmptyState } from "@/components/sc/EmptyState";
-import { DeleteButton } from "@/components/sc/DeleteButton";
-import { FileText, Upload } from "lucide-react";
-import { DOC_TYPES, DOC_STATUSES, labelOf, normalizeDocTipo } from "@/lib/sc-types";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { AlertCircle, FileText, Inbox, Search, X } from "lucide-react";
+import { useClientWorkspaceFilters } from "@/hooks/documentos/use-client-workspace-filters";
+import { useClientDocumentPortal, usePortalClients } from "@/hooks/documentos/use-client-document-portal";
+import { PortalRow } from "@/components/documentos/portal/PortalRow";
+import { PortalDetailSheet } from "@/components/documentos/portal/PortalDetailSheet";
+import { DocumentWorkspacePagination } from "@/components/documentos/workspace/DocumentWorkspacePagination";
+import type { PortalRow as Row, PortalSection } from "@/lib/documentos/portal-types";
 
+// Portal do Cliente — Fase 5.
+// Fonte exclusiva: RPC list_client_document_workspace_paginated (Fase 3).
 export const Route = createFileRoute("/_authenticated/meus-documentos")({
   component: MyDocsPage,
+  validateSearch: (search: Record<string, unknown>) => {
+    const str = (k: string) => (typeof search[k] === "string" ? (search[k] as string) : undefined);
+    const num = (k: string) => {
+      const v = search[k];
+      if (typeof v === "number") return v;
+      if (typeof v === "string" && v !== "" && !Number.isNaN(Number(v))) return Number(v);
+      return undefined;
+    };
+    return {
+      section: str("section"),
+      page: num("page"),
+      page_size: num("page_size"),
+      q: str("q"),
+      client: str("client"),
+      comp: str("comp"),
+      demo: str("demo"),
+    };
+  },
 });
 
 function MyDocsPage() {
-  const { userId, loading } = useCurrentUser();
-  const qc = useQueryClient();
-  const [tipo, setTipo] = useState("outro");
-  const [competencia, setCompetencia] = useState("");
-  const [uploading, setUploading] = useState(false);
-  const [fTipo, setFTipo] = useState<string>("all");
-  const [fStatus, setFStatus] = useState<string>("all");
-  const [fQ, setFQ] = useState("");
+  const { userId, role, loading } = useCurrentUser();
+  const ready = !loading && !!userId;
+  const { filters, setSection, setPage, setPageSize, setSearch, setClient, setCompetencia, clearAll, activeCount } =
+    useClientWorkspaceFilters();
 
+  const [searchInput, setSearchInput] = useState(filters.search);
+  const [detailRow, setDetailRow] = useState<Row | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
 
-  const { data: clients = [], error: clientsError } = useQuery({
-    queryKey: ["my-clients-docs", userId],
-    enabled: !loading && !!userId,
-    retry: 1,
-    // RLS multiempresa: cliente vê todas as empresas vinculadas.
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("clients")
-        .select("id, razao_social, nome_fantasia, documento")
-        .is("deleted_at", null)
-        .neq("status", "inactive")
-        .order("razao_social");
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
+  const clientsQ = usePortalClients(ready);
+  const clients = clientsQ.data ?? [];
+  const multiEmpresa = clients.length > 1;
 
-  const { data: docs = [], refetch, isLoading, error: docsError } = useQuery({
-    queryKey: ["my-docs", clients.map((c) => c.id).join(",")],
-    enabled: clients.length > 0,
-    retry: 1,
-    queryFn: async () => {
-      const ids = clients.map((c) => c.id);
-      const { data, error } = await supabase
-        .from("documents")
-        .select("*, clients(razao_social, nome_fantasia)")
-        .in("client_id", ids)
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
+  const portalQ = useClientDocumentPortal(filters, ready);
+  const rows = portalQ.data?.rows ?? [];
+  const counts = portalQ.data?.counts;
+  const total = portalQ.data?.total ?? 0;
 
-  const [clientId, setClientId] = useState<string>("");
+  const openDetail = (row: Row) => {
+    setDetailRow(row);
+    setDetailOpen(true);
+  };
 
-  useEffect(() => {
-    if (clients.length > 0 && !clientId) setClientId(clients[0].id);
-  }, [clients, clientId]);
+  const isStaff = role === "admin" || role === "collaborator";
 
-  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]; const cid = clientId || clients[0]?.id;
-    if (!file || !cid) { toast.error("Selecione empresa e arquivo"); return; }
-    setUploading(true);
-    try {
-      const path = `${cid}/${Date.now()}-${file.name}`;
-      const { error: upErr } = await supabase.storage.from("documents").upload(path, file);
-      if (upErr) throw upErr;
-      const { error } = await supabase.from("documents").insert({
-        client_id: cid, nome: file.name, tipo, competencia: competencia || null,
-        storage_path: path, uploaded_by: userId, status: "recebido",
-      });
-      if (error) throw error;
-      toast.success("Documento enviado");
-      refetch();
-    } catch (err: any) { toast.error(err.message); }
-    finally { setUploading(false); e.target.value = ""; }
-  }
-
-  const removeDoc = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("documents")
-        .update({ deleted_at: new Date().toISOString(), deleted_by: userId })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["my-docs"] }); refetch(); toast.success("Arquivo removido pelo autor."); },
-    onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Sem permissão para excluir." : (e?.message ?? "Falha")),
-  });
+  const sections: { value: PortalSection; label: string; badge?: number }[] = [
+    { value: "precisa_enviar", label: "Preciso enviar", badge: (counts?.aguardando_voce ?? 0) + (counts?.precisa_reenviar ?? 0) },
+    { value: "historico", label: "Histórico e documentos", badge: counts ? counts.em_analise + counts.concluidos + counts.aguardando_contabilidade + counts.cancelados : undefined },
+  ];
 
   return (
-    <div>
-      <PageHeader title="Meus documentos" description="Envie e acompanhe seus documentos." />
-      <Card className="p-5">
-        <div className="mb-4 flex flex-wrap items-end gap-3 rounded-md border bg-muted/30 p-3">
-          {clients.length > 1 && (
-            <div><Label className="text-xs">Empresa</Label>
-              <Select value={clientId || undefined} onValueChange={setClientId}>
-                <SelectTrigger className="w-[260px]"><SelectValue /></SelectTrigger>
-                <SelectContent>{clients.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.nome_fantasia || c.razao_social}{c.documento ? ` · ${c.documento}` : ""}
-                  </SelectItem>
-                ))}</SelectContent>
+    <div className="p-4 md:p-6 space-y-4">
+      <PageHeader
+        title="Meus documentos"
+        description={
+          filters.section === "precisa_enviar"
+            ? "Itens que a contabilidade está esperando que você envie."
+            : "Documentos já enviados e itens em análise pela contabilidade."
+        }
+      />
+
+      {isStaff && ready && (
+        <Card className="p-3 border-amber-300 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800">
+          <p className="text-xs text-amber-900 dark:text-amber-100">
+            Você está autenticado como equipe. Esta é a visão do cliente — só aparecem empresas em que você é vinculado como cliente.
+          </p>
+        </Card>
+      )}
+
+      <Card className="p-4 space-y-4">
+        {/* Seções — desktop tabs; mobile chips */}
+        <div className="hidden md:flex gap-2">
+          {sections.map((s) => (
+            <Button
+              key={s.value}
+              variant={filters.section === s.value ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSection(s.value)}
+            >
+              {s.label}
+              {typeof s.badge === "number" && (
+                <Badge variant="secondary" className="ml-2">{s.badge}</Badge>
+              )}
+            </Button>
+          ))}
+        </div>
+        <div className="md:hidden flex gap-2 overflow-x-auto">
+          {sections.map((s) => (
+            <Button
+              key={s.value}
+              variant={filters.section === s.value ? "default" : "outline"}
+              size="sm"
+              className="whitespace-nowrap"
+              onClick={() => setSection(s.value)}
+            >
+              {s.label}
+              {typeof s.badge === "number" && (
+                <Badge variant="secondary" className="ml-2">{s.badge}</Badge>
+              )}
+            </Button>
+          ))}
+        </div>
+
+        {/* Filtros server-side */}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="lg:col-span-2">
+            <Label className="text-xs">Buscar</Label>
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                className="pl-8"
+                placeholder="Título, tipo, competência…"
+                value={searchInput}
+                onChange={(e) => {
+                  setSearchInput(e.target.value);
+                  setSearch(e.target.value);
+                }}
+              />
+            </div>
+          </div>
+          {multiEmpresa && (
+            <div>
+              <Label className="text-xs">Empresa</Label>
+              <Select
+                value={filters.clientId ?? "all"}
+                onValueChange={(v) => setClient(v === "all" ? null : v)}
+              >
+                <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {clients.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nome_fantasia || c.razao_social}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
           )}
-          <div><Label className="text-xs">Tipo</Label>
-            <Select value={tipo} onValueChange={setTipo}><SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-              <SelectContent>{DOC_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
-            </Select>
+          <div>
+            <Label className="text-xs">Competência</Label>
+            <Input
+              placeholder="2026-06"
+              value={filters.competencia ?? ""}
+              onChange={(e) => setCompetencia(e.target.value || null)}
+            />
           </div>
-          <div><Label className="text-xs">Competência</Label><Input className="w-[140px]" placeholder="2026-06" value={competencia} onChange={(e) => setCompetencia(e.target.value)} /></div>
-          <label className="ml-auto">
-            <input type="file" className="hidden" onChange={handleUpload} disabled={uploading || clients.length === 0} />
-            <Button asChild disabled={uploading || clients.length === 0}><span><Upload className="mr-2 h-4 w-4" />{uploading ? "Enviando…" : "Enviar"}</span></Button>
-          </label>
+          {activeCount > 0 && (
+            <div className="flex items-end">
+              <Button variant="ghost" size="sm" onClick={() => { setSearchInput(""); clearAll(); }}>
+                <X className="mr-1 h-4 w-4" /> Limpar filtros
+              </Button>
+            </div>
+          )}
         </div>
-
-        <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 rounded-md border p-3">
-          <div><Label className="text-xs">Filtrar por tipo</Label>
-            <Select value={fTipo} onValueChange={setFTipo}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os tipos</SelectItem>
-                {DOC_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div><Label className="text-xs">Status</Label>
-            <Select value={fStatus} onValueChange={setFStatus}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                {DOC_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div><Label className="text-xs">Buscar</Label>
-            <Input placeholder="Nome do arquivo" value={fQ} onChange={(e) => setFQ(e.target.value)} />
-          </div>
-          <div className="flex items-end">
-            <Button variant="ghost" size="sm" onClick={() => { setFTipo("all"); setFStatus("all"); setFQ(""); }}>Limpar filtros</Button>
-          </div>
-        </div>
-
-        {(() => {
-          const filtered = (docs as any[]).filter((d) => {
-            if (fTipo !== "all" && normalizeDocTipo(d.tipo) !== normalizeDocTipo(fTipo)) return false;
-            if (fStatus !== "all" && d.status !== fStatus) return false;
-            if (fQ && !(d.nome ?? "").toLowerCase().includes(fQ.toLowerCase())) return false;
-            return true;
-          });
-          return clientsError || docsError ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />
-        : loading || isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p>
-        : filtered.length === 0 ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Nenhum documento encontrado." /> : (
-          <ul className="divide-y">
-            {filtered.map((d: any) => (
-              <li key={d.id} className="flex items-center justify-between py-3">
-                <div>
-                  <div className="text-sm font-medium">{d.nome}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {labelOf(DOC_TYPES, d.tipo)} {d.competencia ? `· ${d.competencia}` : ""}
-                    {clients.length > 1 && (d.clients?.nome_fantasia || d.clients?.razao_social) && (
-                      <> · Empresa: {d.clients?.nome_fantasia || d.clients?.razao_social}</>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <StatusBadge value={d.status} />
-                  {d.uploaded_by === userId && (
-                    <DeleteButton
-                      onConfirm={() => removeDoc.mutate(d.id)}
-                      iconOnly
-                      description="Tem certeza que deseja apagar este item enviado por você?"
-                    />
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        );
-        })()}
       </Card>
+
+      {!ready ? (
+        <div className="space-y-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="p-4">
+              <Skeleton className="h-5 w-1/2 mb-2" />
+              <Skeleton className="h-4 w-2/3" />
+            </Card>
+          ))}
+        </div>
+      ) : portalQ.isLoading && !portalQ.data ? (
+        <div className="space-y-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="p-4">
+              <Skeleton className="h-5 w-1/2 mb-2" />
+              <Skeleton className="h-4 w-2/3" />
+            </Card>
+          ))}
+        </div>
+      ) : portalQ.error ? (
+        <EmptyState
+          icon={<AlertCircle className="h-6 w-6" />}
+          title="Não foi possível carregar seus documentos"
+          description={(portalQ.error as Error).message}
+        />
+      ) : rows.length === 0 ? (
+        <EmptyState
+          icon={filters.section === "precisa_enviar" ? <FileText className="h-6 w-6" /> : <Inbox className="h-6 w-6" />}
+          title={filters.section === "precisa_enviar" ? "Tudo em dia!" : "Nada por aqui"}
+          description={
+            filters.section === "precisa_enviar"
+              ? "Não há documentos aguardando envio no momento."
+              : "Ainda não há documentos no histórico com os filtros atuais."
+          }
+        />
+      ) : (
+        <div className="space-y-2">
+          {rows.map((row) => (
+            <PortalRow
+              key={`${row.item_kind}:${row.item_id}`}
+              row={row}
+              onOpen={openDetail}
+              showEmpresa={multiEmpresa}
+            />
+          ))}
+          <div className="pt-2">
+            <DocumentWorkspacePagination
+              page={portalQ.data?.page ?? filters.page}
+              pageSize={portalQ.data?.page_size ?? filters.pageSize}
+              total={total}
+              onPage={setPage}
+              onPageSize={setPageSize}
+            />
+          </div>
+        </div>
+      )}
+
+      <PortalDetailSheet
+        row={detailRow}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        userId={userId}
+      />
     </div>
   );
 }
