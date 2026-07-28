@@ -58,11 +58,15 @@ const TIPO_LABEL: Record<Tipo, string> = {
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  pendente: "Pendente",
+  // solicitações (status unificado)
+  aguardando: "Aguardando",
   recebido: "Recebido",
-  recusado: "Recusado",
   reenviar: "Reenviar",
+  concluido: "Concluído",
   cancelado: "Cancelado",
+  // pendências internas (não alteradas nesta fase)
+  pendente: "Pendente",
+  aguardando_cliente: "Aguardando cliente",
 };
 
 function statusTone(tipo: Tipo, status: string, prazo: string | null): string {
