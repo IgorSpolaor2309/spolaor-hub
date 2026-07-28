@@ -21,6 +21,12 @@ import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { formatBR, isPastEndOfDay } from "@/lib/dates";
 import { normalizeDocTipo, normalizeSlug } from "@/lib/sc-types";
+import {
+  DOC_REQUEST_STATUSES,
+  DOC_REQUEST_STATUS_LABEL,
+  DOC_REQUEST_STATUS_TONE,
+  DOC_REQUEST_CLIENT_ACTION_STATUSES,
+} from "@/lib/doc-request-status";
 
 export const Route = createFileRoute("/_authenticated/solicitacoes")({
   component: RequestsPage,
