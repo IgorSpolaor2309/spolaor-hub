@@ -2957,7 +2957,81 @@ export type Database = {
         Args: { _competencia: string; _tipo: string; _valor: number }
         Returns: string
       }
+      client_get_checklist_items: {
+        Args: { p_client_id: string; p_competence?: string }
+        Returns: {
+          categoria: string
+          client_id: string
+          competencia: string
+          concluded_at: string
+          created_at: string
+          document_id: string
+          document_request_id: string
+          id: string
+          observacao: string
+          origem: string
+          prazo: string
+          received_at: string
+          status: string
+          titulo: string
+          updated_at: string
+          visivel_cliente: boolean
+        }[]
+      }
+      client_get_document_request: {
+        Args: { p_id: string }
+        Returns: {
+          attachment_final_name: string
+          categoria: string
+          client_id: string
+          company_process_id: string
+          company_process_step_id: string
+          company_process_step_requirement_id: string
+          competencia: string
+          created_at: string
+          departamento: string
+          descricao: string
+          document_id: string
+          id: string
+          possui_anexo: boolean
+          prazo: string
+          status: string
+          tipo_solicitacao: string
+          titulo: string
+          updated_at: string
+          urgencia: string
+        }[]
+      }
       client_label: { Args: { _client_id: string }; Returns: string }
+      client_list_document_requests: {
+        Args: {
+          p_client_id: string
+          p_limit?: number
+          p_offset?: number
+          p_status?: string
+        }
+        Returns: {
+          attachment_final_name: string
+          categoria: string
+          client_id: string
+          company_process_id: string
+          company_process_step_id: string
+          company_process_step_requirement_id: string
+          competencia: string
+          created_at: string
+          departamento: string
+          descricao: string
+          document_id: string
+          id: string
+          possui_anexo: boolean
+          prazo: string
+          status: string
+          tipo_solicitacao: string
+          titulo: string
+          updated_at: string
+          urgencia: string
+        }[]
+      }
       client_list_processes: {
         Args: never
         Returns: {
