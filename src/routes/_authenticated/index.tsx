@@ -483,7 +483,7 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
           clients: companyLabel.get(row.client_id) ?? null,
         }))
       );
-      const reqPending = reqs.filter((r: any) => ["pendente", "reenviar"].includes(r.status));
+      const reqPending = reqs.filter((r: any) => ["aguardando", "reenviar"].includes(r.status));
       const reqSent = reqs.filter((r: any) => r.status === "recebido");
       return {
         primary,
