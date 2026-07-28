@@ -430,7 +430,7 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
             </>
           ) : (
             <>
-              {(item.status === "aguardando_cliente" || item.status === "pendente" || item.status === "reenviar") && (
+              {DOC_REQUEST_CLIENT_ACTION_STATUSES.includes(item.status as any) && (
                 <label>
                   <input ref={clientReplyRef} type="file" className="hidden" onChange={uploadClientReply} />
                   <Button asChild size="sm">
