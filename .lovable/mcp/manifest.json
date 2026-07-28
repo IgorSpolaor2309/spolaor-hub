@@ -190,7 +190,7 @@
       {
         "name": "list_document_requests",
         "title": "Listar solicitações de documento",
-        "description": "Lista as solicitações de documentos (document_requests) visíveis ao usuário autenticado. Não retorna URLs privadas nem caminhos internos de storage.",
+        "description": "Lista solicitações de documentos visíveis ao usuário. Clientes recebem apenas campos públicos (sem observações internas nem campos administrativos).",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -201,7 +201,7 @@
           "type": "object",
           "properties": {
             "client_id": {
-              "description": "Filtrar por empresa (opcional).",
+              "description": "Filtrar por empresa (obrigatório para clientes).",
               "type": "string",
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
@@ -212,13 +212,13 @@
               "maxLength": 40
             },
             "date_from": {
-              "description": "Data inicial ISO (created_at).",
+              "description": "Data inicial ISO (created_at) — apenas staff.",
               "type": "string",
               "format": "date-time",
               "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
             },
             "date_to": {
-              "description": "Data final ISO (created_at).",
+              "description": "Data final ISO (created_at) — apenas staff.",
               "type": "string",
               "format": "date-time",
               "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
