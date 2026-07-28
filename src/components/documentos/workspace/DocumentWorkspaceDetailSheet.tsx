@@ -87,6 +87,7 @@ export function DocumentWorkspaceDetailSheet({ row, open, onOpenChange, actions 
                     <Link
                       to="/processos/$id"
                       params={{ id: row.company_process_id }}
+                      search={{ client: undefined }}
                       className="text-sm text-primary hover:underline"
                     >
                       Abrir processo →
