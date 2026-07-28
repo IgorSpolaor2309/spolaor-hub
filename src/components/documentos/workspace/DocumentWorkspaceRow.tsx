@@ -130,7 +130,7 @@ export function DocumentWorkspaceRow({ row, onOpen, actions }: Props) {
               {row.has_document && row.document_storage_path && (
                 <AttachmentButton
                   storagePath={row.document_storage_path}
-                  fileName={row.document_name ?? "documento"}
+                  label={row.document_name ?? "Abrir anexo"}
                   size="sm"
                   variant="outline"
                 />
