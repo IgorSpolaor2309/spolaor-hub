@@ -165,7 +165,7 @@ function ClientProcessoDetail() {
 
         <Card className="h-fit p-4">
           <h2 className="mb-3 text-sm font-medium">Andamentos</h2>
-          {timelineQ.isLoading ? <p className="text-xs text-muted-foreground">Carregando…</p>
+          {timelineQ.isLoading ? <ListSkeleton rows={4} />
             : (timelineQ.data ?? []).length === 0 ? <p className="text-xs text-muted-foreground">Sem andamentos ainda.</p>
             : (
               <ul className="space-y-2">

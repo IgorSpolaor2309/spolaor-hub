@@ -212,11 +212,11 @@ function ProcessDetail() {
   }, [steps]);
 
 
-  if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
+  if (loading) return <InlineLoading />;
   if (role !== "admin" && role !== "collaborator") {
     return <EmptyState icon={<Workflow className="h-6 w-6" />} title="Acesso restrito" />;
   }
-  if (procQ.isLoading) return <p className="text-sm text-muted-foreground">Carregando processo…</p>;
+  if (procQ.isLoading) return <InlineLoading label="Carregando processo" />;
   if (!procQ.data) return <EmptyState icon={<Workflow className="h-6 w-6" />} title="Processo não encontrado" />;
 
   const p = proc as any;
@@ -317,7 +317,7 @@ function ProcessDetail() {
 
         <Card className="p-4">
           <div className="mb-2 text-sm font-medium">Timeline</div>
-          {historyQ.isLoading ? <p className="text-xs text-muted-foreground">Carregando…</p>
+          {historyQ.isLoading ? <ListSkeleton rows={4} />
             : (history).filter((e: any) => isTimelineVisible(e.tipo, "staff")).length === 0
               ? <p className="text-xs text-muted-foreground">Nenhum evento registrado.</p>
               : (
@@ -347,7 +347,7 @@ function ProcessDetail() {
 
       <Card className="mt-3 p-2">
         <div className="border-b px-2 py-2 text-sm font-medium">Etapas</div>
-        {stepsQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
+        {stepsQ.isLoading ? <ListSkeleton rows={4} />
           : steps.length === 0 ? <p className="p-3 text-sm text-muted-foreground">Nenhuma etapa.</p>
           : (
             <ul className="divide-y">
@@ -443,7 +443,7 @@ function ProcessDetail() {
             Histórico de alterações
             <span className="ml-2 text-xs font-normal text-muted-foreground">técnico · somente administradores</span>
           </div>
-          {historyQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
+          {historyQ.isLoading ? <ListSkeleton rows={4} />
             : (history).length === 0 ? <p className="p-3 text-sm text-muted-foreground">Sem eventos registrados.</p>
             : (
               <ul className="divide-y">
