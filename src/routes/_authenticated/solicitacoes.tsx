@@ -491,7 +491,7 @@ function NewRequestDialog({ clients, isStaff, onDone }: { clients: any[]; isStaf
         prazo: f.prazo || null,
         observacoes_internas: isStaff ? (f.observacoes_internas || null) : null,
         responsavel_profile_id: isStaff ? (userId ?? null) : null,
-        status: isStaff ? "pendente" : "solicitado",
+        status: "aguardando",
         document_id,
       };
       const { error } = await supabase.from("document_requests").insert(payload);
