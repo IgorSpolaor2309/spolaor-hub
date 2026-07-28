@@ -80,10 +80,12 @@ export function useWorkspaceFilters() {
   const setFilters = useCallback((patch: Partial<Record<keyof typeof s, string | number | undefined>>, opts?: { resetPage?: boolean }) => {
     const reset = opts?.resetPage ?? true;
     navigate({
-      to: ".",
-      search: (prev) => {
-        const next: Record<string, string | number | undefined> = { ...prev, ...patch };
-        // strings vazias saem da URL
+      to: "/documentos",
+      search: (prev: Record<string, unknown>) => {
+        const next: Record<string, string | number | undefined> = {
+          ...(prev as Record<string, string | number | undefined>),
+          ...patch,
+        };
         for (const k of Object.keys(next)) {
           if (next[k] === "" || next[k] === undefined || next[k] === null) delete next[k];
         }
