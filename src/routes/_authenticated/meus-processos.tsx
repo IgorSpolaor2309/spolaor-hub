@@ -163,7 +163,7 @@ function MeusProcessosPage() {
                 const pkBadge = pk === "no_prazo" || pk === "sem_prazo" ? null : PRAZO_STYLE[pk];
                 return (
                   <li key={r.id}>
-                    <Link to="/processos/$id" params={{ id: cp.id }} search={{}} className="block p-3 hover:bg-muted/40">
+                    <Link to="/processos/$id" params={{ id: cp.id }} search={{ client: undefined }} className="block p-3 hover:bg-muted/40">
                       <div className="flex flex-wrap items-center gap-2">
                         {cp.process_types?.cor && <span className="h-3 w-3 rounded-full border" style={{ background: cp.process_types.cor }} />}
                         <span className="font-medium">{clientLabel(cp.clients)}</span>

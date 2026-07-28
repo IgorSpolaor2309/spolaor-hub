@@ -226,7 +226,7 @@ function ProcessDetail() {
     <div>
       <div className="mb-3">
         <Button variant="ghost" size="sm" asChild>
-          <Link to="/processos" search={{}}><ArrowLeft className="mr-1 h-4 w-4" /> Voltar</Link>
+          <Link to="/processos" search={{ client: undefined }}><ArrowLeft className="mr-1 h-4 w-4" /> Voltar</Link>
         </Button>
       </div>
 

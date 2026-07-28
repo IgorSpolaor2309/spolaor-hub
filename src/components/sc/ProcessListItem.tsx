@@ -73,7 +73,7 @@ function StaffProcessRow(p: ProcessListItemProps) {
   const pkBadge = pk && (pk === "vencido" || pk === "hoje" || pk === "em_breve") ? PRAZO_STYLE[pk] : null;
 
   return (
-    <Link to="/processos/$id" params={{ id: p.processId }} search={{}} className="block p-3 hover:bg-muted/40">
+    <Link to="/processos/$id" params={{ id: p.processId }} search={{ client: undefined }} className="block p-3 hover:bg-muted/40">
       <div className="flex flex-wrap items-center gap-2">
         {p.tipoCor && <span className="h-3 w-3 rounded-full border" style={{ background: p.tipoCor }} />}
         <span className="font-medium">{p.empresa}</span>
