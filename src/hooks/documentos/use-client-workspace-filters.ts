@@ -39,13 +39,12 @@ export function useClientWorkspaceFilters() {
     (updates: Record<string, string | number | undefined>) => {
       navigate({
         to: "/meus-documentos",
-        search: (prev) => {
-          const next: Record<string, unknown> = { ...(prev as object) };
+        search: (prev: Record<string, unknown>) => {
+          const next: Record<string, unknown> = { ...prev };
           for (const [k, v] of Object.entries(updates)) {
             if (v === undefined || v === "" || v === null) delete next[k];
             else next[k] = v;
           }
-          // Se qualquer filtro (que não seja page) mudou, reset página.
           if (Object.keys(updates).some((k) => k !== "page" && k !== "page_size")) {
             delete next.page;
           }
