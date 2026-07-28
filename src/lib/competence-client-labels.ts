@@ -32,18 +32,20 @@ export function clientStatusTone(s: string | null | undefined): string {
 }
 
 // Rótulos simples para as ações pendentes do cliente.
+// Rótulos amigáveis das ações do cliente no portal.
+// document_requests (fase 2): apenas 5 status. tax_guides mantém os próprios.
 export const CLIENT_REQUEST_LABEL: Record<string, string> = {
-  pendente: "Aguardando envio",
-  solicitado: "Aguardando envio",
-  aguardando_cliente: "Aguardando envio",
+  // document_requests
+  aguardando: "Aguardando envio",
   reenviar: "Reenviar",
-  em_analise: "Em análise",
-  em_andamento: "Em análise",
-  concluida: "Concluída",
-  concluido: "Concluída",
   recebido: "Recebido",
+  concluido: "Concluída",
+  cancelado: "Cancelada",
+  // tax_guides
   aprovada: "Aprovada",
   entregue: "Entregue",
+  pago: "Pago",
+  baixado: "Baixado",
 };
 
 export function clientRequestLabel(s: string | null | undefined): string {
