@@ -336,7 +336,7 @@ function CollabDashboard({ name, userId }: { name: string; userId: string }) {
         scope(supabase.from("documents").select("id", { head: true, count: "exact" }).in("client_id", ids).in("status", ["recebido", "em_analise"])),
         scope(supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("client_id", ids).eq("status", "recebido")),
         scope(supabase.from("tax_guides").select("id", { head: true, count: "exact" }).in("client_id", ids).gte("vencimento", t).lte("vencimento", in7).not("status", "in", "(paga,cancelada)")),
-        scope(supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("client_id", ids).in("status", ["pendente", "reenviar"])),
+        scope(supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("client_id", ids).in("status", ["aguardando", "reenviar"])),
         scope(supabase.from("timeline_events").select("id, descricao, created_at, clients(razao_social)").in("client_id", ids).order("created_at", { ascending: false }).limit(6)),
       ]);
       const failures = [tasksOverdue, tasksToday, docsAnalysis, awaitingReturn, guidesSoon, reqPending, events].filter((r) => r.error);
