@@ -161,7 +161,7 @@ function DocsPage() {
           data={needToRequestQ.data}
           loading={needToRequestQ.isLoading}
           error={(needToRequestQ.error as Error | null) ?? null}
-          onGoToChecklist={() => navigate({ to: "/checklist", search: { comp: filters.competencia ?? undefined } })}
+          onGoToChecklist={() => navigate({ to: "/checklist", search: { client: filters.clientId ?? undefined, comp: filters.competencia ?? undefined, expand: undefined } })}
         />
       ) : workspaceQ.isLoading && !workspaceQ.data ? (
         <div className="space-y-2">
