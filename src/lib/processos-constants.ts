@@ -129,16 +129,16 @@ export const PROCESS_PRIORITY_OPTIONS: { value: ProcessPriority; label: string }
 
 /* -------------------------------------------------------- Document request status */
 
+// Status oficial unificado (fase 2 — document_requests).
+// Mantém apenas os 5 valores permitidos pelo CHECK. Nunca reintroduzir
+// pendente/solicitado/em_andamento/aguardando_cliente/recusado — foram
+// consolidados em aguardando/recebido/reenviar/concluido/cancelado.
 export const REQUEST_STATUS = {
-  pendente:           { staff: "Pendente",           client: "Pendente",         tone: "bg-amber-100 text-amber-800" },
-  solicitado:         { staff: "Solicitado",         client: "Solicitado",       tone: "bg-sky-100 text-sky-800" },
-  em_andamento:       { staff: "Em andamento",       client: "Em andamento",     tone: "bg-indigo-100 text-indigo-800" },
-  aguardando_cliente: { staff: "Aguardando cliente", client: "Aguardando você",  tone: "bg-amber-100 text-amber-800" },
-  reenviar:           { staff: "Reenviar",           client: "Reenviar",         tone: "bg-amber-100 text-amber-800" },
-  recebido:           { staff: "Recebido",           client: "Recebido",         tone: "bg-emerald-100 text-emerald-800" },
-  concluido:          { staff: "Concluído",          client: "Concluído",        tone: "bg-emerald-100 text-emerald-800" },
-  recusado:           { staff: "Recusado",           client: "Recusado",         tone: "bg-rose-100 text-rose-800" },
-  cancelado:          { staff: "Cancelado",          client: "Cancelado",        tone: "bg-zinc-200 text-zinc-700" },
+  aguardando: { staff: "Aguardando", client: "Aguardando",  tone: "bg-amber-100 text-amber-800" },
+  recebido:   { staff: "Recebido",   client: "Recebido",    tone: "bg-sky-100 text-sky-800" },
+  reenviar:   { staff: "Reenviar",   client: "Reenviar",    tone: "bg-rose-100 text-rose-800" },
+  concluido:  { staff: "Concluído",  client: "Concluído",   tone: "bg-emerald-100 text-emerald-800" },
+  cancelado:  { staff: "Cancelado",  client: "Cancelado",   tone: "bg-zinc-200 text-zinc-700" },
 } as const;
 export type RequestStatus = keyof typeof REQUEST_STATUS;
 
