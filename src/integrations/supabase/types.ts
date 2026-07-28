@@ -3454,12 +3454,7 @@ export type Database = {
       }
       workspace_checklist_precisa_solicitar_count: {
         Args: { _client_id?: string; _include_demo?: boolean }
-        Returns: {
-          criterio: string
-          elegiveis: number
-          ja_com_documento: number
-          ja_com_request_ativo: number
-        }[]
+        Returns: Json
       }
     }
     Enums: {
