@@ -2757,6 +2757,14 @@ export type Database = {
         Args: { p_client_id: string; p_profile_id: string }
         Returns: undefined
       }
+      _doc_workspace_status_label_client: {
+        Args: { _action_owner: string; _status: string }
+        Returns: string
+      }
+      _doc_workspace_status_label_staff: {
+        Args: { _data_validade: string; _kind: string; _status: string }
+        Returns: string
+      }
       admin_bulk_assign_responsible: {
         Args: { p_ids: string[]; p_profile_id: string }
         Returns: Json
@@ -3331,6 +3339,18 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      list_client_document_workspace_paginated: {
+        Args: {
+          _client_id?: string
+          _competencia?: string
+          _include_demo?: boolean
+          _page?: number
+          _page_size?: number
+          _search?: string
+          _section?: string
+        }
+        Returns: Json
+      }
       list_company_processes_paginated: {
         Args: {
           _client_id?: string
@@ -3346,6 +3366,33 @@ export type Database = {
           _sort_by?: string
           _status?: string
           _tab?: string
+        }
+        Returns: Json
+      }
+      list_document_workspace_paginated: {
+        Args: {
+          _action_owner?: string
+          _categoria?: string
+          _client_id?: string
+          _competencia?: string
+          _demo_batch_id?: string
+          _departamento?: string
+          _include_demo?: boolean
+          _origem?: string
+          _page?: number
+          _page_size?: number
+          _prazo_from?: string
+          _prazo_to?: string
+          _responsavel_id?: string
+          _search?: string
+          _somente_meus?: boolean
+          _status?: string
+          _tab?: string
+          _tem_documento?: boolean
+          _tem_vinculo?: boolean
+          _tipo?: string
+          _validade_from?: string
+          _validade_to?: string
         }
         Returns: Json
       }
@@ -3404,6 +3451,15 @@ export type Database = {
       user_owns_collaborator: {
         Args: { _collab_id: string; _user_id: string }
         Returns: boolean
+      }
+      workspace_checklist_precisa_solicitar_count: {
+        Args: { _client_id?: string; _include_demo?: boolean }
+        Returns: {
+          criterio: string
+          elegiveis: number
+          ja_com_documento: number
+          ja_com_request_ativo: number
+        }[]
       }
     }
     Enums: {
