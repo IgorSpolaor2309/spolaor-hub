@@ -323,8 +323,8 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
         uploaded_by: userId, status: "recebido",
       }).select("id").maybeSingle();
       if (dErr) throw dErr;
-      // Cliente respondendo — volta pra em_andamento pra staff analisar
-      const nextStatus = fromClient ? "em_andamento" : "recebido";
+      // Cliente ou staff enviando resposta — vai para "recebido" (aguarda análise/conclusão)
+      const nextStatus = "recebido";
       const { error: rErr } = await supabase.from("document_requests")
         .update({ status: nextStatus, document_id: doc?.id ?? null })
         .eq("id", item.id);
