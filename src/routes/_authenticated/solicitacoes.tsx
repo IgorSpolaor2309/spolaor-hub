@@ -290,7 +290,7 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
   const assumir = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("document_requests")
-        .update({ responsavel_profile_id: userId, status: item.status === "solicitado" ? "em_andamento" : item.status })
+        .update({ responsavel_profile_id: userId })
         .eq("id", item.id);
       if (error) throw error;
     },
