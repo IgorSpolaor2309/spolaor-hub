@@ -114,10 +114,11 @@ export default defineTool({
       prazo: r.prazo,
       possui_anexo: Boolean(r.document_id || r.attachment_final_name),
       proxima_acao:
-        r.status === "pendente" ? "aguardando envio do cliente"
-        : r.status === "aguardando" ? "aguardando revisão da contabilidade"
-        : r.status === "em_andamento" ? "em processamento"
-        : r.status === "concluida" ? "nenhuma"
+        r.status === "aguardando" ? "aguardando envio do cliente"
+        : r.status === "recebido" ? "aguardando análise/conclusão pela contabilidade"
+        : r.status === "reenviar" ? "cliente precisa reenviar"
+        : r.status === "concluido" ? "nenhuma"
+        : r.status === "cancelado" ? "nenhuma"
         : "verificar",
       created_at: r.created_at,
       updated_at: r.updated_at,
