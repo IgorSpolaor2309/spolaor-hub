@@ -86,34 +86,11 @@ function normCategoria(v: string | null | undefined): string {
   return CATEGORIA_ALIASES[n] ?? n;
 }
 
-// Statuses combinados (fluxo staff→cliente e fluxo cliente→staff)
-const STATUSES_STAFF_FLOW = ["pendente", "recebido", "recusado", "reenviar", "cancelado"];
-const STATUSES_CLIENT_FLOW = ["solicitado", "em_andamento", "aguardando_cliente", "concluido", "cancelado"];
-const ALL_STATUSES = Array.from(new Set([...STATUSES_STAFF_FLOW, ...STATUSES_CLIENT_FLOW]));
+// Status oficial unificado (fase 2)
+const ALL_STATUSES = DOC_REQUEST_STATUSES;
 
-const STATUS_TONE: Record<string, string> = {
-  "pendente": "bg-amber-100 text-amber-800",
-  "recebido": "bg-emerald-100 text-emerald-800",
-  "recusado": "bg-rose-100 text-rose-800",
-  "reenviar": "bg-amber-100 text-amber-800",
-  "cancelado": "bg-zinc-200 text-zinc-700",
-  "solicitado": "bg-sky-100 text-sky-800",
-  "em_andamento": "bg-indigo-100 text-indigo-800",
-  "aguardando_cliente": "bg-amber-100 text-amber-800",
-  "concluido": "bg-emerald-100 text-emerald-800",
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  "pendente": "Pendente",
-  "recebido": "Recebido",
-  "recusado": "Recusado",
-  "reenviar": "Reenviar",
-  "cancelado": "Cancelado",
-  "solicitado": "Solicitado",
-  "em_andamento": "Em andamento",
-  "aguardando_cliente": "Aguardando cliente",
-  "concluido": "Concluído",
-};
+const STATUS_TONE: Record<string, string> = DOC_REQUEST_STATUS_TONE;
+const STATUS_LABEL: Record<string, string> = DOC_REQUEST_STATUS_LABEL;
 
 function labelTipo(v?: string | null) {
   return TIPOS.find((t) => t.value === v)?.label ?? v ?? "";
