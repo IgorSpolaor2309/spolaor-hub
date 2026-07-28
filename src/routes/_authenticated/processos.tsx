@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ListSkeleton, InlineLoading } from "@/components/sc/Skeletons";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -159,7 +160,7 @@ function ProcessesPage() {
 
 
 
-  if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
+  if (loading) return <InlineLoading />;
   if (role !== "admin" && role !== "collaborator") {
     return <EmptyState icon={<Workflow className="h-6 w-6" />} title="Acesso restrito" description="Apenas administradores e colaboradores." />;
   }
@@ -392,7 +393,7 @@ function ProcessesPage() {
       </Card>
 
       <Card className="p-2">
-        {listQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
+        {listQ.isLoading ? <ListSkeleton rows={4} />
           : rows.length === 0 ? <EmptyState icon={<Workflow className="h-6 w-6" />} title="Nenhum processo" description="Ajuste os filtros ou crie um novo processo." />
           : (
             <ul className="divide-y">

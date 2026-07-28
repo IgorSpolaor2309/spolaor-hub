@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -8,9 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AttachmentButton } from "@/components/sc/AttachmentButton";
 import { DeleteButton } from "@/components/sc/DeleteButton";
 import { EmptyState } from "@/components/sc/EmptyState";
+import { ListSkeleton } from "@/components/sc/Skeletons";
 import { toast } from "sonner";
 import { FileText, Link2, Paperclip, CheckCircle2, AlertCircle, XCircle, Send, ExternalLink } from "lucide-react";
 import { Link } from "@tanstack/react-router";
@@ -99,14 +104,12 @@ export function ProcessDocumentsSection({ processId, clientId, steps, canEdit }:
     const m: Record<string, any> = {};
     for (const r of reqRequests) {
       if (!r.company_process_step_requirement_id) continue;
-      // Ativa = não cancelada, não concluída, não recebida (matching o UNIQUE do banco)
       const isActive = !["cancelado", "concluido", "recebido"].includes(r.status);
       const cur = m[r.company_process_step_requirement_id];
       if (isActive && !cur) m[r.company_process_step_requirement_id] = r;
     }
     return m;
   }, [reqRequests]);
-  const stepMap = useMemo(() => Object.fromEntries(steps.map(s => [s.id, s])), [steps]);
   const generalDocs = docs.filter((d: any) => !d.company_process_step_id);
   const docsByStep = useMemo(() => {
     const m: Record<string, any[]> = {};
@@ -131,7 +134,7 @@ export function ProcessDocumentsSection({ processId, clientId, steps, canEdit }:
       {/* Documentos gerais */}
       <div className="p-3">
         <div className="mb-1 text-xs font-medium text-muted-foreground uppercase">Gerais do processo</div>
-        {docsQ.isLoading ? <p className="text-xs text-muted-foreground">Carregando…</p>
+        {docsQ.isLoading ? <ListSkeleton rows={3} />
           : generalDocs.length === 0 ? <p className="text-xs text-muted-foreground">Nenhum documento vinculado.</p>
           : (
             <ul className="divide-y rounded border">
@@ -143,7 +146,14 @@ export function ProcessDocumentsSection({ processId, clientId, steps, canEdit }:
                   {d.observacao && <span className="text-xs text-muted-foreground">· {d.observacao}</span>}
                   <div className="ml-auto flex items-center gap-1">
                     <AttachmentButton storagePath={d.documents?.storage_path} label="Abrir" />
-                    {canEdit && <DeleteButton onConfirm={() => unlink.mutate(d.id)} iconOnly description="Remover apenas o vínculo (o documento original é preservado)." />}
+                    {canEdit && (
+                      <DeleteButton
+                        onConfirm={() => unlink.mutate(d.id)}
+                        iconOnly
+                        disabled={unlink.isPending}
+                        description={`Remover o vínculo com "${d.documents?.nome ?? "documento"}"? O arquivo original permanece disponível na página Documentos; apenas o vínculo com este processo será removido.`}
+                      />
+                    )}
                   </div>
                 </li>
               ))}
@@ -180,7 +190,8 @@ export function ProcessDocumentsSection({ processId, clientId, steps, canEdit }:
                           processId={processId} stepId={s.id} stepNome={s.nome}
                           activeRequest={activeReqRequestByReqId[r.id] ?? null}
                           onChanged={invalidate}
-                          onSet={(docId) => setReqDoc.mutate({ reqId: r.id, docId })} />
+                          onSet={(docId) => setReqDoc.mutate({ reqId: r.id, docId })}
+                          isUpdating={setReqDoc.isPending} />
                       ))}
                     </ul>
                   )}
@@ -195,7 +206,14 @@ export function ProcessDocumentsSection({ processId, clientId, steps, canEdit }:
                             {d.documents?.deleted_at && <Badge className="bg-red-100 text-red-800">Excluído</Badge>}
                             <div className="ml-auto flex items-center gap-1">
                               <AttachmentButton storagePath={d.documents?.storage_path} label="Abrir" />
-                              {canEdit && <DeleteButton onConfirm={() => unlink.mutate(d.id)} iconOnly description="Remover apenas o vínculo." />}
+                              {canEdit && (
+                                <DeleteButton
+                                  onConfirm={() => unlink.mutate(d.id)}
+                                  iconOnly
+                                  disabled={unlink.isPending}
+                                  description={`Remover o vínculo de "${d.documents?.nome ?? "documento"}" com a etapa "${s.nome}"? O arquivo original permanece disponível na página Documentos.`}
+                                />
+                              )}
                             </div>
                           </li>
                         ))}
@@ -216,11 +234,13 @@ export function ProcessDocumentsSection({ processId, clientId, steps, canEdit }:
 }
 
 
-function RequirementRow({ req, clientId, canEdit, onSet, processId, stepId, stepNome, activeRequest, onChanged }:
+function RequirementRow({ req, clientId, canEdit, onSet, processId, stepId, stepNome, activeRequest, onChanged, isUpdating }:
   { req: any; clientId: string; canEdit: boolean; onSet: (docId: string | null) => void;
-    processId: string; stepId: string; stepNome: string; activeRequest: any | null; onChanged: () => void }) {
+    processId: string; stepId: string; stepNome: string; activeRequest: any | null;
+    onChanged: () => void; isUpdating: boolean }) {
   const [open, setOpen] = useState(false);
   const [reqOpen, setReqOpen] = useState(false);
+  const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
   const doc = req.documents;
   const missing = !req.document_id;
   const removed = req.document_id && doc?.deleted_at;
@@ -247,7 +267,9 @@ function RequirementRow({ req, clientId, canEdit, onSet, processId, stepId, step
         {met && <AttachmentButton storagePath={doc?.storage_path} label="Abrir" />}
         {activeRequest ? (
           <Button asChild size="sm" variant="outline" className="h-7">
-            <Link to="/solicitacoes"><ExternalLink className="mr-1 h-3.5 w-3.5" /> Abrir solicitação</Link>
+            <Link to="/solicitacoes" search={{ client: undefined, comp: undefined }}>
+              <ExternalLink className="mr-1 h-3.5 w-3.5" /> Abrir solicitação
+            </Link>
           </Button>
         ) : canEdit && !met && (
           <>
@@ -274,10 +296,40 @@ function RequirementRow({ req, clientId, canEdit, onSet, processId, stepId, step
               {open && <PickDocDialog clientId={clientId} onPick={(id) => { onSet(id); setOpen(false); }} onClose={() => setOpen(false)} />}
             </Dialog>
             {met && (
-              <Button size="sm" variant="ghost" className="h-7"
-                onClick={() => { if (confirm("Remover atendimento (o documento não será excluído)?")) onSet(null); }}>
-                Remover
-              </Button>
+              <>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7"
+                  disabled={isUpdating}
+                  onClick={() => setConfirmRemoveOpen(true)}
+                >
+                  Remover
+                </Button>
+                <AlertDialog open={confirmRemoveOpen} onOpenChange={setConfirmRemoveOpen}>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Remover atendimento do requisito</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Isto desvincula o documento <span className="font-medium text-foreground">{doc?.nome ?? "atual"}</span>{" "}
+                        do requisito <span className="font-medium text-foreground">{req.nome}</span> (etapa{" "}
+                        <span className="font-medium text-foreground">{stepNome}</span>). O arquivo original
+                        permanece disponível na página Documentos; apenas o atendimento do requisito é removido.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel disabled={isUpdating}>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        disabled={isUpdating}
+                        onClick={() => { onSet(null); setConfirmRemoveOpen(false); }}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {isUpdating ? "Removendo…" : "Remover"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
             )}
           </>
         )}
@@ -449,41 +501,99 @@ function PickDocDialog({ clientId, onPick, onClose }: { clientId: string; onPick
   );
 }
 
+/**
+ * Busca paginada e server-side de documentos da empresa para vinculação
+ * a um processo. Substitui o antigo `.limit(500)` (que truncava
+ * silenciosamente clientes com mais documentos):
+ *
+ *  - filtro por `client_id` aplicado ANTES da paginação (isolamento por
+ *    cliente / RLS preserva a segurança);
+ *  - busca `ilike` server-side em `nome`/`tipo`/`competencia`, com debounce
+ *    para não flooder o PostgREST;
+ *  - `count: "exact"` para exibir total real e indicar "mais resultados";
+ *  - paginação de 50 por página (constante única, não é limite oculto).
+ */
+const PICK_DOC_PAGE_SIZE = 50;
+
 function PickDocInline({ clientId, onPick }: { clientId: string; onPick: (id: string) => void }) {
+  const [rawQ, setRawQ] = useState("");
   const [q, setQ] = useState("");
+  const [page, setPage] = useState(0);
+
+  // Debounce: 300ms — mantém a UI responsiva sem sobrecarregar o servidor.
+  useEffect(() => {
+    const t = setTimeout(() => { setQ(rawQ.trim()); setPage(0); }, 300);
+    return () => clearTimeout(t);
+  }, [rawQ]);
+
   const listQ = useQuery({
-    queryKey: ["client-docs-pick", clientId],
+    queryKey: ["client-docs-pick", clientId, q, page],
     queryFn: async () => {
-      const { data, error } = await supabase.from("documents")
-        .select("id, nome, tipo, competencia, created_at, storage_path")
-        .eq("client_id", clientId).is("deleted_at", null)
-        .order("created_at", { ascending: false }).limit(500);
+      const from = page * PICK_DOC_PAGE_SIZE;
+      const to = from + PICK_DOC_PAGE_SIZE - 1;
+      let query = supabase.from("documents")
+        .select("id, nome, tipo, competencia, created_at, storage_path", { count: "exact" })
+        .eq("client_id", clientId)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .range(from, to);
+      if (q) {
+        // OR busca em nome/tipo/competencia — todos textuais.
+        query = query.or(
+          `nome.ilike.%${q}%,tipo.ilike.%${q}%,competencia.ilike.%${q}%`,
+        );
+      }
+      const { data, error, count } = await query;
       if (error) throw error;
-      return data ?? [];
+      return { rows: data ?? [], count: count ?? 0 };
     },
   });
-  const docs = (listQ.data ?? []).filter((d: any) =>
-    !q.trim() || `${d.nome ?? ""} ${d.tipo ?? ""} ${d.competencia ?? ""}`.toLowerCase().includes(q.toLowerCase()));
+
+  const rows = listQ.data?.rows ?? [];
+  const total = listQ.data?.count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PICK_DOC_PAGE_SIZE));
+  const showingFrom = total === 0 ? 0 : page * PICK_DOC_PAGE_SIZE + 1;
+  const showingTo = Math.min(total, (page + 1) * PICK_DOC_PAGE_SIZE);
 
   return (
     <div className="space-y-2">
-      <Input placeholder="Buscar por nome, tipo ou competência…" value={q} onChange={(e) => setQ(e.target.value)} />
-      {listQ.isLoading ? <p className="text-xs text-muted-foreground">Carregando…</p>
-        : docs.length === 0 ? <EmptyState icon={<FileText className="h-5 w-5" />} title="Nenhum documento encontrado" description="Envie um documento primeiro na página Documentos." />
+      <Input
+        placeholder="Buscar por nome, tipo ou competência…"
+        value={rawQ}
+        onChange={(e) => setRawQ(e.target.value)}
+      />
+      {listQ.isLoading ? <ListSkeleton rows={4} />
+        : rows.length === 0 ? <EmptyState icon={<FileText className="h-5 w-5" />} title="Nenhum documento encontrado" description={q ? "Ajuste a busca ou envie um documento primeiro na página Documentos." : "Envie um documento primeiro na página Documentos."} />
         : (
-          <ul className="max-h-72 divide-y overflow-y-auto rounded border">
-            {docs.map((d: any) => (
-              <li key={d.id} className="flex flex-wrap items-center gap-2 p-2 text-sm">
-                <span className="font-medium">{d.nome}</span>
-                {d.tipo && <Badge variant="outline" className="text-[10px]">{d.tipo}</Badge>}
-                {d.competencia && <span className="text-xs text-muted-foreground">{d.competencia}</span>}
-                <div className="ml-auto flex items-center gap-1">
-                  <AttachmentButton storagePath={d.storage_path} label="Ver" />
-                  <Button size="sm" onClick={() => onPick(d.id)}>Vincular</Button>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul className="max-h-72 divide-y overflow-y-auto rounded border">
+              {rows.map((d: any) => (
+                <li key={d.id} className="flex flex-wrap items-center gap-2 p-2 text-sm">
+                  <span className="font-medium">{d.nome}</span>
+                  {d.tipo && <Badge variant="outline" className="text-[10px]">{d.tipo}</Badge>}
+                  {d.competencia && <span className="text-xs text-muted-foreground">{d.competencia}</span>}
+                  <div className="ml-auto flex items-center gap-1">
+                    <AttachmentButton storagePath={d.storage_path} label="Ver" />
+                    <Button size="sm" onClick={() => onPick(d.id)}>Vincular</Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="flex items-center justify-between gap-2 pt-1 text-[11px] text-muted-foreground">
+              <span>
+                Mostrando {showingFrom}–{showingTo} de {total}
+                {totalPages > 1 && <> · página {page + 1} de {totalPages}</>}
+              </span>
+              <div className="flex gap-1">
+                <Button size="sm" variant="outline" className="h-7"
+                  disabled={page <= 0 || listQ.isFetching}
+                  onClick={() => setPage((p) => Math.max(0, p - 1))}>Anterior</Button>
+                <Button size="sm" variant="outline" className="h-7"
+                  disabled={page + 1 >= totalPages || listQ.isFetching}
+                  onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}>Próxima</Button>
+              </div>
+            </div>
+          </>
         )}
     </div>
   );

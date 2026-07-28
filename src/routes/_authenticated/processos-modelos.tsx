@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ListSkeleton, InlineLoading } from "@/components/sc/Skeletons";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -110,7 +111,7 @@ function ProcessTypesPage() {
     };
   }, [typesQ.data, statsQ.data]);
 
-  if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
+  if (loading) return <InlineLoading />;
   if (role !== "admin" && role !== "collaborator") {
     return <EmptyState icon={<GitBranch className="h-6 w-6" />} title="Acesso restrito" description="Apenas administradores e colaboradores." />;
   }
@@ -160,7 +161,7 @@ function ProcessTypesPage() {
       </div>
 
       <Card className="p-2">
-        {typesQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
+        {typesQ.isLoading ? <ListSkeleton rows={4} />
           : sortedTypes.length === 0 ? <EmptyState icon={<GitBranch className="h-6 w-6" />} title="Nenhum modelo cadastrado" description="Crie o primeiro tipo de processo." />
           : (
             <ul className="divide-y">
@@ -666,7 +667,7 @@ function StepsSection({ typeId, canEdit }: { typeId: string; canEdit: boolean })
         </div>
       )}
 
-      {stepsQ.isLoading ? <p className="text-xs text-muted-foreground">Carregando…</p>
+      {stepsQ.isLoading ? <ListSkeleton rows={4} />
         : steps.length === 0 ? <p className="text-xs text-muted-foreground">Nenhuma etapa cadastrada.</p>
         : filteredSteps.length === 0 ? <p className="text-xs text-muted-foreground">Nenhuma etapa corresponde ao filtro.</p>
         : (

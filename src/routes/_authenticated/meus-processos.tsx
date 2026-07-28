@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ListSkeleton, InlineLoading } from "@/components/sc/Skeletons";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,7 +84,7 @@ function MeusProcessosPage() {
 
   const kpis = kpisQ.data ?? { abertas: 0, vencidas: 0, hoje: 0, em_breve: 0, sem_prazo: 0, concluidas: 0 };
 
-  if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
+  if (loading) return <InlineLoading />;
   if (role !== "admin" && role !== "collaborator") {
     return <EmptyState icon={<Briefcase className="h-6 w-6" />} title="Acesso restrito" />;
   }
@@ -153,7 +154,7 @@ function MeusProcessosPage() {
       </Card>
 
       <Card className="p-2">
-        {stepsQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
+        {stepsQ.isLoading ? <ListSkeleton rows={4} />
           : rows.length === 0 ? <EmptyState icon={<Briefcase className="h-6 w-6" />} title="Nada para você" description="Nenhuma etapa corresponde aos filtros." />
           : (
             <ul className="divide-y">
@@ -163,7 +164,7 @@ function MeusProcessosPage() {
                 const pkBadge = pk === "no_prazo" || pk === "sem_prazo" ? null : PRAZO_STYLE[pk];
                 return (
                   <li key={r.id}>
-                    <Link to="/processos/$id" params={{ id: cp.id }} search={{}} className="block p-3 hover:bg-muted/40">
+                    <Link to="/processos/$id" params={{ id: cp.id }} search={{ client: undefined }} className="block p-3 hover:bg-muted/40">
                       <div className="flex flex-wrap items-center gap-2">
                         {cp.process_types?.cor && <span className="h-3 w-3 rounded-full border" style={{ background: cp.process_types.cor }} />}
                         <span className="font-medium">{clientLabel(cp.clients)}</span>
