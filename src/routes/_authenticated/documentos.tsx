@@ -1,183 +1,218 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { PageHeader } from "@/components/sc/PageHeader";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { StatusBadge } from "@/components/sc/StatusBadge";
-import { EmptyState } from "@/components/sc/EmptyState";
-import { AttachmentButton } from "@/components/sc/AttachmentButton";
-import { DeleteButton } from "@/components/sc/DeleteButton";
-import { DateRangeFilter, EMPTY_DATE_FILTER, type DateFilterValue } from "@/components/sc/DateRangeFilter";
-import { inRange, resolveRange } from "@/lib/date-ranges";
-import { Button } from "@/components/ui/button";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { DOC_TYPES, DOC_STATUSES, labelOf, normalizeDocTipo } from "@/lib/sc-types";
-import { FileText } from "lucide-react";
-import { toast } from "sonner";
+import { PageHeader } from "@/components/sc/PageHeader";
+import { EmptyState } from "@/components/sc/EmptyState";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AlertCircle, FileText, Inbox } from "lucide-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useWorkspaceFilters } from "@/hooks/documentos/use-document-workspace-filters";
+import { useDocumentWorkspace, useNeedToRequestDiagnostic } from "@/hooks/documentos/use-document-workspace";
+import { useWorkspaceActions } from "@/hooks/documentos/use-document-workspace-actions";
+import { DocumentWorkspaceTabs, DocumentWorkspaceTabsMobile } from "@/components/documentos/workspace/DocumentWorkspaceTabs";
+import { DocumentWorkspaceFilters } from "@/components/documentos/workspace/DocumentWorkspaceFilters";
+import { DocumentWorkspaceRow } from "@/components/documentos/workspace/DocumentWorkspaceRow";
+import { DocumentWorkspacePagination } from "@/components/documentos/workspace/DocumentWorkspacePagination";
+import { DocumentWorkspaceDetailSheet } from "@/components/documentos/workspace/DocumentWorkspaceDetailSheet";
+import { RowRapidActions } from "@/components/documentos/workspace/RowRapidActions";
+import { NeedToRequestPanel } from "@/components/documentos/workspace/NeedToRequestPanel";
+import type { WorkspaceRow } from "@/lib/documentos/workspace-types";
+import { useNavigate } from "@tanstack/react-router";
 
-
+// Fase 4 — Central de Documentos + Solicitações (interface staff).
+// A rota apenas orquestra: nada de lógica de action_owner/counts aqui,
+// tudo vem das RPCs da Fase 3.
 export const Route = createFileRoute("/_authenticated/documentos")({
   component: DocsPage,
-  validateSearch: (search: Record<string, unknown>) => ({
-    client: typeof search.client === "string" ? search.client : undefined,
-    comp: typeof search.comp === "string" ? search.comp : undefined,
-  }),
-  errorComponent: () => <EmptyState icon={<FileText className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />,
+  validateSearch: (search: Record<string, unknown>) => {
+    const str = (k: string) => (typeof search[k] === "string" ? (search[k] as string) : undefined);
+    const num = (k: string) => {
+      const v = search[k];
+      if (typeof v === "number") return v;
+      if (typeof v === "string" && v !== "" && !Number.isNaN(Number(v))) return Number(v);
+      return undefined;
+    };
+    return {
+      tab: str("tab"),
+      page: num("page"),
+      page_size: num("page_size"),
+      q: str("q"),
+      client: str("client"),
+      comp: str("comp"),
+      categoria: str("categoria"),
+      tipo: str("tipo"),
+      dep: str("dep"),
+      status: str("status"),
+      owner: str("owner"),
+      resp: str("resp"),
+      origem: str("origem"),
+      prazo_from: str("prazo_from"),
+      prazo_to: str("prazo_to"),
+      val_from: str("val_from"),
+      val_to: str("val_to"),
+      tem_doc: str("tem_doc"),
+      tem_link: str("tem_link"),
+      meus: str("meus"),
+      demo: str("demo"),
+      demo_batch: str("demo_batch"),
+    };
+  },
+  errorComponent: () => (
+    <EmptyState
+      icon={<AlertCircle className="h-6 w-6" />}
+      title="Não foi possível carregar a Central de Documentos"
+      description="Tente recarregar a página ou volte em instantes."
+    />
+  ),
 });
-
 
 function DocsPage() {
   const { role, userId, loading } = useCurrentUser();
-  const qc = useQueryClient();
   const ready = !loading && !!userId && !!role;
-  const routeSearch = Route.useSearch();
-  const [q, setQ] = useState(""); const [tipo, setTipo] = useState("all"); const [status, setStatus] = useState("all");
-  const [fClient, setFClient] = useState<string>(routeSearch.client ?? "all");
-  const [fComp, setFComp] = useState<string>(routeSearch.comp ?? "");
-  const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
+  const isStaff = role === "admin" || role === "collaborator";
+  const navigate = useNavigate();
 
+  const { filters, setFilters, setTab, setPage, setPageSize, clearAll, activeCount } = useWorkspaceFilters();
+  const [detailRow, setDetailRow] = useState<WorkspaceRow | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
 
-  const { data: clients = [] } = useQuery({
-    queryKey: ["docs-clients", userId, role],
-    enabled: ready,
-    retry: 1,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("clients")
-        .select("id, razao_social, nome_fantasia, documento")
-        .is("deleted_at", null)
-        .neq("status", "inactive")
-        .order("razao_social");
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
+  const workspaceQ = useDocumentWorkspace(filters, ready && isStaff);
+  const includeDemo = filters.demo !== "real";
+  const needToRequestQ = useNeedToRequestDiagnostic(
+    filters.clientId,
+    includeDemo,
+    ready && isStaff && filters.tab === "precisa_solicitar",
+  );
+  const actions = useWorkspaceActions();
 
-  const { data: list = [], isLoading, error: listError } = useQuery({
-    queryKey: ["all-docs", userId, role],
-    enabled: ready,
-    retry: 1,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("documents")
-        .select("*, clients(razao_social, nome_fantasia), company_process_documents(id, company_process_id, company_process_step_id, company_processes(id, process_types(nome)))")
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-  const remove = useMutation({
-    mutationFn: async (id: string) => {
-      // Soft delete: only the uploader can do this (enforced by RLS too).
-      const { error } = await supabase
-        .from("documents")
-        .update({ deleted_at: new Date().toISOString(), deleted_by: userId })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["all-docs"] }); toast.success("Arquivo removido pelo autor."); },
-    onError: (e: any) => toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Sem permissão para excluir." : (e.message ?? "Falha")),
-  });
-  const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
-  const qLower = q.trim().toLowerCase();
-  const filtered = list.filter((d: any) => {
-    if (fClient !== "all" && d.client_id !== fClient) return false;
-    if (fComp && d.competencia !== fComp) return false;
-    if (tipo !== "all" && normalizeDocTipo(d.tipo) !== normalizeDocTipo(tipo)) return false;
-    if (status !== "all" && d.status !== status) return false;
-    if (qLower && !`${d.nome ?? ""} ${d.clients?.razao_social ?? ""} ${d.clients?.nome_fantasia ?? ""}`.toLowerCase().includes(qLower)) return false;
-    if (!inRange(d.created_at, range)) return false;
-    return true;
-  });
-  const clearFilters = () => { setQ(""); setTipo("all"); setStatus("all"); setFClient("all"); setFComp(""); setDateF(EMPTY_DATE_FILTER); };
+  const openDetail = (row: WorkspaceRow) => {
+    setDetailRow(row);
+    setDetailOpen(true);
+  };
 
+  const rows = workspaceQ.data?.rows ?? [];
+  const counts = workspaceQ.data?.counts;
+  const total = workspaceQ.data?.total ?? 0;
 
-  if (!ready) return <p className="text-sm text-muted-foreground">Carregando…</p>;
+  const isPrecisaSolicitar = filters.tab === "precisa_solicitar";
+
+  const emptyDescription = useMemo(() => {
+    if (!filters.tab) return "Ajuste os filtros para ver mais itens.";
+    if (filters.tab === "aguardando_cliente") return "Nenhuma solicitação aguardando cliente.";
+    if (filters.tab === "recebidos") return "Nenhum item aguardando revisão da equipe.";
+    if (filters.tab === "reenviar") return "Nenhuma solicitação marcada para reenvio.";
+    if (filters.tab === "concluidos") return "Nenhum item concluído no recorte atual.";
+    if (filters.tab === "vinculados") return "Nenhum item vinculado a processo no recorte atual.";
+    if (filters.tab === "vencendo") return "Nenhum documento vencendo nos próximos 30 dias.";
+    if (filters.tab === "vencidos") return "Nenhum documento vencido.";
+    return "Nenhum item encontrado.";
+  }, [filters.tab]);
+
+  if (!isStaff && ready) {
+    return (
+      <div className="p-4 md:p-6">
+        <PageHeader title="Central de Documentos" description="Acesso restrito à equipe." />
+        <EmptyState
+          icon={<FileText className="h-6 w-6" />}
+          title="Portal do cliente ainda usa a visão anterior"
+          description="Esta interface unificada foi liberada apenas para a equipe nesta fase."
+        />
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <PageHeader title="Documentos" description="Central de documentos das empresas cadastradas." />
-      <Card className="p-4">
-        <div className="mb-4 flex flex-wrap items-end gap-2">
-          <Input placeholder="Buscar…" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-xs" />
-          <Select value={fClient} onValueChange={setFClient}>
-            <SelectTrigger className="w-[220px]"><SelectValue placeholder="Empresa" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as empresas</SelectItem>
-              {(clients as any[]).map((c) => (
-                <SelectItem key={c.id} value={c.id}>{c.nome_fantasia || c.razao_social || c.documento || "Empresa"}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={tipo} onValueChange={setTipo}><SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="all">Todos os tipos</SelectItem>{DOC_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
-          </Select>
-          <Select value={status} onValueChange={setStatus}><SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="all">Todos status</SelectItem>{DOC_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
-          </Select>
-          <DateRangeFilter value={dateF} onChange={setDateF} label="Criado em" />
-          <Button variant="ghost" size="sm" onClick={clearFilters}>Limpar filtros</Button>
+    <div className="p-4 md:p-6 space-y-4">
+      <PageHeader
+        title="Central de Documentos"
+        description="Solicitações e documentos em uma visão unificada por status e ação necessária."
+      />
+
+      <Card className="p-4 space-y-4">
+        <div className="hidden md:block">
+          <DocumentWorkspaceTabs
+            value={filters.tab}
+            onChange={setTab}
+            counts={counts}
+            needToRequestCount={needToRequestQ.data?.elegiveis}
+          />
         </div>
-        {listError ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." /> :
-         isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p> :
-         filtered.length === 0 ? <EmptyState icon={<FileText className="h-6 w-6" />} title="Nenhum registro encontrado." /> : (
-          <table className="w-full text-sm">
-            <thead className="text-left text-xs uppercase text-muted-foreground">
-              <tr className="border-b"><th className="py-2 pr-4">Arquivo</th><th>Empresa</th><th>Tipo</th><th>Competência</th><th>Status</th><th></th></tr>
-            </thead>
-            <tbody>
-              {filtered.map((d: any) => (
-                <tr key={d.id} className="border-b">
-                  <td className="py-3 pr-4 font-medium">
-                    <div>{d.nome}</div>
-                    {(d.company_process_documents ?? []).length > 0 && (
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {(d.company_process_documents as any[]).map((cpd) => (
-                          <Link key={cpd.id} to="/processos/$id" params={{ id: cpd.company_process_id }} search={{ client: undefined }}
-                            className="inline-flex items-center gap-1 rounded bg-blue-50 px-1.5 py-0.5 text-[10px] text-blue-700 hover:underline">
-                            Processo: {cpd.company_processes?.process_types?.nome ?? "—"}
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </td>
-                  <td>
-                    {d.client_id ? (
-                      <Link to="/clientes/$id" params={{ id: d.client_id }} className="text-secondary hover:underline">
-                        {d.clients?.nome_fantasia || d.clients?.razao_social || "Empresa"}
-                      </Link>
-                    ) : (
-                      <span>{d.clients?.nome_fantasia || d.clients?.razao_social || "—"}</span>
-                    )}
-                  </td>
-                  <td>{labelOf(DOC_TYPES, d.tipo)}</td>
-                  <td>{d.competencia ?? "—"}</td>
-                  <td><StatusBadge value={d.status} /></td>
-                  <td className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <AttachmentButton storagePath={d.storage_path} label="Abrir" />
-                      {(d.uploaded_by === userId || role === "admin") && (
-                        <DeleteButton
-                          onConfirm={() => remove.mutate(d.id)}
-                          iconOnly
-                          description={d.uploaded_by === userId
-                            ? "Tem certeza que deseja apagar este item enviado por você? Esta ação ficará registrada no histórico."
-                            : "Exclusão administrativa: este arquivo foi enviado por outro usuário. Esta ação ficará registrada no histórico."}
-                        />
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="md:hidden">
+          <DocumentWorkspaceTabsMobile
+            value={filters.tab}
+            onChange={setTab}
+            counts={counts}
+            needToRequestCount={needToRequestQ.data?.elegiveis}
+          />
+        </div>
+
+        {!isPrecisaSolicitar && (
+          <DocumentWorkspaceFilters
+            filters={filters}
+            activeCount={activeCount}
+            onChange={(patch) => setFilters(patch)}
+            onClear={clearAll}
+          />
         )}
       </Card>
+
+      {isPrecisaSolicitar ? (
+        <NeedToRequestPanel
+          data={needToRequestQ.data}
+          loading={needToRequestQ.isLoading}
+          error={(needToRequestQ.error as Error | null) ?? null}
+          onGoToChecklist={() => navigate({ to: "/checklist", search: { comp: filters.competencia ?? undefined } })}
+        />
+      ) : workspaceQ.isLoading && !workspaceQ.data ? (
+        <div className="space-y-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Card key={i} className="p-4">
+              <Skeleton className="h-5 w-1/2 mb-2" />
+              <Skeleton className="h-4 w-2/3 mb-1" />
+              <Skeleton className="h-4 w-1/3" />
+            </Card>
+          ))}
+        </div>
+      ) : workspaceQ.error ? (
+        <EmptyState
+          icon={<AlertCircle className="h-6 w-6" />}
+          title="Não foi possível carregar"
+          description={(workspaceQ.error as Error).message}
+        />
+      ) : rows.length === 0 ? (
+        <EmptyState
+          icon={<Inbox className="h-6 w-6" />}
+          title="Nada por aqui"
+          description={emptyDescription}
+        />
+      ) : (
+        <div className="space-y-2">
+          {rows.map((row) => (
+            <DocumentWorkspaceRow
+              key={`${row.item_kind}:${row.item_id}`}
+              row={row}
+              onOpen={openDetail}
+              actions={<RowRapidActions row={row} actions={actions} />}
+            />
+          ))}
+          <div className="pt-2">
+            <DocumentWorkspacePagination
+              page={workspaceQ.data?.page ?? filters.page}
+              pageSize={workspaceQ.data?.page_size ?? filters.pageSize}
+              total={total}
+              onPage={setPage}
+              onPageSize={setPageSize}
+            />
+          </div>
+        </div>
+      )}
+
+      <DocumentWorkspaceDetailSheet
+        row={detailRow}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        actions={actions}
+      />
     </div>
   );
 }
-
