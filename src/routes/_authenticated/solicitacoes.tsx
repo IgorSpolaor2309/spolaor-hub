@@ -438,7 +438,7 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
                   </Button>
                 </label>
               )}
-              {fromClient && item.status === "solicitado" && (
+              {fromClient && item.status === "aguardando" && (
                 <Button size="sm" variant="outline" onClick={() => updateStatus.mutate("cancelado")}>
                   <XCircle className="mr-2 h-4 w-4" /> Cancelar
                 </Button>
