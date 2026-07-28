@@ -21,6 +21,12 @@ import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { formatBR, isPastEndOfDay } from "@/lib/dates";
 import { normalizeDocTipo, normalizeSlug } from "@/lib/sc-types";
+import {
+  DOC_REQUEST_STATUSES,
+  DOC_REQUEST_STATUS_LABEL,
+  DOC_REQUEST_STATUS_TONE,
+  DOC_REQUEST_CLIENT_ACTION_STATUSES,
+} from "@/lib/doc-request-status";
 
 export const Route = createFileRoute("/_authenticated/solicitacoes")({
   component: RequestsPage,
@@ -80,34 +86,11 @@ function normCategoria(v: string | null | undefined): string {
   return CATEGORIA_ALIASES[n] ?? n;
 }
 
-// Statuses combinados (fluxo staff→cliente e fluxo cliente→staff)
-const STATUSES_STAFF_FLOW = ["pendente", "recebido", "recusado", "reenviar", "cancelado"];
-const STATUSES_CLIENT_FLOW = ["solicitado", "em_andamento", "aguardando_cliente", "concluido", "cancelado"];
-const ALL_STATUSES = Array.from(new Set([...STATUSES_STAFF_FLOW, ...STATUSES_CLIENT_FLOW]));
+// Status oficial unificado (fase 2)
+const ALL_STATUSES = DOC_REQUEST_STATUSES;
 
-const STATUS_TONE: Record<string, string> = {
-  "pendente": "bg-amber-100 text-amber-800",
-  "recebido": "bg-emerald-100 text-emerald-800",
-  "recusado": "bg-rose-100 text-rose-800",
-  "reenviar": "bg-amber-100 text-amber-800",
-  "cancelado": "bg-zinc-200 text-zinc-700",
-  "solicitado": "bg-sky-100 text-sky-800",
-  "em_andamento": "bg-indigo-100 text-indigo-800",
-  "aguardando_cliente": "bg-amber-100 text-amber-800",
-  "concluido": "bg-emerald-100 text-emerald-800",
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  "pendente": "Pendente",
-  "recebido": "Recebido",
-  "recusado": "Recusado",
-  "reenviar": "Reenviar",
-  "cancelado": "Cancelado",
-  "solicitado": "Solicitado",
-  "em_andamento": "Em andamento",
-  "aguardando_cliente": "Aguardando cliente",
-  "concluido": "Concluído",
-};
+const STATUS_TONE: Record<string, string> = DOC_REQUEST_STATUS_TONE;
+const STATUS_LABEL: Record<string, string> = DOC_REQUEST_STATUS_LABEL;
 
 function labelTipo(v?: string | null) {
   return TIPOS.find((t) => t.value === v)?.label ?? v ?? "";
@@ -307,7 +290,7 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
   const assumir = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("document_requests")
-        .update({ responsavel_profile_id: userId, status: item.status === "solicitado" ? "em_andamento" : item.status })
+        .update({ responsavel_profile_id: userId })
         .eq("id", item.id);
       if (error) throw error;
     },
@@ -340,8 +323,8 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
         uploaded_by: userId, status: "recebido",
       }).select("id").maybeSingle();
       if (dErr) throw dErr;
-      // Cliente respondendo — volta pra em_andamento pra staff analisar
-      const nextStatus = fromClient ? "em_andamento" : "recebido";
+      // Cliente ou staff enviando resposta — vai para "recebido" (aguarda análise/conclusão)
+      const nextStatus = "recebido";
       const { error: rErr } = await supabase.from("document_requests")
         .update({ status: nextStatus, document_id: doc?.id ?? null })
         .eq("id", item.id);
@@ -447,7 +430,7 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
             </>
           ) : (
             <>
-              {(item.status === "aguardando_cliente" || item.status === "pendente" || item.status === "reenviar") && (
+              {DOC_REQUEST_CLIENT_ACTION_STATUSES.includes(item.status as any) && (
                 <label>
                   <input ref={clientReplyRef} type="file" className="hidden" onChange={uploadClientReply} />
                   <Button asChild size="sm">
@@ -455,7 +438,7 @@ function RequestRow({ item, isStaff, userId, onChange }: any) {
                   </Button>
                 </label>
               )}
-              {fromClient && item.status === "solicitado" && (
+              {fromClient && item.status === "aguardando" && (
                 <Button size="sm" variant="outline" onClick={() => updateStatus.mutate("cancelado")}>
                   <XCircle className="mr-2 h-4 w-4" /> Cancelar
                 </Button>
@@ -508,7 +491,7 @@ function NewRequestDialog({ clients, isStaff, onDone }: { clients: any[]; isStaf
         prazo: f.prazo || null,
         observacoes_internas: isStaff ? (f.observacoes_internas || null) : null,
         responsavel_profile_id: isStaff ? (userId ?? null) : null,
-        status: isStaff ? "pendente" : "solicitado",
+        status: "aguardando",
         document_id,
       };
       const { error } = await supabase.from("document_requests").insert(payload);

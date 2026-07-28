@@ -122,7 +122,7 @@ function AdminDashboard({ name }: { name: string }) {
         supabase.from("collaborators").select("id", { head: true, count: "exact" }).eq("status", "active"),
         scope(supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).lt("prazo", t).not("status", "in", "(concluida,cancelada)")),
         scope(supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).eq("prazo", t).not("status", "in", "(concluida,cancelada)")),
-        scope(supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("status", ["pendente", "reenviar"])),
+        scope(supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("status", ["aguardando", "reenviar"])),
         scope(supabase.from("documents").select("id", { head: true, count: "exact" }).in("status", ["recebido", "em_analise"])),
         scope(supabase.from("tax_guides").select("id", { head: true, count: "exact" }).gte("vencimento", t).lte("vencimento", in7).not("status", "in", "(paga,cancelada)")),
         scope(supabase.from("tax_guides").select("id", { head: true, count: "exact" }).lt("vencimento", t).not("status", "in", "(paga,cancelada)")),
@@ -336,7 +336,7 @@ function CollabDashboard({ name, userId }: { name: string; userId: string }) {
         scope(supabase.from("documents").select("id", { head: true, count: "exact" }).in("client_id", ids).in("status", ["recebido", "em_analise"])),
         scope(supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("client_id", ids).eq("status", "recebido")),
         scope(supabase.from("tax_guides").select("id", { head: true, count: "exact" }).in("client_id", ids).gte("vencimento", t).lte("vencimento", in7).not("status", "in", "(paga,cancelada)")),
-        scope(supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("client_id", ids).in("status", ["pendente", "reenviar"])),
+        scope(supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("client_id", ids).in("status", ["aguardando", "reenviar"])),
         scope(supabase.from("timeline_events").select("id, descricao, created_at, clients(razao_social)").in("client_id", ids).order("created_at", { ascending: false }).limit(6)),
       ]);
       const failures = [tasksOverdue, tasksToday, docsAnalysis, awaitingReturn, guidesSoon, reqPending, events].filter((r) => r.error);
@@ -483,7 +483,7 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
           clients: companyLabel.get(row.client_id) ?? null,
         }))
       );
-      const reqPending = reqs.filter((r: any) => ["pendente", "reenviar"].includes(r.status));
+      const reqPending = reqs.filter((r: any) => ["aguardando", "reenviar"].includes(r.status));
       const reqSent = reqs.filter((r: any) => r.status === "recebido");
       return {
         primary,

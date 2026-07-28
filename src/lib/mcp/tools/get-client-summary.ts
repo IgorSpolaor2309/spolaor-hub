@@ -70,7 +70,7 @@ export default defineTool({
       .select("id", { count: "exact", head: true })
       .eq("client_id", client_id)
       .is("deleted_at", null)
-      .in("status", ["pendente", "aguardando", "em_andamento"]);
+      .in("status", ["aguardando", "reenviar"]);
 
     const guidesP = supabase
       .from("tax_guides")

@@ -36,7 +36,7 @@ export default defineTool({
       .lt("prazo_final", today);
     const solicP = head("document_requests")
       .is("deleted_at", null)
-      .in("status", ["pendente", "aguardando", "em_andamento"]);
+      .in("status", ["aguardando", "reenviar"]);
     const guiasP = head("tax_guides")
       .is("deleted_at", null)
       .gte("vencimento", today)

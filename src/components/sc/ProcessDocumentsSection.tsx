@@ -360,7 +360,7 @@ function RequestFromRequirementDialog({
         descricao: descricao || null,
         urgencia,
         prazo: prazo || null,
-        status: "solicitado",
+        status: "aguardando",
         tipo_solicitacao: "outro",
         observacoes_internas: obsInterna || null,
         company_process_id: processId,

@@ -58,11 +58,15 @@ const TIPO_LABEL: Record<Tipo, string> = {
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  pendente: "Pendente",
+  // solicitações (status unificado)
+  aguardando: "Aguardando",
   recebido: "Recebido",
-  recusado: "Recusado",
   reenviar: "Reenviar",
+  concluido: "Concluído",
   cancelado: "Cancelado",
+  // pendências internas (não alteradas nesta fase)
+  pendente: "Pendente",
+  aguardando_cliente: "Aguardando cliente",
 };
 
 function statusTone(tipo: Tipo, status: string, prazo: string | null): string {
@@ -108,7 +112,7 @@ function TasksPage() {
         supabase
           .from("document_requests")
           .select("id, titulo, categoria, prazo, status, client_id, clients(razao_social, nome_fantasia, documento)")
-          .in("status", ["pendente", "reenviar"]),
+          .in("status", ["aguardando", "reenviar"]),
         supabase
           .from("tax_guides")
           .select("id, tipo, vencimento, status, comprovante_path, client_id, clients(razao_social, nome_fantasia, documento)")
