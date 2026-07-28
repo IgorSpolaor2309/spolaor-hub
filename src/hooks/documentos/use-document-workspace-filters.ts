@@ -81,7 +81,8 @@ export function useWorkspaceFilters() {
     const reset = opts?.resetPage ?? true;
     navigate({
       to: "/documentos",
-      search: (prev: Record<string, unknown>) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      search: ((prev: Record<string, unknown>) => {
         const next: Record<string, string | number | undefined> = {
           ...(prev as Record<string, string | number | undefined>),
           ...patch,
@@ -91,7 +92,7 @@ export function useWorkspaceFilters() {
         }
         if (reset) delete next.page;
         return next;
-      },
+      }) as any,
       replace: true,
     });
   }, [navigate]);
@@ -103,7 +104,8 @@ export function useWorkspaceFilters() {
   const clearAll = useCallback(() => {
     navigate({
       to: "/documentos",
-      search: () => ({ tab: filters.tab }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      search: (() => ({ tab: filters.tab })) as any,
       replace: true,
     });
   }, [navigate, filters.tab]);
