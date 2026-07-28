@@ -459,8 +459,12 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
         if (dTo) q = q.lte("created_at", dTo);
         return q;
       };
-      const [requested, sent, openTasks, guidesAvail, guidesSoon, monthStatus, events] = await Promise.all([
-        scope(supabase.from("document_requests").select("id, titulo, status, prazo, categoria, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(20)),
+      // Cliente: leitura de solicitações via RPC segura (sem observacoes_internas).
+      const reqCalls = ids.map((cid) =>
+        supabase.rpc("client_list_document_requests", { p_client_id: cid, p_limit: 20, p_offset: 0 })
+      );
+      const [reqResults, sent, openTasks, guidesAvail, guidesSoon, monthStatus, events] = await Promise.all([
+        Promise.all(reqCalls),
         scope(supabase.from("documents").select("id, nome, status, created_at, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(5)),
         scope(supabase.from("pending_tasks").select("id, titulo, prazo, status, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).not("status", "in", "(concluida,cancelada)").order("prazo", { ascending: true }).limit(8)),
         supabase.from("tax_guides").select("id, tipo, vencimento, valor, status, storage_path, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).not("status", "in", "(paga,cancelada)").order("vencimento", { ascending: true }).limit(8),
@@ -468,9 +472,17 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
         !isAll && primary ? supabase.from("client_month_status").select("status").eq("client_id", primary.id).eq("competencia", competencia).maybeSingle() : Promise.resolve({ data: null }),
         scope(supabase.from("interactions").select("id, tipo, descricao, created_at, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(5)),
       ]);
-      const failures = [requested, sent, openTasks, guidesAvail, guidesSoon, monthStatus, events].filter((r: any) => r.error);
+      const failures = [sent, openTasks, guidesAvail, guidesSoon, monthStatus, events].filter((r: any) => r.error);
       if (failures.length) console.warn("[dashboard-client] consultas parciais falharam", failures.map((r: any) => r.error?.message));
-      const reqs = requested.data ?? [];
+      const companyLabel = new Map<string, any>();
+      for (const c of myCompanies as any[]) companyLabel.set(c.id, { razao_social: c.razao_social, nome_fantasia: c.nome_fantasia });
+      const reqs = reqResults.flatMap((r: any) =>
+        (r.data ?? []).map((row: any) => ({
+          id: row.id, titulo: row.titulo, status: row.status, prazo: row.prazo,
+          categoria: row.categoria, client_id: row.client_id,
+          clients: companyLabel.get(row.client_id) ?? null,
+        }))
+      );
       const reqPending = reqs.filter((r: any) => ["pendente", "reenviar"].includes(r.status));
       const reqSent = reqs.filter((r: any) => r.status === "recebido");
       return {
