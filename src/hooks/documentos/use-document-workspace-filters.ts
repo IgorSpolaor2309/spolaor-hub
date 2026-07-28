@@ -102,7 +102,7 @@ export function useWorkspaceFilters() {
 
   const clearAll = useCallback(() => {
     navigate({
-      to: ".",
+      to: "/documentos",
       search: () => ({ tab: filters.tab }),
       replace: true,
     });
