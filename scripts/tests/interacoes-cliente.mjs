@@ -111,6 +111,12 @@ async function setup() {
   ctx.cC = await mkClient(`${TAG} Empresa C externa`, { is_demo: true });
   ctx.cDemo = await mkClient(`${TAG} Empresa Demo`, { is_demo: true });
 
+  // Responsabilidade da equipe = client_collaborators (base das notificações).
+  for (const cid of [ctx.cA, ctx.cB]) {
+    const { error } = await admin.from("client_collaborators").insert({ client_id: cid, collaborator_id: col.id });
+    if (error) throw new Error(`client_collaborators: ${error.message}`);
+  }
+
   await link(ctx.cA, ctx.clientUid);
   await link(ctx.cB, ctx.clientUid);
   await link(ctx.cC, ctx.client2Uid, true);
@@ -130,6 +136,7 @@ async function teardown() {
       await admin.from("chat_messages").delete().in("client_id", created.clients);
       await admin.from("chat_conversations").delete().in("client_id", created.clients);
       await admin.from("client_users").delete().in("client_id", created.clients);
+      await admin.from("client_collaborators").delete().in("client_id", created.clients);
       await admin.from("timeline_events").delete().in("client_id", created.clients);
       await admin.from("clients").delete().in("id", created.clients);
     }
