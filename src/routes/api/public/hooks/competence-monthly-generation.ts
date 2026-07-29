@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 /**
  * Cron: prepara automaticamente a competência do mês corrente.
  * Chamado pelo pg_cron no dia 1 de cada mês. Público sob /api/public/*,
- * autenticado por apikey (anon) e SERVICE_ROLE_KEY dentro do handler.
+ * autenticado por um segredo server-only (CRON_SECRET) e SERVICE_ROLE_KEY dentro do handler.
  *
  * O corpo do POST aceita { competence?: "YYYY-MM" }. Se omitido, usa o mês atual (UTC).
  * A função SQL admin_generate_monthly_competences é idempotente
@@ -15,9 +15,21 @@ export const Route = createFileRoute("/api/public/hooks/competence-monthly-gener
     handlers: {
       POST: async ({ request }) => {
         try {
-          const apikey = request.headers.get("apikey") ?? "";
-          const expected = process.env.SUPABASE_PUBLISHABLE_KEY ?? "";
-          if (!apikey || apikey !== expected) {
+          const provided =
+            request.headers.get("x-cron-secret") ??
+            (request.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
+          const expected = process.env.CRON_SECRET ?? "";
+          const ok =
+            expected.length > 0 &&
+            provided.length === expected.length &&
+            (() => {
+              let diff = 0;
+              for (let i = 0; i < expected.length; i++) {
+                diff |= provided.charCodeAt(i) ^ expected.charCodeAt(i);
+              }
+              return diff === 0;
+            })();
+          if (!ok) {
             return new Response(JSON.stringify({ ok: false, error: "unauthorized" }), {
               status: 401, headers: { "Content-Type": "application/json" },
             });
