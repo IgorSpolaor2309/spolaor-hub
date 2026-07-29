@@ -16,6 +16,10 @@ import { DocumentWorkspacePagination } from "@/components/documentos/workspace/D
 import { DocumentWorkspaceDetailSheet } from "@/components/documentos/workspace/DocumentWorkspaceDetailSheet";
 import { RowRapidActions } from "@/components/documentos/workspace/RowRapidActions";
 import { NeedToRequestPanel } from "@/components/documentos/workspace/NeedToRequestPanel";
+import { CreateRequestDialog } from "@/components/documentos/workspace/CreateRequestDialog";
+import { useEligibleChecklistItems } from "@/hooks/documentos/use-create-document-request";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import type { WorkspaceRow } from "@/lib/documentos/workspace-types";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -83,7 +87,19 @@ function DocsPage() {
     includeDemo,
     ready && isStaff && filters.tab === "precisa_solicitar",
   );
+  const eligibleQ = useEligibleChecklistItems(
+    {
+      clientId: filters.clientId,
+      competencia: filters.competencia,
+      search: filters.search,
+      includeDemo,
+      page: filters.page,
+      pageSize: filters.pageSize,
+    },
+    ready && isStaff && filters.tab === "precisa_solicitar",
+  );
   const actions = useWorkspaceActions();
+  const [createOpen, setCreateOpen] = useState(false);
 
   const openDetail = (row: WorkspaceRow) => {
     setDetailRow(row);
@@ -126,6 +142,12 @@ function DocsPage() {
       <PageHeader
         title="Central de Documentos"
         description="Solicitações e documentos em uma visão unificada por status e ação necessária."
+        action={
+          <Button className="gap-2" onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Nova solicitação
+          </Button>
+        }
       />
 
       <Card className="p-4 space-y-4">
@@ -162,6 +184,14 @@ function DocsPage() {
           loading={needToRequestQ.isLoading}
           error={(needToRequestQ.error as Error | null) ?? null}
           onGoToChecklist={() => navigate({ to: "/checklist", search: { client: filters.clientId ?? undefined, comp: filters.competencia ?? undefined, expand: undefined } })}
+          items={eligibleQ.data?.rows ?? []}
+          itemsTotal={eligibleQ.data?.total ?? 0}
+          itemsLoading={eligibleQ.isLoading}
+          itemsError={(eligibleQ.error as Error | null) ?? null}
+          page={eligibleQ.data?.page ?? filters.page}
+          pageSize={eligibleQ.data?.page_size ?? filters.pageSize}
+          onPage={setPage}
+          onPageSize={setPageSize}
         />
       ) : workspaceQ.isLoading && !workspaceQ.data ? (
         <div className="space-y-2">
@@ -212,6 +242,13 @@ function DocsPage() {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         actions={actions}
+      />
+
+      <CreateRequestDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        defaultClientId={filters.clientId}
+        defaultCompetencia={filters.competencia}
       />
     </div>
   );
