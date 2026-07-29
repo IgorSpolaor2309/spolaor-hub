@@ -74,27 +74,17 @@ export function PortalDetailSheet({ row, open, onOpenChange, userId }: Props) {
       const up = await supabase.storage.from("documents").upload(path, file);
       if (up.error) throw up.error;
 
-      const insert = await supabase
-        .from("documents")
-        .insert({
-          client_id: row.client_id,
-          nome: file.name,
-          tipo: row.tipo ?? "outro",
-          competencia: row.competencia ?? null,
-          storage_path: path,
-          uploaded_by: userId,
-          status: "recebido",
-        })
-        .select("id")
-        .single();
-      if (insert.error) throw insert.error;
-
-      const upd = await supabase
-        .from("document_requests")
-        .update({ document_id: insert.data.id, status: "recebido" })
-        .eq("id", row.item_id);
-      if (upd.error) throw upd.error;
+      // A RPC registra o documento e move a solicitação para "recebido" em uma
+      // única transação — o cliente não tem SELECT direto em document_requests.
+      const { error } = await supabase.rpc("client_submit_document_request", {
+        _request_id: row.item_id,
+        _storage_path: path,
+        _nome: file.name,
+        _tipo: row.tipo ?? undefined,
+      });
+      if (error) throw error;
     },
+
     onSuccess: () => {
       toast.success("Documento enviado. A contabilidade vai revisar em breve.");
       setFile(null);
