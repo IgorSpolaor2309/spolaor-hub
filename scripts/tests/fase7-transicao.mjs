@@ -102,7 +102,7 @@ async function main() {
     .select("id, storage_path")
     .single();
 
-  await admin.from("document_requests").insert({
+  const { error: reqErr } = await admin.from("document_requests").insert({
     client_id: cli.id,
     titulo: `req-${TAG}`,
     status: "aguardando",
@@ -111,6 +111,7 @@ async function main() {
     document_id: doc.id,
     tipo_solicitacao: "outro",
   });
+  if (reqErr) throw new Error(`document_request: ${reqErr.message}`);
 
   const admTok = await signIn(E.admin);
   const cliTok = await signIn(E.client);
@@ -192,7 +193,10 @@ async function main() {
 
   const hookLegacy = read("../../src/hooks/use-legacy-route-deprecation.ts");
   assert("Redirect só ocorre quando a flag está ativa", /if \(!active \|\| flagLoading \|\| !redirectEnabled/.test(hookLegacy));
-  assert("Rota antiga preservada enquanto a flag é false (sem redirect incondicional)", !/^\s*navigate\(\{\s*to: "\/documentos"/m.test(hookLegacy.split("openCentral")[0].replace(/redirectEnabled[\s\S]*?\n/, "")));
+  assert(
+    "Rota antiga preservada enquanto a flag é false (redirect sempre atrás do guard)",
+    /!redirectEnabled \|\| redirected\.current\) return;\s*redirected\.current = true;\s*navigate\(/.test(hookLegacy),
+  );
   assert("Redirect usa replace para não poluir o histórico", /replace: true/.test(hookLegacy));
 
   const legacyLib = await import(
@@ -230,7 +234,7 @@ async function main() {
   assert("Cliente não acessa a RPC staff da Central", !!cliWsErr, cliWsErr?.message);
   const { data: cliPortal, error: cliPortalErr } = await asClient.rpc(
     "list_client_document_workspace_paginated",
-    { _tab: "todos", _page_size: 50 },
+    { _section: "preciso_enviar", _page: 1, _page_size: 50 },
   );
   assert("Portal do cliente continua funcionando", !cliPortalErr, cliPortalErr?.message);
   assert(
@@ -307,7 +311,7 @@ async function main() {
   });
   assert("Central: paginação continua funcionando", reg2?.page_size === 1 && (reg2?.rows?.length ?? 0) <= 1, reg2?.page_size);
   assert("Central: contadores continuam presentes", typeof reg2?.counts?.todos === "number", reg2?.counts);
-  const { error: procErr } = await asAdmin.rpc("list_processes_paginated", { _page: 1, _page_size: 5 });
+  const { error: procErr } = await asAdmin.rpc("list_company_processes_paginated", { _page: 1, _page_size: 5 });
   assert("Processos: RPC paginada continua funcionando", !procErr, procErr?.message);
 
   const manifestPath = new URL("../../src/lib/mcp/manifest.ts", import.meta.url);
