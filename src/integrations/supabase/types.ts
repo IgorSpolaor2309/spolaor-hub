@@ -1478,6 +1478,123 @@ export type Database = {
           },
         ]
       }
+      document_request_files: {
+        Row: {
+          active: boolean
+          created_at: string
+          demo_batch_id: string | null
+          document_id: string
+          document_request_id: string
+          id: string
+          is_demo: boolean
+          request_status_at: string | null
+          submission_type: string
+          submitted_at: string
+          submitted_by: string | null
+          submitted_by_role: string
+          version_number: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          demo_batch_id?: string | null
+          document_id: string
+          document_request_id: string
+          id?: string
+          is_demo?: boolean
+          request_status_at?: string | null
+          submission_type?: string
+          submitted_at?: string
+          submitted_by?: string | null
+          submitted_by_role?: string
+          version_number: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          demo_batch_id?: string | null
+          document_id?: string
+          document_request_id?: string
+          id?: string
+          is_demo?: boolean
+          request_status_at?: string | null
+          submission_type?: string
+          submitted_at?: string
+          submitted_by?: string | null
+          submitted_by_role?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_request_files_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_request_files_document_request_id_fkey"
+            columns: ["document_request_id"]
+            isOneToOne: false
+            referencedRelation: "document_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_request_link_issues: {
+        Row: {
+          client_id: string
+          created_at: string
+          demo_batch_id: string | null
+          detalhes: Json
+          document_request_id: string
+          id: string
+          is_demo: boolean
+          issue_type: string
+          resolved_at: string | null
+          resolved_by: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          demo_batch_id?: string | null
+          detalhes?: Json
+          document_request_id: string
+          id?: string
+          is_demo?: boolean
+          issue_type: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          demo_batch_id?: string | null
+          detalhes?: Json
+          document_request_id?: string
+          id?: string
+          is_demo?: boolean
+          issue_type?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_request_link_issues_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_request_link_issues_document_request_id_fkey"
+            columns: ["document_request_id"]
+            isOneToOne: false
+            referencedRelation: "document_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_requests: {
         Row: {
           attachment_final_name: string | null
@@ -2965,6 +3082,10 @@ export type Database = {
         Args: { _competencia: string; _tipo: string; _valor: number }
         Returns: string
       }
+      can_user_access_document: {
+        Args: { _document_id: string; _user_id: string }
+        Returns: boolean
+      }
       client_get_checklist_items: {
         Args: { p_client_id: string; p_competence?: string }
         Returns: {
@@ -3038,6 +3159,27 @@ export type Database = {
           titulo: string
           updated_at: string
           urgencia: string
+        }[]
+      }
+      client_list_documents: {
+        Args: {
+          p_client_id: string
+          p_competencia?: string
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: {
+          categoria_validade: string
+          client_id: string
+          competencia: string
+          created_at: string
+          data_validade: string
+          id: string
+          nome: string
+          status: string
+          tipo: string
+          vencendo: boolean
+          vencido: boolean
         }[]
       }
       client_list_processes: {
@@ -3340,6 +3482,14 @@ export type Database = {
           sol_total: number
         }[]
       }
+      get_document_request_details_client: {
+        Args: { _request_id: string }
+        Returns: Json
+      }
+      get_document_request_details_staff: {
+        Args: { _request_id: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3376,6 +3526,14 @@ export type Database = {
           _status?: string
           _tab?: string
         }
+        Returns: Json
+      }
+      list_document_request_files_client: {
+        Args: { _request_id: string }
+        Returns: Json
+      }
+      list_document_request_files_staff: {
+        Args: { _request_id: string }
         Returns: Json
       }
       list_document_workspace_paginated: {
@@ -3452,6 +3610,32 @@ export type Database = {
       recalc_company_process: {
         Args: { _process_id: string }
         Returns: undefined
+      }
+      search_client_documents_paginated: {
+        Args: {
+          _client_id: string
+          _competencia?: string
+          _page?: number
+          _page_size?: number
+          _search?: string
+          _tipo?: string
+          _validade_from?: string
+          _validade_to?: string
+        }
+        Returns: Json
+      }
+      staff_attach_document_to_request: {
+        Args: {
+          _document_id: string
+          _request_id: string
+          _set_recebido?: boolean
+          _submission_type?: string
+        }
+        Returns: string
+      }
+      staff_set_active_request_file: {
+        Args: { _file_id: string }
+        Returns: boolean
       }
       user_has_client_access: {
         Args: { _client_id: string; _user_id: string }

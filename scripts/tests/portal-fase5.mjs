@@ -457,8 +457,9 @@ async function run() {
     assert("13d. estático: responsavel_id/demo_batch_id não referenciados",
       !code.includes("responsavel_id") && !code.includes("demo_batch_id"));
 
-    assert("10. estático: createSignedUrl só dentro do handler de clique (1 ocorrência)",
-      (all.match(/createSignedUrl/g) || []).length === 1 && src.sheet.includes("async function openAttachment"));
+    // Fase 6: o portal não gera mais signed URL no cliente — usa server function segura.
+    assert("10. estático: portal não chama createSignedUrl no navegador (server function)",
+      (all.match(/createSignedUrl/g) || []).length === 0 && src.sheet.includes("useDocumentFileUrl"));
     assert("10b. estático: nenhum map/forEach gerando signed URL em lote",
       !/\.(map|forEach)\([^)]*createSignedUrl/s.test(all));
     assert("7c. estático: botão de envio desabilitado enquanto pendente",
