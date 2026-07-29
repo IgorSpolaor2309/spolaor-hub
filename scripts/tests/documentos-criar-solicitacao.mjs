@@ -91,8 +91,8 @@ async function main() {
   // ---------- 1) Guard de DDL em funções de leitura ----------
   const ddl = await sqlCatalog(`
     select p.proname, p.provolatile,
-           (pg_get_functiondef(p.oid) ~* '(^|[^a-z_])create\\s+(temp|temporary\\s+)?table') as has_create_table,
-           (pg_get_functiondef(p.oid) ~* '(^|[^a-z_])(create|drop|alter|truncate)\\s') as has_ddl
+           (p.prosrc ~* '(^|[^a-z_])create\\s+(temp|temporary\\s+)?table') as has_create_table,
+           (p.prosrc ~* '(^|[^a-z_])(create\\s+(temp|temporary|table|index|view|schema|sequence)|drop\\s+(table|index|view|schema|sequence)|alter\\s+table|truncate\\s)') as has_ddl
       from pg_proc p
       join pg_namespace n on n.oid = p.pronamespace
      where n.nspname = 'public'
@@ -115,7 +115,7 @@ async function main() {
 
   const { data: colRow } = await admin
     .from("collaborators")
-    .insert({ nome: `col ${TAG}`, email: E.collab, user_id: collabId, status: "ativo" })
+    .insert({ nome: `col ${TAG}`, email: E.collab, user_id: collabId, status: "active" })
     .select("id").single();
   created.collaborators.push(colRow.id);
 
@@ -276,7 +276,7 @@ async function main() {
 
   // ---------- 12) Cross-empresa / demo ----------
   const cross = await collabC.rpc("staff_create_document_request", { _client_id: cB, _titulo: "x" });
-  assert("colaborador não cria solicitação fora da carteira", !!cross.error, cross.data);
+  assert("colaborador não cria solicitação fora da carteira", !!cross.error, { cA, cB, got: cross.data?.client_id, err: cross.error?.message });
   const crossItem = await adminC.rpc("staff_create_document_request", {
     _client_id: cA, _titulo: "x", _checklist_item_id: itemB,
   });
