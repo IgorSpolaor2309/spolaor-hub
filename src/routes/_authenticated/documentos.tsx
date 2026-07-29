@@ -16,6 +16,10 @@ import { DocumentWorkspacePagination } from "@/components/documentos/workspace/D
 import { DocumentWorkspaceDetailSheet } from "@/components/documentos/workspace/DocumentWorkspaceDetailSheet";
 import { RowRapidActions } from "@/components/documentos/workspace/RowRapidActions";
 import { NeedToRequestPanel } from "@/components/documentos/workspace/NeedToRequestPanel";
+import { CreateRequestDialog } from "@/components/documentos/workspace/CreateRequestDialog";
+import { useEligibleChecklistItems } from "@/hooks/documentos/use-create-document-request";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import type { WorkspaceRow } from "@/lib/documentos/workspace-types";
 import { useNavigate } from "@tanstack/react-router";
 
