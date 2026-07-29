@@ -7,6 +7,9 @@ import { Link } from "@tanstack/react-router";
 import { formatBR } from "@/lib/dates";
 import type { WorkspaceRow } from "@/lib/documentos/workspace-types";
 import { RowRapidActions } from "./RowRapidActions";
+import { RequestFileHistory } from "./RequestFileHistory";
+import { ReuseDocumentDialog } from "./ReuseDocumentDialog";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import type { useWorkspaceActions } from "@/hooks/documentos/use-document-workspace-actions";
 
 type Props = {
@@ -26,6 +29,10 @@ function LabelValue({ label, children }: { label: string; children: React.ReactN
 }
 
 export function DocumentWorkspaceDetailSheet({ row, open, onOpenChange, actions }: Props) {
+  const { role } = useCurrentUser();
+  const isAdmin = role === "admin";
+  const isRequest = row?.item_kind === "document_request";
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
@@ -110,8 +117,27 @@ export function DocumentWorkspaceDetailSheet({ row, open, onOpenChange, actions 
               ) : (
                 <Button variant="outline" size="sm" disabled>Sem documento anexado</Button>
               )}
+              {isRequest && (
+                <ReuseDocumentDialog
+                  requestId={row.item_id}
+                  clientId={row.client_id}
+                  competencia={row.competencia}
+                />
+              )}
               <RowRapidActions row={row} actions={actions} />
             </div>
+
+            {isRequest && (
+              <>
+                <Separator />
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2">
+                    Histórico de arquivos
+                  </p>
+                  <RequestFileHistory requestId={row.item_id} open={open} isAdmin={isAdmin} />
+                </div>
+              </>
+            )}
           </div>
         )}
       </SheetContent>
