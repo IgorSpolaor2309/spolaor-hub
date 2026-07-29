@@ -39,7 +39,7 @@ export function useClientWorkspaceFilters() {
     (updates: Record<string, string | number | undefined>) => {
       navigate({
         to: "/meus-documentos",
-        search: (prev: Record<string, unknown>) => {
+        search: ((prev: Record<string, unknown>) => {
           const next: Record<string, unknown> = { ...prev };
           for (const [k, v] of Object.entries(updates)) {
             if (v === undefined || v === "" || v === null) delete next[k];
@@ -49,12 +49,13 @@ export function useClientWorkspaceFilters() {
             delete next.page;
           }
           return next;
-        },
+        }) as never,
         replace: true,
       });
     },
     [navigate],
   );
+
 
   const setSection = useCallback((s: PortalSection) => patch({ section: s === "precisa_enviar" ? undefined : s, page: undefined }), [patch]);
   const setPage = useCallback((p: number) => patch({ page: p > 1 ? p : undefined }), [patch]);
@@ -64,7 +65,7 @@ export function useClientWorkspaceFilters() {
   const setCompetencia = useCallback((v: string | null) => patch({ comp: v ?? undefined }), [patch]);
 
   const clearAll = useCallback(() => {
-    navigate({ to: "/meus-documentos", search: {}, replace: true });
+    navigate({ to: "/meus-documentos", search: {} as never, replace: true });
   }, [navigate]);
 
   const activeCount =

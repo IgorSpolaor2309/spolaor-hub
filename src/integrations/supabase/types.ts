@@ -3068,6 +3068,15 @@ export type Database = {
         }[]
       }
       client_staff_user_ids: { Args: { _client_id: string }; Returns: string[] }
+      client_submit_document_request: {
+        Args: {
+          _nome: string
+          _request_id: string
+          _storage_path: string
+          _tipo?: string
+        }
+        Returns: string
+      }
       client_user_ids: { Args: { _client_id: string }; Returns: string[] }
       collaborator_visible_to_user: {
         Args: { _collab_id: string; _user_id: string }
