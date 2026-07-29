@@ -275,6 +275,13 @@ async function main() {
   assert("criação manual não exige checklist", manual.data?.checklist_item_id == null, manual.data);
 
   // ---------- 12) Cross-empresa / demo ----------
+  {
+    const dbg1 = await admin.from("clients").select("id,owner_profile_id,status,deleted_at,is_demo").eq("id", cB).single();
+    const dbg2 = await admin.from("client_collaborators").select("client_id,collaborator_id").eq("client_id", cB);
+    const dbg3 = await admin.from("user_roles").select("role").eq("user_id", collabId);
+    const dbg4 = await collabC.auth.getUser();
+    console.log("DBG", JSON.stringify({ cB: dbg1.data, links: dbg2.data, roles: dbg3.data, uid: dbg4.data?.user?.id, collabId }));
+  }
   const cross = await collabC.rpc("staff_create_document_request", { _client_id: cB, _titulo: "x" });
   assert("colaborador não cria solicitação fora da carteira", !!cross.error, { cA, cB, got: cross.data?.client_id, err: cross.error?.message });
   const crossItem = await adminC.rpc("staff_create_document_request", {
