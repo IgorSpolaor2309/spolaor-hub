@@ -231,9 +231,9 @@ async function run() {
   // C. STAFF — RPCs de histórico e definição de versão atual
   // ------------------------------------------------------------------
   const hStaff = await ctx.AD.rpc("list_document_request_files_staff", { _request_id: req });
-  assert("C1. staff lê o histórico via RPC", !hStaff.error && (Array.isArray(hStaff.data) ? hStaff.data.length : Object.keys(hStaff.data ?? {}).length) >= 2,
+  assert("C1. staff lê o histórico via RPC", !hStaff.error && (hStaff.data?.items ?? hStaff.data ?? []).length >= 2,
     { err: hStaff.error?.message, d: JSON.stringify(hStaff.data)?.slice(0,120) });
-  const staffKeys = Object.keys(hStaff.data?.[0] ?? {});
+  const staffKeys = Object.keys((hStaff.data?.items ?? hStaff.data ?? [])[0] ?? {});
   assert("C2. histórico staff não expõe storage_path", !staffKeys.includes("storage_path"), staffKeys);
 
   const setActive = await ctx.AD.rpc("staff_set_active_request_file", { _file_id: files[0].id });
