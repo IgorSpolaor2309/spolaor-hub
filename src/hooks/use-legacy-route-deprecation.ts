@@ -19,7 +19,10 @@ import {
 export function useLegacyRouteDeprecation(
   route: LegacyRoute,
   params?: { client?: string; comp?: string },
+  options?: { enabled?: boolean },
 ) {
+  // A depreciação vale apenas para staff: clientes nunca acessam /documentos.
+  const active = options?.enabled ?? true;
   const navigate = useNavigate();
   const { enabled: redirectEnabled, isLoading: flagLoading } = useFeatureFlag(LEGACY_REDIRECT_FLAG);
   const loggedView = useRef(false);
@@ -45,15 +48,15 @@ export function useLegacyRouteDeprecation(
 
   // Registra a visita uma única vez por montagem.
   useEffect(() => {
-    if (loggedView.current || flagLoading) return;
+    if (!active || loggedView.current || flagLoading) return;
     loggedView.current = true;
     log(redirectEnabled ? "redirect" : "view", params?.client ?? null);
-  }, [log, flagLoading, redirectEnabled, params?.client]);
+  }, [active, log, flagLoading, redirectEnabled, params?.client]);
 
   // Redirect somente quando a flag estiver ativa. Com a flag falsa,
   // a rota antiga permanece integralmente acessível.
   useEffect(() => {
-    if (flagLoading || !redirectEnabled || redirected.current) return;
+    if (!active || flagLoading || !redirectEnabled || redirected.current) return;
     redirected.current = true;
     navigate({
       to: "/documentos",
@@ -61,7 +64,7 @@ export function useLegacyRouteDeprecation(
       search: (() => target) as any,
       replace: true,
     });
-  }, [flagLoading, redirectEnabled, navigate, target]);
+  }, [active, flagLoading, redirectEnabled, navigate, target]);
 
   const openCentral = useCallback(() => {
     log("open_central", params?.client ?? null);
@@ -72,5 +75,5 @@ export function useLegacyRouteDeprecation(
     });
   }, [log, navigate, target, params?.client]);
 
-  return { redirectEnabled, flagLoading, log, openCentral, target };
+  return { redirectEnabled: active && redirectEnabled, flagLoading, log, openCentral, target };
 }
