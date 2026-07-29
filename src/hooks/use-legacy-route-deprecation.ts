@@ -32,7 +32,7 @@ export function useLegacyRouteDeprecation(
         .rpc("log_legacy_route_access", {
           _route: route,
           _action: action,
-          _client_id: clientId && clientId !== "all" ? clientId : null,
+          _client_id: clientId && clientId !== "all" ? clientId : undefined,
         })
         .then(({ error }) => {
           if (error) console.warn("[legacy-telemetry]", action, error.message);
