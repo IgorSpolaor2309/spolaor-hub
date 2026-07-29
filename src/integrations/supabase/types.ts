@@ -3275,6 +3275,16 @@ export type Database = {
           tipo_nome: string
         }[]
       }
+      client_open_interaction: {
+        Args: {
+          _attachment_name?: string
+          _attachment_path?: string
+          _attachment_size?: number
+          _body?: string
+          _client_id: string
+        }
+        Returns: Json
+      }
       client_process_detail: { Args: { _id: string }; Returns: Json }
       client_process_timeline: {
         Args: { _id: string }
