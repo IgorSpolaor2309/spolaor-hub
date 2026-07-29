@@ -3714,6 +3714,35 @@ export type Database = {
         }
         Returns: string
       }
+      staff_check_duplicate_document_request: {
+        Args: {
+          _categoria?: string
+          _client_id: string
+          _competencia?: string
+          _tipo?: string
+        }
+        Returns: Json
+      }
+      staff_create_document_request: {
+        Args: {
+          _categoria?: string
+          _checklist_item_id?: string
+          _client_id: string
+          _company_process_id?: string
+          _company_process_step_id?: string
+          _company_process_step_requirement_id?: string
+          _competencia?: string
+          _departamento?: string
+          _descricao?: string
+          _observacoes_internas?: string
+          _prazo?: string
+          _responsavel_profile_id?: string
+          _tipo_solicitacao?: string
+          _titulo: string
+          _urgencia?: string
+        }
+        Returns: Json
+      }
       staff_set_active_request_file: {
         Args: { _file_id: string }
         Returns: boolean
@@ -3728,6 +3757,17 @@ export type Database = {
       }
       workspace_checklist_precisa_solicitar_count: {
         Args: { _client_id?: string; _include_demo?: boolean }
+        Returns: Json
+      }
+      workspace_checklist_precisa_solicitar_list: {
+        Args: {
+          _client_id?: string
+          _competencia?: string
+          _include_demo?: boolean
+          _page?: number
+          _page_size?: number
+          _search?: string
+        }
         Returns: Json
       }
     }
