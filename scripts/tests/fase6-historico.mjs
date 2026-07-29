@@ -196,8 +196,8 @@ async function run() {
   assert("A7. apenas uma versão ativa", (files ?? []).filter((f) => f.active).length === 1);
   assert("A8. a versão ativa é a mais recente", files?.[1]?.active === true);
   assert("A9. document_id da solicitação aponta para a versão ativa", dr.document_id === files?.[1]?.document_id);
-  assert("A10. tipo de envio classificado (envio/reenvio)",
-    files?.[0]?.submission_type === "envio" && files?.[1]?.submission_type === "reenvio",
+  assert("A10. tipo de envio classificado (original/reenvio)",
+    files?.[0]?.submission_type === "original" && files?.[1]?.submission_type === "reenvio",
     files?.map((f) => f.submission_type));
   assert("A11. papel do remetente registrado como client",
     files?.every((f) => f.submitted_by_role === "client"));
