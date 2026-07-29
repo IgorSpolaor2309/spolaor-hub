@@ -356,17 +356,22 @@ async function run() {
     assert("7. segundo upload no mesmo path é rejeitado pelo storage (sem sobrescrita silenciosa)",
       !!second.error, second.error?.message ?? "sem erro");
 
-    const { data: d } = await CL.from("documents").insert({
-      client_id: ctx.cA, nome: "dbl.txt", tipo: "outro", storage_path: p,
-      uploaded_by: ctx.clientUid, status: "recebido",
-    }).select("id").single();
-    created.docs.push(d.id);
-    await CL.from("document_requests").update({ document_id: d.id, status: "recebido" }).eq("id", target);
-    // update idempotente (segundo clique)
-    await CL.from("document_requests").update({ document_id: d.id, status: "recebido" }).eq("id", target);
+    const first = await CL.rpc("client_submit_document_request", {
+      _request_id: target, _storage_path: p, _nome: "dbl.txt", _tipo: "outro",
+    });
+    assert("7b. primeiro envio aceito", !first.error, first.error?.message);
+    if (first.data) created.docs.push(first.data);
+    // segundo clique: a solicitação já saiu de aguardando/reenviar → RPC recusa
+    const dbl = await CL.rpc("client_submit_document_request", {
+      _request_id: target, _storage_path: p, _nome: "dbl.txt", _tipo: "outro",
+    });
+    assert("7c. segundo envio é recusado (sem duplicar documento)", !!dbl.error, dbl.error?.message ?? "sem erro");
     const { data: reqRows } = await admin.from("document_requests").select("id, document_id, status").eq("id", target);
-    assert("7b. solicitação permanece única e com um único vínculo",
-      reqRows.length === 1 && reqRows[0].document_id === d.id && reqRows[0].status === "recebido", reqRows);
+    assert("7d. solicitação permanece única e com um único vínculo",
+      reqRows.length === 1 && reqRows[0].document_id === first.data && reqRows[0].status === "recebido", reqRows);
+    const { data: dupDocs } = await admin.from("documents").select("id").eq("storage_path", p);
+    assert("7e. apenas um registro de documento para o mesmo arquivo", dupDocs.length === 1, dupDocs);
+
   }
 
   // ─── 9/10/14. Anexos e signed URLs ──────────────────────────────────────
