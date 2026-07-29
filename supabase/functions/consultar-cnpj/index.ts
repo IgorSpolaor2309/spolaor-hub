@@ -20,6 +20,27 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Método não suportado." }, 405);
 
+  // Exige sessão autenticada: impede uso do endpoint como proxy público.
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+  if (!token) return json({ error: "Não autorizado." }, 401);
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? "";
+  if (!supabaseUrl || !anonKey) return json({ error: "Configuração inválida." }, 500);
+
+  try {
+    const userResp = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: { Authorization: `Bearer ${token}`, apikey: anonKey },
+    });
+    if (!userResp.ok) return json({ error: "Não autorizado." }, 401);
+    const user = await userResp.json();
+    if (!user?.id) return json({ error: "Não autorizado." }, 401);
+  } catch {
+    return json({ error: "Não autorizado." }, 401);
+  }
+
+
   let payload: { cnpj?: string };
   try {
     payload = await req.json();
