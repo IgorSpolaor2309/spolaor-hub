@@ -89,18 +89,6 @@ async function cleanup() {
 
 async function main() {
   // ---------- 1) Guard de DDL em funções de leitura ----------
-  const ddlProbe = await admin.rpc("exec_sql_probe_unused", {}).catch(() => null);
-  void ddlProbe;
-  const { data: fnRows, error: fnErr } = await admin
-    .from("pg_proc_read_only_ddl_guard")
-    .select("*")
-    .limit(1)
-    .then((r) => r, () => ({ data: null, error: "no-view" }));
-  void fnRows; void fnErr;
-
-  // Consulta direta ao catálogo via RPC de leitura genérica não existe;
-  // usamos a REST do PostgREST apenas para funções conhecidas + checagem textual
-  // com a função de introspecção do próprio Postgres via SQL over PostgREST.
   const ddl = await sqlCatalog(`
     select p.proname, p.provolatile,
            (pg_get_functiondef(p.oid) ~* '(^|[^a-z_])create\\s+(temp|temporary\\s+)?table') as has_create_table,
@@ -313,9 +301,6 @@ async function main() {
 
 /** Executa SQL de catálogo via função utilitária temporária (service role). */
 async function sqlCatalog(sql) {
-  const r = await fetch(`${URL_}/rest/v1/rpc/__catalog_probe__`, { method: "POST" }).catch(() => null);
-  void r;
-  // PostgREST não expõe SQL arbitrário; usamos a conexão direta do Postgres via pg.
   const { Client } = await import("pg");
   const c = new Client({ connectionString: process.env.SUPABASE_DB_URL, ssl: { rejectUnauthorized: false } });
   await c.connect();
