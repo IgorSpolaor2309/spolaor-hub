@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/sc/PageHeader";
+import { LegacyRouteNotice } from "@/components/documentos/LegacyRouteNotice";
+import { useLegacyRouteDeprecation } from "@/hooks/use-legacy-route-deprecation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +52,13 @@ function ValidadesPage() {
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const [editing, setEditing] = useState<any | null>(null);
 
+  // Fase 7 — telemetria + redirect controlado por feature flag (staff apenas).
+  const legacy = useLegacyRouteDeprecation(
+    "/validades",
+    { client: fClient !== "all" ? fClient : undefined },
+    { enabled: isStaff },
+  );
+
   const { data: clients = [], error: clientsError } = useQuery({
     queryKey: ["val-clients", userId, role],
     enabled: ready,
@@ -97,6 +106,9 @@ function ValidadesPage() {
 
   return (
     <div>
+      {isStaff && (
+        <LegacyRouteNotice route="/validades" onOpenCentral={legacy.openCentral} />
+      )}
       <PageHeader
         title="Documentos com validade"
         description="Acompanhe certificados, contratos e certidões prestes a vencer."

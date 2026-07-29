@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { AttachmentButton } from "@/components/sc/AttachmentButton";
+import { SecureAttachmentButton } from "@/components/documentos/SecureAttachmentButton";
 import { AlertCircle, AlertTriangle, Building2, CalendarClock, CheckCircle2, ClipboardList, FileText, LinkIcon, User } from "lucide-react";
 import { formatBR } from "@/lib/dates";
 import type { WorkspaceRow } from "@/lib/documentos/workspace-types";
@@ -127,9 +127,9 @@ export function DocumentWorkspaceRow({ row, onOpen, actions }: Props) {
               )}
             </div>
             <div className="flex items-center gap-2">
-              {row.has_document && row.document_storage_path && (
-                <AttachmentButton
-                  storagePath={row.document_storage_path}
+              {row.has_document && row.document_id && (
+                <SecureAttachmentButton
+                  documentId={row.document_id}
                   label={row.document_name ?? "Abrir anexo"}
                   size="sm"
                   variant="outline"

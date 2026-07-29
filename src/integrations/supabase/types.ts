@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_feature_flags: {
+        Row: {
+          created_at: string
+          description: string | null
+          enabled: boolean
+          key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat_conversations: {
         Row: {
           client_id: string
@@ -1944,6 +1968,44 @@ export type Database = {
           },
         ]
       }
+      legacy_route_access_log: {
+        Row: {
+          action: string
+          client_id: string | null
+          created_at: string
+          id: string
+          route: string
+          user_id: string
+          user_role: string
+        }
+        Insert: {
+          action?: string
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          route: string
+          user_id: string
+          user_role: string
+        }
+        Update: {
+          action?: string
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          route?: string
+          user_id?: string
+          user_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legacy_route_access_log_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mcp_audit_log: {
         Row: {
           created_at: string
@@ -3055,6 +3117,10 @@ export type Database = {
         }[]
       }
       admin_restore_client: { Args: { _client_id: string }; Returns: undefined }
+      admin_set_feature_flag: {
+        Args: { _enabled: boolean; _key: string }
+        Returns: boolean
+      }
       admin_set_user_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3490,6 +3556,7 @@ export type Database = {
         Args: { _request_id: string }
         Returns: Json
       }
+      get_feature_flag: { Args: { _key: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3572,6 +3639,10 @@ export type Database = {
           _status_group?: string
         }
         Returns: Json
+      }
+      log_legacy_route_access: {
+        Args: { _action?: string; _client_id?: string; _route: string }
+        Returns: string
       }
       mark_password_changed: { Args: never; Returns: undefined }
       notify_user: {

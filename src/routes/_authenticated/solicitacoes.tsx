@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/sc/PageHeader";
+import { LegacyRouteNotice } from "@/components/documentos/LegacyRouteNotice";
+import { useLegacyRouteDeprecation } from "@/hooks/use-legacy-route-deprecation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -113,6 +115,13 @@ function RequestsPage() {
   const [fComp, setFComp] = useState(routeSearch.comp ?? "");
 
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
+
+  // Fase 7 — telemetria + redirect controlado por feature flag (staff apenas).
+  const legacy = useLegacyRouteDeprecation(
+    "/solicitacoes",
+    { client: routeSearch.client, comp: routeSearch.comp },
+    { enabled: isStaff },
+  );
   const [open, setOpen] = useState(false);
 
   const { data: clients = [], error: clientsError } = useQuery({
@@ -171,6 +180,9 @@ function RequestsPage() {
 
   return (
     <div>
+      {isStaff && (
+        <LegacyRouteNotice route="/solicitacoes" onOpenCentral={legacy.openCentral} />
+      )}
       <PageHeader
         title={isStaff ? "Solicitações de documentos" : "Minhas solicitações"}
         description={isStaff

@@ -2,7 +2,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { AttachmentButton } from "@/components/sc/AttachmentButton";
+import { SecureAttachmentButton } from "@/components/documentos/SecureAttachmentButton";
 import { Link } from "@tanstack/react-router";
 import { formatBR } from "@/lib/dates";
 import type { WorkspaceRow } from "@/lib/documentos/workspace-types";
@@ -107,9 +107,9 @@ export function DocumentWorkspaceDetailSheet({ row, open, onOpenChange, actions 
             <Separator />
 
             <div className="flex flex-wrap items-center gap-2">
-              {row.has_document && row.document_storage_path ? (
-                <AttachmentButton
-                  storagePath={row.document_storage_path}
+              {row.has_document && row.document_id ? (
+                <SecureAttachmentButton
+                  documentId={row.document_id}
                   label={row.document_name ?? "Abrir anexo"}
                   size="sm"
                   variant="default"

@@ -53,7 +53,6 @@ Cada elemento em `rows` obedece a este contrato:
 
   "document_id": "uuid | null",
   "document_name": "string | null",
-  "document_storage_path": "string | null",
   "has_document": "boolean",
 
   "has_process_link": "boolean",
@@ -110,7 +109,7 @@ Cada elemento em `rows` obedece a este contrato:
 A RPC do cliente **nunca** retorna:
 
 - `observacoes_internas` da solicitação
-- `document_storage_path` (o portal deve pedir signed URL sob demanda)
+- `document_storage_path` (removido também do payload staff na Fase 7; use `getDocumentSignedUrl(document_id)`)
 - `responsavel_id`, `responsavel_nome`, IDs administrativos
 - `demo_batch_id`
 - `criado_por`, `criado_por_role`, autores/auditoria interna
@@ -356,7 +355,8 @@ final será validada em uma futura Fase 5.
 - **Redirects ou remoção de rotas antigas** — nada foi tocado em
   `solicitacoes.tsx`, `checklist.tsx`, dashboard etc.
 - **Signed URLs no portal** — a RPC do cliente já omite
-  `document_storage_path`; a UI da fase 4 deverá pedir signed URL sob
+  `document_storage_path` **até a Fase 6**; a partir da **Fase 7 o campo foi
+  removido do payload staff** e a UI pede signed URL sob
   demanda usando `document_id`.
 - **Real-time / broadcast** — sem `channel` novo; as tabelas base já
   emitem os eventos que serão consumidos na fase 4.
