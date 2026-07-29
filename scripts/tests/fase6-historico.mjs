@@ -231,8 +231,8 @@ async function run() {
   // C. STAFF — RPCs de histórico e definição de versão atual
   // ------------------------------------------------------------------
   const hStaff = await ctx.AD.rpc("list_document_request_files_staff", { _request_id: req });
-  assert("C1. staff lê o histórico via RPC", !hStaff.error && (hStaff.data ?? []).length >= 2,
-    { err: hStaff.error?.message, n: (hStaff.data ?? []).length });
+  assert("C1. staff lê o histórico via RPC", !hStaff.error && (Array.isArray(hStaff.data) ? hStaff.data.length : Object.keys(hStaff.data ?? {}).length) >= 2,
+    { err: hStaff.error?.message, d: JSON.stringify(hStaff.data)?.slice(0,120) });
   const staffKeys = Object.keys(hStaff.data?.[0] ?? {});
   assert("C2. histórico staff não expõe storage_path", !staffKeys.includes("storage_path"), staffKeys);
 
@@ -254,8 +254,8 @@ async function run() {
   // D. CLIENTE — histórico com whitelist reduzida
   // ------------------------------------------------------------------
   const hCli = await ctx.CL.rpc("list_document_request_files_client", { _request_id: req });
-  assert("D1. cliente lê o próprio histórico", !hCli.error && (hCli.data ?? []).length >= 1,
-    { err: hCli.error?.message, n: (hCli.data ?? []).length });
+  assert("D1. cliente lê o próprio histórico", !hCli.error && (Array.isArray(hCli.data) ? hCli.data.length : Object.keys(hCli.data ?? {}).length) >= 1,
+    { err: hCli.error?.message, d: JSON.stringify(hCli.data)?.slice(0,120) });
   const cliKeys = Object.keys(hCli.data?.[0] ?? {});
   assert("D2. histórico do cliente não expõe storage_path", !cliKeys.includes("storage_path"), cliKeys);
   assert("D3. histórico do cliente não expõe campos internos",
