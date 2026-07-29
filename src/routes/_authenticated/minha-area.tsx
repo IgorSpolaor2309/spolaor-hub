@@ -65,10 +65,10 @@ function MyAreaPage() {
                 <CurrentCompetenceBlock clientId={c.id} />
 
                 <div className="mt-4 flex flex-wrap gap-3 text-sm">
-                  <Link to="/solicitacoes" className="inline-flex items-center gap-1 text-primary hover:underline">
+                  <Link to="/solicitacoes" search={{ client: undefined, comp: undefined }} className="inline-flex items-center gap-1 text-primary hover:underline">
                     <FileText className="h-3.5 w-3.5" /> Solicitações
                   </Link>
-                  <Link to="/guias" className="inline-flex items-center gap-1 text-primary hover:underline">
+                  <Link to="/guias" search={{ client: undefined, comp: undefined }} className="inline-flex items-center gap-1 text-primary hover:underline">
                     <Receipt className="h-3.5 w-3.5" /> Guias
                   </Link>
                   <Link to="/minhas-pendencias" className="inline-flex items-center gap-1 text-primary hover:underline">

@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
     try {
       const { data } = await supabase.auth.getSession();
-      if (!data.session) throw redirect({ to: "/auth" });
+      if (!data.session) throw redirect({ to: "/auth", search: { next: undefined } });
       return { user: data.session.user };
     } catch (err) {
       // Sempre repropaga redirects do router; engole erros transitórios de
@@ -29,7 +29,7 @@ export const Route = createFileRoute("/_authenticated")({
       // em vez de derrubar para a Error Boundary raiz.
       if (err && typeof err === "object" && "to" in (err as Record<string, unknown>)) throw err;
       console.warn("[_authenticated.beforeLoad] sessão indisponível:", err);
-      throw redirect({ to: "/auth" });
+      throw redirect({ to: "/auth", search: { next: undefined } });
     }
   },
   component: AuthedLayout,
