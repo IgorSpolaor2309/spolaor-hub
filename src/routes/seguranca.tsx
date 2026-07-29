@@ -59,6 +59,7 @@ function TrustPage() {
           </Link>
           <Link
             to="/auth"
+            search={{ next: undefined }}
             className="text-sm font-medium text-muted-foreground hover:text-foreground"
           >
             Entrar

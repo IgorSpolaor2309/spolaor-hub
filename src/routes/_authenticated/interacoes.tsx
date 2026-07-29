@@ -90,8 +90,8 @@ type Msg = {
 function ChatPage() {
   const { role, userId, profile, loading } = useCurrentUser();
   const qc = useQueryClient();
-  const search = useSearch({ from: "/_authenticated/interacoes" });
-  const navigate = useNavigate({ from: "/_authenticated/interacoes" });
+  const search = useSearch({ from: "/interacoes" });
+  const navigate = useNavigate({ from: "/interacoes" });
   const isStaff = role === "admin" || role === "collaborator";
   const [q, setQ] = useState("");
   const [activeId, setActiveId] = useState<string | null>(search.conversation ?? null);
@@ -569,7 +569,7 @@ function QuickTemplatesDialog({
 function NewConversationButton() {
   const [open, setOpen] = useState(false);
   const [clientId, setClientId] = useState<string | undefined>(undefined);
-  const navigate = useNavigate({ from: "/_authenticated/interacoes" });
+  const navigate = useNavigate({ from: "/interacoes" });
   const qc = useQueryClient();
   const { data: clients = [] } = useQuery({
     queryKey: ["chat-new-clients"],

@@ -157,8 +157,8 @@ function ClientDetail() {
         <Card className="mb-6 p-4">
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Ações rápidas</div>
           <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline" size="sm"><Link to="/solicitacoes"><Inbox className="mr-2 h-4 w-4" /> Solicitar documento</Link></Button>
-            <Button asChild variant="outline" size="sm"><Link to="/guias"><Receipt className="mr-2 h-4 w-4" /> Criar guia/imposto</Link></Button>
+            <Button asChild variant="outline" size="sm"><Link to="/solicitacoes" search={{ client: undefined, comp: undefined }}><Inbox className="mr-2 h-4 w-4" /> Solicitar documento</Link></Button>
+            <Button asChild variant="outline" size="sm"><Link to="/guias" search={{ client: undefined, comp: undefined }}><Receipt className="mr-2 h-4 w-4" /> Criar guia/imposto</Link></Button>
             <Button asChild variant="outline" size="sm"><Link to="/validades"><CalendarClock className="mr-2 h-4 w-4" /> Documentos com validade</Link></Button>
             
             <Button asChild variant="outline" size="sm"><Link to="/modelos"><MessagesSquare className="mr-2 h-4 w-4" /> Usar modelo de mensagem</Link></Button>
@@ -1496,7 +1496,7 @@ function ChecklistHistorySection({ clientId }: { clientId: string }) {
             <li key={comp}>
               <Link
                 to="/checklist"
-                search={{ client: clientId, comp, expand: "1" }}
+                search={{ client: clientId, comp, expand: true }}
                 className="flex items-center justify-between gap-3 px-2 py-3 hover:bg-muted/40"
               >
                 <div className="min-w-0">
