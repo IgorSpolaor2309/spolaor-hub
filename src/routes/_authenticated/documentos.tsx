@@ -243,6 +243,13 @@ function DocsPage() {
         onOpenChange={setDetailOpen}
         actions={actions}
       />
+
+      <CreateRequestDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        defaultClientId={filters.clientId}
+        defaultCompetencia={filters.competencia}
+      />
     </div>
   );
 }
