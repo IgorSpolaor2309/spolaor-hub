@@ -15,6 +15,7 @@ import { AttachmentButton } from "@/components/sc/AttachmentButton";
 import { MessageSquare, Paperclip, Send, Search, Wand2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { ensureConversation } from "@/lib/chat";
+import { ClientNewConversationDialog } from "@/components/sc/ClientNewConversationDialog";
 import { applyTemplateVars, pendingVars, type TemplateVars } from "@/lib/template-vars";
 import { TEMPLATE_CATEGORIES, labelOf } from "@/lib/sc-types";
 import { cn } from "@/lib/utils";
@@ -146,33 +147,14 @@ function ChatPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search.client, loading, userId]);
 
-  // Auto-seleciona a primeira conversa. Para clientes sem conversa, cria uma
-  // automaticamente para que a página não fique vazia/quebrada.
+  // Auto-seleciona a primeira conversa existente. Nada é criado automaticamente:
+  // o cliente abre a conversa pelo botão "Nova conversa" (RPC client_open_interaction),
+  // sempre com a primeira mensagem — nunca uma conversa vazia.
   useEffect(() => {
     if (loading || !userId || loadingConvs) return;
     if (activeId) return;
-    if (conversations.length > 0) {
-      setActiveId(conversations[0].id);
-      return;
-    }
-    if (role === "client" && userId) {
-      (async () => {
-        try {
-          // Multiempresa: pega a primeira empresa visível e cria a conversa dela.
-          // Para as demais, a equipe inicia (ou o cliente abre via Minha área).
-          const { data: cs } = await supabase
-            .from("clients").select("id").is("deleted_at", null).neq("status", "inactive").limit(1);
-          const clientId = cs?.[0]?.id;
-          if (!clientId) return;
-          const id = await ensureConversation(clientId);
-          setActiveId(id);
-          qc.invalidateQueries({ queryKey: ["chat-convs"] });
-        } catch (e) {
-          logChatError("clients.select/ensureConversation.autoCreate", e);
-        }
-      })();
-    }
-  }, [activeId, conversations, loadingConvs, role, userId, qc, loading]);
+    if (conversations.length > 0) setActiveId(conversations[0].id);
+  }, [activeId, conversations, loadingConvs, userId, loading]);
 
   const filteredConvs = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -184,15 +166,35 @@ function ChatPage() {
 
   const activeConv = conversations.find((c) => c.id === activeId);
 
+  // client_id -> conversation_id: usado para reaproveitar a conversa única da empresa.
+  const existingByClientId = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const c of conversations) map[c.client_id] = c.id;
+    return map;
+  }, [conversations]);
+
+  const openConversation = (id: string) => {
+    setActiveId(id);
+    navigate({ to: "/interacoes", search: { conversation: id }, replace: false });
+  };
+
   if (loading || !userId || !role) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col">
       <PageHeader
         title="Interações"
-        description="Chat interno com clientes da Spolaor Company."
-        action={isStaff && <NewConversationButton />}
+        description={isStaff ? "Chat interno com clientes da Spolaor Company." : "Fale com a sua contabilidade."}
+        action={
+          isStaff ? (
+            <NewConversationButton />
+          ) : (
+            <ClientNewConversationDialog existingByClientId={existingByClientId} onOpened={openConversation} />
+          )
+        }
       />
+
+
 
       <Card className="flex flex-1 overflow-hidden p-0">
         {/* Lista de conversas */}
@@ -245,7 +247,7 @@ function ChatPage() {
               <EmptyState
                 icon={<MessageSquare className="h-6 w-6" />}
                 title="Selecione uma conversa"
-                description={isStaff ? "Ou inicie uma nova com qualquer cliente." : "Aguarde sua equipe iniciar a conversa."}
+                description={isStaff ? "Ou inicie uma nova com qualquer cliente." : "Use “Nova conversa” para falar com a sua contabilidade."}
               />
             </div>
           )}
