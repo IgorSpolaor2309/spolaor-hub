@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { PageHeader } from "@/components/sc/PageHeader";
 import { EmptyState } from "@/components/sc/EmptyState";
@@ -46,12 +46,14 @@ export const Route = createFileRoute("/_authenticated/meus-documentos")({
 function MyDocsPage() {
   const { userId, role, loading } = useCurrentUser();
   const ready = !loading && !!userId;
+  const { item: deepLinkItem } = Route.useSearch();
   const { filters, setSection, setPage, setPageSize, setSearch, setClient, setCompetencia, clearAll, activeCount } =
     useClientWorkspaceFilters();
 
   const [searchInput, setSearchInput] = useState(filters.search);
   const [detailRow, setDetailRow] = useState<Row | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [autoOpened, setAutoOpened] = useState(false);
 
   const clientsQ = usePortalClients(ready);
   const clients = clientsQ.data ?? [];
@@ -67,7 +69,19 @@ function MyDocsPage() {
     setDetailOpen(true);
   };
 
+  // Deep link vindo de "O que preciso fazer": abre o item correspondente.
+  useEffect(() => {
+    if (!deepLinkItem || autoOpened || rows.length === 0) return;
+    const match = rows.find((r) => r.item_id === deepLinkItem);
+    if (match) {
+      setDetailRow(match);
+      setDetailOpen(true);
+      setAutoOpened(true);
+    }
+  }, [deepLinkItem, autoOpened, rows]);
+
   const isStaff = role === "admin" || role === "collaborator";
+
 
   const sections: { value: PortalSection; label: string; badge?: number }[] = [
     { value: "precisa_enviar", label: "Preciso enviar", badge: (counts?.aguardando_voce ?? 0) + (counts?.precisa_reenviar ?? 0) },
