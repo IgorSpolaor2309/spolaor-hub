@@ -56,15 +56,15 @@ const userClient = (tok) =>
 
 const created = { users: [], clients: [], paths: [], collabs: [] };
 
-async function createUser(email) {
+async function createUser(email, isDemo = false) {
   const { data, error } = await admin.auth.admin.createUser({ email, password: PWD, email_confirm: true });
   if (error) throw new Error(`createUser ${email}: ${error.message}`);
   created.users.push(data.user.id);
-  await admin.from("profiles").upsert({ id: data.user.id, email, full_name: email, status: "active" });
+  await admin.from("profiles").upsert({ id: data.user.id, email, full_name: email, status: "active", is_demo: isDemo });
   return data.user.id;
 }
-async function grantRole(uid, role) {
-  const { error } = await admin.from("user_roles").insert({ user_id: uid, role });
+async function grantRole(uid, role, isDemo = false) {
+  const { error } = await admin.from("user_roles").insert({ user_id: uid, role, is_demo: isDemo });
   if (error && !/duplicate/i.test(error.message)) throw new Error(`grantRole: ${error.message}`);
 }
 async function mkClient(nome, patch = {}) {
@@ -77,8 +77,8 @@ async function mkClient(nome, patch = {}) {
   created.clients.push(data.id);
   return data.id;
 }
-async function link(clientId, uid) {
-  const { error } = await admin.from("client_users").insert({ client_id: clientId, user_id: uid, ativo: true, papel: "titular" });
+async function link(clientId, uid, isDemo = false) {
+  const { error } = await admin.from("client_users").insert({ client_id: clientId, user_id: uid, ativo: true, papel: "titular", is_demo: isDemo });
   if (error) throw new Error(`client_users: ${error.message}`);
 }
 
@@ -88,12 +88,12 @@ async function setup() {
   ctx.adminId = await createUser(E.admin);
   ctx.collabId = await createUser(E.collab);
   ctx.clientUid = await createUser(E.client);
-  ctx.client2Uid = await createUser(E.client2);
+  ctx.client2Uid = await createUser(E.client2, true); // conta demo
   ctx.outsiderUid = await createUser(E.outsider);
   await grantRole(ctx.adminId, "admin");
   await grantRole(ctx.collabId, "collaborator");
   await grantRole(ctx.clientUid, "client");
-  await grantRole(ctx.client2Uid, "client");
+  await grantRole(ctx.client2Uid, "client", true);
   await grantRole(ctx.outsiderUid, "client");
 
   const { data: col, error: colErr } = await admin
@@ -108,13 +108,13 @@ async function setup() {
   // Empresa A (cliente vinculado, colaborador responsável), B (multiempresa), C (externa)
   ctx.cA = await mkClient(`${TAG} Empresa A`, { owner_profile_id: ctx.collabId });
   ctx.cB = await mkClient(`${TAG} Empresa B`);
-  ctx.cC = await mkClient(`${TAG} Empresa C externa`);
+  ctx.cC = await mkClient(`${TAG} Empresa C externa`, { is_demo: true });
   ctx.cDemo = await mkClient(`${TAG} Empresa Demo`, { is_demo: true });
 
   await link(ctx.cA, ctx.clientUid);
   await link(ctx.cB, ctx.clientUid);
-  await link(ctx.cC, ctx.client2Uid);
-  await link(ctx.cDemo, ctx.client2Uid);
+  await link(ctx.cC, ctx.client2Uid, true);
+  await link(ctx.cDemo, ctx.client2Uid, true);
 
   ctx.CL = userClient(await signIn(E.client));
   ctx.CL2 = userClient(await signIn(E.client2));
