@@ -57,7 +57,8 @@ export type WorkspaceRow = {
   responsavel_nome: string | null;
   document_id: string | null;
   document_name: string | null;
-  document_storage_path: string | null;
+  // Fase 7: `document_storage_path` foi removido do contrato.
+  // O acesso ao arquivo é feito sob demanda via `getDocumentSignedUrl(document_id)`.
   has_document: boolean;
   has_process_link: boolean;
   links_count: number;
