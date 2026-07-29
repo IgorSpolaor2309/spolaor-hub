@@ -3565,6 +3565,16 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      list_checklist_responsibles: {
+        Args: { _client_id?: string }
+        Returns: {
+          email: string
+          full_name: string
+          is_admin: boolean
+          linked_to_client: boolean
+          profile_id: string
+        }[]
+      }
       list_client_document_workspace_paginated: {
         Args: {
           _client_id?: string
