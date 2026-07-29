@@ -15,6 +15,24 @@ export function isValidCompetencia(s: string | undefined | null): s is string {
   return typeof s === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(s);
 }
 
+// Normaliza entradas variadas para a forma canônica "AAAA-MM".
+// Aceita: "2026-07", "2026-7", "07/2026", "7/2026", "2026-07-01", "2026/07".
+// Retorna null quando não for possível normalizar.
+export function normalizeCompetencia(input: string | null | undefined): string | null {
+  if (typeof input !== "string") return null;
+  const s = input.trim();
+  if (!s) return null;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const ok = (y: number, m: number) =>
+    y >= 1900 && y <= 2999 && m >= 1 && m <= 12 ? `${y}-${pad(m)}` : null;
+
+  let m = s.match(/^(\d{4})[-/](\d{1,2})(?:[-/]\d{1,2})?$/);
+  if (m) return ok(Number(m[1]), Number(m[2]));
+  m = s.match(/^(\d{1,2})[-/](\d{4})$/);
+  if (m) return ok(Number(m[2]), Number(m[1]));
+  return null;
+}
+
 export function currentCompetencia(now: Date = new Date()): string {
   const y = now.getFullYear();
   const m = String(now.getMonth() + 1).padStart(2, "0");

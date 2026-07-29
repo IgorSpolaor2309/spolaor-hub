@@ -229,7 +229,7 @@ function MyMonthPage() {
           <div className="mt-5 flex justify-end">
             <Button asChild disabled={!clientId}>
               <Link
-                to="/meu-mes_/$clientId/$competence"
+                to="/meu-mes/$clientId/$competence"
                 params={{ clientId: clientId ?? "", competence: comp }}
               >
                 Ver detalhes <ArrowRight className="ml-2 h-4 w-4" />
@@ -261,7 +261,7 @@ function MyMonthPage() {
                 </div>
                 <Button asChild size="sm" variant="ghost" disabled={!clientId}>
                   <Link
-                    to="/meu-mes_/$clientId/$competence"
+                    to="/meu-mes/$clientId/$competence"
                     params={{ clientId: clientId ?? "", competence: h.competence }}
                   >
                     Abrir <ArrowRight className="ml-1 h-3.5 w-3.5" />

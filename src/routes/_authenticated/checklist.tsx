@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { EmptyState } from "@/components/sc/EmptyState";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { formatBR, todayLocalYmd } from "@/lib/dates";
+import { normalizeCompetencia } from "@/lib/competencia";
 import { toast } from "sonner";
 import { ListChecks, Plus, Check, Inbox as InboxIcon, Send, Sparkles, ChevronDown, ChevronRight, MoreHorizontal, Search, ArrowUp, ArrowDown, ArrowUpDown, RotateCw, Trash2, Pencil, X, SlidersHorizontal } from "lucide-react";
 import { AttachmentButton } from "@/components/sc/AttachmentButton";
@@ -232,7 +233,7 @@ function renderFilterFields(p: any) {
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
             {collabs.map((c: any) => (
-              <SelectItem key={c.user_id} value={c.user_id}>{c.nome_completo}</SelectItem>
+              <SelectItem key={c.profile_id} value={c.profile_id}>{c.full_name}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -374,17 +375,17 @@ function ChecklistPage() {
   });
 
   const collabsQ = useQuery({
-    queryKey: ["checklist-collabs"],
+    queryKey: ["checklist-responsibles"],
     enabled: ready,
     staleTime: 5 * 60_000,
     gcTime: 30 * 60_000,
     queryFn: async () => {
-      const { data, error } = await supabase.from("collaborators")
-        .select("id, user_id, nome_completo").eq("status", "active").order("nome_completo");
+      const { data, error } = await (supabase as any).rpc("list_checklist_responsibles", { _client_id: null });
       if (error) throw error;
-      return (data ?? []).filter((c: any) => c.user_id);
+      return (data ?? []) as any[];
     },
   });
+
 
   const itemsQ = useQuery({
     queryKey: ["checklist-items", selectedComp],
@@ -527,6 +528,8 @@ function ChecklistPage() {
                   clients={clients}
                   collabs={collabs}
                   initial={editing}
+                  defaultComp={selectedComp === "all" ? undefined : selectedComp}
+                  defaultClient={fClient}
                   onDone={() => { setOpen(false); setEditing(null); qc.invalidateQueries({ queryKey: ["checklist-items"] }); }}
                 />
               )}
@@ -1077,29 +1080,56 @@ function ItemRow({ item, isAdmin, onEdit, onChange }: any) {
   );
 }
 
-function ItemDialog({ clients, collabs, initial, onDone }: any) {
+function ItemDialog({ clients, collabs, initial, onDone, defaultComp, defaultClient }: any) {
   const { userId } = useCurrentUser();
   const isEdit = !!initial;
+  const fallbackComp = normalizeCompetencia(defaultComp) ?? defaultCompetencia();
   const [f, setF] = useState({
-    client_id: initial?.client_id ?? "",
+    client_id: initial?.client_id ?? (defaultClient && defaultClient !== "all" ? defaultClient : ""),
     titulo: initial?.titulo ?? "",
     categoria: initial?.categoria ?? "outro",
     responsavel_profile_id: initial?.responsavel_profile_id ?? userId ?? "",
     prazo: initial?.prazo ?? "",
-    competencia: initial?.competencia ?? "",
+    competencia: normalizeCompetencia(initial?.competencia) ?? (isEdit ? "" : fallbackComp),
     observacao: initial?.observacao ?? "",
     visivel_cliente: initial?.visivel_cliente ?? false,
   });
 
+  // Responsáveis contextualizados pela empresa escolhida (vinculados primeiro).
+  const respQ = useQuery({
+    queryKey: ["checklist-responsibles", f.client_id || null],
+    enabled: !!f.client_id,
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("list_checklist_responsibles", { _client_id: f.client_id });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+  const responsibles: any[] = respQ.data ?? collabs ?? [];
+
+  const compOptions = useMemo(() => {
+    const base = defaultCompetencia();
+    const set = new Set<string>([base, shiftComp(base, 1)]);
+    for (let i = 1; i <= 18; i++) set.add(shiftComp(base, -i));
+    const cur = normalizeCompetencia(f.competencia);
+    if (cur) set.add(cur);
+    if (fallbackComp) set.add(fallbackComp);
+    return Array.from(set).sort((a, b) => b.localeCompare(a));
+  }, [f.competencia, fallbackComp]);
+
   const save = useMutation({
     mutationFn: async () => {
+      const comp = normalizeCompetencia(f.competencia);
+      if (f.competencia && !comp) throw new Error("Competência inválida. Use o formato AAAA-MM.");
+      if (!f.client_id) throw new Error("Selecione uma empresa válida.");
       const payload: any = {
         client_id: f.client_id,
         titulo: f.titulo.trim(),
         categoria: f.categoria,
         responsavel_profile_id: f.responsavel_profile_id || null,
         prazo: f.prazo || null,
-        competencia: f.competencia || null,
+        competencia: comp,
         observacao: f.observacao || null,
         visivel_cliente: f.visivel_cliente,
       };
@@ -1115,6 +1145,7 @@ function ItemDialog({ clients, collabs, initial, onDone }: any) {
     onSuccess: () => { toast.success(isEdit ? "Item atualizado" : "Item criado"); onDone(); },
     onError: (e: any) => toast.error(/permission|row-level/i.test(e?.message ?? "") ? "Sem permissão para esta empresa." : e.message),
   });
+
 
   return (
     <DialogContent className="max-w-xl">
@@ -1147,14 +1178,23 @@ function ItemDialog({ clients, collabs, initial, onDone }: any) {
           </div>
           <div className="space-y-1.5">
             <Label>Responsável</Label>
-            <Select value={f.responsavel_profile_id} onValueChange={(v) => setF({ ...f, responsavel_profile_id: v })}>
+            <Select
+              value={f.responsavel_profile_id || "none"}
+              onValueChange={(v) => setF({ ...f, responsavel_profile_id: v === "none" ? "" : v })}
+            >
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
-                {collabs.map((c: any) => (
-                  <SelectItem key={c.user_id} value={c.user_id}>{c.nome_completo}</SelectItem>
+                <SelectItem value="none">Sem responsável</SelectItem>
+                {responsibles.map((c: any) => (
+                  <SelectItem key={c.profile_id} value={c.profile_id}>
+                    {c.full_name}{c.linked_to_client ? " • desta empresa" : ""}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {!f.client_id && (
+              <p className="text-xs text-muted-foreground">Selecione a empresa para ver os responsáveis vinculados.</p>
+            )}
           </div>
           <div className="space-y-1.5">
             <Label>Prazo</Label>
@@ -1162,7 +1202,18 @@ function ItemDialog({ clients, collabs, initial, onDone }: any) {
           </div>
           <div className="space-y-1.5">
             <Label>Competência</Label>
-            <Input placeholder="2026-06" value={f.competencia} onChange={(e) => setF({ ...f, competencia: e.target.value })} />
+            <Select
+              value={f.competencia || "none"}
+              onValueChange={(v) => setF({ ...f, competencia: v === "none" ? "" : v })}
+            >
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sem competência</SelectItem>
+                {compOptions.map((c) => (
+                  <SelectItem key={c} value={c}>{formatCompLabel(c)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <div className="space-y-1.5">
