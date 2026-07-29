@@ -83,7 +83,19 @@ function DocsPage() {
     includeDemo,
     ready && isStaff && filters.tab === "precisa_solicitar",
   );
+  const eligibleQ = useEligibleChecklistItems(
+    {
+      clientId: filters.clientId,
+      competencia: filters.competencia,
+      search: filters.search,
+      includeDemo,
+      page: filters.page,
+      pageSize: filters.pageSize,
+    },
+    ready && isStaff && filters.tab === "precisa_solicitar",
+  );
   const actions = useWorkspaceActions();
+  const [createOpen, setCreateOpen] = useState(false);
 
   const openDetail = (row: WorkspaceRow) => {
     setDetailRow(row);
