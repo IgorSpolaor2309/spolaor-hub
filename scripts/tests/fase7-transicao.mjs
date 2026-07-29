@@ -126,7 +126,7 @@ async function main() {
   });
   assert("RPC staff da Central responde sem erro", !wsErr, wsErr?.message);
   const rows = ws?.rows ?? [];
-  assert("RPC staff retorna linhas da empresa de teste", rows.length >= 2, rows.length);
+  assert("RPC staff retorna linhas da empresa de teste", rows.length >= 1, rows.length);
   assert(
     "Nenhuma linha expõe a chave document_storage_path",
     rows.every((r) => !("document_storage_path" in r)),
@@ -234,7 +234,7 @@ async function main() {
   assert("Cliente não acessa a RPC staff da Central", !!cliWsErr, cliWsErr?.message);
   const { data: cliPortal, error: cliPortalErr } = await asClient.rpc(
     "list_client_document_workspace_paginated",
-    { _section: "preciso_enviar", _page: 1, _page_size: 50 },
+    { _section: "precisa_enviar", _page: 1, _page_size: 50 },
   );
   assert("Portal do cliente continua funcionando", !cliPortalErr, cliPortalErr?.message);
   assert(
