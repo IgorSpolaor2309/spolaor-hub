@@ -15,6 +15,7 @@ import { AttachmentButton } from "@/components/sc/AttachmentButton";
 import { MessageSquare, Paperclip, Send, Search, Wand2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { ensureConversation } from "@/lib/chat";
+import { ClientNewConversationDialog } from "@/components/sc/ClientNewConversationDialog";
 import { applyTemplateVars, pendingVars, type TemplateVars } from "@/lib/template-vars";
 import { TEMPLATE_CATEGORIES, labelOf } from "@/lib/sc-types";
 import { cn } from "@/lib/utils";
