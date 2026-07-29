@@ -326,17 +326,16 @@ async function run() {
     const up = await CL.storage.from("documents").upload(newPath, new Blob(["reenvio"]), { contentType: "text/plain" });
     assert("6. upload de reenvio aceito", !up.error, up.error?.message);
     created.paths.push(newPath);
-    const ins = await CL.from("documents").insert({
-      client_id: ctx.cA, nome: "resend.txt", tipo: "outro", storage_path: newPath,
-      uploaded_by: ctx.clientUid, status: "recebido",
-    }).select("id").single();
+    const ins = await CL.rpc("client_submit_document_request", {
+      _request_id: target, _storage_path: newPath, _nome: "resend.txt", _tipo: "outro",
+    });
     assert("6b. novo documento registrado no reenvio", !ins.error, ins.error?.message);
-    if (ins.data?.id) created.docs.push(ins.data.id);
-    const upd = await CL.from("document_requests").update({ document_id: ins.data.id, status: "recebido" }).eq("id", target);
-    assert("6c. reenvio muda status para recebido", !upd.error, upd.error?.message);
+    if (ins.data) created.docs.push(ins.data);
     const { data: after } = await admin.from("document_requests").select("status, document_id").eq("id", target).single();
+    assert("6c. reenvio muda status para recebido", after.status === "recebido", after);
     assert("6d. status persistido = recebido no reenvio", after.status === "recebido", after);
-    assert("6e. solicitação aponta para o NOVO documento", after.document_id === ins.data.id, after);
+    assert("6e. solicitação aponta para o NOVO documento", after.document_id === ins.data, after);
+
 
     // 8. arquivo anterior preservado
     const { data: oldStill } = await admin.from("documents").select("id, storage_path, deleted_at").eq("id", oldDoc.id).single();
