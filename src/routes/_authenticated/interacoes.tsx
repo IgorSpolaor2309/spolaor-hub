@@ -247,7 +247,7 @@ function ChatPage() {
               <EmptyState
                 icon={<MessageSquare className="h-6 w-6" />}
                 title="Selecione uma conversa"
-                description={isStaff ? "Ou inicie uma nova com qualquer cliente." : "Aguarde sua equipe iniciar a conversa."}
+                description={isStaff ? "Ou inicie uma nova com qualquer cliente." : "Use “Nova conversa” para falar com a sua contabilidade."}
               />
             </div>
           )}
