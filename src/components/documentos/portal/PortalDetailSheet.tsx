@@ -71,6 +71,8 @@ export function PortalDetailSheet({ row, open, onOpenChange, userId }: Props) {
       setFile(null);
       qc.invalidateQueries({ queryKey: ["portal-docs"] });
       qc.invalidateQueries({ queryKey: ["doc-request-files"] });
+      // "O que preciso fazer" (cliente) sai da lista sem reload manual.
+      qc.invalidateQueries({ queryKey: ["client-pendings"] });
       onOpenChange(false);
     },
     onError: (err) => {
