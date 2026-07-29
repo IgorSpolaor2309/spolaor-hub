@@ -391,7 +391,20 @@ async function run() {
     const crossSigned = await CL.storage.from("documents").createSignedUrl(`${ctx.cB}/${TAG}-b.txt`, 60);
     assert("14b. signed URL de arquivo de outra empresa é negada",
       !!crossSigned.error || !crossSigned.data?.signedUrl, crossSigned.error?.message ?? "gerou url");
+
+    // 2d. envio para solicitação de outra empresa é bloqueado na RPC
+    const crossSubmit = await CL.rpc("client_submit_document_request", {
+      _request_id: ctx.reqB, _storage_path: `${ctx.cB}/hack.txt`, _nome: "hack.txt", _tipo: "outro",
+    });
+    assert("2d. envio para solicitação de outra empresa é bloqueado", !!crossSubmit.error, crossSubmit.error?.message ?? "aceitou");
+    // 2e. caminho fora da pasta da própria empresa é bloqueado
+    const badPath = await CL.rpc("client_submit_document_request", {
+      _request_id: ctx.bulk[1], _storage_path: `${ctx.cB}/roubo.txt`, _nome: "roubo.txt", _tipo: "outro",
+    });
+    assert("2e. caminho de outra empresa é bloqueado", !!badPath.error, badPath.error?.message ?? "aceitou");
   }
+
+
 
   // ─── 19. Rotas legadas /solicitacoes e /validades ───────────────────────
   {
