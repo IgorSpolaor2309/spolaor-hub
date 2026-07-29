@@ -433,13 +433,17 @@ async function run() {
       !/from\(\s*["'](document_requests|documents)["']/.test(src.route));
     assert("12b. estático: storage_path nunca renderizado em JSX",
       !/\{[^}]*storage_path[^}]*\}\s*</.test(all) && !/>\s*\{?[^<]*storage_path/.test(src.row));
+    // comentários não são código executável — a auditoria estática ignora-os
+    const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "").replace(/\/\/.*$/gm, "");
+    const code = strip(all);
     assert("12c. estático: storage_path só aparece no fetch sob demanda do sheet",
-      (all.match(/storage_path/g) || []).length === (src.sheet.match(/storage_path/g) || []).length + 3,
-      { total: (all.match(/storage_path/g) || []).length, sheet: (src.sheet.match(/storage_path/g) || []).length });
+      (code.match(/storage_path/g) || []).length === (strip(src.sheet).match(/storage_path/g) || []).length,
+      { total: (code.match(/storage_path/g) || []).length, sheet: (strip(src.sheet).match(/storage_path/g) || []).length });
     assert("12d. estático: nenhum console.log com storage_path", !/console\.[a-z]+\([^)]*storage_path/.test(all));
-    assert("11b. estático: observacoes_internas não referenciado no portal", !all.includes("observacoes_internas"));
+    assert("11b. estático: observacoes_internas não referenciado no portal", !code.includes("observacoes_internas"));
     assert("13d. estático: responsavel_id/demo_batch_id não referenciados",
-      !all.includes("responsavel_id") && !all.includes("demo_batch_id"));
+      !code.includes("responsavel_id") && !code.includes("demo_batch_id"));
+
     assert("10. estático: createSignedUrl só dentro do handler de clique (1 ocorrência)",
       (all.match(/createSignedUrl/g) || []).length === 1 && src.sheet.includes("async function openAttachment"));
     assert("10b. estático: nenhum map/forEach gerando signed URL em lote",
