@@ -270,17 +270,14 @@ async function run() {
     assert("5. cliente consegue subir arquivo no bucket documents", !up.error, up.error?.message);
     created.paths.push(firstPath);
 
-    const ins = await CL.from("documents").insert({
-      client_id: ctx.cA, nome: "upload-1.txt", tipo: "outro", competencia: "2026-06",
-      storage_path: firstPath, uploaded_by: ctx.clientUid, status: "recebido",
-    }).select("id").single();
-    assert("5b. cliente registra o documento", !ins.error, ins.error?.message);
-    firstDocId = ins.data?.id;
+    const ins = await CL.rpc("client_submit_document_request", {
+      _request_id: target, _storage_path: firstPath, _nome: "upload-1.txt", _tipo: "outro",
+    });
+    assert("5b. cliente registra o documento via RPC", !ins.error, ins.error?.message);
+    firstDocId = ins.data;
     if (firstDocId) created.docs.push(firstDocId);
+    assert("5c. RPC devolve o id do documento criado", typeof firstDocId === "string" && firstDocId.length === 36, firstDocId);
 
-    const upd = await CL.from("document_requests")
-      .update({ document_id: firstDocId, status: "recebido" }).eq("id", target);
-    assert("5c. cliente atualiza a solicitação para 'recebido'", !upd.error, upd.error?.message);
 
     const { data: after } = await admin.from("document_requests").select("status, document_id").eq("id", target).single();
     assert("5d. status persistido = recebido", after.status === "recebido", after);
