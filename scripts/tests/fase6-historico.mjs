@@ -230,7 +230,7 @@ async function run() {
   // ------------------------------------------------------------------
   // C. STAFF — RPCs de histórico e definição de versão atual
   // ------------------------------------------------------------------
-  const hStaff = await ctx.AD.rpc("staff_list_request_files", { _request_id: req });
+  const hStaff = await ctx.AD.rpc("list_document_request_files_staff", { _request_id: req });
   assert("C1. staff lê o histórico via RPC", !hStaff.error && (hStaff.data ?? []).length === 2, hStaff.error?.message);
   const staffKeys = Object.keys(hStaff.data?.[0] ?? {});
   assert("C2. histórico staff não expõe storage_path", !staffKeys.includes("storage_path"), staffKeys);
@@ -252,7 +252,7 @@ async function run() {
   // ------------------------------------------------------------------
   // D. CLIENTE — histórico com whitelist reduzida
   // ------------------------------------------------------------------
-  const hCli = await ctx.CL.rpc("client_list_request_files", { _request_id: req });
+  const hCli = await ctx.CL.rpc("list_document_request_files_client", { _request_id: req });
   assert("D1. cliente lê o próprio histórico", !hCli.error && (hCli.data ?? []).length >= 2, hCli.error?.message);
   const cliKeys = Object.keys(hCli.data?.[0] ?? {});
   assert("D2. histórico do cliente não expõe storage_path", !cliKeys.includes("storage_path"), cliKeys);
@@ -260,20 +260,20 @@ async function run() {
     !cliKeys.some((k) => ["observacoes_internas", "demo_batch_id", "submitted_by"].includes(k)), cliKeys);
 
   const reqB = await mkReq(ctx.cB, { titulo: "outra-empresa" });
-  const hCross = await ctx.CL.rpc("client_list_request_files", { _request_id: reqB });
+  const hCross = await ctx.CL.rpc("list_document_request_files_client", { _request_id: reqB });
   assert("D4. cliente não lê histórico de outra empresa",
     !!hCross.error || (hCross.data ?? []).length === 0, hCross.error?.message);
 
   // ------------------------------------------------------------------
   // E. ACESSO A ARQUIVO — can_user_access_document
   // ------------------------------------------------------------------
-  const okAccess = await ctx.CL.rpc("can_user_access_document", { _document_id: files[0].document_id });
+  const okAccess = await ctx.CL.rpc("can_user_access_document", { _user_id: ctx.clientUid, _document_id: files[0].document_id });
   assert("E1. cliente tem acesso ao próprio documento", okAccess.data === true, okAccess.error?.message);
   const docB = await mkDoc(ctx.cB, "docB.txt");
-  const noAccess = await ctx.CL.rpc("can_user_access_document", { _document_id: docB.id });
+  const noAccess = await ctx.CL.rpc("can_user_access_document", { _user_id: ctx.clientUid, _document_id: docB.id });
   assert("E2. cliente NÃO tem acesso a documento de outra empresa",
     noAccess.data === false || !!noAccess.error, noAccess.data);
-  const admAccess = await ctx.AD.rpc("can_user_access_document", { _document_id: docB.id });
+  const admAccess = await ctx.AD.rpc("can_user_access_document", { _user_id: ctx.adminId, _document_id: docB.id });
   assert("E3. admin tem acesso a documento de qualquer empresa", admAccess.data === true, admAccess.error?.message);
 
   // ------------------------------------------------------------------
@@ -354,7 +354,7 @@ async function run() {
   assert("G7. cliente não pode usar a função de reaproveitamento", !!clientAttach.error);
 
   const search = await ctx.AD.rpc("search_client_documents_paginated", {
-    _client_id: ctx.cA, _search: "reuso", _limit: 10, _offset: 0,
+    _client_id: ctx.cA, _search: "reuso", _page: 1, _page_size: 10,
   });
   assert("G8. busca paginada de documentos reaproveitáveis funciona",
     !search.error && Array.isArray(search.data?.rows ?? search.data), search.error?.message);
@@ -362,7 +362,7 @@ async function run() {
   assert("G9. busca não devolve storage_path",
     !Object.keys(searchRows[0] ?? {}).includes("storage_path"), Object.keys(searchRows[0] ?? {}));
   const searchCross = await ctx.CL.rpc("search_client_documents_paginated", {
-    _client_id: ctx.cB, _search: "", _limit: 10, _offset: 0,
+    _client_id: ctx.cB, _search: "", _page: 1, _page_size: 10,
   });
   assert("G10. cliente não busca documentos de outra empresa", !!searchCross.error);
 
