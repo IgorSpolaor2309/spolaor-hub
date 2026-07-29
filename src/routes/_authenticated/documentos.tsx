@@ -142,6 +142,12 @@ function DocsPage() {
       <PageHeader
         title="Central de Documentos"
         description="Solicitações e documentos em uma visão unificada por status e ação necessária."
+        action={
+          <Button className="gap-2" onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Nova solicitação
+          </Button>
+        }
       />
 
       <Card className="p-4 space-y-4">
