@@ -196,7 +196,8 @@ async function run() {
   }
 
   // ─── 2. Retorno staff base ───────────────────────────────────────────────
-  const { data: staffAll, error: eSA } = await rpcStaff(A);
+  // _search=TAG escopa a página 1 ao dataset do teste (a base real já ultrapassa 100 linhas)
+  const { data: staffAll, error: eSA } = await rpcStaff(A, { _search: TAG });
   assert("admin executa RPC staff sem erro", !eSA, eSA);
   assert("payload tem { rows, counts, page, total }",
     staffAll && Array.isArray(staffAll.rows) && staffAll.counts && "total" in staffAll, staffAll && Object.keys(staffAll));
