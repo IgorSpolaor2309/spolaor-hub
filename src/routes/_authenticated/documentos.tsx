@@ -162,6 +162,14 @@ function DocsPage() {
           loading={needToRequestQ.isLoading}
           error={(needToRequestQ.error as Error | null) ?? null}
           onGoToChecklist={() => navigate({ to: "/checklist", search: { client: filters.clientId ?? undefined, comp: filters.competencia ?? undefined, expand: undefined } })}
+          items={eligibleQ.data?.rows ?? []}
+          itemsTotal={eligibleQ.data?.total ?? 0}
+          itemsLoading={eligibleQ.isLoading}
+          itemsError={(eligibleQ.error as Error | null) ?? null}
+          page={eligibleQ.data?.page ?? filters.page}
+          pageSize={eligibleQ.data?.page_size ?? filters.pageSize}
+          onPage={setPage}
+          onPageSize={setPageSize}
         />
       ) : workspaceQ.isLoading && !workspaceQ.data ? (
         <div className="space-y-2">
