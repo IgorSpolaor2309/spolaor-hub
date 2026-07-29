@@ -180,7 +180,7 @@ function MyTasksPage() {
                             item: r.item_id,
                           }}
                         >
-                          Enviar документо
+                          Enviar documento
                         </Link>
                       </Button>
                     ) : (
