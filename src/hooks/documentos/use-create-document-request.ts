@@ -65,12 +65,15 @@ export function useRequestResponsibles(clientId: string | null, enabled = true) 
     queryKey: ["doc-workspace", "responsibles", clientId],
     enabled,
     staleTime: 5 * 60_000,
-    queryFn: async () => {
+    queryFn: async (): Promise<{ id: string; nome: string }[]> => {
       const { data, error } = await supabase.rpc("list_checklist_responsibles", {
         _client_id: clientId ?? undefined,
       });
       if (error) throw error;
-      return (data ?? []) as { id: string; nome: string | null }[];
+      return (data ?? []).map((r) => ({
+        id: r.profile_id,
+        nome: r.full_name || r.email || "Sem nome",
+      }));
     },
   });
 }
