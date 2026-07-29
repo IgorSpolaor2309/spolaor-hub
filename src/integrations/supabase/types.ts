@@ -3248,6 +3248,17 @@ export type Database = {
           vencido: boolean
         }[]
       }
+      client_list_pending_actions: {
+        Args: {
+          _client_id?: string
+          _include_demo?: boolean
+          _kind?: string
+          _page?: number
+          _page_size?: number
+          _search?: string
+        }
+        Returns: Json
+      }
       client_list_processes: {
         Args: never
         Returns: {
