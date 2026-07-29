@@ -65,7 +65,7 @@ export function useClientWorkspaceFilters() {
   const setCompetencia = useCallback((v: string | null) => patch({ comp: v ?? undefined }), [patch]);
 
   const clearAll = useCallback(() => {
-    navigate({ to: "/meus-documentos", search: {}, replace: true });
+    navigate({ to: "/meus-documentos", search: {} as never, replace: true });
   }, [navigate]);
 
   const activeCount =
