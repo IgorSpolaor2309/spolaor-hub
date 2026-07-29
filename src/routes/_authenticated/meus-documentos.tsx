@@ -38,6 +38,7 @@ export const Route = createFileRoute("/_authenticated/meus-documentos")({
       client: str("client"),
       comp: str("comp"),
       demo: str("demo"),
+      item: str("item"),
     };
   },
 });
