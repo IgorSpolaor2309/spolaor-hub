@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { AttachmentButton } from "@/components/sc/AttachmentButton";
+import { SecureAttachmentButton } from "@/components/documentos/SecureAttachmentButton";
 import { AlertCircle, AlertTriangle, Building2, CalendarClock, CheckCircle2, ClipboardList, FileText, LinkIcon, User } from "lucide-react";
 import { formatBR } from "@/lib/dates";
 import type { WorkspaceRow } from "@/lib/documentos/workspace-types";

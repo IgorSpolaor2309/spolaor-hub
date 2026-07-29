@@ -2,7 +2,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { AttachmentButton } from "@/components/sc/AttachmentButton";
+import { SecureAttachmentButton } from "@/components/documentos/SecureAttachmentButton";
 import { Link } from "@tanstack/react-router";
 import { formatBR } from "@/lib/dates";
 import type { WorkspaceRow } from "@/lib/documentos/workspace-types";
