@@ -122,9 +122,13 @@ describe("C3.2 — parâmetros aceitos pelo validateSearch", () => {
     for (const l of allLinks) {
       if (l.path === "/documentos") expect(l.params).not.toContain("item");
     }
-    expect(
-      allLinks.filter((l) => l.path === "/meus-documentos").every((l) => l.params.includes("item")),
-    ).toBe(true);
+    // `item` é concatenado após o literal (`... || '&item=' || NEW.id`).
+    const portalOccurrences = [...sql.matchAll(/'\/meus-documentos[^']*'/g)];
+    expect(portalOccurrences.length).toBeGreaterThan(0);
+    for (const m of portalOccurrences) {
+      const after = sql.slice(m.index! + m[0].length, m.index! + m[0].length + 160);
+      expect(after, m[0]).toContain("'&item=' || NEW.id::text");
+    }
   });
 
   it("todo link inclui client (cliente pode ter várias empresas)", () => {
