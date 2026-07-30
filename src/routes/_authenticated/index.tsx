@@ -21,6 +21,8 @@ import { toast } from "sonner";
 import { formatBR, todayLocalYmd, localYmdInDays } from "@/lib/dates";
 import { OFFICIAL_LABEL, OFFICIAL_TONE, type OfficialStatus } from "@/lib/competence-status";
 import { clientStatusLabel, clientStatusTone } from "@/lib/competence-client-labels";
+import { TAX_GUIDE_CLOSED_STATUSES_PG } from "@/lib/competence-progress";
+
 
 
 export const Route = createFileRoute("/_authenticated/")({
@@ -158,8 +160,14 @@ function AdminDashboard({ name }: { name: string }) {
       });
 
 
-      const docsByClient = new Set((docsThisMonth.data ?? []).map((d: any) => d.client_id));
-      const clientsNoDocs = (clientsActiveForMonth.data ?? []).filter((c: any) => !docsByClient.has(c.id)).slice(0, 8);
+      // Fase B2: "sem documentos do mês" usa doc_total da visão de competências
+      // (competência AAAA-MM), não mais uma contagem por created_at.
+      const overviewRows = ((monthOverview as any)?.data ?? []) as { client_id: string; razao_social: string; doc_total: number }[];
+      const clientsNoDocs = overviewRows
+        .filter((r) => (r.doc_total ?? 0) === 0)
+        .slice(0, 8)
+        .map((r) => ({ id: r.client_id, razao_social: r.razao_social }));
+
 
       // Fase A2: máquina oficial de estados. "completed" = concluída.
       // Tudo o que não está concluído continua em aberto para a equipe.
