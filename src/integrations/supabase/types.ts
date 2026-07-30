@@ -2867,20 +2867,16 @@ export type Database = {
         }
         Returns: Json
       }
-      admin_create_client_with_user:
-        | {
-            Args: { _papel?: string; _payload: Json; _user_id: string }
-            Returns: string
-          }
-        | {
-            Args: {
-              _collaborator_ids?: string[]
-              _papel?: string
-              _payload: Json
-              _user_id: string
-            }
-            Returns: string
-          }
+      admin_create_client_with_user: {
+        Args: {
+          _collaborator_ids?: string[]
+          _papel?: string
+          _payload: Json
+          _primary_collaborator_id?: string
+          _user_id: string
+        }
+        Returns: string
+      }
       admin_demo_contamination_report: { Args: never; Returns: Json }
       admin_demo_create_environment: {
         Args: { _label?: string }
@@ -3027,6 +3023,15 @@ export type Database = {
         }[]
       }
       admin_restore_client: { Args: { _client_id: string }; Returns: undefined }
+      admin_set_collaborator_client_link: {
+        Args: {
+          p_client_id: string
+          p_collaborator_id: string
+          p_link: boolean
+          p_replacement_collaborator_id?: string
+        }
+        Returns: Json
+      }
       admin_set_feature_flag: {
         Args: { _enabled: boolean; _key: string }
         Returns: boolean
@@ -3041,6 +3046,14 @@ export type Database = {
       admin_soft_delete_client: {
         Args: { _client_id: string }
         Returns: undefined
+      }
+      admin_sync_client_collaborators: {
+        Args: {
+          p_client_id: string
+          p_collaborator_ids: string[]
+          p_primary_collaborator_id?: string
+        }
+        Returns: Json
       }
       admin_sync_process_visibility: {
         Args: { _dry_run?: boolean; _mode: string; _process_type_id: string }
@@ -3217,6 +3230,10 @@ export type Database = {
         Returns: string
       }
       client_user_ids: { Args: { _client_id: string }; Returns: string[] }
+      collaborator_primary_eligible: {
+        Args: { p_client_id: string; p_collaborator_id: string }
+        Returns: boolean
+      }
       collaborator_visible_to_user: {
         Args: { _collab_id: string; _user_id: string }
         Returns: boolean
