@@ -36,6 +36,8 @@ import { mapReceitaToForm } from "@/lib/receita-map";
 import { AccountLookup, type AccountMatch } from "@/components/sc/AccountLookup";
 import { MultiSelect } from "@/components/sc/MultiSelect";
 import { AlertTriangle, UserCog } from "lucide-react";
+import { ClientCollaboratorsManager } from "@/components/sc/ClientCollaboratorsManager";
+import { PRIMARY_HINT, carteiraAlert, eligibleWithin, resolvePrimary, type CollaboratorOption } from "@/lib/client-collaborators";
 
 
 export const Route = createFileRoute("/_authenticated/clientes")({
@@ -72,7 +74,7 @@ function ClientsPage() {
       if (isAdmin) return await getAdminClients({});
       const { data, error } = await supabase
         .from("clients")
-        .select("*, client_fiscal_data(regime_tributario, uf, municipio), client_collaborators(collaborator_id, collaborators(id, nome)), client_users(id, ativo), client_commercial(tipo_cliente, plano, status_comercial, periodicidade)")
+        .select("*, client_fiscal_data(regime_tributario, uf, municipio), client_collaborators(collaborator_id, is_primary, collaborators(id, nome)), client_users(id, ativo), client_commercial(tipo_cliente, plano, status_comercial, periodicidade)")
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -328,16 +330,24 @@ function ClientsPage() {
                           <AlertTriangle className="h-3 w-3" /> Empresa sem conta vinculada
                         </Link>
                       )}
-                      {role === "admin" && ((c.client_collaborators ?? []) as any[]).length === 0 && (
-                        <Link
-                          to="/clientes/$id"
-                          params={{ id: c.id }}
-                          className="mt-1 ml-1 inline-flex items-center gap-1 rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-900 hover:bg-amber-100"
-                          title="Vincule um colaborador encarregado na aba Equipe"
-                        >
-                          <UserCog className="h-3 w-3" /> Empresa sem colaborador encarregado
-                        </Link>
-                      )}
+                      {role === "admin" && (() => {
+                        const links = ((c.client_collaborators ?? []) as any[]);
+                        const alerta = carteiraAlert({
+                          linkedCount: links.length,
+                          hasEligiblePrimary: links.some((l) => l.is_primary),
+                        });
+                        if (!alerta) return null;
+                        return (
+                          <Link
+                            to="/clientes/$id"
+                            params={{ id: c.id }}
+                            className="mt-1 ml-1 inline-flex items-center gap-1 rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-900 hover:bg-amber-100"
+                            title="Gerencie a carteira na aba Equipe"
+                          >
+                            <UserCog className="h-3 w-3" /> {alerta.label}
+                          </Link>
+                        );
+                      })()}
 
                     </td>
                     <td className="py-3 pr-4">{labelOf(CLIENT_TYPES, c.tipo)}</td>
@@ -555,18 +565,26 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
   });
   const [account, setAccount] = useState<AccountMatch | null>(null);
   const [collabIds, setCollabIds] = useState<string[]>([]);
+  const [primaryId, setPrimaryId] = useState<string | null>(null);
   const [existing, setExisting] = useState<{ id: string; razao_social: string | null; nome_fantasia: string | null } | null>(null);
 
   const { data: allCollaborators = [] } = useQuery({
     queryKey: ["new-client-collab-options"],
-    queryFn: async () =>
-      (await supabase.from("collaborators").select("id, nome, email").eq("status", "active").order("nome")).data ?? [],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("admin_list_client_collaborator_options", {});
+      if (error) throw error;
+      return (data ?? []) as CollaboratorOption[];
+    },
   });
+
+  const eligibleSelected = eligibleWithin(collabIds, allCollaborators as CollaboratorOption[]);
+  const primaryResolution = resolvePrimary(collabIds, allCollaborators as CollaboratorOption[], primaryId);
 
   const mut = useMutation({
     mutationFn: async () => {
       if (!account) throw new Error("Vincule uma conta de acesso existente antes de salvar.");
       if (collabIds.length === 0) throw new Error("Selecione pelo menos um colaborador encarregado.");
+      if (primaryResolution.error) throw new Error(primaryResolution.error);
       const ok = await ensureNoDuplicateCnpj(form.cnpj);
       if (!ok) throw new Error("__dup__");
       const payload = { ...buildClientPayload(form, form.cnpj), origem_cadastro: "manual" };
@@ -575,6 +593,7 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
         _user_id: account.id,
         _papel: "responsavel",
         _collaborator_ids: collabIds,
+        _primary_collaborator_id: primaryResolution.primary ?? undefined,
       } as any);
       if (error) throw error;
     },
@@ -601,13 +620,46 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
               Selecione um ou mais colaboradores responsáveis por esta empresa. Apenas eles terão acesso à comunicação, documentos e pendências do cliente.
             </p>
             <MultiSelect
-              options={(allCollaborators as any[]).map((c) => ({ value: c.id, label: c.nome, hint: c.email }))}
+              options={(allCollaborators as CollaboratorOption[]).map((c) => ({
+                value: c.collaborator_id,
+                label: c.nome,
+                hint: c.email ?? undefined,
+              }))}
               value={collabIds}
-              onChange={setCollabIds}
+              onChange={(v) => {
+                setCollabIds(v);
+                if (primaryId && !v.includes(primaryId)) setPrimaryId(null);
+              }}
               placeholder="Buscar colaborador por nome ou e-mail…"
               emptyMessage="Nenhum colaborador ativo cadastrado."
               noneSelectedMessage="Nenhum colaborador selecionado ainda."
             />
+
+            {collabIds.length > 0 && (
+              <div className="space-y-1 pt-2">
+                <Label className="text-sm font-semibold">
+                  Responsável principal <span className="text-destructive">*</span>
+                </Label>
+                <p className="text-xs text-muted-foreground">{PRIMARY_HINT}</p>
+                <Select
+                  value={primaryResolution.primary ?? ""}
+                  onValueChange={(v) => setPrimaryId(v)}
+                  disabled={eligibleSelected.length === 0}
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+                  <SelectContent>
+                    {(allCollaborators as CollaboratorOption[])
+                      .filter((c) => eligibleSelected.includes(c.collaborator_id))
+                      .map((c) => (
+                        <SelectItem key={c.collaborator_id} value={c.collaborator_id}>{c.nome}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                {primaryResolution.error && (
+                  <p className="text-xs text-destructive">{primaryResolution.error}</p>
+                )}
+              </div>
+            )}
           </div>
         </section>
 
@@ -978,116 +1030,7 @@ function ClientUsersInlineManager({ clientId }: { clientId: string }) {
 }
 
 function ClientCollabsInlineManager({ clientId }: { clientId: string }) {
-  const qc = useQueryClient();
-  const { data: current = [], error: currentError, isLoading: loadingCurrent } = useQuery({
-    queryKey: ["client-collabs", clientId],
-    enabled: !!clientId,
-    retry: 1,
-    queryFn: async () => {
-      const { data, error } = await supabase.from("client_collaborators").select("collaborator_id, collaborators(nome, email)").eq("client_id", clientId);
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-  const { data: allCollabs = [] } = useQuery({
-    queryKey: ["all-collabs-select"],
-    enabled: !!clientId,
-    retry: 1,
-    queryFn: async () => {
-      const { data, error } = await supabase.from("collaborators").select("id, nome, email").eq("status", "active").order("nome");
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-  const [cid, setCid] = useState<string | undefined>(undefined);
-  const [search, setSearch] = useState("");
-  const linkedIds = new Set((current as any[]).map((c) => c.collaborator_id));
-  const available = (allCollabs as any[]).filter((c) => {
-    if (linkedIds.has(c.id)) return false;
-    if (!search.trim()) return true;
-    const s = search.trim().toLowerCase();
-    return (c.nome ?? "").toLowerCase().includes(s) || (c.email ?? "").toLowerCase().includes(s);
-  });
-
-  const add = useMutation({
-    mutationFn: async () => {
-      if (!cid) throw new Error("Selecione um colaborador.");
-      const { error } = await supabase.from("client_collaborators").insert({ client_id: clientId, collaborator_id: cid });
-      if (error) throw error;
-    },
-    onSuccess: () => { toast.success("Colaborador vinculado."); setCid(undefined); setSearch(""); qc.invalidateQueries({ queryKey: ["client-collabs", clientId] }); qc.invalidateQueries({ queryKey: ["clients"] }); },
-    onError: (e: any) => { if (e?.code === "23505") return toast.error("Já vinculado."); toast.error(e?.message ?? "Falha"); },
-  });
-  const del = useMutation({
-    mutationFn: async (collaboratorId: string) => {
-      const { error } = await supabase.from("client_collaborators").delete().eq("client_id", clientId).eq("collaborator_id", collaboratorId);
-      if (error) throw error;
-    },
-    onSuccess: () => { toast.success("Removido."); qc.invalidateQueries({ queryKey: ["client-collabs", clientId] }); qc.invalidateQueries({ queryKey: ["clients"] }); },
-  });
-
-  const isEmpty = (current as any[]).length === 0;
-  return (
-    <div className="space-y-3 py-2">
-      {currentError ? (
-        <p className="text-sm text-destructive">Falha ao carregar colaboradores responsáveis.</p>
-      ) : loadingCurrent ? (
-        <p className="text-sm text-muted-foreground">Carregando…</p>
-      ) : isEmpty && (
-        <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          <div>Empresa sem colaborador responsável. Vincule pelo menos um para liberar a comunicação interna.</div>
-        </div>
-      )}
-      <div className="grid gap-3 rounded-md border bg-muted/30 p-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-        <div>
-          <Label className="text-xs">Buscar colaborador</Label>
-          <Input placeholder="Nome ou e-mail…" value={search} onChange={(e) => setSearch(e.target.value)} />
-        </div>
-        <div>
-          <Label className="text-xs">Selecionar</Label>
-          <Select value={cid} onValueChange={setCid}>
-            <SelectTrigger><SelectValue placeholder={available.length === 0 ? "Nenhum disponível" : "Selecione"} /></SelectTrigger>
-            <SelectContent>
-              {available.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.nome}{c.email ? ` — ${c.email}` : ""}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <Button onClick={() => add.mutate()} disabled={!cid || add.isPending}>
-          {add.isPending ? "…" : "Vincular"}
-        </Button>
-      </div>
-      {isEmpty ? <p className="text-sm text-muted-foreground">Nenhum colaborador vinculado.</p> : (
-        <ul className="divide-y rounded-md border">
-          {(current as any[]).map((c) => (
-            <li key={c.collaborator_id} className="flex items-center justify-between px-3 py-2">
-              <div>
-                <div className="text-sm font-medium">{c.collaborators?.nome ?? "—"}</div>
-                <div className="text-xs text-muted-foreground">{c.collaborators?.email ?? ""}</div>
-              </div>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="sm">Remover</Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Remover colaborador?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {c.collaborators?.nome ?? "Este colaborador"} deixará de acessar esta empresa.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => del.mutate(c.collaborator_id)}>Remover</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
+  return <ClientCollaboratorsManager clientId={clientId} asCard={false} />;
 }
 
 function InactivateClientButton({ client }: { client: any }) {

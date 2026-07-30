@@ -408,27 +408,26 @@ function AccountLinksEditor({ userId, roles }: { userId: string; roles: string[]
   const currentClientIds = assignedClients.map((a: any) => a.client_id);
   const currentCollabIds = assignedCollabs.map((a: any) => a.collaborator_id);
 
+  /** Fase E1.2C — toda alteração de vínculo passa pela RPC canônica. */
+  async function applyLinkChanges(pairs: Array<{ client_id: string; collaborator_id: string; link: boolean }>) {
+    for (const p of pairs) {
+      const { error } = await supabase.rpc("admin_set_collaborator_client_link", {
+        p_client_id: p.client_id,
+        p_collaborator_id: p.collaborator_id,
+        p_link: p.link,
+      });
+      if (error) throw error;
+    }
+  }
+
   const updateCollabLinks = useMutation({
     mutationFn: async (next: string[]) => {
       const toAdd = next.filter((id) => !currentClientIds.includes(id));
       const toRemove = currentClientIds.filter((id: string) => !next.includes(id));
-      if (toAdd.length) {
-        const { error } = await supabase
-          .from("client_collaborators")
-          .upsert(
-            toAdd.map((client_id) => ({ client_id, collaborator_id: collab!.id })),
-            { onConflict: "client_id,collaborator_id", ignoreDuplicates: true },
-          );
-        if (error) throw error;
-      }
-      if (toRemove.length) {
-        const { error } = await supabase
-          .from("client_collaborators")
-          .delete()
-          .eq("collaborator_id", collab!.id)
-          .in("client_id", toRemove);
-        if (error) throw error;
-      }
+      await applyLinkChanges([
+        ...toAdd.map((client_id) => ({ client_id, collaborator_id: collab!.id, link: true })),
+        ...toRemove.map((client_id: string) => ({ client_id, collaborator_id: collab!.id, link: false })),
+      ]);
     },
     onSuccess: () => {
       toast.success("Vínculos atualizados.");
@@ -443,23 +442,10 @@ function AccountLinksEditor({ userId, roles }: { userId: string; roles: string[]
     mutationFn: async (next: string[]) => {
       const toAdd = next.filter((id) => !currentCollabIds.includes(id));
       const toRemove = currentCollabIds.filter((id: string) => !next.includes(id));
-      if (toAdd.length) {
-        const { error } = await supabase
-          .from("client_collaborators")
-          .upsert(
-            toAdd.map((collaborator_id) => ({ client_id: client!.id, collaborator_id })),
-            { onConflict: "client_id,collaborator_id", ignoreDuplicates: true },
-          );
-        if (error) throw error;
-      }
-      if (toRemove.length) {
-        const { error } = await supabase
-          .from("client_collaborators")
-          .delete()
-          .eq("client_id", client!.id)
-          .in("collaborator_id", toRemove);
-        if (error) throw error;
-      }
+      await applyLinkChanges([
+        ...toAdd.map((collaborator_id) => ({ client_id: client!.id, collaborator_id, link: true })),
+        ...toRemove.map((collaborator_id: string) => ({ client_id: client!.id, collaborator_id, link: false })),
+      ]);
     },
     onSuccess: () => {
       toast.success("Vínculos atualizados.");

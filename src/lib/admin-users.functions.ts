@@ -228,26 +228,27 @@ export const adminCreateUser = createServerFn({ method: "POST" })
         }
       }
 
-      // vínculos cliente-colaborador
+      // vínculos cliente-colaborador — sempre pela RPC canônica, que aplica as
+      // regras de responsável principal (Fase E1.2C).
       if (data.role === "collaborator" && collaboratorIdResolved && data.assign_client_ids?.length) {
-        const rows = data.assign_client_ids.map((cid) => ({
-          collaborator_id: collaboratorIdResolved!,
-          client_id: cid,
-        }));
-        const { error } = await supabaseAdmin
-          .from("client_collaborators")
-          .upsert(rows, { onConflict: "client_id,collaborator_id", ignoreDuplicates: true });
-        if (error) throw error;
+        for (const cid of data.assign_client_ids) {
+          const { error } = await supabaseAdmin.rpc("admin_set_collaborator_client_link", {
+            p_client_id: cid,
+            p_collaborator_id: collaboratorIdResolved!,
+            p_link: true,
+          });
+          if (error) throw error;
+        }
       }
       if (data.role === "client" && clientIdResolved && data.assign_collaborator_ids?.length) {
-        const rows = data.assign_collaborator_ids.map((cid) => ({
-          client_id: clientIdResolved!,
-          collaborator_id: cid,
-        }));
-        const { error } = await supabaseAdmin
-          .from("client_collaborators")
-          .upsert(rows, { onConflict: "client_id,collaborator_id", ignoreDuplicates: true });
-        if (error) throw error;
+        for (const cid of data.assign_collaborator_ids) {
+          const { error } = await supabaseAdmin.rpc("admin_set_collaborator_client_link", {
+            p_client_id: clientIdResolved!,
+            p_collaborator_id: cid,
+            p_link: true,
+          });
+          if (error) throw error;
+        }
       }
     } catch (linkErr: any) {
       // rollback do usuário se o cadastro vinculado falhar
@@ -523,6 +524,23 @@ export const adminSetCollaboratorStatus = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await ensureAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Fase E1.2C — inativar não pode deixar empresa ativa sem responsável principal.
+    if (data.status === "inactive") {
+      const { data: primaryLinks } = await supabaseAdmin
+        .from("client_collaborators")
+        .select("client_id, clients(razao_social, status, deleted_at)")
+        .eq("collaborator_id", data.collaborator_id)
+        .eq("is_primary", true);
+      const blocking = (primaryLinks ?? []).filter(
+        (l: any) => l.clients && l.clients.status !== "inactive" && !l.clients.deleted_at,
+      );
+      if (blocking.length) {
+        const nomes = blocking.map((l: any) => l.clients?.razao_social ?? l.client_id).join(", ");
+        throw new Error(
+          `Este colaborador é responsável principal de: ${nomes}. Defina outro responsável principal nessas empresas antes de inativá-lo.`,
+        );
+      }
+    }
     const { error } = await supabaseAdmin
       .from("collaborators")
       .update({ status: data.status })

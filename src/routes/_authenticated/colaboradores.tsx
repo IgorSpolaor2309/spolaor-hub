@@ -27,6 +27,9 @@ import { adminSetCollaboratorStatus } from "@/lib/admin-users.functions";
 import { getAdminCollaboratorsPage } from "@/lib/access-diagnostics.functions";
 import { DemoBadge } from "@/components/sc/DemoBadge";
 import { DemoFilter, matchesDemoFilter, type DemoFilterValue } from "@/components/sc/DemoFilter";
+import { Badge } from "@/components/ui/badge";
+import { Star } from "lucide-react";
+import { linkErrorMessage } from "@/lib/client-collaborators";
 
 
 export const Route = createFileRoute("/_authenticated/colaboradores")({
@@ -330,7 +333,7 @@ function CollaboratorClientsSection({ collaboratorId }: { collaboratorId: string
     queryFn: async () =>
       (await supabase
         .from("client_collaborators")
-        .select("client_id, clients(razao_social, nome_fantasia)")
+        .select("client_id, is_primary, clients(razao_social, nome_fantasia)")
         .eq("collaborator_id", collaboratorId)).data ?? [],
   });
   const { data: allClients = [] } = useQuery({
@@ -340,45 +343,40 @@ function CollaboratorClientsSection({ collaboratorId }: { collaboratorId: string
   });
 
   const currentIds = assigned.map((a: any) => a.client_id);
+  const primaryOf = new Map(assigned.map((a: any) => [a.client_id, !!a.is_primary]));
 
+  /**
+   * Fase E1.2C — cada alteração passa pela RPC transacional; a remoção de um
+   * responsável principal é recusada pelo servidor quando deixaria a empresa
+   * ativa sem responsável.
+   */
   const setAssignments = useMutation({
     mutationFn: async (next: string[]) => {
       const toAdd = next.filter((id) => !currentIds.includes(id));
       const toRemove = currentIds.filter((id: string) => !next.includes(id));
-      if (toAdd.length) {
-        const { error } = await supabase
-          .from("client_collaborators")
-          .upsert(
-            toAdd.map((client_id) => ({ client_id, collaborator_id: collaboratorId })),
-            { onConflict: "client_id,collaborator_id", ignoreDuplicates: true },
-          );
-        if (error) throw error;
-      }
-      if (toRemove.length) {
-        const { error } = await supabase
-          .from("client_collaborators")
-          .delete()
-          .eq("collaborator_id", collaboratorId)
-          .in("client_id", toRemove);
+      for (const client_id of [...toAdd.map((id) => ({ id, link: true })), ...toRemove.map((id: string) => ({ id, link: false }))]) {
+        const { error } = await supabase.rpc("admin_set_collaborator_client_link", {
+          p_client_id: client_id.id,
+          p_collaborator_id: collaboratorId,
+          p_link: client_id.link,
+        });
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      toast.success("Clientes atribuídos atualizados.");
+      toast.success("Empresas atribuídas atualizadas.");
       qc.invalidateQueries({ queryKey: ["collab-clients", collaboratorId] });
+      qc.invalidateQueries({ queryKey: ["clients"] });
     },
-    onError: (e: any) =>
-      toast.error(
-        /row-level security|permission/i.test(e?.message ?? "")
-          ? "Você não tem permissão para realizar esta ação."
-          : (e?.message ?? "Não foi possível atualizar os vínculos."),
-      ),
+    onError: (e: unknown) => toast.error(linkErrorMessage(e)),
   });
 
   return (
     <div className="rounded-md border p-3">
       <Label className="text-xs uppercase text-muted-foreground">EMPRESAS ATRIBUÍDAS A ESTE COLABORADOR</Label>
-      <p className="mb-2 text-xs text-muted-foreground">Adicione ou remova clientes vinculados.</p>
+      <p className="mb-2 text-xs text-muted-foreground">
+        Adicione ou remova empresas. O responsável principal é definido na ficha da empresa.
+      </p>
       <MultiSelect
         options={allClients.map((c: any) => ({
           value: c.id,
@@ -391,6 +389,16 @@ function CollaboratorClientsSection({ collaboratorId }: { collaboratorId: string
         emptyMessage="Nenhum cliente cadastrado."
         noneSelectedMessage="Nenhuma empresa selecionada."
       />
+      {assigned.some((a: any) => a.is_primary) && (
+        <ul className="mt-2 space-y-1">
+          {assigned.filter((a: any) => primaryOf.get(a.client_id)).map((a: any) => (
+            <li key={a.client_id} className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Badge variant="secondary" className="gap-1"><Star className="h-3 w-3" />Principal</Badge>
+              <span className="truncate">{a.clients?.razao_social ?? a.client_id}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
