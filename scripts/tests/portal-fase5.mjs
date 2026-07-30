@@ -172,7 +172,6 @@ async function teardown() {
     await step("documents", () => admin.from("documents").delete().in("client_id", created.clients));
     await step("client_competences", () =>
       admin.from("client_competences").delete().in("client_id", created.clients));
-    await step("interactions", () => admin.from("interactions").delete().in("client_id", created.clients));
     await step("timeline_events", () => admin.from("timeline_events").delete().in("client_id", created.clients));
     await step("client_users", () => admin.from("client_users").delete().in("client_id", created.clients));
     await step("clients", () => admin.from("clients").delete().in("id", created.clients));

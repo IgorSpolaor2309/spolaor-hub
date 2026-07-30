@@ -483,8 +483,6 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
           ? supabase.rpc("get_client_competence_portal", { p_client_id: primary.id, p_competence: competencia })
           : Promise.resolve({ data: null }),
       ]);
-      // Fase D2.2A — registro manual de interações desativado; card fica sem itens.
-      const events: any[] = [];
       const failures = [sent, openTasks, guidesAvail, guidesSoon, monthStatus].filter((r: any) => r.error);
 
       if (failures.length) console.warn("[dashboard-client] consultas parciais falharam", failures.map((r: any) => r.error?.message));
@@ -509,7 +507,6 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
         openTasks: openTasks.data ?? [],
         guides: guidesAvail.data ?? [],
         guidesSoon: guidesSoon.count ?? 0,
-        events,
 
       };
     },
@@ -638,26 +635,8 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
             </ul>
           )}
         </Card>
-
-        <Card className="p-5">
-          <h3 className="mb-3 font-display text-lg flex items-center gap-2"><MessageSquare className="h-4 w-4 text-primary" /> Últimas atividades</h3>
-          {!data.events.length ? <p className="text-sm text-muted-foreground">Sem atividades.</p> : (
-            <ul className="space-y-3">
-              {data.events.map((e: any) => (
-                <li key={e.id}>
-                  <div className="text-sm">{e.descricao}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {isAll && (e.clients?.nome_fantasia || e.clients?.razao_social) && (
-                      <>Empresa: {e.clients?.nome_fantasia || e.clients?.razao_social} · </>
-                    )}
-                    {formatDistanceToNow(new Date(e.created_at), { addSuffix: true, locale: ptBR })}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
       </div>
+
 
       <button hidden onClick={() => { void qc; void toast; }} />
     </div>

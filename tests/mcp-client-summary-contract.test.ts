@@ -55,3 +55,25 @@ describe("Fase D2.2A — nenhum código ativo consulta interactions", () => {
     expect(types).not.toContain("INTERACTION_TYPES");
   });
 });
+
+describe("Fase D2.2B — estrutura legada removida", () => {
+  it("scripts de teste não tentam limpar a tabela inexistente", () => {
+    for (const f of [
+      "scripts/tests/portal-fase5.mjs",
+      "scripts/tests/fase6-historico.mjs",
+      "scripts/tests/client-pendencias.mjs",
+    ]) {
+      expect(readFileSync(f, "utf8")).not.toContain('from("interactions")');
+    }
+  });
+
+  it("tipos gerados não contêm mais a tabela", () => {
+    const types = readFileSync("src/integrations/supabase/types.ts", "utf8");
+    expect(types).not.toMatch(/^\s{6}interactions: \{$/m);
+  });
+
+  it("dashboard do cliente não possui card permanentemente vazio", () => {
+    const dash = readFileSync("src/routes/_authenticated/index.tsx", "utf8");
+    expect(dash).not.toContain("Sem atividades.");
+  });
+});
