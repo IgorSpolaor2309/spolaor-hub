@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { ListSkeleton, InlineLoading } from "@/components/sc/Skeletons";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -17,7 +17,7 @@ import { clientLabel } from "@/lib/client-display";
 import { PROCESS_STATUS_OPTIONS, PROCESS_PRIORITY_OPTIONS } from "@/lib/processos-constants";
 import { ProcessListItem } from "@/components/sc/ProcessListItem";
 import { toast } from "sonner";
-import { Workflow, Plus, Search, X } from "lucide-react";
+import { Workflow, Plus, Search, X, ListChecks } from "lucide-react";
 
 
 export const Route = createFileRoute("/_authenticated/processos")({
@@ -171,6 +171,10 @@ function ProcessesPage() {
         title="Processos"
         description="Acompanhamento de serviços extraordinários das empresas."
         action={
+          <div className="flex flex-wrap items-center gap-2">
+          <Button asChild variant="outline">
+            <Link to="/meus-processos"><ListChecks className="mr-2 h-4 w-4" /> Minhas etapas</Link>
+          </Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button><Plus className="mr-2 h-4 w-4" /> Novo processo</Button>
@@ -182,6 +186,7 @@ function ProcessesPage() {
               onDone={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["company-processes"] }); }}
             />}
           </Dialog>
+          </div>
         }
       />
 
