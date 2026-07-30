@@ -3428,6 +3428,7 @@ export type Database = {
         }
       }
       cron_generate_current_plan_checklist: { Args: never; Returns: Json }
+      cron_secret_matches: { Args: { p_provided: string }; Returns: boolean }
       current_actor_role: { Args: never; Returns: string }
       generate_plan_checklist: { Args: { _competencia: string }; Returns: Json }
       get_client_competence_history: {
