@@ -161,8 +161,7 @@ async function teardown() {
   }
   if (created.clients.length) {
     // ordem: dependentes antes das empresas (FKs e triggers de consistência)
-    await step("document_request_files", () =>
-      admin.from("document_request_files").delete().in("client_id", created.clients));
+    // document_request_files sai por cascade ao remover as solicitações
     await step("document_request_link_issues", () =>
       admin.from("document_request_link_issues").delete().in("client_id", created.clients));
     await step("client_checklist_items", () =>
