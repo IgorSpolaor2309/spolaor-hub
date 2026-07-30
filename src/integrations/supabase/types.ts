@@ -3009,7 +3009,7 @@ export type Database = {
         Returns: Json
       }
       admin_list_client_collaborator_options: {
-        Args: { p_client_id: string }
+        Args: { p_client_id?: string }
         Returns: {
           collaborator_id: string
           eligible_primary: boolean
