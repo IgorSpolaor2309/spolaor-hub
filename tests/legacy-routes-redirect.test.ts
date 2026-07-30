@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   LEGACY_ROUTES,
   LEGACY_REDIRECT_FLAG,
+  isForcedClientRedirect,
   isLegacyRoute,
   legacyDestination,
   legacyNoticeCta,
@@ -35,8 +36,27 @@ describe("legacy routes — destino por perfil", () => {
     }
   });
 
-  it("cliente em /validades não tem destino (rota staff-only)", () => {
-    expect(legacyDestination("/validades", "client")).toBeNull();
+  it("cliente em /validades vai para o histórico do Portal", () => {
+    expect(legacyDestination("/validades", "client")).toEqual({
+      to: "/meus-documentos",
+      search: { section: "historico" },
+    });
+  });
+
+  it("cliente em /validades preserva parâmetros válidos e descarta 'all'/vazios", () => {
+    const d = legacyDestination("/validades", "client", {
+      client: "all",
+      comp: "2026-07",
+      item: "",
+      q: "certidao",
+    });
+    expect(d!.search).toEqual({ section: "historico", comp: "2026-07", q: "certidao" });
+  });
+
+  it("cliente em /validades tem redirect obrigatório, independente da flag", () => {
+    expect(isForcedClientRedirect("/validades", "client")).toBe(true);
+    expect(isForcedClientRedirect("/solicitacoes", "client")).toBe(false);
+    expect(isForcedClientRedirect("/validades", "staff")).toBe(false);
   });
 
   it("preserva client, comp, item e q para staff", () => {
