@@ -118,10 +118,11 @@ const HANDLER = readFileSync(
 );
 
 describe("contrato do handler", () => {
-  it("exige segredo interno e responde 401 sem ele", () => {
-    expect(HANDLER).toMatch(/CRON_SECRET/);
-    expect(HANDLER).toMatch(/status:\s*401/);
+  it("exige segredo interno (helper central) e responde 401 sem ele", () => {
+    expect(HANDLER).toMatch(/isAuthorizedCronRequest\(request\)/);
+    expect(HANDLER).toMatch(/cronUnauthorized\(\)/);
   });
+
   it("usa service_role apenas dentro do handler e nunca no cliente", () => {
     expect(HANDLER).toMatch(/process\.env\.SUPABASE_SERVICE_ROLE_KEY/);
     expect(HANDLER).not.toMatch(/import\.meta\.env/);
