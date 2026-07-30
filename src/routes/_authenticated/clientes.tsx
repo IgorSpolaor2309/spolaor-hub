@@ -36,6 +36,7 @@ import { mapReceitaToForm } from "@/lib/receita-map";
 import { AccountLookup, type AccountMatch } from "@/components/sc/AccountLookup";
 import { MultiSelect } from "@/components/sc/MultiSelect";
 import { AlertTriangle, UserCog } from "lucide-react";
+import { ClientCollaboratorsManager } from "@/components/sc/ClientCollaboratorsManager";
 
 
 export const Route = createFileRoute("/_authenticated/clientes")({
