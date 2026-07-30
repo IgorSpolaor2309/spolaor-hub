@@ -1,3 +1,4 @@
+import { computeProgress, progressInputsFromPortal } from "@/lib/competence-progress";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -101,7 +102,7 @@ function CurrentCompetenceBlock({ clientId }: { clientId: string }) {
       return data as {
         has_competence: boolean;
         status: string | null;
-        progresso: number;
+        progress_inputs: unknown;
         updated_at: string | null;
         reopened: boolean;
       };
@@ -127,8 +128,8 @@ function CurrentCompetenceBlock({ clientId }: { clientId: string }) {
       ) : q.data ? (
         <>
           <div className="mt-2 flex items-center gap-2">
-            <Progress value={q.data.progresso} className="h-2 flex-1" />
-            <div className="text-sm font-semibold">{q.data.progresso}%</div>
+            <Progress value={q.computeProgress(progressInputsFromPortal(data.progress_inputs)).percent} className="h-2 flex-1" />
+            <div className="text-sm font-semibold">{q.computeProgress(progressInputsFromPortal(data.progress_inputs)).percent}%</div>
           </div>
           {q.data.reopened && (
             <div className="mt-1 text-[11px] text-orange-700">

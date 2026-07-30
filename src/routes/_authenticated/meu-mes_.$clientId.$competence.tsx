@@ -1,3 +1,4 @@
+import { computeProgress, progressInputsFromPortal } from "@/lib/competence-progress";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,7 +37,7 @@ type PortalData = {
   competence: string;
   has_competence: boolean;
   status: string | null;
-  progresso: number;
+  progress_inputs: unknown;
   updated_at: string | null;
   reopened: boolean;
   o_que_foi_feito: Array<{ tipo: string; titulo: string; data: string | null }>;
@@ -143,8 +144,8 @@ function MyMonthDetailPage() {
               <div className="min-w-[240px]">
                 <div className="text-xs text-muted-foreground">Progresso</div>
                 <div className="mt-1 flex items-center gap-3">
-                  <Progress value={d.progresso} className="h-3 flex-1" />
-                  <div className="text-lg font-semibold">{d.progresso}%</div>
+                  <Progress value={computeProgress(progressInputsFromPortal(d.progress_inputs)).percent} className="h-3 flex-1" />
+                  <div className="text-lg font-semibold">{computeProgress(progressInputsFromPortal(d.progress_inputs)).percent}%</div>
                 </div>
                 <div className="mt-1 text-[11px] text-muted-foreground">
                   O progresso é uma estimativa com base nas atividades aplicáveis deste mês.

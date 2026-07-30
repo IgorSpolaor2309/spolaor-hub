@@ -1,3 +1,4 @@
+import { computeProgress, progressInputsFromPortal } from "@/lib/competence-progress";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
@@ -39,7 +40,7 @@ type PortalData = {
   competence: string;
   has_competence: boolean;
   status: string | null;
-  progresso: number;
+  progress_inputs: unknown;
   updated_at: string | null;
   reopened: boolean;
 };
@@ -209,8 +210,8 @@ function MyMonthPage() {
             <div className="min-w-[240px]">
               <div className="text-xs text-muted-foreground">Progresso</div>
               <div className="mt-1 flex items-center gap-3">
-                <Progress value={data.progresso} className="h-3 flex-1" />
-                <div className="text-lg font-semibold">{data.progresso}%</div>
+                <Progress value={computeProgress(progressInputsFromPortal(data.progress_inputs)).percent} className="h-3 flex-1" />
+                <div className="text-lg font-semibold">{computeProgress(progressInputsFromPortal(data.progress_inputs)).percent}%</div>
               </div>
               <div className="mt-1 text-xs text-muted-foreground">
                 {data.updated_at
