@@ -309,6 +309,7 @@ export type Database = {
           demo_batch_id: string | null
           id: string
           is_demo: boolean
+          is_primary: boolean
         }
         Insert: {
           client_id: string
@@ -317,6 +318,7 @@ export type Database = {
           demo_batch_id?: string | null
           id?: string
           is_demo?: boolean
+          is_primary?: boolean
         }
         Update: {
           client_id?: string
@@ -325,6 +327,7 @@ export type Database = {
           demo_batch_id?: string | null
           id?: string
           is_demo?: boolean
+          is_primary?: boolean
         }
         Relationships: [
           {
@@ -3623,6 +3626,10 @@ export type Database = {
       recalc_company_process: {
         Args: { _process_id: string }
         Returns: undefined
+      }
+      resolve_client_internal_responsible: {
+        Args: { p_client_id: string }
+        Returns: string
       }
       search_client_documents_paginated: {
         Args: {
