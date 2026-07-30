@@ -159,7 +159,7 @@ function TasksPage() {
           status: r.status,
           statusTone: statusTone("solicitacao", r.status, r.prazo),
           prioridade: null,
-          link: "/solicitacoes",
+          link: "/documentos?tab=aguardando_cliente",
           rawId: r.id,
         });
       }
@@ -195,7 +195,7 @@ function TasksPage() {
           status: r.data_validade && r.data_validade < t ? "vencido" : "a vencer",
           statusTone: statusTone("validade", "", r.data_validade),
           prioridade: null,
-          link: "/validades",
+          link: "/documentos?tab=vencendo",
           rawId: r.id,
         });
       }
