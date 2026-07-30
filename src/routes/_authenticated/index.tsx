@@ -19,6 +19,9 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { formatBR, todayLocalYmd, localYmdInDays } from "@/lib/dates";
+import { OFFICIAL_LABEL, OFFICIAL_TONE, type OfficialStatus } from "@/lib/competence-status";
+import { clientStatusLabel, clientStatusTone } from "@/lib/competence-client-labels";
+
 
 export const Route = createFileRoute("/_authenticated/")({
   component: Dashboard,
@@ -39,17 +42,10 @@ const monthRange = () => {
   return { start, end };
 };
 
-const MONTH_STATUSES = [
-  { value: "aguardando_documentos", label: "Aguardando documentos", tone: "bg-amber-100 text-amber-800" },
-  { value: "documentos_recebidos", label: "Documentos recebidos", tone: "bg-sky-100 text-sky-800" },
-  { value: "em_analise", label: "Em análise", tone: "bg-blue-100 text-blue-800" },
-  { value: "pendencias_encontradas", label: "Pendências encontradas", tone: "bg-orange-100 text-orange-800" },
-  { value: "em_fechamento", label: "Em fechamento", tone: "bg-indigo-100 text-indigo-800" },
-  { value: "fechado", label: "Fechado", tone: "bg-emerald-100 text-emerald-800" },
-  { value: "enviado_ao_cliente", label: "Enviado ao cliente", tone: "bg-teal-100 text-teal-800" },
-];
-const monthLabel = (v?: string | null) =>
-  MONTH_STATUSES.find((s) => s.value === v) ?? { label: "Sem status", tone: "bg-zinc-100 text-zinc-700" };
+// Fase A2: a fonte oficial do status mensal é public.client_competences.
+// Os status internos vivem em competence-status.ts (equipe) e
+// competence-client-labels.ts (cliente). Nada mais lê client_month_status.
+
 
 /* ---------- shared UI ---------- */
 function StatCard({
@@ -135,7 +131,9 @@ function AdminDashboard({ name }: { name: string }) {
         supabase.from("pending_tasks").select("collaborator_id").not("status", "in", "(concluida,cancelada)").not("collaborator_id", "is", null),
         supabase.from("clients").select("id, razao_social").eq("status", "active").is("deleted_at", null),
         supabase.from("documents").select("client_id").gte("created_at", monthStart),
-        supabase.from("client_month_status").select("client_id, status, competencia").eq("competencia", competencia),
+        // Fonte oficial do status mensal (Fase A2): client_competences.
+        supabase.from("client_competences").select("client_id, status, competence").eq("competence", competencia),
+
       ]);
       const failures = [clients, collabs, tasksOverdue, tasksToday, reqPending, docsAnalysis, guidesSoon, guidesOverdue, certsSoon, recentEvents, unassignedClients, collabTaskCounts, clientsActiveForMonth, docsThisMonth, monthStatuses].filter((r) => r.error);
       if (failures.length) console.warn("[dashboard-admin] consultas parciais falharam", failures.map((r) => r.error?.message));
@@ -161,12 +159,15 @@ function AdminDashboard({ name }: { name: string }) {
       const docsByClient = new Set((docsThisMonth.data ?? []).map((d: any) => d.client_id));
       const clientsNoDocs = (clientsActiveForMonth.data ?? []).filter((c: any) => !docsByClient.has(c.id)).slice(0, 8);
 
+      // Fase A2: máquina oficial de estados. "completed" = concluída.
+      // Tudo o que não está concluído continua em aberto para a equipe.
       const statusByClient = new Map<string, string>();
       for (const s of (monthStatuses.data ?? [])) statusByClient.set(s.client_id as string, s.status as string);
-      const lateClosing = (clientsActiveForMonth.data ?? [])
-        .map((c: any) => ({ ...c, status: statusByClient.get(c.id) ?? null }))
-        .filter((c: any) => !c.status || ["aguardando_documentos", "documentos_recebidos", "pendencias_encontradas"].includes(c.status))
+      const openCompetences = (clientsActiveForMonth.data ?? [])
+        .map((c: any) => ({ ...c, compStatus: (statusByClient.get(c.id) ?? null) as OfficialStatus | null }))
+        .filter((c: any) => c.compStatus !== "completed")
         .slice(0, 8);
+
 
       return {
         clients: clients.count ?? 0, collabs: collabs.count ?? 0,
@@ -175,7 +176,7 @@ function AdminDashboard({ name }: { name: string }) {
         guidesSoon: guidesSoon.count ?? 0, guidesOverdue: guidesOverdue.count ?? 0,
         certsSoon: certsSoon.data ?? [],
         recentEvents: recentEvents.data ?? [],
-        clientsNoCollab, topCollabs, clientsNoDocs, lateClosing,
+        clientsNoCollab, topCollabs, clientsNoDocs, openCompetences,
       };
     },
   });
@@ -249,19 +250,24 @@ function AdminDashboard({ name }: { name: string }) {
         </Card>
 
         <Card className="p-5">
-          <h3 className="mb-3 font-display text-lg">Fechamento do mês atrasado</h3>
-          {!(data?.lateClosing?.length) ? <p className="text-sm text-muted-foreground">Tudo em dia.</p> : (
+          <h3 className="mb-3 font-display text-lg">Competências do mês em aberto</h3>
+          {!(data?.openCompetences?.length) ? <p className="text-sm text-muted-foreground">Todas as competências do mês estão concluídas.</p> : (
             <ul className="divide-y">
-              {data!.lateClosing.map((c: any) => {
-                const m = monthLabel(c.status);
+              {data!.openCompetences.map((c: any) => {
+                const st = c.compStatus as OfficialStatus | null;
                 return (
                   <li key={c.id} className="flex items-center justify-between py-2.5">
                     <Link to="/clientes/$id" params={{ id: c.id }} className="text-sm font-medium text-primary hover:underline">{c.razao_social}</Link>
-                    <Badge className={m.tone}>{m.label}</Badge>
+                    {st ? (
+                      <Badge className={OFFICIAL_TONE[st]}>{OFFICIAL_LABEL[st]}</Badge>
+                    ) : (
+                      <Badge variant="outline">Competência não iniciada</Badge>
+                    )}
                   </li>
                 );
               })}
             </ul>
+
           )}
         </Card>
 
@@ -469,7 +475,11 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
         scope(supabase.from("pending_tasks").select("id, titulo, prazo, status, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).not("status", "in", "(concluida,cancelada)").order("prazo", { ascending: true }).limit(8)),
         supabase.from("tax_guides").select("id, tipo, vencimento, valor, status, storage_path, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).not("status", "in", "(paga,cancelada)").order("vencimento", { ascending: true }).limit(8),
         supabase.from("tax_guides").select("id", { head: true, count: "exact" }).in("client_id", ids).gte("vencimento", t).lte("vencimento", in7).not("status", "in", "(paga,cancelada)"),
-        !isAll && primary ? supabase.from("client_month_status").select("status").eq("client_id", primary.id).eq("competencia", competencia).maybeSingle() : Promise.resolve({ data: null }),
+        // Fase A2: fonte oficial segura para o cliente (mesma usada em /meu-mes).
+        !isAll && primary
+          ? supabase.rpc("get_client_competence_portal", { p_client_id: primary.id, p_competence: competencia })
+          : Promise.resolve({ data: null }),
+
         scope(supabase.from("interactions").select("id, tipo, descricao, created_at, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(5)),
       ]);
       const failures = [sent, openTasks, guidesAvail, guidesSoon, monthStatus, events].filter((r: any) => r.error);
@@ -487,7 +497,9 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
       const reqSent = reqs.filter((r: any) => r.status === "recebido");
       return {
         primary,
-        status: (monthStatus as any)?.data?.status ?? null,
+        status: ((monthStatus as any)?.data?.status ?? null) as string | null,
+        hasCompetence: !!((monthStatus as any)?.data?.has_competence),
+
         reqAll: reqs, reqPending, reqSent,
         sent: sent.data ?? [],
         openTasks: openTasks.data ?? [],
@@ -502,7 +514,10 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
   if (myCompanies.length === 0) return <div className="text-sm text-muted-foreground">Sem empresa vinculada.</div>;
   if (!data) return <div className="text-sm text-muted-foreground">Carregando…</div>;
 
-  const m = monthLabel(data.status);
+  // Linguagem externa (nunca expõe status interno, responsável ou notas internas).
+  const clientLabel = data.hasCompetence ? clientStatusLabel(data.status) : "Ainda não iniciada";
+  const clientTone = data.hasCompetence ? clientStatusTone(data.status) : clientStatusTone(null);
+
   const empresaName = (c: any) => c?.nome_fantasia || c?.razao_social || "Empresa";
 
   return (
@@ -538,10 +553,11 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="text-xs uppercase tracking-wide text-muted-foreground">Status geral do mês</div>
-              <div className="mt-1 font-display text-xl">{m.label}</div>
+              <div className="mt-1 font-display text-xl">{clientLabel}</div>
               {data.primary && <div className="mt-0.5 text-xs text-muted-foreground">{empresaName(data.primary)}</div>}
             </div>
-            <Badge className={`${m.tone} text-sm`}>{m.label}</Badge>
+            <Badge className={`${clientTone} text-sm`}>{clientLabel}</Badge>
+
           </div>
         </Card>
       )}
@@ -644,41 +660,10 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
 }
 
 /* ============================================================
-   Status do mês — seletor inline reutilizável (exportado)
+   Fase A2 — MonthStatusSelector removido.
+   O status mensal passou a ser controlado exclusivamente pelo ciclo oficial
+   da competência (public.client_competences) na Central de Competências.
+   Escritas em client_month_status foram revogadas no banco.
+   Exibição inline: @/components/sc/CompetenceStatusInline
    ============================================================ */
-export function MonthStatusSelector({ clientId, userId, onChanged }: { clientId: string; userId: string; onChanged?: () => void }) {
-  const competencia = currentCompetencia();
-  const { data, isLoading } = useQuery({
-    queryKey: ["month-status", clientId, competencia],
-    queryFn: async () =>
-      (await supabase.from("client_month_status").select("status").eq("client_id", clientId).eq("competencia", competencia).maybeSingle()).data,
-  });
-  const qc = useQueryClient();
-  const mut = useMutation({
-    mutationFn: async (status: string) => {
-      const { error } = await supabase.from("client_month_status").upsert(
-        { client_id: clientId, competencia, status, updated_by: userId },
-        { onConflict: "client_id,competencia" },
-      );
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Status do mês atualizado.");
-      qc.invalidateQueries({ queryKey: ["month-status", clientId, competencia] });
-      onChanged?.();
-    },
-    onError: (e: any) =>
-      toast.error(/row-level security|permission/i.test(e?.message ?? "") ? "Sem permissão para alterar." : (e?.message ?? "Falha ao salvar.")),
-  });
 
-  const current = (data as any)?.status ?? "";
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-xs text-muted-foreground">Status do mês ({competencia}):</span>
-      <Select value={current || undefined} onValueChange={(v) => mut.mutate(v)} disabled={isLoading || mut.isPending}>
-        <SelectTrigger className="h-8 w-[220px]"><SelectValue placeholder="Definir status" /></SelectTrigger>
-        <SelectContent>{MONTH_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
-      </Select>
-    </div>
-  );
-}
