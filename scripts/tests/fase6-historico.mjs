@@ -154,7 +154,6 @@ async function teardown() {
     await step("document_requests", () => admin.from("document_requests").delete().eq("client_id", c));
     await step("documents", () => admin.from("documents").delete().eq("client_id", c));
     await step("client_competences", () => admin.from("client_competences").delete().eq("client_id", c));
-    await step("interactions", () => admin.from("interactions").delete().eq("client_id", c));
     await step("timeline_events", () => admin.from("timeline_events").delete().eq("client_id", c));
     await step("client_users", () => admin.from("client_users").delete().eq("client_id", c));
     await step("clients", () => admin.from("clients").delete().eq("id", c));

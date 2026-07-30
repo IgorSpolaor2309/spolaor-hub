@@ -438,7 +438,7 @@ function DocsTab({ clientId, docs, userId, onChange }: any) {
   );
 }
 
-/* Fase D2.1 — registro manual de interações removido (public.interactions inerte). */
+/* Fase D2.2B — registro manual de contatos removido definitivamente (tabela legada excluída). */
 
 
 
