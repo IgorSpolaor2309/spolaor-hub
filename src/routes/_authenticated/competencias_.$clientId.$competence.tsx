@@ -29,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/competencias_/$clientId/$c
   ),
 });
 
-type OverviewRow = Parameters<typeof computeProgress>[0];
+type OverviewRow = CompetenceOverviewRow;
 
 function CompetenciaDetailPage() {
   const { clientId, competence } = Route.useParams();
