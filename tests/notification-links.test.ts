@@ -16,7 +16,12 @@ const MIGRATION = resolve(
   "supabase/migrations/20260730215210_0ec2c348-d4fd-4989-906b-ab0501182f5a.sql",
 );
 
-const sql = readFileSync(MIGRATION, "utf8");
+const rawSql = readFileSync(MIGRATION, "utf8");
+/** Código efetivo, sem comentários de linha (`-- ...`). */
+const sql = rawSql
+  .split("\n")
+  .map((line) => line.replace(/(^|\s)--.*$/, ""))
+  .join("\n");
 
 /** Parâmetros aceitos pelo validateSearch de /documentos (staff). */
 const STAFF_PARAMS = new Set([
