@@ -638,8 +638,8 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
         </Card>
 
         <Card className="p-5">
-          <h3 className="mb-3 font-display text-lg flex items-center gap-2"><MessageSquare className="h-4 w-4 text-primary" /> Últimas interações</h3>
-          {!data.events.length ? <p className="text-sm text-muted-foreground">Sem mensagens.</p> : (
+          <h3 className="mb-3 font-display text-lg flex items-center gap-2"><MessageSquare className="h-4 w-4 text-primary" /> Últimas atividades</h3>
+          {!data.events.length ? <p className="text-sm text-muted-foreground">Sem atividades.</p> : (
             <ul className="space-y-3">
               {data.events.map((e: any) => (
                 <li key={e.id}>

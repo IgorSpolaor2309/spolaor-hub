@@ -48,7 +48,7 @@ function ChatErrorBoundary({ error, reset }: { error: Error; reset: () => void }
 
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col">
-      <PageHeader title="Interações" description="Chat interno com clientes da Spolaor Company." />
+      <PageHeader title="Mensagens" description="Converse e acompanhe as mensagens por empresa." />
       <Card className="flex flex-1 items-center justify-center p-8">
         <EmptyState
           icon={<MessageSquare className="h-6 w-6" />}
@@ -183,8 +183,10 @@ function ChatPage() {
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col">
       <PageHeader
-        title="Interações"
-        description={isStaff ? "Chat interno com clientes da Spolaor Company." : "Fale com a sua contabilidade."}
+        title="Mensagens"
+        description={isStaff
+          ? "Converse com clientes e acompanhe as mensagens por empresa."
+          : "Converse com a equipe da Spolaor Company e acompanhe suas mensagens."}
         action={
           isStaff ? (
             <NewConversationButton />
