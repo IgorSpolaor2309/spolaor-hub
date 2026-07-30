@@ -147,12 +147,12 @@ async function teardown() {
   };
 
   for (const c of created.clients) {
-    await step("document_request_files", () => admin.from("document_request_files").delete().eq("client_id", c));
+    // document_request_files sai por cascade ao remover as solicitações
     await step("document_request_link_issues", () => admin.from("document_request_link_issues").delete().eq("client_id", c));
     await step("client_checklist_items", () => admin.from("client_checklist_items").delete().eq("client_id", c));
     await step("tax_guides", () => admin.from("tax_guides").delete().eq("client_id", c));
-    await step("documents", () => admin.from("documents").delete().eq("client_id", c));
     await step("document_requests", () => admin.from("document_requests").delete().eq("client_id", c));
+    await step("documents", () => admin.from("documents").delete().eq("client_id", c));
     await step("client_competences", () => admin.from("client_competences").delete().eq("client_id", c));
     await step("interactions", () => admin.from("interactions").delete().eq("client_id", c));
     await step("timeline_events", () => admin.from("timeline_events").delete().eq("client_id", c));
