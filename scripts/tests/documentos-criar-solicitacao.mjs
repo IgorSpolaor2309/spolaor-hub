@@ -86,7 +86,7 @@ async function cleanup() {
   for (const id of created.requests) await step("request", () => admin.from("document_requests").delete().eq("id", id));
   for (const id of created.items) await step("item", () => admin.from("client_checklist_items").delete().eq("id", id));
   for (const id of created.clients) {
-    await step("document_request_files", () => admin.from("document_request_files").delete().eq("client_id", id));
+    // document_request_files sai por cascade ao remover as solicitações
     await step("document_requests", () => admin.from("document_requests").delete().eq("client_id", id));
     await step("client_checklist_items", () => admin.from("client_checklist_items").delete().eq("client_id", id));
     await step("client_collaborators", () => admin.from("client_collaborators").delete().eq("client_id", id));
