@@ -483,8 +483,6 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
           ? supabase.rpc("get_client_competence_portal", { p_client_id: primary.id, p_competence: competencia })
           : Promise.resolve({ data: null }),
       ]);
-      // Fase D2.2A — registro manual de interações desativado; card fica sem itens.
-      const events: any[] = [];
       const failures = [sent, openTasks, guidesAvail, guidesSoon, monthStatus].filter((r: any) => r.error);
 
       if (failures.length) console.warn("[dashboard-client] consultas parciais falharam", failures.map((r: any) => r.error?.message));
@@ -509,7 +507,6 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
         openTasks: openTasks.data ?? [],
         guides: guidesAvail.data ?? [],
         guidesSoon: guidesSoon.count ?? 0,
-        events,
 
       };
     },
