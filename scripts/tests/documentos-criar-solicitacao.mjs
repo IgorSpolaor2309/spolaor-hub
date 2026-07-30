@@ -72,19 +72,42 @@ async function createUser(email, role) {
   return uid;
 }
 
-const created = { clients: [], users: [], collaborators: [], items: [], requests: [] };
+const created = { clients: [], users: [], collaborators: [], items: [], requests: [], demoBatches: [] };
 
 async function cleanup() {
-  for (const id of created.requests) await admin.from("document_requests").delete().eq("id", id);
-  for (const id of created.items) await admin.from("client_checklist_items").delete().eq("id", id);
+  const step = async (label, fn) => {
+    try {
+      await fn();
+    } catch (e) {
+      console.warn(`cleanup warn (${label}):`, e.message);
+    }
+  };
+
+  for (const id of created.requests) await step("request", () => admin.from("document_requests").delete().eq("id", id));
+  for (const id of created.items) await step("item", () => admin.from("client_checklist_items").delete().eq("id", id));
   for (const id of created.clients) {
-    await admin.from("document_requests").delete().eq("client_id", id);
-    await admin.from("client_checklist_items").delete().eq("client_id", id);
-    await admin.from("client_collaborators").delete().eq("client_id", id);
-    await admin.from("clients").delete().eq("id", id);
+    await step("document_request_files", () => admin.from("document_request_files").delete().eq("client_id", id));
+    await step("document_requests", () => admin.from("document_requests").delete().eq("client_id", id));
+    await step("client_checklist_items", () => admin.from("client_checklist_items").delete().eq("client_id", id));
+    await step("client_collaborators", () => admin.from("client_collaborators").delete().eq("client_id", id));
+    await step("client_users", () => admin.from("client_users").delete().eq("client_id", id));
+    await step("client_competences", () => admin.from("client_competences").delete().eq("client_id", id));
+    await step("timeline_events", () => admin.from("timeline_events").delete().eq("client_id", id));
+    await step("clients", () => admin.from("clients").delete().eq("id", id));
   }
-  for (const id of created.collaborators) await admin.from("collaborators").delete().eq("id", id);
-  for (const id of created.users) await admin.auth.admin.deleteUser(id).catch(() => {});
+  for (const id of created.collaborators) await step("collaborator", () => admin.from("collaborators").delete().eq("id", id));
+  // lotes demo criados pelo teste não podem sobreviver ao teste
+  for (const id of created.demoBatches) await step("demo_batch", () => admin.from("demo_batches").delete().eq("id", id));
+  for (const id of created.users) {
+    await step("user_roles", () => admin.from("user_roles").delete().eq("user_id", id));
+    await step("profiles", () => admin.from("profiles").delete().eq("id", id));
+    await step("auth.user", () => admin.auth.admin.deleteUser(id));
+  }
+  if (created.clients.length) {
+    const { data } = await admin.from("clients").select("id").in("id", created.clients);
+    if (data?.length) console.warn("⚠️ cleanup incompleto: empresas remanescentes", data.map((r) => r.id));
+    else console.log("🧹 cleanup completo (0 registros remanescentes)");
+  }
 }
 
 async function main() {
@@ -122,7 +145,7 @@ async function main() {
   const mk = async (nome, extra = {}) => {
     const { data, error } = await admin
       .from("clients")
-      .insert({ razao_social: nome, status: "ativo", origem_cadastro: "manual", ...extra })
+      .insert({ razao_social: nome, status: "active", origem_cadastro: "manual", ...extra })
       .select("id").single();
     if (error) throw error;
     created.clients.push(data.id);
@@ -131,6 +154,7 @@ async function main() {
   const cA = await mk(`A ${TAG}`);          // carteira do colaborador
   const cB = await mk(`B ${TAG}`);          // fora da carteira
   const cDemoBatch = randomUUID();
+  created.demoBatches.push(cDemoBatch);
   await admin.from("demo_batches").insert({ id: cDemoBatch, label: `batch ${TAG}`, status: "ativo" });
   const cD = await mk(`D ${TAG}`, { is_demo: true, demo_batch_id: cDemoBatch });
 

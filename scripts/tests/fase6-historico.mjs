@@ -64,7 +64,7 @@ async function grantRole(uid, role) {
 async function mkClient(nome) {
   const { data, error } = await admin
     .from("clients")
-    .insert({ razao_social: nome, status: "ativo", origem_cadastro: "manual" })
+    .insert({ razao_social: nome, status: "active", origem_cadastro: "manual" })
     .select("id")
     .single();
   if (error) throw new Error(`mkClient: ${error.message}`);
@@ -138,22 +138,42 @@ async function setup() {
 }
 
 async function teardown() {
-  try {
-    for (const c of created.clients) {
-      await admin.from("document_request_files").delete().eq("client_id", c);
-      await admin.from("document_request_link_issues").delete().eq("client_id", c);
-      await admin.from("client_checklist_items").delete().eq("client_id", c);
-      await admin.from("documents").delete().eq("client_id", c);
-      await admin.from("document_requests").delete().eq("client_id", c);
-      await admin.from("timeline_events").delete().eq("client_id", c);
-      await admin.from("client_users").delete().eq("client_id", c);
-      await admin.from("clients").delete().eq("id", c);
+  const step = async (label, fn) => {
+    try {
+      await fn();
+    } catch (e) {
+      console.warn(`teardown warn (${label}):`, e.message);
     }
-    if (created.paths.length) await admin.storage.from("documents").remove(created.paths);
-    for (const u of created.users) await admin.auth.admin.deleteUser(u);
-  } catch (e) {
-    console.warn("teardown parcial:", e.message);
+  };
+
+  for (const c of created.clients) {
+    await step("document_request_files", () => admin.from("document_request_files").delete().eq("client_id", c));
+    await step("document_request_link_issues", () => admin.from("document_request_link_issues").delete().eq("client_id", c));
+    await step("client_checklist_items", () => admin.from("client_checklist_items").delete().eq("client_id", c));
+    await step("tax_guides", () => admin.from("tax_guides").delete().eq("client_id", c));
+    await step("documents", () => admin.from("documents").delete().eq("client_id", c));
+    await step("document_requests", () => admin.from("document_requests").delete().eq("client_id", c));
+    await step("client_competences", () => admin.from("client_competences").delete().eq("client_id", c));
+    await step("interactions", () => admin.from("interactions").delete().eq("client_id", c));
+    await step("timeline_events", () => admin.from("timeline_events").delete().eq("client_id", c));
+    await step("client_users", () => admin.from("client_users").delete().eq("client_id", c));
+    await step("clients", () => admin.from("clients").delete().eq("id", c));
   }
+  if (created.paths.length) {
+    await step("storage", () => admin.storage.from("documents").remove(created.paths));
+  }
+  for (const u of created.users) {
+    await step("notifications", () => admin.from("notifications").delete().eq("user_id", u));
+    await step("user_roles", () => admin.from("user_roles").delete().eq("user_id", u));
+    await step("profiles", () => admin.from("profiles").delete().eq("id", u));
+    await step("auth.user", () => admin.auth.admin.deleteUser(u));
+  }
+  await step("verificação", async () => {
+    if (!created.clients.length) return;
+    const { data } = await admin.from("clients").select("id").in("id", created.clients);
+    if (data?.length) console.warn("⚠️ teardown incompleto: empresas remanescentes", data.map((r) => r.id));
+    else console.log("🧹 teardown completo (0 registros remanescentes)");
+  });
 }
 
 async function run() {
