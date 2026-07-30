@@ -159,9 +159,9 @@ function ClientDetail() {
         <Card className="mb-6 p-4">
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Ações rápidas</div>
           <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline" size="sm"><Link to="/solicitacoes" search={{ client: undefined, comp: undefined }}><Inbox className="mr-2 h-4 w-4" /> Solicitar documento</Link></Button>
+            <Button asChild variant="outline" size="sm"><Link to="/documentos" search={{ tab: "aguardando_cliente", client: id } as any}><Inbox className="mr-2 h-4 w-4" /> Solicitar documento</Link></Button>
             <Button asChild variant="outline" size="sm"><Link to="/guias" search={{ client: undefined, comp: undefined }}><Receipt className="mr-2 h-4 w-4" /> Criar guia/imposto</Link></Button>
-            <Button asChild variant="outline" size="sm"><Link to="/validades"><CalendarClock className="mr-2 h-4 w-4" /> Documentos com validade</Link></Button>
+            <Button asChild variant="outline" size="sm"><Link to="/documentos" search={{ tab: "vencendo", client: id } as any}><CalendarClock className="mr-2 h-4 w-4" /> Documentos com validade</Link></Button>
             
             <Button asChild variant="outline" size="sm"><Link to="/modelos"><MessagesSquare className="mr-2 h-4 w-4" /> Usar modelo de mensagem</Link></Button>
           </div>

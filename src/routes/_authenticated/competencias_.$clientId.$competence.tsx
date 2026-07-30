@@ -191,7 +191,7 @@ function CompetenciaDetailPage() {
                 label={`${r.proc_atrasados} processo(s) atrasado(s)`} icon={<Workflow className="h-4 w-4" />} tone="danger" />
             )}
             {r.sol_aguardando_cliente > 0 && (
-              <ShortcutLink to="/solicitacoes" params={{ client: clientId, comp: competence }}
+              <ShortcutLink to="/documentos" params={{ tab: "aguardando_cliente", client: clientId, comp: competence }}
                 label={`${r.sol_aguardando_cliente} solicitação(ões) aguardando cliente`} icon={<Inbox className="h-4 w-4" />} tone="warn" />
             )}
           </div>

@@ -45,8 +45,8 @@ const currentCompetencia = () => {
 
 /* ---------- shared UI ---------- */
 function StatCard({
-  icon: Icon, label, value, accent, to,
-}: { icon: React.ComponentType<{ className?: string }>; label: string; value: string | number; accent?: string; to?: string }) {
+  icon: Icon, label, value, accent, to, search,
+}: { icon: React.ComponentType<{ className?: string }>; label: string; value: string | number; accent?: string; to?: string; search?: Record<string, string | number | undefined> }) {
   const inner = (
     <Card className="h-full p-5 transition hover:shadow-md">
       <div className="flex items-start justify-between">
@@ -60,7 +60,7 @@ function StatCard({
       </div>
     </Card>
   );
-  return to ? <Link to={to as any}>{inner}</Link> : inner;
+  return to ? <Link to={to as any} search={(search ?? {}) as any}>{inner}</Link> : inner;
 }
 
 /* ---------- root ---------- */
@@ -198,8 +198,8 @@ function AdminDashboard({ name }: { name: string }) {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={AlertTriangle} label="Pendências vencidas" value={data?.tasksOverdue ?? "—"} accent="bg-destructive/10 text-destructive" to="/pendencias" />
         <StatCard icon={Clock} label="Pendências de hoje" value={data?.tasksToday ?? "—"} accent="bg-amber-100 text-amber-800" to="/pendencias" />
-        <StatCard icon={Inbox} label="Solicitações pendentes" value={data?.reqPending ?? "—"} accent="bg-sky-100 text-sky-800" to="/solicitacoes" />
-        <StatCard icon={FileText} label="DOCUMENTOS RECEBIDOS" value={data?.docsAnalysis ?? "—"} accent="bg-blue-100 text-blue-800" to="/documentos" />
+        <StatCard icon={Inbox} label="Solicitações pendentes" value={data?.reqPending ?? "—"} accent="bg-sky-100 text-sky-800" to="/documentos" search={{ tab: "aguardando_cliente" }} />
+        <StatCard icon={FileText} label="DOCUMENTOS RECEBIDOS" value={data?.docsAnalysis ?? "—"} accent="bg-blue-100 text-blue-800" to="/documentos" search={{ tab: "recebidos" }} />
         <StatCard icon={Receipt} label="Guias vencendo (7 dias)" value={data?.guidesSoon ?? "—"} accent="bg-orange-100 text-orange-800" to="/guias" />
         <StatCard icon={Receipt} label="Guias vencidas" value={data?.guidesOverdue ?? "—"} accent="bg-destructive/10 text-destructive" to="/guias" />
         <StatCard icon={Users} label="Empresas ativas" value={data?.clients ?? "—"} to="/clientes" />
@@ -384,10 +384,10 @@ function CollabDashboard({ name, userId }: { name: string; userId: string }) {
 
         <StatCard icon={AlertTriangle} label="Minhas vencidas" value={data?.tasksOverdue ?? "—"} accent="bg-destructive/10 text-destructive" to="/pendencias" />
         <StatCard icon={Clock} label="Pendências de hoje" value={data?.tasksToday ?? "—"} accent="bg-amber-100 text-amber-800" to="/pendencias" />
-        <StatCard icon={FileText} label="Docs para analisar" value={data?.docsAnalysis ?? "—"} accent="bg-blue-100 text-blue-800" to="/documentos" />
-        <StatCard icon={Inbox} label="Solicitações recebidas para análise" value={data?.awaiting ?? "—"} accent="bg-sky-100 text-sky-800" to="/solicitacoes" />
+        <StatCard icon={FileText} label="Docs para analisar" value={data?.docsAnalysis ?? "—"} accent="bg-blue-100 text-blue-800" to="/documentos" search={{ tab: "recebidos" }} />
+        <StatCard icon={Inbox} label="Solicitações recebidas para análise" value={data?.awaiting ?? "—"} accent="bg-sky-100 text-sky-800" to="/documentos" search={{ tab: "recebidos" }} />
         <StatCard icon={Receipt} label="Guias vencendo (7 dias)" value={data?.guidesSoon ?? "—"} accent="bg-orange-100 text-orange-800" to="/guias" />
-        <StatCard icon={Inbox} label="Solicitações pendentes" value={data?.reqPending ?? "—"} accent="bg-secondary/10 text-secondary" to="/solicitacoes" />
+        <StatCard icon={Inbox} label="Solicitações pendentes" value={data?.reqPending ?? "—"} accent="bg-secondary/10 text-secondary" to="/documentos" search={{ tab: "aguardando_cliente" }} />
         <StatCard icon={Users} label="Empresas vinculadas" value={data?.clients ?? "—"} to="/clientes" />
       </div>
 
@@ -566,7 +566,7 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
       )}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={Inbox} label="Documentos solicitados" value={data.reqAll.length} to="/solicitacoes" />
+        <StatCard icon={Inbox} label="Documentos solicitados" value={data.reqAll.length} to="/meus-documentos" search={{ section: "precisa_enviar", client: data.primary?.id }} />
         <StatCard icon={FileText} label="Enviados" value={data.reqSent.length} accent="bg-emerald-100 text-emerald-800" to="/meus-documentos" />
         <StatCard icon={AlertTriangle} label="Pendências" value={data.reqPending.length + data.openTasks.length} accent="bg-orange-100 text-orange-800" to="/pendencias" />
         <StatCard icon={Receipt} label="Guias próximas (7d)" value={data.guidesSoon} accent="bg-amber-100 text-amber-800" to="/guias" />

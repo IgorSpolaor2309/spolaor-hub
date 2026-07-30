@@ -118,7 +118,7 @@ function TemplatesPage() {
   return (
     <div>
       <PageHeader
-        title="Modelos de mensagens"
+        title="Modelos de mensagem"
         description="Padronize a comunicação com clientes."
         action={(isAdmin || role === "collaborator") && (
           <Button onClick={() => {

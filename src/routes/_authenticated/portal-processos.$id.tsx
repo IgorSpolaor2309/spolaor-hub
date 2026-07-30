@@ -120,7 +120,7 @@ function ClientProcessoDetail() {
                                   {r.solicitacao.prazo ? ` · prazo ${formatBR(r.solicitacao.prazo)}` : ""}
                                 </Badge>
                                 <Button asChild size="sm" variant="outline" className="ml-auto h-7">
-                                  <Link to="/solicitacoes" search={{ client: undefined, comp: undefined }}><ExternalLink className="mr-1 h-3 w-3" /> Abrir solicitação</Link>
+                                  <Link to="/meus-documentos" search={{ section: "precisa_enviar" } as any}><ExternalLink className="mr-1 h-3 w-3" /> Abrir solicitação</Link>
                                 </Button>
                               </>
                             ) : r.atendido ? (
@@ -154,7 +154,7 @@ function ClientProcessoDetail() {
                     </Badge>
                     {s.prazo && <span className="text-[11px] text-muted-foreground">Prazo {formatBR(s.prazo)}</span>}
                     <Button asChild size="sm" variant="outline" className="ml-auto h-7">
-                      <Link to="/solicitacoes" search={{ client: undefined, comp: undefined }}><ExternalLink className="mr-1 h-3 w-3" /> Abrir</Link>
+                      <Link to="/meus-documentos" search={{ section: "precisa_enviar" } as any}><ExternalLink className="mr-1 h-3 w-3" /> Abrir</Link>
                     </Button>
                   </li>
                 ))}

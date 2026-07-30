@@ -106,7 +106,7 @@ function ProcessTypesPage() {
   return (
     <div>
       <PageHeader
-        title="Modelos de processos"
+        title="Modelos de processo"
         description="Cadastre tipos de processo e suas etapas padrão."
         action={isAdmin && (
           <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null); }}>

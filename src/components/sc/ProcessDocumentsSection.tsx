@@ -267,7 +267,7 @@ function RequirementRow({ req, clientId, canEdit, onSet, processId, stepId, step
         {met && <AttachmentButton storagePath={doc?.storage_path} label="Abrir" />}
         {activeRequest ? (
           <Button asChild size="sm" variant="outline" className="h-7">
-            <Link to="/solicitacoes" search={{ client: undefined, comp: undefined }}>
+            <Link to="/documentos" search={{ tab: "aguardando_cliente" } as any}>
               <ExternalLink className="mr-1 h-3.5 w-3.5" /> Abrir solicitação
             </Link>
           </Button>
