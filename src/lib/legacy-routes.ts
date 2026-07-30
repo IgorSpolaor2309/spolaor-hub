@@ -57,6 +57,18 @@ export function isLegacyRoute(route: string): route is LegacyRoute {
 }
 
 /**
+ * Rotas legadas internas que o perfil cliente nunca pode renderizar,
+ * independentemente da feature flag de transição.
+ *
+ * `/validades` é tela interna de staff: o cliente é sempre redirecionado
+ * para `/meus-documentos?section=historico`.
+ */
+export function isForcedClientRedirect(route: LegacyRoute, audience: LegacyAudience): boolean {
+  return audience === "client" && route === "/validades";
+}
+
+
+/**
  * Destino oficial de uma rota legada, resolvido por perfil.
  *
  * staff:
@@ -64,8 +76,10 @@ export function isLegacyRoute(route: string): route is LegacyRoute {
  *   `/validades`    → `/documentos?tab=vencendo`
  * cliente:
  *   `/solicitacoes` → `/meus-documentos?section=precisa_enviar`
- *   `/validades`    → sem destino (rota staff-only; nunca enviar cliente a `/documentos`)
+ *   `/validades`    → `/meus-documentos?section=historico`
+ *   (cliente nunca é enviado a `/documentos`)
  */
+
 export function legacyDestination(
   route: LegacyRoute,
   audience: LegacyAudience,
@@ -79,12 +93,18 @@ export function legacyDestination(
   };
 
   if (audience === "client") {
-    if (route !== "/solicitacoes") return null;
+    if (route === "/validades") {
+      return {
+        to: "/meus-documentos",
+        search: clean({ section: "historico", ...carry }),
+      };
+    }
     return {
       to: "/meus-documentos",
       search: clean({ section: "precisa_enviar", ...carry }),
     };
   }
+
 
   return {
     to: "/documentos",

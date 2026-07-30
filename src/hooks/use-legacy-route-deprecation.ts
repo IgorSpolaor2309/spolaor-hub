@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useFeatureFlag } from "@/hooks/use-feature-flag";
 import {
   LEGACY_REDIRECT_FLAG,
+  isForcedClientRedirect,
   isLegacyRoute,
   legacyDestination,
   type LegacyAudience,
@@ -11,6 +12,7 @@ import {
   type LegacyRoute,
   type LegacyTelemetryAction,
 } from "@/lib/legacy-routes";
+
 
 /**
  * Fase 7 / C2 — telemetria + redirect controlado por feature flag para as
@@ -40,8 +42,15 @@ export function useLegacyRouteDeprecation(
     [route, audience, params?.client, params?.comp, params?.item, params?.q],
   );
 
-  // Sem destino válido para o perfil (ex.: cliente em /validades) → camada inerte.
+  // Rotas internas que o cliente nunca pode renderizar: redirect obrigatório,
+  // independentemente da feature flag.
+  const forced = isForcedClientRedirect(route, audience);
+
+  // Sem destino válido para o perfil → camada inerte.
   const active = (options?.enabled ?? true) && !!destination;
+
+  // Redirect efetivo: forçado (cliente em rota interna) ou controlado pela flag.
+  const willRedirect = active && (forced || (!flagLoading && redirectEnabled));
 
   const log = useCallback(
     (action: LegacyTelemetryAction, clientId?: string | null) => {
@@ -61,15 +70,16 @@ export function useLegacyRouteDeprecation(
 
   // Registra a visita uma única vez por montagem (todos os perfis atendidos).
   useEffect(() => {
-    if (!active || loggedView.current || flagLoading) return;
+    if (!active || loggedView.current) return;
+    if (!forced && flagLoading) return;
     loggedView.current = true;
-    log(redirectEnabled ? "redirect" : "view", params?.client ?? null);
-  }, [active, log, flagLoading, redirectEnabled, params?.client]);
+    log(willRedirect ? "redirect" : "view", params?.client ?? null);
+  }, [active, forced, log, flagLoading, willRedirect, params?.client]);
 
-  // Redirect somente quando a flag estiver ativa. Com a flag falsa,
-  // a rota antiga permanece integralmente acessível.
+  // Redirect quando forçado (cliente) ou quando a flag estiver ativa.
+  // Com a flag falsa, staff mantém a rota antiga integralmente acessível.
   useEffect(() => {
-    if (!active || flagLoading || !redirectEnabled || redirected.current || !destination) return;
+    if (!active || !willRedirect || redirected.current || !destination) return;
     // Proteção extra contra loop: o destino nunca pode ser uma rota legada.
     if (isLegacyRoute(destination.to)) return;
     redirected.current = true;
@@ -79,7 +89,8 @@ export function useLegacyRouteDeprecation(
       search: (() => destination.search) as any,
       replace: true,
     });
-  }, [active, flagLoading, redirectEnabled, navigate, destination]);
+  }, [active, willRedirect, navigate, destination]);
+
 
   const openCentral = useCallback(() => {
     if (!destination) return;
@@ -92,7 +103,9 @@ export function useLegacyRouteDeprecation(
   }, [log, navigate, destination, params?.client]);
 
   return {
-    redirectEnabled: active && redirectEnabled,
+    redirectEnabled: willRedirect,
+    /** Redirect obrigatório (cliente em rota interna), ignora a flag. */
+    forcedRedirect: forced && active,
     flagLoading,
     log,
     openCentral,
@@ -101,4 +114,5 @@ export function useLegacyRouteDeprecation(
     /** Compat com a Fase 7: search do destino (vazio quando não há destino). */
     target: destination?.search ?? {},
   };
+
 }

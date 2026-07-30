@@ -44,6 +44,7 @@ function statusFromDays(d: number | null) {
 function ValidadesPage() {
   const { role, userId, loading } = useCurrentUser();
   const isStaff = role === "admin" || role === "collaborator";
+  const isClient = role === "client";
   const ready = !loading && !!userId && !!role;
   const qc = useQueryClient();
   const [fClient, setFClient] = useState("all");
@@ -52,16 +53,19 @@ function ValidadesPage() {
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const [editing, setEditing] = useState<any | null>(null);
 
-  // Fase 7 / C2 — telemetria + redirect (staff apenas: /validades é staff-only).
+  // Fase 7 / C2 — telemetria + redirect.
+  // Staff: controlado pela feature flag. Cliente: redirect obrigatório
+  // para /meus-documentos?section=historico (tela interna nunca renderiza).
   const legacy = useLegacyRouteDeprecation(
     "/validades",
     { client: fClient !== "all" ? fClient : undefined },
-    { enabled: isStaff, audience: "staff" },
+    { enabled: isStaff || isClient, audience: isClient ? "client" : "staff" },
   );
+
 
   const { data: clients = [], error: clientsError } = useQuery({
     queryKey: ["val-clients", userId, role],
-    enabled: ready,
+    enabled: ready && isStaff,
     retry: 1,
     queryFn: async () => {
       const { data, error } = await supabase.from("clients").select("id, razao_social, nome_fantasia, documento").is("deleted_at", null).neq("status", "inactive").order("razao_social");
@@ -72,7 +76,7 @@ function ValidadesPage() {
 
   const { data: docs = [], isLoading, error: docsError } = useQuery({
     queryKey: ["docs-validity", userId, role],
-    enabled: ready,
+    enabled: ready && isStaff,
     retry: 1,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -103,6 +107,10 @@ function ValidadesPage() {
 
 
   if (!ready) return <p className="text-sm text-muted-foreground">Carregando…</p>;
+
+  // Cliente nunca renderiza a tela interna de validades: apenas o estado de
+  // transição enquanto o redirect obrigatório para o Portal acontece.
+  if (!isStaff) return <p className="text-sm text-muted-foreground">Redirecionando…</p>;
 
   return (
     <div>
