@@ -103,7 +103,9 @@ export function useLegacyRouteDeprecation(
   }, [log, navigate, destination, params?.client]);
 
   return {
-    redirectEnabled: active && redirectEnabled,
+    redirectEnabled: willRedirect,
+    /** Redirect obrigatório (cliente em rota interna), ignora a flag. */
+    forcedRedirect: forced && active,
     flagLoading,
     log,
     openCentral,
@@ -112,4 +114,5 @@ export function useLegacyRouteDeprecation(
     /** Compat com a Fase 7: search do destino (vazio quando não há destino). */
     target: destination?.search ?? {},
   };
+
 }
