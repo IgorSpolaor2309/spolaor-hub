@@ -509,7 +509,8 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
         openTasks: openTasks.data ?? [],
         guides: guidesAvail.data ?? [],
         guidesSoon: guidesSoon.count ?? 0,
-        events: events.data ?? [],
+        events,
+
       };
     },
   });
