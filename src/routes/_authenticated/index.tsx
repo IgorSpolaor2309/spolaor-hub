@@ -112,7 +112,7 @@ function AdminDashboard({ name }: { name: string }) {
         recentEvents,
         unassignedClients,
         collabTaskCounts,
-        clientsActiveForMonth, docsThisMonth, monthStatuses,
+        clientsActiveForMonth, monthOverview, monthStatuses,
       ] = await Promise.all([
         supabase.from("clients").select("id", { head: true, count: "exact" }).eq("status", "active").is("deleted_at", null),
         supabase.from("collaborators").select("id", { head: true, count: "exact" }).eq("status", "active"),
@@ -120,8 +120,8 @@ function AdminDashboard({ name }: { name: string }) {
         scope(supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).eq("prazo", t).not("status", "in", "(concluida,cancelada)")),
         scope(supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("status", ["aguardando", "reenviar"])),
         scope(supabase.from("documents").select("id", { head: true, count: "exact" }).in("status", ["recebido", "em_analise"])),
-        scope(supabase.from("tax_guides").select("id", { head: true, count: "exact" }).gte("vencimento", t).lte("vencimento", in7).not("status", "in", "(paga,cancelada)")),
-        scope(supabase.from("tax_guides").select("id", { head: true, count: "exact" }).lt("vencimento", t).not("status", "in", "(paga,cancelada)")),
+        scope(supabase.from("tax_guides").select("id", { head: true, count: "exact" }).gte("vencimento", t).lte("vencimento", in7).not("status", "in", TAX_GUIDE_CLOSED_STATUSES_PG)),
+        scope(supabase.from("tax_guides").select("id", { head: true, count: "exact" }).lt("vencimento", t).not("status", "in", TAX_GUIDE_CLOSED_STATUSES_PG)),
         supabase.from("documents").select("id, nome, data_validade, client_id, clients(razao_social)")
           .not("data_validade", "is", null).gte("data_validade", t).lte("data_validade", in30)
           .order("data_validade", { ascending: true }).limit(10),
@@ -130,12 +130,14 @@ function AdminDashboard({ name }: { name: string }) {
         supabase.from("clients").select("id, razao_social, client_collaborators(collaborator_id)").eq("status", "active").is("deleted_at", null),
         supabase.from("pending_tasks").select("collaborator_id").not("status", "in", "(concluida,cancelada)").not("collaborator_id", "is", null),
         supabase.from("clients").select("id, razao_social").eq("status", "active").is("deleted_at", null),
-        supabase.from("documents").select("client_id").gte("created_at", monthStart),
+        // Fase B2: fonte única dos contadores do mês (mesma de /competencias).
+        supabase.rpc("get_competence_overview", { p_competence: competencia }),
         // Fonte oficial do status mensal (Fase A2): client_competences.
         supabase.from("client_competences").select("client_id, status, competence").eq("competence", competencia),
 
       ]);
-      const failures = [clients, collabs, tasksOverdue, tasksToday, reqPending, docsAnalysis, guidesSoon, guidesOverdue, certsSoon, recentEvents, unassignedClients, collabTaskCounts, clientsActiveForMonth, docsThisMonth, monthStatuses].filter((r) => r.error);
+      const failures = [clients, collabs, tasksOverdue, tasksToday, reqPending, docsAnalysis, guidesSoon, guidesOverdue, certsSoon, recentEvents, unassignedClients, collabTaskCounts, clientsActiveForMonth, monthOverview, monthStatuses].filter((r) => r.error);
+
       if (failures.length) console.warn("[dashboard-admin] consultas parciais falharam", failures.map((r) => r.error?.message));
 
       const clientsNoCollab = (unassignedClients.data ?? []).filter((c: any) => !(c.client_collaborators ?? []).length).slice(0, 8);
