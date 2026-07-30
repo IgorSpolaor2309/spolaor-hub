@@ -438,44 +438,9 @@ function DocsTab({ clientId, docs, userId, onChange }: any) {
   );
 }
 
-/* ---------- Interactions ---------- */
-function InteractionsTab({ clientId, list, canCreate, onChange }: any) {
-  const [form, setForm] = useState({ tipo: "observacao", descricao: "" });
-  const save = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("interactions").insert({ client_id: clientId, ...form });
-      if (error) throw error;
-    },
-    onSuccess: () => { toast.success("Interação registrada"); setForm({ tipo: "observacao", descricao: "" }); onChange(); },
-    onError: (e: any) => toast.error(e.message),
-  });
-  return (
-    <Card className="p-5">
-      {canCreate && (
-        <div className="mb-4 grid gap-3 rounded-md border bg-muted/30 p-3 sm:grid-cols-[180px_1fr_auto] sm:items-end">
-          <div><Label className="text-xs">Tipo</Label>
-            <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{INTERACTION_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div><Label className="text-xs">Descrição</Label><Textarea rows={2} value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} /></div>
-          <Button onClick={() => save.mutate()} disabled={!form.descricao || save.isPending}>Registrar</Button>
-        </div>
-      )}
-      {list.length === 0 ? <EmptyState title="Sem interações" /> : (
-        <ul className="space-y-3">
-          {list.map((i: any) => (
-            <li key={i.id} className="rounded-md border p-3">
-              <div className="text-xs uppercase text-muted-foreground">{labelOf(INTERACTION_TYPES, i.tipo)} · {formatDistanceToNow(new Date(i.created_at), { addSuffix: true, locale: ptBR })}</div>
-              <div className="mt-1 text-sm">{i.descricao}</div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card>
-  );
-}
+/* Fase D2.1 — registro manual de interações removido (public.interactions inerte). */
+
+
 
 /* ---------- Requirements ---------- */
 function RequirementsTab({ clientId, list, canManage, onChange }: any) {
