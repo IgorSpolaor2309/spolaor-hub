@@ -115,8 +115,8 @@ function TrustPage() {
             <p>
               Coletamos apenas os dados necessários para a operação contábil:
               dados cadastrais das empresas vinculadas, dados de contato do
-              usuário, documentos enviados, mensagens trocadas no chat interno e
-              registros de atividade (timeline).
+              usuário, documentos enviados, mensagens trocadas na plataforma e
+              registros de atividade (histórico).
             </p>
             <p>
               Não vendemos dados pessoais e não compartilhamos com terceiros
