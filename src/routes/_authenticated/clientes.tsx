@@ -556,18 +556,26 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
   });
   const [account, setAccount] = useState<AccountMatch | null>(null);
   const [collabIds, setCollabIds] = useState<string[]>([]);
+  const [primaryId, setPrimaryId] = useState<string | null>(null);
   const [existing, setExisting] = useState<{ id: string; razao_social: string | null; nome_fantasia: string | null } | null>(null);
 
   const { data: allCollaborators = [] } = useQuery({
     queryKey: ["new-client-collab-options"],
-    queryFn: async () =>
-      (await supabase.from("collaborators").select("id, nome, email").eq("status", "active").order("nome")).data ?? [],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("admin_list_client_collaborator_options", {});
+      if (error) throw error;
+      return (data ?? []) as CollaboratorOption[];
+    },
   });
+
+  const eligibleSelected = eligibleWithin(collabIds, allCollaborators as CollaboratorOption[]);
+  const primaryResolution = resolvePrimary(collabIds, allCollaborators as CollaboratorOption[], primaryId);
 
   const mut = useMutation({
     mutationFn: async () => {
       if (!account) throw new Error("Vincule uma conta de acesso existente antes de salvar.");
       if (collabIds.length === 0) throw new Error("Selecione pelo menos um colaborador encarregado.");
+      if (primaryResolution.error) throw new Error(primaryResolution.error);
       const ok = await ensureNoDuplicateCnpj(form.cnpj);
       if (!ok) throw new Error("__dup__");
       const payload = { ...buildClientPayload(form, form.cnpj), origem_cadastro: "manual" };
@@ -576,6 +584,7 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
         _user_id: account.id,
         _papel: "responsavel",
         _collaborator_ids: collabIds,
+        _primary_collaborator_id: primaryResolution.primary ?? undefined,
       } as any);
       if (error) throw error;
     },
