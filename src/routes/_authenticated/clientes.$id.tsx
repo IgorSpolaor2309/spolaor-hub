@@ -19,7 +19,8 @@ import { Plus, Upload, ArrowLeft, Pencil, Inbox, Receipt, CalendarClock, Message
 import { toast } from "sonner";
 
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { MonthStatusSelector } from "@/routes/_authenticated/index";
+import { CompetenceStatusInline } from "@/components/sc/CompetenceStatusInline";
+
 import {
   TASK_STATUSES, TASK_PRIORITIES, DOC_TYPES, DOC_STATUSES, INTERACTION_TYPES, CLIENT_TYPES,
   DEPARTMENTS, DOC_VALIDITY_CATEGORIES, labelOf,
@@ -109,9 +110,10 @@ function ClientDetail() {
         action={
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge value={client.status} />
-            {role !== "client" && userId && (
-              <MonthStatusSelector clientId={client.id} userId={userId} />
+            {role !== "client" && (
+              <CompetenceStatusInline clientId={client.id} showResponsible={role === "admin" || role === "collaborator"} />
             )}
+
             {role !== "client" && (
               <Button asChild variant="outline" size="sm">
                 <Link to="/interacoes" search={{ client: client.id }}>
