@@ -64,7 +64,7 @@ async function grantRole(uid, role) {
 async function mkClient(nome) {
   const { data, error } = await admin
     .from("clients")
-    .insert({ razao_social: nome, status: "ativo", origem_cadastro: "manual" })
+    .insert({ razao_social: nome, status: "active", origem_cadastro: "manual" })
     .select("id")
     .single();
   if (error) throw new Error(`mkClient: ${error.message}`);
@@ -138,22 +138,42 @@ async function setup() {
 }
 
 async function teardown() {
-  try {
-    for (const c of created.clients) {
-      await admin.from("document_request_files").delete().eq("client_id", c);
-      await admin.from("document_request_link_issues").delete().eq("client_id", c);
-      await admin.from("client_checklist_items").delete().eq("client_id", c);
-      await admin.from("documents").delete().eq("client_id", c);
-      await admin.from("document_requests").delete().eq("client_id", c);
-      await admin.from("timeline_events").delete().eq("client_id", c);
-      await admin.from("client_users").delete().eq("client_id", c);
-      await admin.from("clients").delete().eq("id", c);
+  const step = async (label, fn) => {
+    try {
+      await fn();
+    } catch (e) {
+      console.warn(`teardown warn (${label}):`, e.message);
     }
-    if (created.paths.length) await admin.storage.from("documents").remove(created.paths);
-    for (const u of created.users) await admin.auth.admin.deleteUser(u);
-  } catch (e) {
-    console.warn("teardown parcial:", e.message);
+  };
+
+  for (const c of created.clients) {
+    // document_request_files sai por cascade ao remover as solicitações
+    await step("document_request_link_issues", () => admin.from("document_request_link_issues").delete().eq("client_id", c));
+    await step("client_checklist_items", () => admin.from("client_checklist_items").delete().eq("client_id", c));
+    await step("tax_guides", () => admin.from("tax_guides").delete().eq("client_id", c));
+    await step("document_requests", () => admin.from("document_requests").delete().eq("client_id", c));
+    await step("documents", () => admin.from("documents").delete().eq("client_id", c));
+    await step("client_competences", () => admin.from("client_competences").delete().eq("client_id", c));
+    await step("interactions", () => admin.from("interactions").delete().eq("client_id", c));
+    await step("timeline_events", () => admin.from("timeline_events").delete().eq("client_id", c));
+    await step("client_users", () => admin.from("client_users").delete().eq("client_id", c));
+    await step("clients", () => admin.from("clients").delete().eq("id", c));
   }
+  if (created.paths.length) {
+    await step("storage", () => admin.storage.from("documents").remove(created.paths));
+  }
+  for (const u of created.users) {
+    await step("notifications", () => admin.from("notifications").delete().eq("user_id", u));
+    await step("user_roles", () => admin.from("user_roles").delete().eq("user_id", u));
+    await step("profiles", () => admin.from("profiles").delete().eq("id", u));
+    await step("auth.user", () => admin.auth.admin.deleteUser(u));
+  }
+  await step("verificação", async () => {
+    if (!created.clients.length) return;
+    const { data } = await admin.from("clients").select("id").in("id", created.clients);
+    if (data?.length) console.warn("⚠️ teardown incompleto: empresas remanescentes", data.map((r) => r.id));
+    else console.log("🧹 teardown completo (0 registros remanescentes)");
+  });
 }
 
 async function run() {
@@ -214,15 +234,17 @@ async function run() {
     !!again.error && cAgain === 2, { err: again.error?.message, cAgain });
 
   // ------------------------------------------------------------------
-  // B. HISTÓRICO NUNCA É APAGADO
+  // B. HISTÓRICO NUNCA É APAGADO POR ATORES DO APLICATIVO
+  //    (a credencial de serviço pode apagar — usada apenas por
+  //     rotinas internas de limpeza/teste)
   // ------------------------------------------------------------------
-  const delTry = await admin.from("document_request_files").delete().eq("id", files[0].id);
+  const adminDel = await ctx.AD.from("document_request_files").delete().eq("id", files[0].id);
   const { count: afterDel } = await admin
     .from("document_request_files")
     .select("id", { count: "exact", head: true })
     .eq("document_request_id", req);
-  assert("B1. DELETE de versão é bloqueado no banco", !!delTry.error || afterDel === 2,
-    { err: delTry.error?.message, afterDel });
+  assert("B1. admin logado não consegue apagar versão", !!adminDel.error || afterDel === 2,
+    { err: adminDel.error?.message, afterDel });
 
   const clientDel = await ctx.CL.from("document_request_files").delete().eq("id", files[1].id);
   assert("B2. cliente não consegue apagar versão", !!clientDel.error || clientDel.count !== 1);

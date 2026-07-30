@@ -70,7 +70,7 @@ async function grantRole(uid, role, isDemo = false) {
 async function mkClient(nome, patch = {}) {
   const { data, error } = await admin
     .from("clients")
-    .insert({ razao_social: nome, status: "ativo", origem_cadastro: "manual", ...patch })
+    .insert({ razao_social: nome, status: "active", origem_cadastro: "manual", ...patch })
     .select("id")
     .single();
   if (error) throw new Error(`mkClient: ${error.message}`);
