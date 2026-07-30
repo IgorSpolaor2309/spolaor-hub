@@ -37,11 +37,6 @@ const currentCompetencia = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 };
-const monthRange = () => {
-  const d = new Date();
-  const start = new Date(d.getFullYear(), d.getMonth(), 1).toISOString();
-  const end = new Date(d.getFullYear(), d.getMonth() + 1, 1).toISOString();
-  return { start, end };
 };
 
 // Fase A2: a fonte oficial do status mensal é public.client_competences.
@@ -95,7 +90,6 @@ function AdminDashboard({ name }: { name: string }) {
       const t = today();
       const in7 = inDays(7);
       const in30 = inDays(30);
-      const { start: monthStart } = monthRange();
       const competencia = currentCompetencia();
       const dFrom = range.from ? `${range.from}T00:00:00` : null;
       const dTo = range.to ? `${range.to}T23:59:59` : null;
