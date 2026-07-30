@@ -11,13 +11,15 @@ import {
   type Candidate,
   type RunSummary,
 } from "@/lib/chat-orphans";
+import { cronUnauthorized, isAuthorizedCronRequest } from "@/lib/cron-auth";
 
 /**
  * Fase D3.2 — reconciliador interno de anexos órfãos de Mensagens.
  *
  * Endpoint técnico, invisível ao usuário (nenhuma tela, menu ou módulo).
  * Chamado apenas pelo pg_cron; autenticado pelo mesmo mecanismo já adotado no
- * projeto (segredo server-only CRON_SECRET) e usando SERVICE_ROLE_KEY somente
+ * projeto (helper central de cron: CRON_SECRET / cron_internal_secret no Vault)
+ * e usando SERVICE_ROLE_KEY somente
  * dentro do handler. Nada vindo do navegador é considerado confiável: nenhum
  * client_id, caminho ou lista de arquivos é aceito no corpo.
  *
@@ -27,26 +29,6 @@ import {
  */
 
 type Admin = SupabaseClient<any, any, any>;
-
-function unauthorized() {
-  return new Response(JSON.stringify({ ok: false, error: "unauthorized" }), {
-    status: 401,
-    headers: { "Content-Type": "application/json" },
-  });
-}
-
-function authorized(request: Request): boolean {
-  const provided =
-    request.headers.get("x-cron-secret") ??
-    (request.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
-  const expected = process.env.CRON_SECRET ?? "";
-  if (expected.length === 0 || provided.length !== expected.length) return false;
-  let diff = 0;
-  for (let i = 0; i < expected.length; i++) {
-    diff |= provided.charCodeAt(i) ^ expected.charCodeAt(i);
-  }
-  return diff === 0;
-}
 
 type StorageEntry = { name: string; id: string | null; created_at?: string | null; metadata?: any };
 
@@ -148,7 +130,7 @@ export const Route = createFileRoute("/api/public/hooks/cleanup-chat-orphans")({
     handlers: {
       POST: async ({ request }) => {
         const startedAt = Date.now();
-        if (!authorized(request)) return unauthorized();
+        if (!(await isAuthorizedCronRequest(request))) return cronUnauthorized();
 
         const raw = (await request.json().catch(() => ({}))) as { mode?: unknown };
         const mode: RunSummary["mode"] = raw?.mode === "effective" ? "effective" : "dry-run";
