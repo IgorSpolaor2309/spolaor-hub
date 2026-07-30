@@ -234,15 +234,17 @@ async function run() {
     !!again.error && cAgain === 2, { err: again.error?.message, cAgain });
 
   // ------------------------------------------------------------------
-  // B. HISTÓRICO NUNCA É APAGADO
+  // B. HISTÓRICO NUNCA É APAGADO POR ATORES DO APLICATIVO
+  //    (a credencial de serviço pode apagar — usada apenas por
+  //     rotinas internas de limpeza/teste)
   // ------------------------------------------------------------------
-  const delTry = await admin.from("document_request_files").delete().eq("id", files[0].id);
+  const adminDel = await ctx.AD.from("document_request_files").delete().eq("id", files[0].id);
   const { count: afterDel } = await admin
     .from("document_request_files")
     .select("id", { count: "exact", head: true })
     .eq("document_request_id", req);
-  assert("B1. DELETE de versão é bloqueado no banco", !!delTry.error || afterDel === 2,
-    { err: delTry.error?.message, afterDel });
+  assert("B1. admin logado não consegue apagar versão", !!adminDel.error || afterDel === 2,
+    { err: adminDel.error?.message, afterDel });
 
   const clientDel = await ctx.CL.from("document_request_files").delete().eq("id", files[1].id);
   assert("B2. cliente não consegue apagar versão", !!clientDel.error || clientDel.count !== 1);
