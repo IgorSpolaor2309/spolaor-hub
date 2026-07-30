@@ -63,7 +63,7 @@ export function ClientCollaboratorsManager({
       const { error } = await supabase.rpc("admin_sync_client_collaborators", {
         p_client_id: clientId,
         p_collaborator_ids: input.ids,
-        p_primary_collaborator_id: input.primaryId,
+        p_primary_collaborator_id: input.primaryId ?? undefined,
       });
       if (error) throw error;
     },
