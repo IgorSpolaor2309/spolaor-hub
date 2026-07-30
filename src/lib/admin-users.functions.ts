@@ -524,6 +524,23 @@ export const adminSetCollaboratorStatus = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await ensureAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Fase E1.2C — inativar não pode deixar empresa ativa sem responsável principal.
+    if (data.status === "inactive") {
+      const { data: primaryLinks } = await supabaseAdmin
+        .from("client_collaborators")
+        .select("client_id, clients(razao_social, status, deleted_at)")
+        .eq("collaborator_id", data.collaborator_id)
+        .eq("is_primary", true);
+      const blocking = (primaryLinks ?? []).filter(
+        (l: any) => l.clients && l.clients.status !== "inactive" && !l.clients.deleted_at,
+      );
+      if (blocking.length) {
+        const nomes = blocking.map((l: any) => l.clients?.razao_social ?? l.client_id).join(", ");
+        throw new Error(
+          `Este colaborador é responsável principal de: ${nomes}. Defina outro responsável principal nessas empresas antes de inativá-lo.`,
+        );
+      }
+    }
     const { error } = await supabaseAdmin
       .from("collaborators")
       .update({ status: data.status })
