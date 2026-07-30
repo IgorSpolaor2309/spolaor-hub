@@ -79,12 +79,18 @@ export function legacyDestination(
   };
 
   if (audience === "client") {
-    if (route !== "/solicitacoes") return null;
+    if (route === "/validades") {
+      return {
+        to: "/meus-documentos",
+        search: clean({ section: "historico", ...carry }),
+      };
+    }
     return {
       to: "/meus-documentos",
       search: clean({ section: "precisa_enviar", ...carry }),
     };
   }
+
 
   return {
     to: "/documentos",
