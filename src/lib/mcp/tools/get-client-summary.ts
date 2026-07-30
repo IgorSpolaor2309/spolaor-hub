@@ -99,17 +99,10 @@ export default defineTool({
       .is("deleted_at", null)
       .eq("status", "concluido");
 
-    const interactionsP = supabase
-      .from("interactions")
-      .select("id, tipo, descricao, created_at")
-      .eq("client_id", client_id)
-      .order("created_at", { ascending: false })
-      .limit(5);
-
     const [
-      fiscal, collabs, pending, processes, requests, guides, docsRecent, chkTotal, chkDone, interactions,
+      fiscal, collabs, pending, processes, requests, guides, docsRecent, chkTotal, chkDone,
     ] = await Promise.all([
-      fiscalP, collabsP, pendingP, processesP, requestsP, guidesP, docsRecentP, checklistTotalP, checklistDoneP, interactionsP,
+      fiscalP, collabsP, pendingP, processesP, requestsP, guidesP, docsRecentP, checklistTotalP, checklistDoneP,
     ]);
 
     const responsaveis =
@@ -138,7 +131,10 @@ export default defineTool({
       guias_proximas_vencimento: guides.count ?? 0,
       documentos_recentes: docsRecent.count ?? 0,
       checklist: { total, concluidos: done, progresso_pct: progress },
-      ultimas_interacoes: interactions.data ?? [],
+      // @deprecated Fase D2.2A — registro manual de interações desativado.
+      // Campo mantido apenas por compatibilidade do contrato MCP; sempre [].
+      // Será removido em uma revisão futura do contrato.
+      ultimas_interacoes: [] as Array<never>,
     };
 
     return {
