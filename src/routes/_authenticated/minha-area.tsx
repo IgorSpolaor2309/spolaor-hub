@@ -128,8 +128,8 @@ function CurrentCompetenceBlock({ clientId }: { clientId: string }) {
       ) : q.data ? (
         <>
           <div className="mt-2 flex items-center gap-2">
-            <Progress value={q.computeProgress(progressInputsFromPortal(data.progress_inputs)).percent} className="h-2 flex-1" />
-            <div className="text-sm font-semibold">{q.computeProgress(progressInputsFromPortal(data.progress_inputs)).percent}%</div>
+            <Progress value={computeProgress(progressInputsFromPortal(q.data.progress_inputs)).percent} className="h-2 flex-1" />
+            <div className="text-sm font-semibold">{computeProgress(progressInputsFromPortal(q.data.progress_inputs)).percent}%</div>
           </div>
           {q.data.reopened && (
             <div className="mt-1 text-[11px] text-orange-700">
