@@ -184,7 +184,7 @@ function MyMonthDetailPage() {
                         </Button>
                       ) : (
                         <Button asChild size="sm">
-                          <Link to="/solicitacoes" search={{ client: clientId, comp: competence } as any}>Abrir</Link>
+                          <Link to="/meus-documentos" search={{ section: "precisa_enviar", client: clientId, comp: competence } as any}>Abrir</Link>
                         </Button>
                       )}
                     </li>
@@ -361,7 +361,7 @@ function RequestGroup({
       {items.length > 6 && (
         <div className="mt-1 text-right">
           <Button asChild size="sm" variant="ghost">
-            <Link to="/solicitacoes" search={{ client: clientId, comp: competence } as any}>
+            <Link to="/meus-documentos" search={{ section: "precisa_enviar", client: clientId, comp: competence } as any}>
               Ver todas <ArrowRight className="ml-1 h-3.5 w-3.5" />
             </Link>
           </Button>

@@ -41,6 +41,7 @@ type Item = {
   statusTone: string;
   prioridade: string | null;
   link: string;
+  linkSearch?: Record<string, string | undefined>;
   rawId: string;
 };
 
@@ -159,7 +160,8 @@ function TasksPage() {
           status: r.status,
           statusTone: statusTone("solicitacao", r.status, r.prazo),
           prioridade: null,
-          link: "/solicitacoes",
+          link: "/documentos",
+          linkSearch: { tab: "aguardando_cliente", client: r.client_id ?? undefined },
           rawId: r.id,
         });
       }
@@ -195,7 +197,8 @@ function TasksPage() {
           status: r.data_validade && r.data_validade < t ? "vencido" : "a vencer",
           statusTone: statusTone("validade", "", r.data_validade),
           prioridade: null,
-          link: "/validades",
+          link: "/documentos",
+          linkSearch: { tab: "vencendo", client: r.client_id ?? undefined },
           rawId: r.id,
         });
       }
@@ -317,7 +320,7 @@ function TasksPage() {
                     <td className="text-right">
                       <div className="flex justify-end gap-1">
                         <Button asChild size="sm" variant="ghost">
-                          <Link to={i.link as any}>
+                          <Link to={i.link as any} search={(i.linkSearch ?? {}) as any}>
                             <ExternalLink className="h-3.5 w-3.5" />
                           </Link>
                         </Button>

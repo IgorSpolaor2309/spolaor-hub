@@ -191,7 +191,7 @@ function CompetenciaDetailPage() {
                 label={`${r.proc_atrasados} processo(s) atrasado(s)`} icon={<Workflow className="h-4 w-4" />} tone="danger" />
             )}
             {r.sol_aguardando_cliente > 0 && (
-              <ShortcutLink to="/solicitacoes" params={{ client: clientId, comp: competence }}
+              <ShortcutLink to="/documentos" params={{ tab: "aguardando_cliente", client: clientId, comp: competence }}
                 label={`${r.sol_aguardando_cliente} solicitação(ões) aguardando cliente`} icon={<Inbox className="h-4 w-4" />} tone="warn" />
             )}
           </div>
@@ -239,8 +239,8 @@ function CompetenciaDetailPage() {
         <ModuleCard
           title="Solicitações"
           icon={<Inbox className="h-4 w-4" />}
-          to="/solicitacoes"
-          params={{ client: clientId, comp: competence }}
+          to="/documentos"
+          params={{ tab: "aguardando_cliente", client: clientId, comp: competence }}
           stats={[
             { label: "Aguardando cliente", value: r.sol_aguardando_cliente },
             { label: "Em análise", value: r.sol_em_analise },
@@ -322,7 +322,7 @@ function ModuleCard({
 }: {
   title: string;
   icon: React.ReactNode;
-  to: "/checklist" | "/pendencias" | "/solicitacoes" | "/documentos" | "/guias" | "/processos";
+  to: "/checklist" | "/pendencias" | "/documentos" | "/guias" | "/processos";
   params: Record<string, string>;
   stats: { label: string; value: number; tone?: "danger" }[];
   summary?: string;
@@ -353,7 +353,7 @@ function ModuleCard({
 function ShortcutLink({
   to, params, label, icon, tone,
 }: {
-  to: "/pendencias" | "/guias" | "/processos" | "/solicitacoes";
+  to: "/pendencias" | "/guias" | "/processos" | "/documentos";
   params: Record<string, string>;
   label: string;
   icon: React.ReactNode;

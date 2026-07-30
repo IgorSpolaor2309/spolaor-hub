@@ -66,7 +66,7 @@ function MyAreaPage() {
                 <CurrentCompetenceBlock clientId={c.id} />
 
                 <div className="mt-4 flex flex-wrap gap-3 text-sm">
-                  <Link to="/solicitacoes" search={{ client: undefined, comp: undefined }} className="inline-flex items-center gap-1 text-primary hover:underline">
+                  <Link to="/meus-documentos" search={{ section: "precisa_enviar", client: c.id } as any} className="inline-flex items-center gap-1 text-primary hover:underline">
                     <FileText className="h-3.5 w-3.5" /> Solicitações
                   </Link>
                   <Link to="/guias" search={{ client: undefined, comp: undefined }} className="inline-flex items-center gap-1 text-primary hover:underline">
