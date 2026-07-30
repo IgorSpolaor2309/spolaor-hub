@@ -11,7 +11,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { clientLabel } from "@/lib/client-display";
 import { formatCompetenciaLong, isValidCompetencia, competenciaBounds } from "@/lib/competencia";
 import { formatBR } from "@/lib/dates";
-import { computeProgress, computeSituacao } from "./competencias";
+import { computeProgress, computeSituacao, type CompetenceOverviewRow } from "@/lib/competence-progress";
 import { CompetenceCyclePanel } from "@/components/sc/CompetenceCyclePanel";
 import {
   Layers, AlertTriangle, ClipboardList, ListChecks, Inbox, FileText, Receipt, Workflow,
@@ -29,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/competencias_/$clientId/$c
   ),
 });
 
-type OverviewRow = Parameters<typeof computeProgress>[0];
+type OverviewRow = CompetenceOverviewRow;
 
 function CompetenciaDetailPage() {
   const { clientId, competence } = Route.useParams();

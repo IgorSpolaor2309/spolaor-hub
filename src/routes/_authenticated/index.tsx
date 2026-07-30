@@ -21,6 +21,8 @@ import { toast } from "sonner";
 import { formatBR, todayLocalYmd, localYmdInDays } from "@/lib/dates";
 import { OFFICIAL_LABEL, OFFICIAL_TONE, type OfficialStatus } from "@/lib/competence-status";
 import { clientStatusLabel, clientStatusTone } from "@/lib/competence-client-labels";
+import { TAX_GUIDE_CLOSED_STATUSES_PG } from "@/lib/competence-progress";
+
 
 
 export const Route = createFileRoute("/_authenticated/")({
@@ -34,12 +36,6 @@ const inDays = (n: number) => localYmdInDays(n);
 const currentCompetencia = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-};
-const monthRange = () => {
-  const d = new Date();
-  const start = new Date(d.getFullYear(), d.getMonth(), 1).toISOString();
-  const end = new Date(d.getFullYear(), d.getMonth() + 1, 1).toISOString();
-  return { start, end };
 };
 
 // Fase A2: a fonte oficial do status mensal é public.client_competences.
@@ -93,7 +89,6 @@ function AdminDashboard({ name }: { name: string }) {
       const t = today();
       const in7 = inDays(7);
       const in30 = inDays(30);
-      const { start: monthStart } = monthRange();
       const competencia = currentCompetencia();
       const dFrom = range.from ? `${range.from}T00:00:00` : null;
       const dTo = range.to ? `${range.to}T23:59:59` : null;
@@ -112,7 +107,7 @@ function AdminDashboard({ name }: { name: string }) {
         recentEvents,
         unassignedClients,
         collabTaskCounts,
-        clientsActiveForMonth, docsThisMonth, monthStatuses,
+        clientsActiveForMonth, monthOverview, monthStatuses,
       ] = await Promise.all([
         supabase.from("clients").select("id", { head: true, count: "exact" }).eq("status", "active").is("deleted_at", null),
         supabase.from("collaborators").select("id", { head: true, count: "exact" }).eq("status", "active"),
@@ -120,8 +115,8 @@ function AdminDashboard({ name }: { name: string }) {
         scope(supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).eq("prazo", t).not("status", "in", "(concluida,cancelada)")),
         scope(supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("status", ["aguardando", "reenviar"])),
         scope(supabase.from("documents").select("id", { head: true, count: "exact" }).in("status", ["recebido", "em_analise"])),
-        scope(supabase.from("tax_guides").select("id", { head: true, count: "exact" }).gte("vencimento", t).lte("vencimento", in7).not("status", "in", "(paga,cancelada)")),
-        scope(supabase.from("tax_guides").select("id", { head: true, count: "exact" }).lt("vencimento", t).not("status", "in", "(paga,cancelada)")),
+        scope(supabase.from("tax_guides").select("id", { head: true, count: "exact" }).gte("vencimento", t).lte("vencimento", in7).not("status", "in", TAX_GUIDE_CLOSED_STATUSES_PG)),
+        scope(supabase.from("tax_guides").select("id", { head: true, count: "exact" }).lt("vencimento", t).not("status", "in", TAX_GUIDE_CLOSED_STATUSES_PG)),
         supabase.from("documents").select("id, nome, data_validade, client_id, clients(razao_social)")
           .not("data_validade", "is", null).gte("data_validade", t).lte("data_validade", in30)
           .order("data_validade", { ascending: true }).limit(10),
@@ -130,12 +125,14 @@ function AdminDashboard({ name }: { name: string }) {
         supabase.from("clients").select("id, razao_social, client_collaborators(collaborator_id)").eq("status", "active").is("deleted_at", null),
         supabase.from("pending_tasks").select("collaborator_id").not("status", "in", "(concluida,cancelada)").not("collaborator_id", "is", null),
         supabase.from("clients").select("id, razao_social").eq("status", "active").is("deleted_at", null),
-        supabase.from("documents").select("client_id").gte("created_at", monthStart),
+        // Fase B2: fonte única dos contadores do mês (mesma de /competencias).
+        supabase.rpc("get_competence_overview", { p_competence: competencia }),
         // Fonte oficial do status mensal (Fase A2): client_competences.
         supabase.from("client_competences").select("client_id, status, competence").eq("competence", competencia),
 
       ]);
-      const failures = [clients, collabs, tasksOverdue, tasksToday, reqPending, docsAnalysis, guidesSoon, guidesOverdue, certsSoon, recentEvents, unassignedClients, collabTaskCounts, clientsActiveForMonth, docsThisMonth, monthStatuses].filter((r) => r.error);
+      const failures = [clients, collabs, tasksOverdue, tasksToday, reqPending, docsAnalysis, guidesSoon, guidesOverdue, certsSoon, recentEvents, unassignedClients, collabTaskCounts, clientsActiveForMonth, monthOverview, monthStatuses].filter((r) => r.error);
+
       if (failures.length) console.warn("[dashboard-admin] consultas parciais falharam", failures.map((r) => r.error?.message));
 
       const clientsNoCollab = (unassignedClients.data ?? []).filter((c: any) => !(c.client_collaborators ?? []).length).slice(0, 8);
@@ -156,8 +153,14 @@ function AdminDashboard({ name }: { name: string }) {
       });
 
 
-      const docsByClient = new Set((docsThisMonth.data ?? []).map((d: any) => d.client_id));
-      const clientsNoDocs = (clientsActiveForMonth.data ?? []).filter((c: any) => !docsByClient.has(c.id)).slice(0, 8);
+      // Fase B2: "sem documentos do mês" usa doc_total da visão de competências
+      // (competência AAAA-MM), não mais uma contagem por created_at.
+      const overviewRows = ((monthOverview as any)?.data ?? []) as { client_id: string; razao_social: string; doc_total: number }[];
+      const clientsNoDocs = overviewRows
+        .filter((r) => (r.doc_total ?? 0) === 0)
+        .slice(0, 8)
+        .map((r) => ({ id: r.client_id, razao_social: r.razao_social }));
+
 
       // Fase A2: máquina oficial de estados. "completed" = concluída.
       // Tudo o que não está concluído continua em aberto para a equipe.
@@ -341,7 +344,7 @@ function CollabDashboard({ name, userId }: { name: string; userId: string }) {
         scope(supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).in("client_id", ids).eq("prazo", t).not("status", "in", "(concluida,cancelada)")),
         scope(supabase.from("documents").select("id", { head: true, count: "exact" }).in("client_id", ids).in("status", ["recebido", "em_analise"])),
         scope(supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("client_id", ids).eq("status", "recebido")),
-        scope(supabase.from("tax_guides").select("id", { head: true, count: "exact" }).in("client_id", ids).gte("vencimento", t).lte("vencimento", in7).not("status", "in", "(paga,cancelada)")),
+        scope(supabase.from("tax_guides").select("id", { head: true, count: "exact" }).in("client_id", ids).gte("vencimento", t).lte("vencimento", in7).not("status", "in", TAX_GUIDE_CLOSED_STATUSES_PG)),
         scope(supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("client_id", ids).in("status", ["aguardando", "reenviar"])),
         scope(supabase.from("timeline_events").select("id, descricao, created_at, clients(razao_social)").in("client_id", ids).order("created_at", { ascending: false }).limit(6)),
       ]);
@@ -382,7 +385,7 @@ function CollabDashboard({ name, userId }: { name: string; userId: string }) {
         <StatCard icon={AlertTriangle} label="Minhas vencidas" value={data?.tasksOverdue ?? "—"} accent="bg-destructive/10 text-destructive" to="/pendencias" />
         <StatCard icon={Clock} label="Pendências de hoje" value={data?.tasksToday ?? "—"} accent="bg-amber-100 text-amber-800" to="/pendencias" />
         <StatCard icon={FileText} label="Docs para analisar" value={data?.docsAnalysis ?? "—"} accent="bg-blue-100 text-blue-800" to="/documentos" />
-        <StatCard icon={Inbox} label="Empresas aguardando retorno" value={data?.awaiting ?? "—"} accent="bg-sky-100 text-sky-800" to="/solicitacoes" />
+        <StatCard icon={Inbox} label="Solicitações recebidas para análise" value={data?.awaiting ?? "—"} accent="bg-sky-100 text-sky-800" to="/solicitacoes" />
         <StatCard icon={Receipt} label="Guias vencendo (7 dias)" value={data?.guidesSoon ?? "—"} accent="bg-orange-100 text-orange-800" to="/guias" />
         <StatCard icon={Inbox} label="Solicitações pendentes" value={data?.reqPending ?? "—"} accent="bg-secondary/10 text-secondary" to="/solicitacoes" />
         <StatCard icon={Users} label="Empresas vinculadas" value={data?.clients ?? "—"} to="/clientes" />
@@ -473,8 +476,8 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
         Promise.all(reqCalls),
         scope(supabase.from("documents").select("id, nome, status, created_at, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(5)),
         scope(supabase.from("pending_tasks").select("id, titulo, prazo, status, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).not("status", "in", "(concluida,cancelada)").order("prazo", { ascending: true }).limit(8)),
-        supabase.from("tax_guides").select("id, tipo, vencimento, valor, status, storage_path, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).not("status", "in", "(paga,cancelada)").order("vencimento", { ascending: true }).limit(8),
-        supabase.from("tax_guides").select("id", { head: true, count: "exact" }).in("client_id", ids).gte("vencimento", t).lte("vencimento", in7).not("status", "in", "(paga,cancelada)"),
+        supabase.from("tax_guides").select("id, tipo, vencimento, valor, status, storage_path, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).not("status", "in", TAX_GUIDE_CLOSED_STATUSES_PG).order("vencimento", { ascending: true }).limit(8),
+        supabase.from("tax_guides").select("id", { head: true, count: "exact" }).in("client_id", ids).gte("vencimento", t).lte("vencimento", in7).not("status", "in", TAX_GUIDE_CLOSED_STATUSES_PG),
         // Fase A2: fonte oficial segura para o cliente (mesma usada em /meu-mes).
         !isAll && primary
           ? supabase.rpc("get_client_competence_portal", { p_client_id: primary.id, p_competence: competencia })
