@@ -65,7 +65,7 @@ function ValidadesPage() {
 
   const { data: clients = [], error: clientsError } = useQuery({
     queryKey: ["val-clients", userId, role],
-    enabled: ready,
+    enabled: ready && isStaff,
     retry: 1,
     queryFn: async () => {
       const { data, error } = await supabase.from("clients").select("id, razao_social, nome_fantasia, documento").is("deleted_at", null).neq("status", "inactive").order("razao_social");
@@ -76,7 +76,7 @@ function ValidadesPage() {
 
   const { data: docs = [], isLoading, error: docsError } = useQuery({
     queryKey: ["docs-validity", userId, role],
-    enabled: ready,
+    enabled: ready && isStaff,
     retry: 1,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -107,6 +107,10 @@ function ValidadesPage() {
 
 
   if (!ready) return <p className="text-sm text-muted-foreground">Carregando…</p>;
+
+  // Cliente nunca renderiza a tela interna de validades: apenas o estado de
+  // transição enquanto o redirect obrigatório para o Portal acontece.
+  if (!isStaff) return <p className="text-sm text-muted-foreground">Redirecionando…</p>;
 
   return (
     <div>
