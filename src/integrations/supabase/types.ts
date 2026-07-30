@@ -1875,54 +1875,6 @@ export type Database = {
           },
         ]
       }
-      interactions: {
-        Row: {
-          actor_profile_id: string | null
-          anexos: Json | null
-          client_id: string
-          created_at: string
-          descricao: string
-          id: string
-          tipo: string
-          updated_at: string
-        }
-        Insert: {
-          actor_profile_id?: string | null
-          anexos?: Json | null
-          client_id: string
-          created_at?: string
-          descricao: string
-          id?: string
-          tipo: string
-          updated_at?: string
-        }
-        Update: {
-          actor_profile_id?: string | null
-          anexos?: Json | null
-          client_id?: string
-          created_at?: string
-          descricao?: string
-          id?: string
-          tipo?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "interactions_actor_profile_id_fkey"
-            columns: ["actor_profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "interactions_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       legacy_route_access_log: {
         Row: {
           action: string
