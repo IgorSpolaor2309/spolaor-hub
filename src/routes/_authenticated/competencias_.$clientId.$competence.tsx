@@ -11,7 +11,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { clientLabel } from "@/lib/client-display";
 import { formatCompetenciaLong, isValidCompetencia, competenciaBounds } from "@/lib/competencia";
 import { formatBR } from "@/lib/dates";
-import { computeProgress, computeSituacao, type CompetenceOverviewRow } from "@/lib/competence-progress";
+import { computeProgress, computeSituacao, progressInputsFromOverview, type CompetenceOverviewRow } from "@/lib/competence-progress";
 import { CompetenceCyclePanel } from "@/components/sc/CompetenceCyclePanel";
 import {
   Layers, AlertTriangle, ClipboardList, ListChecks, Inbox, FileText, Receipt, Workflow,
@@ -109,7 +109,7 @@ function CompetenciaDetailPage() {
     );
   }
 
-  const { percent, applicable } = computeProgress(r);
+  const { percent, applicable } = computeProgress(progressInputsFromOverview(r));
   const situacao = computeSituacao(r);
 
   const alerts: string[] = [];

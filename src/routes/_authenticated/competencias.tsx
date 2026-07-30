@@ -19,7 +19,7 @@ import {
 } from "@/lib/competencia";
 import { OFFICIAL_LABEL, OFFICIAL_TONE, type CompetenceRow, type OfficialStatus } from "@/lib/competence-status";
 import {
-  computeProgress, computeSituacao, SITUACAO_LABEL,
+  computeProgress, computeSituacao, progressInputsFromOverview, SITUACAO_LABEL,
   type CompetenceOverviewRow, type Situacao,
 } from "@/lib/competence-progress";
 
@@ -146,7 +146,7 @@ function CompetenciasPage() {
         return true;
       })
       .map((r) => {
-        const { percent, applicable } = computeProgress(r);
+        const { percent, applicable } = computeProgress(progressInputsFromOverview(r));
         const situacao = computeSituacao(r);
         return { r, percent, applicable, situacao };
       })
