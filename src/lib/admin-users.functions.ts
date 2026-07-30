@@ -228,26 +228,27 @@ export const adminCreateUser = createServerFn({ method: "POST" })
         }
       }
 
-      // vínculos cliente-colaborador
+      // vínculos cliente-colaborador — sempre pela RPC canônica, que aplica as
+      // regras de responsável principal (Fase E1.2C).
       if (data.role === "collaborator" && collaboratorIdResolved && data.assign_client_ids?.length) {
-        const rows = data.assign_client_ids.map((cid) => ({
-          collaborator_id: collaboratorIdResolved!,
-          client_id: cid,
-        }));
-        const { error } = await supabaseAdmin
-          .from("client_collaborators")
-          .upsert(rows, { onConflict: "client_id,collaborator_id", ignoreDuplicates: true });
-        if (error) throw error;
+        for (const cid of data.assign_client_ids) {
+          const { error } = await supabaseAdmin.rpc("admin_set_collaborator_client_link", {
+            p_client_id: cid,
+            p_collaborator_id: collaboratorIdResolved!,
+            p_link: true,
+          });
+          if (error) throw error;
+        }
       }
       if (data.role === "client" && clientIdResolved && data.assign_collaborator_ids?.length) {
-        const rows = data.assign_collaborator_ids.map((cid) => ({
-          client_id: clientIdResolved!,
-          collaborator_id: cid,
-        }));
-        const { error } = await supabaseAdmin
-          .from("client_collaborators")
-          .upsert(rows, { onConflict: "client_id,collaborator_id", ignoreDuplicates: true });
-        if (error) throw error;
+        for (const cid of data.assign_collaborator_ids) {
+          const { error } = await supabaseAdmin.rpc("admin_set_collaborator_client_link", {
+            p_client_id: clientIdResolved!,
+            p_collaborator_id: cid,
+            p_link: true,
+          });
+          if (error) throw error;
+        }
       }
     } catch (linkErr: any) {
       // rollback do usuário se o cadastro vinculado falhar
