@@ -170,8 +170,7 @@ function ClientDetail() {
           <TabsTrigger value="pendencias">Pendências</TabsTrigger>
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
           <TabsTrigger value="checklists">Checklists</TabsTrigger>
-          <TabsTrigger value="timeline">Timeline</TabsTrigger>
-          <TabsTrigger value="interacoes">Interações</TabsTrigger>
+          <TabsTrigger value="timeline">Histórico de atividades</TabsTrigger>
           <TabsTrigger value="requisitos">Requisitos</TabsTrigger>
           {role !== "client" && <TabsTrigger value="fiscal">Dados fiscais</TabsTrigger>}
           {role === "admin" && <TabsTrigger value="equipe">Colaboradores responsáveis</TabsTrigger>}
@@ -214,9 +213,8 @@ function ClientDetail() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="interacoes">
-          <InteractionsTab clientId={id} list={inters} canCreate={role !== "client"} onChange={() => qc.invalidateQueries({ queryKey: ["client-inter", id] })} />
-        </TabsContent>
+
+
 
         <TabsContent value="requisitos">
           <RequirementsTab clientId={id} list={reqs} canManage={role === "admin"} onChange={() => qc.invalidateQueries({ queryKey: ["client-reqs", id] })} />
