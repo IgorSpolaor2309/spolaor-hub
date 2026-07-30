@@ -3501,7 +3501,9 @@ export type Database = {
           checklist_total: number
           client_id: string
           doc_total: number
+          guias_cancelado: number
           guias_com_comprovante: number
+          guias_concluidas: number
           guias_proximas: number
           guias_sem_comprovante: number
           guias_total: number
@@ -3519,6 +3521,7 @@ export type Database = {
           razao_social: string
           responsavel_nome: string
           sol_aguardando_cliente: number
+          sol_cancelado: number
           sol_concluidas: number
           sol_em_analise: number
           sol_total: number
