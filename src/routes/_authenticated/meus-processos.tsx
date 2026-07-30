@@ -93,7 +93,7 @@ function MeusProcessosPage() {
 
   return (
     <div>
-      <PageHeader title="Meus processos" description="Etapas de processos atribuídas a você." />
+      <PageHeader title="Minhas etapas" description="Etapas dos processos atribuídas a você." />
 
       <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
         {[

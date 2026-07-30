@@ -171,6 +171,10 @@ function ProcessesPage() {
         title="Processos"
         description="Acompanhamento de serviços extraordinários das empresas."
         action={
+          <div className="flex flex-wrap items-center gap-2">
+          <Button asChild variant="outline">
+            <Link to="/meus-processos"><ListChecks className="mr-2 h-4 w-4" /> Minhas etapas</Link>
+          </Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button><Plus className="mr-2 h-4 w-4" /> Novo processo</Button>
