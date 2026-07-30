@@ -57,6 +57,18 @@ export function isLegacyRoute(route: string): route is LegacyRoute {
 }
 
 /**
+ * Rotas legadas internas que o perfil cliente nunca pode renderizar,
+ * independentemente da feature flag de transição.
+ *
+ * `/validades` é tela interna de staff: o cliente é sempre redirecionado
+ * para `/meus-documentos?section=historico`.
+ */
+export function isForcedClientRedirect(route: LegacyRoute, audience: LegacyAudience): boolean {
+  return audience === "client" && route === "/validades";
+}
+
+
+/**
  * Destino oficial de uma rota legada, resolvido por perfil.
  *
  * staff:
