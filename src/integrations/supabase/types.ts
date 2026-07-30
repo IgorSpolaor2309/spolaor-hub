@@ -3008,6 +3008,19 @@ export type Database = {
         Args: { _source: string; _target: string }
         Returns: Json
       }
+      admin_list_client_collaborator_options: {
+        Args: { p_client_id: string }
+        Returns: {
+          collaborator_id: string
+          eligible_primary: boolean
+          email: string
+          ineligible_reason: string
+          is_primary: boolean
+          linked: boolean
+          nome: string
+          status: string
+        }[]
+      }
       admin_process_models_stats: {
         Args: never
         Returns: {
