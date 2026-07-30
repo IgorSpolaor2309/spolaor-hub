@@ -62,15 +62,6 @@ export const DOC_STATUSES = [
   { value: "recusado", label: "Recusado" },
 ] as const;
 
-export const INTERACTION_TYPES = [
-  { value: "ligacao", label: "Ligação" },
-  { value: "whatsapp", label: "WhatsApp" },
-  { value: "email", label: "E-mail" },
-  { value: "reuniao", label: "Reunião" },
-  { value: "observacao", label: "Observação interna" },
-  { value: "outro", label: "Outro" },
-] as const;
-
 export const CLIENT_TYPES = [
   { value: "comercio", label: "Comércio" },
   { value: "servicos", label: "Serviços" },
