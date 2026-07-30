@@ -472,7 +472,7 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
       const reqCalls = ids.map((cid) =>
         supabase.rpc("client_list_document_requests", { p_client_id: cid, p_limit: 20, p_offset: 0 })
       );
-      const [reqResults, sent, openTasks, guidesAvail, guidesSoon, monthStatus, events] = await Promise.all([
+      const [reqResults, sent, openTasks, guidesAvail, guidesSoon, monthStatus] = await Promise.all([
         Promise.all(reqCalls),
         scope(supabase.from("documents").select("id, nome, status, created_at, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(5)),
         scope(supabase.from("pending_tasks").select("id, titulo, prazo, status, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).not("status", "in", "(concluida,cancelada)").order("prazo", { ascending: true }).limit(8)),
@@ -482,10 +482,11 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
         !isAll && primary
           ? supabase.rpc("get_client_competence_portal", { p_client_id: primary.id, p_competence: competencia })
           : Promise.resolve({ data: null }),
-
-        scope(supabase.from("interactions").select("id, tipo, descricao, created_at, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(5)),
       ]);
-      const failures = [sent, openTasks, guidesAvail, guidesSoon, monthStatus, events].filter((r: any) => r.error);
+      // Fase D2.2A — registro manual de interações desativado; card fica sem itens.
+      const events: any[] = [];
+      const failures = [sent, openTasks, guidesAvail, guidesSoon, monthStatus].filter((r: any) => r.error);
+
       if (failures.length) console.warn("[dashboard-client] consultas parciais falharam", failures.map((r: any) => r.error?.message));
       const companyLabel = new Map<string, any>();
       for (const c of myCompanies as any[]) companyLabel.set(c.id, { razao_social: c.razao_social, nome_fantasia: c.nome_fantasia });
