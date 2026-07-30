@@ -626,51 +626,6 @@ export type Database = {
           },
         ]
       }
-      client_month_status: {
-        Row: {
-          client_id: string
-          competencia: string
-          created_at: string
-          id: string
-          status: string
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          client_id: string
-          competencia: string
-          created_at?: string
-          id?: string
-          status?: string
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          client_id?: string
-          competencia?: string
-          created_at?: string
-          id?: string
-          status?: string
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "client_month_status_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "client_month_status_updated_by_fkey"
-            columns: ["updated_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       client_users: {
         Row: {
           ativo: boolean
