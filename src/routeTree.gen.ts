@@ -47,6 +47,7 @@ import { Route as AuthenticatedClientesIdRouteImport } from './routes/_authentic
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicHooksCompetenceMonthlyGenerationRouteImport } from './routes/api/public/hooks/competence-monthly-generation'
+import { Route as ApiPublicHooksCleanupChatOrphansRouteImport } from './routes/api/public/hooks/cleanup-chat-orphans'
 import { Route as AuthenticatedMeuMesClientIdCompetenceRouteImport } from './routes/_authenticated/meu-mes_.$clientId.$competence'
 import { Route as AuthenticatedCompetenciasClientIdCompetenceRouteImport } from './routes/_authenticated/competencias_.$clientId.$competence'
 
@@ -257,6 +258,12 @@ const ApiPublicHooksCompetenceMonthlyGenerationRoute =
     path: '/api/public/hooks/competence-monthly-generation',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksCleanupChatOrphansRoute =
+  ApiPublicHooksCleanupChatOrphansRouteImport.update({
+    id: '/api/public/hooks/cleanup-chat-orphans',
+    path: '/api/public/hooks/cleanup-chat-orphans',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedMeuMesClientIdCompetenceRoute =
   AuthenticatedMeuMesClientIdCompetenceRouteImport.update({
     id: '/meu-mes_/$clientId/$competence',
@@ -309,6 +316,7 @@ export interface FileRoutesByFullPath {
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
   '/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/meu-mes/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
+  '/api/public/hooks/cleanup-chat-orphans': typeof ApiPublicHooksCleanupChatOrphansRoute
   '/api/public/hooks/competence-monthly-generation': typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
 }
 export interface FileRoutesByTo {
@@ -350,6 +358,7 @@ export interface FileRoutesByTo {
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
   '/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/meu-mes/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
+  '/api/public/hooks/cleanup-chat-orphans': typeof ApiPublicHooksCleanupChatOrphansRoute
   '/api/public/hooks/competence-monthly-generation': typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
 }
 export interface FileRoutesById {
@@ -393,6 +402,7 @@ export interface FileRoutesById {
   '/_authenticated/processos/$id': typeof AuthenticatedProcessosIdRoute
   '/_authenticated/competencias_/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/_authenticated/meu-mes_/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
+  '/api/public/hooks/cleanup-chat-orphans': typeof ApiPublicHooksCleanupChatOrphansRoute
   '/api/public/hooks/competence-monthly-generation': typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
 }
 export interface FileRouteTypes {
@@ -436,6 +446,7 @@ export interface FileRouteTypes {
     | '/processos/$id'
     | '/competencias/$clientId/$competence'
     | '/meu-mes/$clientId/$competence'
+    | '/api/public/hooks/cleanup-chat-orphans'
     | '/api/public/hooks/competence-monthly-generation'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -477,6 +488,7 @@ export interface FileRouteTypes {
     | '/processos/$id'
     | '/competencias/$clientId/$competence'
     | '/meu-mes/$clientId/$competence'
+    | '/api/public/hooks/cleanup-chat-orphans'
     | '/api/public/hooks/competence-monthly-generation'
   id:
     | '__root__'
@@ -519,6 +531,7 @@ export interface FileRouteTypes {
     | '/_authenticated/processos/$id'
     | '/_authenticated/competencias_/$clientId/$competence'
     | '/_authenticated/meu-mes_/$clientId/$competence'
+    | '/api/public/hooks/cleanup-chat-orphans'
     | '/api/public/hooks/competence-monthly-generation'
   fileRoutesById: FileRoutesById
 }
@@ -531,6 +544,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiPublicHooksCleanupChatOrphansRoute: typeof ApiPublicHooksCleanupChatOrphansRoute
   ApiPublicHooksCompetenceMonthlyGenerationRoute: typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
 }
 
@@ -802,6 +816,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksCompetenceMonthlyGenerationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/cleanup-chat-orphans': {
+      id: '/api/public/hooks/cleanup-chat-orphans'
+      path: '/api/public/hooks/cleanup-chat-orphans'
+      fullPath: '/api/public/hooks/cleanup-chat-orphans'
+      preLoaderRoute: typeof ApiPublicHooksCleanupChatOrphansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/meu-mes_/$clientId/$competence': {
       id: '/_authenticated/meu-mes_/$clientId/$competence'
       path: '/meu-mes/$clientId/$competence'
@@ -938,6 +959,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiPublicHooksCleanupChatOrphansRoute: ApiPublicHooksCleanupChatOrphansRoute,
   ApiPublicHooksCompetenceMonthlyGenerationRoute:
     ApiPublicHooksCompetenceMonthlyGenerationRoute,
 }
