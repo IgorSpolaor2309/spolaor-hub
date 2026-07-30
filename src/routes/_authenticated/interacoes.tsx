@@ -400,13 +400,25 @@ function ChatThread({
           const fromStaff = m.sender_role === "admin" || m.sender_role === "collaborator";
           const removeMsg = async () => {
             if (!confirm("Tem certeza que deseja apagar este item enviado por você?")) return;
+            // Fase D3.2 — soft-delete idempotente: só aplica quando ainda não excluída,
+            // preservando o primeiro deleted_at/deleted_by. O objeto físico do anexo é
+            // removido depois pelo reconciliador interno (janela de 24h).
             const { error } = await supabase
               .from("chat_messages")
-              .update({ deleted_at: new Date().toISOString(), deleted_by: currentUserId, body: null, attachment_path: null, attachment_name: null })
-              .eq("id", m.id);
+              .update({
+                deleted_at: new Date().toISOString(),
+                deleted_by: currentUserId,
+                body: null,
+                attachment_path: null,
+                attachment_name: null,
+                attachment_size: null,
+              })
+              .eq("id", m.id)
+              .is("deleted_at", null);
             if (error) toast.error(/row-level security|permission/i.test(error.message) ? "Sem permissão para excluir." : error.message);
             else qc.invalidateQueries({ queryKey: ["chat-msgs", conv.id] });
           };
+
           return (
             <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
               <div
