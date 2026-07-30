@@ -22,7 +22,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { CompetenceStatusInline } from "@/components/sc/CompetenceStatusInline";
 
 import {
-  TASK_STATUSES, TASK_PRIORITIES, DOC_TYPES, DOC_STATUSES, INTERACTION_TYPES, CLIENT_TYPES,
+  TASK_STATUSES, TASK_PRIORITIES, DOC_TYPES, DOC_STATUSES, CLIENT_TYPES,
   DEPARTMENTS, DOC_VALIDITY_CATEGORIES, labelOf,
 } from "@/lib/sc-types";
 import { EditClientDialog } from "@/routes/_authenticated/clientes";
@@ -77,11 +77,8 @@ function ClientDetail() {
     queryFn: async () => (await supabase.from("timeline_events").select("*").eq("client_id", id).order("created_at", { ascending: false })).data ?? [],
   });
 
-  const { data: inters = [] } = useQuery({
-    queryKey: ["client-inter", id],
-    enabled: ready,
-    queryFn: async () => (await supabase.from("interactions").select("*").eq("client_id", id).order("created_at", { ascending: false })).data ?? [],
-  });
+
+
 
   const { data: reqs = [] } = useQuery({
     queryKey: ["client-reqs", id],
@@ -173,8 +170,7 @@ function ClientDetail() {
           <TabsTrigger value="pendencias">Pendências</TabsTrigger>
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
           <TabsTrigger value="checklists">Checklists</TabsTrigger>
-          <TabsTrigger value="timeline">Timeline</TabsTrigger>
-          <TabsTrigger value="interacoes">Interações</TabsTrigger>
+          <TabsTrigger value="timeline">Histórico de atividades</TabsTrigger>
           <TabsTrigger value="requisitos">Requisitos</TabsTrigger>
           {role !== "client" && <TabsTrigger value="fiscal">Dados fiscais</TabsTrigger>}
           {role === "admin" && <TabsTrigger value="equipe">Colaboradores responsáveis</TabsTrigger>}
@@ -217,9 +213,8 @@ function ClientDetail() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="interacoes">
-          <InteractionsTab clientId={id} list={inters} canCreate={role !== "client"} onChange={() => qc.invalidateQueries({ queryKey: ["client-inter", id] })} />
-        </TabsContent>
+
+
 
         <TabsContent value="requisitos">
           <RequirementsTab clientId={id} list={reqs} canManage={role === "admin"} onChange={() => qc.invalidateQueries({ queryKey: ["client-reqs", id] })} />
@@ -443,44 +438,9 @@ function DocsTab({ clientId, docs, userId, onChange }: any) {
   );
 }
 
-/* ---------- Interactions ---------- */
-function InteractionsTab({ clientId, list, canCreate, onChange }: any) {
-  const [form, setForm] = useState({ tipo: "observacao", descricao: "" });
-  const save = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("interactions").insert({ client_id: clientId, ...form });
-      if (error) throw error;
-    },
-    onSuccess: () => { toast.success("Interação registrada"); setForm({ tipo: "observacao", descricao: "" }); onChange(); },
-    onError: (e: any) => toast.error(e.message),
-  });
-  return (
-    <Card className="p-5">
-      {canCreate && (
-        <div className="mb-4 grid gap-3 rounded-md border bg-muted/30 p-3 sm:grid-cols-[180px_1fr_auto] sm:items-end">
-          <div><Label className="text-xs">Tipo</Label>
-            <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{INTERACTION_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div><Label className="text-xs">Descrição</Label><Textarea rows={2} value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} /></div>
-          <Button onClick={() => save.mutate()} disabled={!form.descricao || save.isPending}>Registrar</Button>
-        </div>
-      )}
-      {list.length === 0 ? <EmptyState title="Sem interações" /> : (
-        <ul className="space-y-3">
-          {list.map((i: any) => (
-            <li key={i.id} className="rounded-md border p-3">
-              <div className="text-xs uppercase text-muted-foreground">{labelOf(INTERACTION_TYPES, i.tipo)} · {formatDistanceToNow(new Date(i.created_at), { addSuffix: true, locale: ptBR })}</div>
-              <div className="mt-1 text-sm">{i.descricao}</div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card>
-  );
-}
+/* Fase D2.1 — registro manual de interações removido (public.interactions inerte). */
+
+
 
 /* ---------- Requirements ---------- */
 function RequirementsTab({ clientId, list, canManage, onChange }: any) {

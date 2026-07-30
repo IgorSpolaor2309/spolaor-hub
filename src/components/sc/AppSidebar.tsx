@@ -45,7 +45,7 @@ const SECTIONS: Section[] = [
       { to: "/processos", label: "Processos", icon: Workflow, roles: ["admin", "collaborator"] },
       { to: "/documentos", label: "Documentos", icon: FileText, roles: ["admin", "collaborator"] },
       { to: "/guias", label: "Guias e impostos", icon: Receipt, roles: ["admin", "collaborator", "client"] },
-      { to: "/interacoes", label: "Interações", icon: MessageSquare, roles: ["admin", "collaborator", "client"] },
+      { to: "/interacoes", label: "Mensagens", icon: MessageSquare, roles: ["admin", "collaborator", "client"] },
     ],
   },
   {
