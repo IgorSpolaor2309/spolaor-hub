@@ -611,13 +611,46 @@ function NewClientDialog({ onDone }: { onDone: () => void }) {
               Selecione um ou mais colaboradores responsáveis por esta empresa. Apenas eles terão acesso à comunicação, documentos e pendências do cliente.
             </p>
             <MultiSelect
-              options={(allCollaborators as any[]).map((c) => ({ value: c.id, label: c.nome, hint: c.email }))}
+              options={(allCollaborators as CollaboratorOption[]).map((c) => ({
+                value: c.collaborator_id,
+                label: c.nome,
+                hint: c.email ?? undefined,
+              }))}
               value={collabIds}
-              onChange={setCollabIds}
+              onChange={(v) => {
+                setCollabIds(v);
+                if (primaryId && !v.includes(primaryId)) setPrimaryId(null);
+              }}
               placeholder="Buscar colaborador por nome ou e-mail…"
               emptyMessage="Nenhum colaborador ativo cadastrado."
               noneSelectedMessage="Nenhum colaborador selecionado ainda."
             />
+
+            {collabIds.length > 0 && (
+              <div className="space-y-1 pt-2">
+                <Label className="text-sm font-semibold">
+                  Responsável principal <span className="text-destructive">*</span>
+                </Label>
+                <p className="text-xs text-muted-foreground">{PRIMARY_HINT}</p>
+                <Select
+                  value={primaryResolution.primary ?? ""}
+                  onValueChange={(v) => setPrimaryId(v)}
+                  disabled={eligibleSelected.length === 0}
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+                  <SelectContent>
+                    {(allCollaborators as CollaboratorOption[])
+                      .filter((c) => eligibleSelected.includes(c.collaborator_id))
+                      .map((c) => (
+                        <SelectItem key={c.collaborator_id} value={c.collaborator_id}>{c.nome}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                {primaryResolution.error && (
+                  <p className="text-xs text-destructive">{primaryResolution.error}</p>
+                )}
+              </div>
+            )}
           </div>
         </section>
 
