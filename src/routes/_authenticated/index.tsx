@@ -37,7 +37,6 @@ const currentCompetencia = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 };
-};
 
 // Fase A2: a fonte oficial do status mensal é public.client_competences.
 // Os status internos vivem em competence-status.ts (equipe) e
