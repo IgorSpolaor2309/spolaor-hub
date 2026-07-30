@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useFeatureFlag } from "@/hooks/use-feature-flag";
 import {
   LEGACY_REDIRECT_FLAG,
+  isForcedClientRedirect,
   isLegacyRoute,
   legacyDestination,
   type LegacyAudience,
@@ -11,6 +12,7 @@ import {
   type LegacyRoute,
   type LegacyTelemetryAction,
 } from "@/lib/legacy-routes";
+
 
 /**
  * Fase 7 / C2 — telemetria + redirect controlado por feature flag para as
