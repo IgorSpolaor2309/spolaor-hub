@@ -116,11 +116,13 @@ function RequestsPage() {
 
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
 
-  // Fase 7 — telemetria + redirect controlado por feature flag (staff apenas).
+  // Fase 7 / C2 — telemetria + redirect controlado por feature flag.
+  // Staff → /documentos?tab=aguardando_cliente. Cliente → /meus-documentos?section=precisa_enviar.
+  const legacyAudience = isStaff ? "staff" : "client";
   const legacy = useLegacyRouteDeprecation(
     "/solicitacoes",
     { client: routeSearch.client, comp: routeSearch.comp },
-    { enabled: isStaff },
+    { enabled: !!role, audience: legacyAudience },
   );
   const [open, setOpen] = useState(false);
 
@@ -180,8 +182,8 @@ function RequestsPage() {
 
   return (
     <div>
-      {isStaff && (
-        <LegacyRouteNotice route="/solicitacoes" onOpenCentral={legacy.openCentral} />
+      {!!role && (
+        <LegacyRouteNotice route="/solicitacoes" onOpenCentral={legacy.openCentral} audience={legacyAudience} />
       )}
       <PageHeader
         title={isStaff ? "Solicitações de documentos" : "Minhas solicitações"}

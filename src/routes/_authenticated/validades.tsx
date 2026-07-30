@@ -52,11 +52,11 @@ function ValidadesPage() {
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const [editing, setEditing] = useState<any | null>(null);
 
-  // Fase 7 — telemetria + redirect controlado por feature flag (staff apenas).
+  // Fase 7 / C2 — telemetria + redirect (staff apenas: /validades é staff-only).
   const legacy = useLegacyRouteDeprecation(
     "/validades",
     { client: fClient !== "all" ? fClient : undefined },
-    { enabled: isStaff },
+    { enabled: isStaff, audience: "staff" },
   );
 
   const { data: clients = [], error: clientsError } = useQuery({
@@ -107,7 +107,7 @@ function ValidadesPage() {
   return (
     <div>
       {isStaff && (
-        <LegacyRouteNotice route="/validades" onOpenCentral={legacy.openCentral} />
+        <LegacyRouteNotice route="/validades" onOpenCentral={legacy.openCentral} audience="staff" />
       )}
       <PageHeader
         title="Documentos com validade"
