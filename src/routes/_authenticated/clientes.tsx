@@ -37,7 +37,7 @@ import { AccountLookup, type AccountMatch } from "@/components/sc/AccountLookup"
 import { MultiSelect } from "@/components/sc/MultiSelect";
 import { AlertTriangle, UserCog } from "lucide-react";
 import { ClientCollaboratorsManager } from "@/components/sc/ClientCollaboratorsManager";
-import { PRIMARY_HINT, eligibleWithin, resolvePrimary, type CollaboratorOption } from "@/lib/client-collaborators";
+import { PRIMARY_HINT, carteiraAlert, eligibleWithin, resolvePrimary, type CollaboratorOption } from "@/lib/client-collaborators";
 
 
 export const Route = createFileRoute("/_authenticated/clientes")({
@@ -74,7 +74,7 @@ function ClientsPage() {
       if (isAdmin) return await getAdminClients({});
       const { data, error } = await supabase
         .from("clients")
-        .select("*, client_fiscal_data(regime_tributario, uf, municipio), client_collaborators(collaborator_id, collaborators(id, nome)), client_users(id, ativo), client_commercial(tipo_cliente, plano, status_comercial, periodicidade)")
+        .select("*, client_fiscal_data(regime_tributario, uf, municipio), client_collaborators(collaborator_id, is_primary, collaborators(id, nome)), client_users(id, ativo), client_commercial(tipo_cliente, plano, status_comercial, periodicidade)")
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -330,16 +330,24 @@ function ClientsPage() {
                           <AlertTriangle className="h-3 w-3" /> Empresa sem conta vinculada
                         </Link>
                       )}
-                      {role === "admin" && ((c.client_collaborators ?? []) as any[]).length === 0 && (
-                        <Link
-                          to="/clientes/$id"
-                          params={{ id: c.id }}
-                          className="mt-1 ml-1 inline-flex items-center gap-1 rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-900 hover:bg-amber-100"
-                          title="Vincule um colaborador encarregado na aba Equipe"
-                        >
-                          <UserCog className="h-3 w-3" /> Empresa sem colaborador encarregado
-                        </Link>
-                      )}
+                      {role === "admin" && (() => {
+                        const links = ((c.client_collaborators ?? []) as any[]);
+                        const alerta = carteiraAlert({
+                          linkedCount: links.length,
+                          hasEligiblePrimary: links.some((l) => l.is_primary),
+                        });
+                        if (!alerta) return null;
+                        return (
+                          <Link
+                            to="/clientes/$id"
+                            params={{ id: c.id }}
+                            className="mt-1 ml-1 inline-flex items-center gap-1 rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-900 hover:bg-amber-100"
+                            title="Gerencie a carteira na aba Equipe"
+                          >
+                            <UserCog className="h-3 w-3" /> {alerta.label}
+                          </Link>
+                        );
+                      })()}
 
                     </td>
                     <td className="py-3 pr-4">{labelOf(CLIENT_TYPES, c.tipo)}</td>
