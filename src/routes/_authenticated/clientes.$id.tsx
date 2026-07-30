@@ -22,7 +22,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { CompetenceStatusInline } from "@/components/sc/CompetenceStatusInline";
 
 import {
-  TASK_STATUSES, TASK_PRIORITIES, DOC_TYPES, DOC_STATUSES, INTERACTION_TYPES, CLIENT_TYPES,
+  TASK_STATUSES, TASK_PRIORITIES, DOC_TYPES, DOC_STATUSES, CLIENT_TYPES,
   DEPARTMENTS, DOC_VALIDITY_CATEGORIES, labelOf,
 } from "@/lib/sc-types";
 import { EditClientDialog } from "@/routes/_authenticated/clientes";
