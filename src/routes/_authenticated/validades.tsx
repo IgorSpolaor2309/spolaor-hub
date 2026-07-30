@@ -44,6 +44,7 @@ function statusFromDays(d: number | null) {
 function ValidadesPage() {
   const { role, userId, loading } = useCurrentUser();
   const isStaff = role === "admin" || role === "collaborator";
+  const isClient = role === "client";
   const ready = !loading && !!userId && !!role;
   const qc = useQueryClient();
   const [fClient, setFClient] = useState("all");
@@ -52,12 +53,15 @@ function ValidadesPage() {
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const [editing, setEditing] = useState<any | null>(null);
 
-  // Fase 7 / C2 — telemetria + redirect (staff apenas: /validades é staff-only).
+  // Fase 7 / C2 — telemetria + redirect.
+  // Staff: controlado pela feature flag. Cliente: redirect obrigatório
+  // para /meus-documentos?section=historico (tela interna nunca renderiza).
   const legacy = useLegacyRouteDeprecation(
     "/validades",
     { client: fClient !== "all" ? fClient : undefined },
-    { enabled: isStaff, audience: "staff" },
+    { enabled: isStaff || isClient, audience: isClient ? "client" : "staff" },
   );
+
 
   const { data: clients = [], error: clientsError } = useQuery({
     queryKey: ["val-clients", userId, role],
