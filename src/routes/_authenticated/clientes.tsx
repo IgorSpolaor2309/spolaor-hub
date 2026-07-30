@@ -37,6 +37,7 @@ import { AccountLookup, type AccountMatch } from "@/components/sc/AccountLookup"
 import { MultiSelect } from "@/components/sc/MultiSelect";
 import { AlertTriangle, UserCog } from "lucide-react";
 import { ClientCollaboratorsManager } from "@/components/sc/ClientCollaboratorsManager";
+import { PRIMARY_HINT, eligibleWithin, resolvePrimary, type CollaboratorOption } from "@/lib/client-collaborators";
 
 
 export const Route = createFileRoute("/_authenticated/clientes")({
