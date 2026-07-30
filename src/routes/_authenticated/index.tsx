@@ -351,7 +351,7 @@ function CollabDashboard({ name, userId }: { name: string; userId: string }) {
         scope(supabase.from("pending_tasks").select("id", { head: true, count: "exact" }).in("client_id", ids).eq("prazo", t).not("status", "in", "(concluida,cancelada)")),
         scope(supabase.from("documents").select("id", { head: true, count: "exact" }).in("client_id", ids).in("status", ["recebido", "em_analise"])),
         scope(supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("client_id", ids).eq("status", "recebido")),
-        scope(supabase.from("tax_guides").select("id", { head: true, count: "exact" }).in("client_id", ids).gte("vencimento", t).lte("vencimento", in7).not("status", "in", "(paga,cancelada)")),
+        scope(supabase.from("tax_guides").select("id", { head: true, count: "exact" }).in("client_id", ids).gte("vencimento", t).lte("vencimento", in7).not("status", "in", TAX_GUIDE_CLOSED_STATUSES_PG)),
         scope(supabase.from("document_requests").select("id", { head: true, count: "exact" }).in("client_id", ids).in("status", ["aguardando", "reenviar"])),
         scope(supabase.from("timeline_events").select("id, descricao, created_at, clients(razao_social)").in("client_id", ids).order("created_at", { ascending: false }).limit(6)),
       ]);
@@ -392,7 +392,7 @@ function CollabDashboard({ name, userId }: { name: string; userId: string }) {
         <StatCard icon={AlertTriangle} label="Minhas vencidas" value={data?.tasksOverdue ?? "—"} accent="bg-destructive/10 text-destructive" to="/pendencias" />
         <StatCard icon={Clock} label="Pendências de hoje" value={data?.tasksToday ?? "—"} accent="bg-amber-100 text-amber-800" to="/pendencias" />
         <StatCard icon={FileText} label="Docs para analisar" value={data?.docsAnalysis ?? "—"} accent="bg-blue-100 text-blue-800" to="/documentos" />
-        <StatCard icon={Inbox} label="Empresas aguardando retorno" value={data?.awaiting ?? "—"} accent="bg-sky-100 text-sky-800" to="/solicitacoes" />
+        <StatCard icon={Inbox} label="Solicitações recebidas para análise" value={data?.awaiting ?? "—"} accent="bg-sky-100 text-sky-800" to="/solicitacoes" />
         <StatCard icon={Receipt} label="Guias vencendo (7 dias)" value={data?.guidesSoon ?? "—"} accent="bg-orange-100 text-orange-800" to="/guias" />
         <StatCard icon={Inbox} label="Solicitações pendentes" value={data?.reqPending ?? "—"} accent="bg-secondary/10 text-secondary" to="/solicitacoes" />
         <StatCard icon={Users} label="Empresas vinculadas" value={data?.clients ?? "—"} to="/clientes" />
@@ -483,8 +483,8 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
         Promise.all(reqCalls),
         scope(supabase.from("documents").select("id, nome, status, created_at, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).order("created_at", { ascending: false }).limit(5)),
         scope(supabase.from("pending_tasks").select("id, titulo, prazo, status, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).not("status", "in", "(concluida,cancelada)").order("prazo", { ascending: true }).limit(8)),
-        supabase.from("tax_guides").select("id, tipo, vencimento, valor, status, storage_path, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).not("status", "in", "(paga,cancelada)").order("vencimento", { ascending: true }).limit(8),
-        supabase.from("tax_guides").select("id", { head: true, count: "exact" }).in("client_id", ids).gte("vencimento", t).lte("vencimento", in7).not("status", "in", "(paga,cancelada)"),
+        supabase.from("tax_guides").select("id, tipo, vencimento, valor, status, storage_path, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).not("status", "in", TAX_GUIDE_CLOSED_STATUSES_PG).order("vencimento", { ascending: true }).limit(8),
+        supabase.from("tax_guides").select("id", { head: true, count: "exact" }).in("client_id", ids).gte("vencimento", t).lte("vencimento", in7).not("status", "in", TAX_GUIDE_CLOSED_STATUSES_PG),
         // Fase A2: fonte oficial segura para o cliente (mesma usada em /meu-mes).
         !isAll && primary
           ? supabase.rpc("get_client_competence_portal", { p_client_id: primary.id, p_competence: competencia })
