@@ -77,11 +77,8 @@ function ClientDetail() {
     queryFn: async () => (await supabase.from("timeline_events").select("*").eq("client_id", id).order("created_at", { ascending: false })).data ?? [],
   });
 
-  const { data: inters = [] } = useQuery({
-    queryKey: ["client-inter", id],
-    enabled: ready,
-    queryFn: async () => (await supabase.from("interactions").select("*").eq("client_id", id).order("created_at", { ascending: false })).data ?? [],
-  });
+
+
 
   const { data: reqs = [] } = useQuery({
     queryKey: ["client-reqs", id],
