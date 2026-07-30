@@ -64,8 +64,10 @@ export function isLegacyRoute(route: string): route is LegacyRoute {
  *   `/validades`    → `/documentos?tab=vencendo`
  * cliente:
  *   `/solicitacoes` → `/meus-documentos?section=precisa_enviar`
- *   `/validades`    → sem destino (rota staff-only; nunca enviar cliente a `/documentos`)
+ *   `/validades`    → `/meus-documentos?section=historico`
+ *   (cliente nunca é enviado a `/documentos`)
  */
+
 export function legacyDestination(
   route: LegacyRoute,
   audience: LegacyAudience,
