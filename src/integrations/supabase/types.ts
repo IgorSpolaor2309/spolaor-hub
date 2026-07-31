@@ -2328,12 +2328,17 @@ export type Database = {
           descricao: string | null
           id: string
           is_demo: boolean
+          limite_faturamento: number | null
           nome: string
+          observacoes_comerciais: string | null
           periodicidade: string
+          publico_alvo: string | null
           status: string
           tipo_cliente: string
+          tipo_preco: string
           updated_at: string
           valor_padrao: number | null
+          valor_provisorio: boolean
         }
         Insert: {
           created_at?: string
@@ -2342,12 +2347,17 @@ export type Database = {
           descricao?: string | null
           id?: string
           is_demo?: boolean
+          limite_faturamento?: number | null
           nome: string
+          observacoes_comerciais?: string | null
           periodicidade?: string
+          publico_alvo?: string | null
           status?: string
           tipo_cliente: string
+          tipo_preco?: string
           updated_at?: string
           valor_padrao?: number | null
+          valor_provisorio?: boolean
         }
         Update: {
           created_at?: string
@@ -2356,12 +2366,17 @@ export type Database = {
           descricao?: string | null
           id?: string
           is_demo?: boolean
+          limite_faturamento?: number | null
           nome?: string
+          observacoes_comerciais?: string | null
           periodicidade?: string
+          publico_alvo?: string | null
           status?: string
           tipo_cliente?: string
+          tipo_preco?: string
           updated_at?: string
           valor_padrao?: number | null
+          valor_provisorio?: boolean
         }
         Relationships: [
           {
@@ -2612,6 +2627,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      services: {
+        Row: {
+          categoria: string
+          created_at: string
+          created_by: string | null
+          departamento: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          observacoes_internas: string | null
+          ordem: number
+          status: string
+          tipo_cobranca: string
+          tipo_preco: string
+          unidade_cobranca: string | null
+          updated_at: string
+          valor_provisorio: boolean
+          valor_referencia: number | null
+        }
+        Insert: {
+          categoria?: string
+          created_at?: string
+          created_by?: string | null
+          departamento?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          observacoes_internas?: string | null
+          ordem?: number
+          status?: string
+          tipo_cobranca?: string
+          tipo_preco?: string
+          unidade_cobranca?: string | null
+          updated_at?: string
+          valor_provisorio?: boolean
+          valor_referencia?: number | null
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          created_by?: string | null
+          departamento?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          observacoes_internas?: string | null
+          ordem?: number
+          status?: string
+          tipo_cobranca?: string
+          tipo_preco?: string
+          unidade_cobranca?: string | null
+          updated_at?: string
+          valor_provisorio?: boolean
+          valor_referencia?: number | null
+        }
+        Relationships: []
       }
       tax_guides: {
         Row: {

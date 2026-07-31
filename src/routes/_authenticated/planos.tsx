@@ -14,9 +14,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { DeleteButton } from "@/components/sc/DeleteButton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ServicesSection } from "@/components/planos/ServicesSection";
+import { TIPO_PRECO_PLANO } from "@/lib/services-catalog";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { toast } from "sonner";
 import { Briefcase, Plus, Pencil, ChevronDown, ChevronRight } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/planos")({
   component: PlansPage,
@@ -80,58 +84,91 @@ function PlansPage() {
   return (
     <div>
       <PageHeader
-        title="Planos"
-        description="Catálogo de planos comerciais e itens mensais do checklist."
-        action={isAdmin && (
-          <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null); }}>
-            <DialogTrigger asChild>
-              <Button><Plus className="mr-2 h-4 w-4" /> Novo plano</Button>
-            </DialogTrigger>
-            {open && <PlanDialog initial={editing} onDone={() => { setOpen(false); setEditing(null); qc.invalidateQueries({ queryKey: ["plans"] }); }} />}
-          </Dialog>
-        )}
+        title="Planos e serviços"
+        description="Catálogo de planos comerciais, itens mensais do checklist e serviços extraordinários."
       />
 
-      <Card className="p-2">
-        {plansQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
-          : (plansQ.data ?? []).length === 0 ? <EmptyState icon={<Briefcase className="h-6 w-6" />} title="Nenhum plano cadastrado" description="Crie o primeiro plano para começar." />
-          : (
-            <ul className="divide-y">
-              {(plansQ.data ?? []).map((p: any) => (
-                <li key={p.id} className="p-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0"
-                      onClick={() => setExpanded((e) => ({ ...e, [p.id]: !e[p.id] }))}>
-                      {expanded[p.id] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                    </Button>
-                    <span className="font-medium">{p.nome}</span>
-                    <Badge variant="outline">{p.tipo_cliente}</Badge>
-                    <Badge variant="secondary">{PERIODICIDADES.find((x) => x.value === p.periodicidade)?.label}</Badge>
-                    <Badge className={p.status === "ativo" ? "bg-emerald-100 text-emerald-800" : "bg-zinc-200 text-zinc-700"}>
-                      {p.status === "ativo" ? "Ativo" : "Inativo"}
-                    </Badge>
-                    <span className="text-sm text-muted-foreground">{brl(p.valor_padrao)}</span>
-                    <span className="text-xs text-muted-foreground">· {p.plan_items?.length ?? 0} itens</span>
-                    <div className="ml-auto flex items-center gap-1">
-                      {isAdmin && (
+      <Tabs defaultValue="planos">
+        <TabsList>
+          <TabsTrigger value="planos">Planos</TabsTrigger>
+          <TabsTrigger value="servicos">Serviços extraordinários</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="planos" className="space-y-3">
+          {isAdmin && (
+            <div className="flex justify-end">
+              <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null); }}>
+                <DialogTrigger asChild>
+                  <Button><Plus className="mr-2 h-4 w-4" /> Novo plano</Button>
+                </DialogTrigger>
+                {open && <PlanDialog initial={editing} onDone={() => { setOpen(false); setEditing(null); qc.invalidateQueries({ queryKey: ["plans"] }); }} />}
+              </Dialog>
+            </div>
+          )}
+          <Card className="p-2">
+            {plansQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
+              : (plansQ.data ?? []).length === 0 ? <EmptyState icon={<Briefcase className="h-6 w-6" />} title="Nenhum plano cadastrado" description="Crie o primeiro plano para começar." />
+              : (
+                <ul className="divide-y">
+                  {(plansQ.data ?? []).map((p: any) => (
+                    <li key={p.id} className="p-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0"
+                          onClick={() => setExpanded((e) => ({ ...e, [p.id]: !e[p.id] }))}>
+                          {expanded[p.id] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                        </Button>
+                        <span className="font-medium">{p.nome}</span>
+                        <Badge variant="outline">{p.tipo_cliente}</Badge>
+                        <Badge variant="secondary">{PERIODICIDADES.find((x) => x.value === p.periodicidade)?.label}</Badge>
+                        <Badge className={p.status === "ativo" ? "bg-emerald-100 text-emerald-800" : "bg-zinc-200 text-zinc-700"}>
+                          {p.status === "ativo" ? "Ativo" : "Inativo"}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">
+                          {p.tipo_preco === "sob_orcamento" ? "Sob orçamento" : `${brl(p.valor_padrao)}/mês`}
+                        </span>
+                        {p.valor_provisorio && <Badge className="bg-amber-100 text-amber-800">Valor provisório</Badge>}
+                        {p.limite_faturamento != null && (
+                          <span className="text-xs text-muted-foreground">· até {brl(p.limite_faturamento)}/mês</span>
+                        )}
+                        <span className="text-xs text-muted-foreground">· {p.plan_items?.length ?? 0} itens</span>
+                        <div className="ml-auto flex items-center gap-1">
+                          {isAdmin && (
+                            <>
+                              <Button size="sm" variant="ghost" onClick={() => { setEditing(p); setOpen(true); }}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <DeletePlanButton planId={p.id} onDone={() => qc.invalidateQueries({ queryKey: ["plans"] })} />
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      {p.publico_alvo && <p className="ml-9 mt-1 text-xs text-muted-foreground">{p.publico_alvo}</p>}
+                      {expanded[p.id] && (
                         <>
-                          <Button size="sm" variant="ghost" onClick={() => { setEditing(p); setOpen(true); }}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <DeletePlanButton planId={p.id} onDone={() => qc.invalidateQueries({ queryKey: ["plans"] })} />
+                          {p.observacoes_comerciais && (
+                            <p className="ml-9 mt-2 text-xs text-muted-foreground">
+                              <span className="font-medium">Observações comerciais preliminares: </span>
+                              {p.observacoes_comerciais}
+                            </p>
+                          )}
+                          <PlanItemsSection planId={p.id} canEdit={isAdmin} />
                         </>
                       )}
-                    </div>
-                  </div>
-                  {expanded[p.id] && <PlanItemsSection planId={p.id} canEdit={isAdmin} />}
-                </li>
-              ))}
-            </ul>
-          )}
-      </Card>
+                    </li>
+                  ))}
+                </ul>
+              )}
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="servicos">
+          <ServicesSection canEdit={isAdmin} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
+
 
 function DeletePlanButton({ planId, onDone }: { planId: string; onDone: () => void }) {
   const m = useMutation({
@@ -154,16 +191,27 @@ function PlanDialog({ initial, onDone }: { initial: any; onDone: () => void }) {
     periodicidade: initial?.periodicidade ?? "mensal",
     status: initial?.status ?? "ativo",
     descricao: initial?.descricao ?? "",
+    publico_alvo: initial?.publico_alvo ?? "",
+    limite_faturamento: initial?.limite_faturamento ?? "",
+    tipo_preco: initial?.tipo_preco ?? "fixo",
+    valor_provisorio: initial?.valor_provisorio ?? true,
+    observacoes_comerciais: initial?.observacoes_comerciais ?? "",
   });
+  const sobOrcamento = f.tipo_preco === "sob_orcamento";
   const save = useMutation({
     mutationFn: async () => {
       const payload: any = {
         nome: f.nome.trim(),
         tipo_cliente: f.tipo_cliente,
-        valor_padrao: f.valor_padrao === "" ? null : Number(f.valor_padrao),
+        valor_padrao: sobOrcamento || f.valor_padrao === "" ? null : Number(f.valor_padrao),
         periodicidade: f.periodicidade,
         status: f.status,
         descricao: f.descricao || null,
+        publico_alvo: f.publico_alvo || null,
+        limite_faturamento: f.limite_faturamento === "" ? null : Number(f.limite_faturamento),
+        tipo_preco: f.tipo_preco,
+        valor_provisorio: f.valor_provisorio,
+        observacoes_comerciais: f.observacoes_comerciais || null,
       };
       if (isEdit) {
         const { error } = await (supabase as any).from("plans").update(payload).eq("id", initial.id);
@@ -179,10 +227,14 @@ function PlanDialog({ initial, onDone }: { initial: any; onDone: () => void }) {
   return (
     <DialogContent className="max-w-lg">
       <DialogHeader><DialogTitle>{isEdit ? "Editar plano" : "Novo plano"}</DialogTitle></DialogHeader>
-      <div className="grid gap-3">
+      <div className="grid max-h-[70vh] gap-3 overflow-y-auto">
         <div className="space-y-1.5">
           <Label>Nome *</Label>
           <Input value={f.nome} onChange={(e) => setF({ ...f, nome: e.target.value })} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Público-alvo</Label>
+          <Input placeholder="ex.: Simples Nacional, Anexo III" value={f.publico_alvo} onChange={(e) => setF({ ...f, publico_alvo: e.target.value })} />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
@@ -200,8 +252,20 @@ function PlanDialog({ initial, onDone }: { initial: any; onDone: () => void }) {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label>Valor padrão (R$)</Label>
-            <Input type="number" step="0.01" value={f.valor_padrao} onChange={(e) => setF({ ...f, valor_padrao: e.target.value })} />
+            <Label>Tipo de preço</Label>
+            <Select value={f.tipo_preco} onValueChange={(v) => setF({ ...f, tipo_preco: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{TIPO_PRECO_PLANO.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Valor mensal (R$)</Label>
+            <Input type="number" step="0.01" disabled={sobOrcamento} value={sobOrcamento ? "" : f.valor_padrao}
+              onChange={(e) => setF({ ...f, valor_padrao: e.target.value })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Limite de faturamento mensal (R$)</Label>
+            <Input type="number" step="0.01" value={f.limite_faturamento} onChange={(e) => setF({ ...f, limite_faturamento: e.target.value })} />
           </div>
           <div className="space-y-1.5">
             <Label>Status</Label>
@@ -214,11 +278,20 @@ function PlanDialog({ initial, onDone }: { initial: any; onDone: () => void }) {
             </Select>
           </div>
         </div>
+        <label className="flex items-center gap-2 text-sm">
+          <Checkbox checked={f.valor_provisorio} onCheckedChange={(v) => setF({ ...f, valor_provisorio: !!v })} />
+          Valor provisório
+        </label>
         <div className="space-y-1.5">
           <Label>Descrição</Label>
           <Textarea rows={2} value={f.descricao} onChange={(e) => setF({ ...f, descricao: e.target.value })} />
         </div>
+        <div className="space-y-1.5">
+          <Label>Observações comerciais preliminares (não publicadas)</Label>
+          <Textarea rows={3} value={f.observacoes_comerciais} onChange={(e) => setF({ ...f, observacoes_comerciais: e.target.value })} />
+        </div>
       </div>
+
       <DialogFooter>
         <Button disabled={!f.nome.trim() || save.isPending} onClick={() => save.mutate()}>
           {save.isPending ? "Salvando…" : isEdit ? "Salvar" : "Criar plano"}
