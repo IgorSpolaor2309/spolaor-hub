@@ -3540,6 +3540,9 @@ export type Database = {
           last_sender_role: string
           nome_fantasia: string
           razao_social: string
+          responsible_name: string
+          responsible_profile_id: string
+          waiting_since: string
         }[]
       }
       list_checklist_responsibles: {

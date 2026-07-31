@@ -94,3 +94,39 @@ export function filterConversationsBySituation<
     (r) => deriveChatSituation(r.last_sender_role, r.last_message_created_at) === filter,
   );
 }
+
+/* ------------------------------------------------------------------ *
+ * Fase E2.3 — responsável principal e indicador de atraso (staff)     *
+ * ------------------------------------------------------------------ */
+
+/** Alvo único de resposta da equipe (horas corridas). Sem SLA no banco. */
+export const CHAT_TEAM_RESPONSE_TARGET_HOURS = 24;
+
+/** Texto exibido quando a empresa não tem responsável principal válido. */
+export const CHAT_NO_RESPONSIBLE_LABEL = "Sem responsável principal";
+
+export const CHAT_OVERDUE_TOOLTIP = `Aguardando resposta da equipe há ${CHAT_TEAM_RESPONSE_TARGET_HOURS} horas ou mais`;
+
+/**
+ * Função pura de atraso. Só há atraso quando a conversa está aguardando a
+ * equipe, `waitingSince` é um timestamp válido e no passado, e a espera já
+ * atingiu (>=) o alvo. Sem fim de semana/feriado/expediente nesta fase.
+ */
+export function isChatResponseOverdue(
+  situation: ChatSituation,
+  waitingSince: string | null | undefined,
+  now: number = Date.now(),
+): boolean {
+  if (situation !== "aguardando_equipe") return false;
+  if (!waitingSince) return false;
+  const started = new Date(waitingSince).getTime();
+  if (!Number.isFinite(started)) return false;
+  if (started > now) return false; // timestamp futuro nunca gera atraso
+  return now - started >= CHAT_TEAM_RESPONSE_TARGET_HOURS * 3_600_000;
+}
+
+/** Rótulo do responsável para a lista/cabeçalho (somente staff). */
+export function chatResponsibleLabel(name: string | null | undefined): string {
+  const trimmed = (name ?? "").trim();
+  return trimmed ? `Responsável: ${trimmed}` : CHAT_NO_RESPONSIBLE_LABEL;
+}
