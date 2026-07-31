@@ -19,7 +19,7 @@ function latestTriggerDefinition(): string {
   let def: string | null = null;
   for (const file of files) {
     const sql = readFileSync(join(MIGRATIONS_DIR, file), "utf8");
-    const match = /CREATE OR REPLACE FUNCTION public\.on_chat_message_insert\(\)[\s\S]*?\$function\$;?/i.exec(sql);
+    const match = /CREATE OR REPLACE FUNCTION public\.on_chat_message_insert\(\)[\s\S]*?AS \$function\$[\s\S]*?\$function\$/i.exec(sql);
     if (match) def = match[0];
   }
   if (!def) throw new Error("definição de on_chat_message_insert() não encontrada nas migrations");
