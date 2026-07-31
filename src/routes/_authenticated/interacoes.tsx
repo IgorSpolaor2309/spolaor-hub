@@ -445,7 +445,7 @@ function ChatThread({
             <div className="truncate text-xs text-muted-foreground">{conv.clients.razao_social}</div>
           )}
         </div>
-        {showSituation ? <SituationBadge conv={conv} /> : <span />}
+        {showSituation ? <SituationBadge conv={conv} className="justify-self-end" /> : <span />}
       </header>
 
       <div ref={scrollerRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto overflow-x-hidden bg-muted/30 p-3 sm:p-4">
