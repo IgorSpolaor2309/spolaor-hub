@@ -2257,6 +2257,7 @@ export type Database = {
           pode_concluir_manual: boolean
           prazo_tipo: string
           prazo_valor: number | null
+          service_id: string | null
           titulo: string
           updated_at: string
           visivel_cliente: boolean
@@ -2278,6 +2279,7 @@ export type Database = {
           pode_concluir_manual?: boolean
           prazo_tipo?: string
           prazo_valor?: number | null
+          service_id?: string | null
           titulo: string
           updated_at?: string
           visivel_cliente?: boolean
@@ -2299,6 +2301,7 @@ export type Database = {
           pode_concluir_manual?: boolean
           prazo_tipo?: string
           prazo_valor?: number | null
+          service_id?: string | null
           titulo?: string
           updated_at?: string
           visivel_cliente?: boolean
@@ -2316,6 +2319,79 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_items_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_services: {
+        Row: {
+          created_at: string
+          id: string
+          limite_quantidade: number | null
+          observacoes: string | null
+          ordem: number
+          periodicidade_limite: string | null
+          plan_id: string
+          service_id: string
+          status: string
+          tipo_inclusao: string
+          unidade_limite: string | null
+          updated_at: string
+          valor_especifico: number | null
+          valor_especifico_provisorio: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          limite_quantidade?: number | null
+          observacoes?: string | null
+          ordem?: number
+          periodicidade_limite?: string | null
+          plan_id: string
+          service_id: string
+          status?: string
+          tipo_inclusao: string
+          unidade_limite?: string | null
+          updated_at?: string
+          valor_especifico?: number | null
+          valor_especifico_provisorio?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          limite_quantidade?: number | null
+          observacoes?: string | null
+          ordem?: number
+          periodicidade_limite?: string | null
+          plan_id?: string
+          service_id?: string
+          status?: string
+          tipo_inclusao?: string
+          unidade_limite?: string | null
+          updated_at?: string
+          valor_especifico?: number | null
+          valor_especifico_provisorio?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_services_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
             referencedColumns: ["id"]
           },
         ]
