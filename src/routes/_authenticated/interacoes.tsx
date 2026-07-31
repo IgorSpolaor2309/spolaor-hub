@@ -582,12 +582,14 @@ function ChatThread({
         </div>
         {showSituation ? (
           <div className="flex shrink-0 flex-col items-end gap-1 justify-self-end">
-            <div className="flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center justify-end gap-1.5">
+              <OperationalNotice status={conv.client_operational_status} />
               <SituationBadge conv={conv} />
               {isChatResponseOverdue(
                 deriveChatSituation(conv.last_sender_role, conv.last_message_created_at),
                 conv.waiting_since,
                 now,
+                conv.client_operational_status,
               ) && (
                 <span className="inline-flex items-center gap-1 text-[10px] font-medium text-destructive" title={CHAT_OVERDUE_TOOLTIP}>
                   <OverdueDot />
