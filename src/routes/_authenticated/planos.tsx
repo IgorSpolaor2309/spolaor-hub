@@ -16,6 +16,8 @@ import { EmptyState } from "@/components/sc/EmptyState";
 import { DeleteButton } from "@/components/sc/DeleteButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ServicesSection } from "@/components/planos/ServicesSection";
+import { PlanServicesSection } from "@/components/planos/PlanServicesSection";
+
 import { TIPO_PRECO_PLANO } from "@/lib/services-catalog";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { toast } from "sonner";
@@ -152,6 +154,8 @@ function PlansPage() {
                             </p>
                           )}
                           <PlanItemsSection planId={p.id} canEdit={isAdmin} />
+                          <PlanServicesSection planId={p.id} canEdit={isAdmin} />
+
                         </>
                       )}
                     </li>
