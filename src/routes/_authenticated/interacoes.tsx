@@ -500,6 +500,41 @@ function ChatThread({
     return () => { supabase.removeChannel(ch); };
   }, [conv.id, qc]);
 
+  /**
+   * Fase E2.5 — leitura vinculada à exibição real da conversa.
+   * Marca como lidas apenas as notificações de chat do próprio usuário
+   * cujo link é exatamente o desta conversa. RLS garante o escopo.
+   */
+  const lastMsgId = messages.length ? (messages[messages.length - 1] as any).id as string : null;
+  useEffect(() => {
+    if (!displayed || !currentUserId || !conv.id) return;
+    const key = `${currentUserId}:${conv.id}:${lastMsgId ?? "empty"}`;
+    if (markedRef.current === key) return;
+    markedRef.current = key;
+    let cancelled = false;
+    (async () => {
+      const { error, count } = await supabase
+        .from("notifications")
+        .update({ lida: true }, { count: "exact" })
+        .eq("user_id", currentUserId)
+        .eq("tipo", CHAT_NOTIFICATION_TYPE)
+        .eq("link", conversationLink(conv.id))
+        .eq("lida", false);
+      if (cancelled) return;
+      if (error) {
+        markedRef.current = null;
+        logChatError("notifications.markConversationRead", error, { conversationId: conv.id });
+        return;
+      }
+      if (count) {
+        qc.invalidateQueries({ queryKey: ["notif-unread", currentUserId] });
+        qc.invalidateQueries({ queryKey: ["notif", currentUserId] });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [displayed, currentUserId, conv.id, lastMsgId, qc]);
+
+
   useEffect(() => {
     if (scrollerRef.current) scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight;
   }, [messages.length]);
