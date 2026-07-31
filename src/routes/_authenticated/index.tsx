@@ -439,6 +439,32 @@ function CollabDashboard({ name, userId }: { name: string; userId: string }) {
         <StatCard icon={Users} label="Empresas vinculadas" value={data?.clients ?? "—"} to="/clientes" />
       </div>
 
+      {/* Fase B3 — linha compacta da competência atual (carteira via RLS). */}
+      <Card className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 p-4">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Layers className="h-4 w-4 text-primary" />
+          {formatCompetenciaLong(competencia)}
+        </div>
+        {overviewError ? (
+          <span className="text-sm text-muted-foreground">Situação do mês indisponível.</span>
+        ) : (
+          <>
+            <span className="text-xs text-muted-foreground">
+              {summary.total} competência{summary.total === 1 ? "" : "s"}
+            </span>
+            <SituacaoCounts summary={summary} />
+            <span className="text-xs text-muted-foreground">
+              {summary.procAtrasados} processo{summary.procAtrasados === 1 ? "" : "s"} atrasado{summary.procAtrasados === 1 ? "" : "s"}
+            </span>
+          </>
+        )}
+        <Link to="/competencias" search={{ comp: competencia }} className="ml-auto text-xs font-medium text-primary hover:underline">
+          Ver Competências
+        </Link>
+      </Card>
+
+
+
       <div className="mt-6">
         <Card className="p-5">
           <h3 className="mb-3 font-display text-lg flex items-center gap-2"><MessageSquare className="h-4 w-4 text-primary" /> Atividades recentes das minhas empresas</h3>
