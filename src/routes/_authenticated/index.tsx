@@ -13,15 +13,19 @@ import { DateRangeFilter, EMPTY_DATE_FILTER, type DateFilterValue } from "@/comp
 import { resolveRange } from "@/lib/date-ranges";
 import {
   Users, UserCog, ClipboardList, AlertTriangle, FileText, Clock,
-  Inbox, Receipt, ShieldCheck, MessageSquare,
+  Inbox, Receipt, ShieldCheck, MessageSquare, Layers,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { formatBR, todayLocalYmd, localYmdInDays } from "@/lib/dates";
-import { OFFICIAL_LABEL, OFFICIAL_TONE, type OfficialStatus } from "@/lib/competence-status";
 import { clientStatusLabel, clientStatusTone } from "@/lib/competence-client-labels";
-import { TAX_GUIDE_CLOSED_STATUSES_PG } from "@/lib/competence-progress";
+import {
+  SITUACAO_LABEL, TAX_GUIDE_CLOSED_STATUSES_PG,
+  type CompetenceOverviewRow, type Situacao,
+} from "@/lib/competence-progress";
+import { summarizeCompetenceOverview, type CompetenceSummary } from "@/lib/competence-summary";
+import { currentCompetencia, formatCompetenciaLong } from "@/lib/competencia";
 
 
 
@@ -33,14 +37,60 @@ export const Route = createFileRoute("/_authenticated/")({
 /* ---------- helpers ---------- */
 const today = () => todayLocalYmd();
 const inDays = (n: number) => localYmdInDays(n);
-const currentCompetencia = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-};
 
 // Fase A2: a fonte oficial do status mensal é public.client_competences.
-// Os status internos vivem em competence-status.ts (equipe) e
-// competence-client-labels.ts (cliente). Nada mais lê client_month_status.
+// Fase B3: o Dashboard lê a competência atual por get_competence_overview —
+// a mesma RPC de /competencias — e agrega com summarizeCompetenceOverview.
+
+const SITUACAO_TONE: Record<Situacao, string> = {
+  sem_atividade: "bg-zinc-100 text-zinc-700",
+  com_atrasos: "bg-red-100 text-red-800",
+  aguardando_cliente: "bg-amber-100 text-amber-800",
+  pronta_revisao: "bg-emerald-100 text-emerald-800",
+  em_andamento: "bg-blue-100 text-blue-800",
+};
+
+/**
+ * Fase B3 — chamada ÚNICA por Dashboard à visão mensal.
+ * Mesma query key de /competencias: cache compartilhado, zero N+1,
+ * e o filtro de período do Dashboard não participa da chave.
+ */
+function useCurrentCompetenceSummary(enabled: boolean) {
+  const competencia = currentCompetencia();
+  const { data, error } = useQuery({
+    queryKey: ["competence-overview", competencia],
+    enabled,
+    staleTime: 30_000,
+    retry: 1,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("get_competence_overview", {
+        p_competence: competencia,
+      });
+      if (error) throw error;
+      return (data ?? []) as CompetenceOverviewRow[];
+    },
+  });
+  // Dashboard operacional = ambiente Real. Inativas/excluídas já não vêm da RPC.
+  const summary = useMemo(() => summarizeCompetenceOverview(data), [data]);
+  return { competencia, summary, error, isLoading: !data && !error };
+}
+
+/** Contagens por situação canônica, em linha e sem cards adicionais. */
+function SituacaoCounts({ summary }: { summary: CompetenceSummary }) {
+  const ordered: Situacao[] = ["com_atrasos", "aguardando_cliente", "sem_atividade", "em_andamento", "pronta_revisao"];
+  const visible = ordered.filter((s) => summary.bySituacao[s] > 0);
+  if (!visible.length) return <span className="text-sm text-muted-foreground">Sem competências no mês.</span>;
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {visible.map((s) => (
+        <Badge key={s} className={SITUACAO_TONE[s]}>
+          {SITUACAO_LABEL[s]} <span className="ml-1 font-semibold">{summary.bySituacao[s]}</span>
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
 
 
 /* ---------- shared UI ---------- */
