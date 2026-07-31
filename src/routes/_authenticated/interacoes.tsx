@@ -427,7 +427,17 @@ function ChatThread({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex items-center justify-between border-b px-4 py-3">
+      <header className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b px-3 py-3 sm:px-4">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 md:hidden"
+          onClick={onBack}
+          aria-label="Voltar para a lista de conversas"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
         <div className="min-w-0">
           <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Chat — Empresa</div>
           <div className="truncate font-medium">{conv.clients?.nome_fantasia || conv.clients?.razao_social || "Cliente"}</div>
@@ -435,9 +445,11 @@ function ChatThread({
             <div className="truncate text-xs text-muted-foreground">{conv.clients.razao_social}</div>
           )}
         </div>
+        {showSituation ? <SituationBadge conv={conv} /> : <span />}
       </header>
 
-      <div ref={scrollerRef} className="flex-1 space-y-3 overflow-y-auto bg-muted/30 p-4">
+      <div ref={scrollerRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto overflow-x-hidden bg-muted/30 p-3 sm:p-4">
+
         {messagesError ? (
           <div className="mt-12 text-center text-xs text-destructive">Falha ao carregar mensagens.</div>
         ) : loadingMessages ? (
