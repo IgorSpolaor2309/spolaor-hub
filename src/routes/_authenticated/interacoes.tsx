@@ -23,6 +23,7 @@ import {
   CHAT_SITUATION_FILTERS, CHAT_SITUATION_LABELS, CHAT_SITUATION_TONES, canSeeChatSituation,
   chatSituationEmptyMessage, deriveChatSituation, filterConversationsBySituation,
   parseChatSituationFilter, serializeChatSituationFilter, type ChatSituationFilter,
+  CHAT_OVERDUE_TOOLTIP, chatResponsibleLabel, isChatResponseOverdue,
 } from "@/lib/chat-situation";
 import { z } from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
@@ -81,6 +82,10 @@ type Conv = {
   last_message_at: string | null;
   last_sender_role: string | null;
   last_message_created_at: string | null;
+  /** Fase E2.3 — metadados internos: sempre nulos para o perfil Cliente. */
+  responsible_profile_id: string | null;
+  responsible_name: string | null;
+  waiting_since: string | null;
   clients?: { razao_social: string; nome_fantasia: string | null } | null;
 };
 
@@ -111,6 +116,31 @@ function SituationBadge({ conv, className }: { conv: Conv; className?: string })
   );
 }
 
+/** Indicador discreto de atraso (staff): ponto vermelho + tooltip nativo. */
+function OverdueDot({ className }: { className?: string }) {
+  return (
+    <span
+      role="img"
+      aria-label={CHAT_OVERDUE_TOOLTIP}
+      title={CHAT_OVERDUE_TOOLTIP}
+      className={cn("inline-block h-2 w-2 shrink-0 rounded-full bg-destructive", className)}
+    />
+  );
+}
+
+/**
+ * Relógio compartilhado (60s): o atraso precisa aparecer sem nova mensagem e
+ * sem nova consulta ao banco — apenas o helper puro é recalculado.
+ */
+function useSharedClock(intervalMs = 60_000) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), intervalMs);
+    return () => clearInterval(id);
+  }, [intervalMs]);
+  return now;
+}
+
 function ChatPage() {
   const { role, userId, profile, loading } = useCurrentUser();
   const qc = useQueryClient();
@@ -119,6 +149,7 @@ function ChatPage() {
   const isStaff = role === "admin" || role === "collaborator";
   const showSituation = canSeeChatSituation(role);
   const [q, setQ] = useState("");
+  const now = useSharedClock();
 
   // Fase E2.2 — filtro de situação (staff). Cliente ignora o parâmetro.
   const situationFilter: ChatSituationFilter = showSituation
@@ -146,6 +177,9 @@ function ChatPage() {
         last_message_at: r.last_message_at,
         last_sender_role: r.last_sender_role,
         last_message_created_at: r.last_message_created_at,
+        responsible_profile_id: r.responsible_profile_id ?? null,
+        responsible_name: r.responsible_name ?? null,
+        waiting_since: r.waiting_since ?? null,
         clients: { razao_social: r.razao_social, nome_fantasia: r.nome_fantasia },
       })) as Conv[];
     },
@@ -331,8 +365,22 @@ function ChatPage() {
                     <div className="mt-0.5 text-[10px] text-muted-foreground">
                       {c.last_message_at ? new Date(c.last_message_at).toLocaleString("pt-BR") : "Sem mensagens"}
                     </div>
+                    {showSituation && (
+                      <div className="mt-0.5 truncate text-[10px] text-muted-foreground">
+                        {chatResponsibleLabel(c.responsible_name)}
+                      </div>
+                    )}
                   </div>
-                  {showSituation && <SituationBadge conv={c} />}
+                  {showSituation && (
+                    <div className="flex shrink-0 items-center gap-1">
+                      <SituationBadge conv={c} />
+                      {isChatResponseOverdue(
+                        deriveChatSituation(c.last_sender_role, c.last_message_created_at),
+                        c.waiting_since,
+                        now,
+                      ) && <OverdueDot />}
+                    </div>
+                  )}
                 </div>
               </button>
             ))}
@@ -353,6 +401,7 @@ function ChatPage() {
               currentRole={role as any}
               currentName={profile?.full_name ?? "Você"}
               showSituation={showSituation}
+              now={now}
               onBack={backToList}
             />
           ) : (
@@ -372,13 +421,14 @@ function ChatPage() {
 
 
 function ChatThread({
-  conv, currentUserId, currentRole, currentName, showSituation, onBack,
+  conv, currentUserId, currentRole, currentName, showSituation, now, onBack,
 }: {
   conv: Conv;
   currentUserId: string | null;
   currentRole: "admin" | "collaborator" | "client" | null;
   currentName: string;
   showSituation: boolean;
+  now: number;
   onBack: () => void;
 }) {
   const qc = useQueryClient();
@@ -507,7 +557,26 @@ function ChatThread({
             <div className="truncate text-xs text-muted-foreground">{conv.clients.razao_social}</div>
           )}
         </div>
-        {showSituation ? <SituationBadge conv={conv} className="justify-self-end" /> : <span />}
+        {showSituation ? (
+          <div className="flex shrink-0 flex-col items-end gap-1 justify-self-end">
+            <div className="flex items-center gap-1.5">
+              <SituationBadge conv={conv} />
+              {isChatResponseOverdue(
+                deriveChatSituation(conv.last_sender_role, conv.last_message_created_at),
+                conv.waiting_since,
+                now,
+              ) && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-destructive" title={CHAT_OVERDUE_TOOLTIP}>
+                  <OverdueDot />
+                  Em atraso
+                </span>
+              )}
+            </div>
+            <span className="max-w-[12rem] truncate text-[10px] text-muted-foreground">
+              {chatResponsibleLabel(conv.responsible_name)}
+            </span>
+          </div>
+        ) : <span />}
       </header>
 
       <div ref={scrollerRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto overflow-x-hidden bg-muted/30 p-3 sm:p-4">
@@ -652,6 +721,7 @@ function QuickTemplatesDialog({
   onPick: (content: string) => void;
 }) {
   const [q, setQ] = useState("");
+  const now = useSharedClock();
   const [cat, setCat] = useState<string>("all");
   const { data: list = [] } = useQuery({
     queryKey: ["chat-templates"],
