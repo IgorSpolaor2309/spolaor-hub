@@ -721,7 +721,7 @@ function QuickTemplatesDialog({
   onPick: (content: string) => void;
 }) {
   const [q, setQ] = useState("");
-  const now = useSharedClock();
+
   const [cat, setCat] = useState<string>("all");
   const { data: list = [] } = useQuery({
     queryKey: ["chat-templates"],
