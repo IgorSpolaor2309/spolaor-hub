@@ -175,15 +175,15 @@ function ChatPage() {
           const existing = conversations.find((c) => c.client_id === search.client);
           if (!existing) {
             toast.info("Use “Nova conversa” para falar com a equipe.");
-            navigate({ to: "/interacoes", search: {}, replace: true });
+            navigate({ to: "/interacoes", search: { situacao: search.situacao }, replace: true });
             return;
           }
-          navigate({ to: "/interacoes", search: { conversation: existing.id }, replace: true });
+          navigate({ to: "/interacoes", search: { conversation: existing.id, situacao: search.situacao }, replace: true });
           return;
         }
         const id = await ensureConversation(search.client!);
         qc.invalidateQueries({ queryKey: ["chat-convs"] });
-        navigate({ to: "/interacoes", search: { conversation: id }, replace: true });
+        navigate({ to: "/interacoes", search: { conversation: id, situacao: search.situacao }, replace: true });
       } catch (e: any) {
         toast.error(e?.message ?? "Não foi possível abrir a conversa");
       }
@@ -191,17 +191,34 @@ function ChatPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search.client, loading, userId, role, loadingConvs]);
 
+  // Normalização: valor inválido (ou cliente com ?situacao) é descartado da URL.
+  useEffect(() => {
+    if (search.situacao === undefined) return;
+    const normalized = showSituation ? serializeChatSituationFilter(situationFilter) : undefined;
+    if (normalized === search.situacao) return;
+    navigate({ to: "/interacoes", search: { ...search, situacao: normalized }, replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.situacao, showSituation, situationFilter]);
+
+  // Ordem: dados autorizados pela RPC → filtro de situação → busca textual.
+  const situationConvs = useMemo(
+    () => filterConversationsBySituation(conversations, situationFilter),
+    [conversations, situationFilter],
+  );
+
   const filteredConvs = useMemo(() => {
     const term = q.trim().toLowerCase();
-    if (!term) return conversations;
-    return conversations.filter((c) =>
+    if (!term) return situationConvs;
+    return situationConvs.filter((c) =>
       `${c.clients?.razao_social ?? ""} ${c.clients?.nome_fantasia ?? ""}`.toLowerCase().includes(term),
     );
-  }, [conversations, q]);
+  }, [situationConvs, q]);
 
-  // Desktop pode cair na primeira conversa; no mobile isso nunca acontece
-  // porque o painel só aparece quando existe ?conversation.
-  const effectiveId = selectedId ?? conversations[0]?.id ?? null;
+  // Desktop pode cair na primeira conversa do conjunto filtrado; no mobile isso
+  // nunca acontece porque o painel só aparece quando existe ?conversation.
+  const effectiveId = selectedId ?? filteredConvs[0]?.id ?? null;
+  // Busca na lista completa: uma conversa aberta explicitamente não fecha só
+  // porque uma nova mensagem mudou a situação dela.
   const activeConv = conversations.find((c) => c.id === effectiveId);
 
   // client_id -> conversation_id: usado para reaproveitar a conversa única da empresa.
@@ -212,12 +229,26 @@ function ChatPage() {
   }, [conversations]);
 
   const openConversation = (id: string, replace = false) => {
-    navigate({ to: "/interacoes", search: { conversation: id }, replace });
+    navigate({ to: "/interacoes", search: { ...search, client: undefined, conversation: id }, replace });
   };
 
   const backToList = () => {
-    const { conversation: _drop, ...rest } = search;
-    navigate({ to: "/interacoes", search: rest, replace: true });
+    navigate({ to: "/interacoes", search: { ...search, conversation: undefined }, replace: true });
+  };
+
+  /** Troca manual do filtro: se a conversa aberta sair do conjunto, solta a seleção. */
+  const setSituationFilter = (next: ChatSituationFilter) => {
+    const nextSet = filterConversationsBySituation(conversations, next);
+    const keep = selectedId && nextSet.some((c) => c.id === selectedId);
+    navigate({
+      to: "/interacoes",
+      search: {
+        ...search,
+        situacao: serializeChatSituationFilter(next),
+        conversation: keep ? selectedId : undefined,
+      },
+      replace: true,
+    });
   };
 
   if (loading || !userId || !role) return <p className="text-sm text-muted-foreground">Carregando…</p>;
