@@ -393,12 +393,14 @@ function ChatPage() {
                     )}
                   </div>
                   {showSituation && (
-                    <div className="flex shrink-0 items-center gap-1">
+                    <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+                      <OperationalNotice status={c.client_operational_status} />
                       <SituationBadge conv={c} />
                       {isChatResponseOverdue(
                         deriveChatSituation(c.last_sender_role, c.last_message_created_at),
                         c.waiting_since,
                         now,
+                        c.client_operational_status,
                       ) && <OverdueDot />}
                     </div>
                   )}
