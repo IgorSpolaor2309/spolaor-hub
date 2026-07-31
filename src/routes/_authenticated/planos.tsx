@@ -14,9 +14,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { DeleteButton } from "@/components/sc/DeleteButton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ServicesSection } from "@/components/planos/ServicesSection";
+import { TIPO_PRECO_PLANO } from "@/lib/services-catalog";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { toast } from "sonner";
 import { Briefcase, Plus, Pencil, ChevronDown, ChevronRight } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/planos")({
   component: PlansPage,
