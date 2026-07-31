@@ -446,7 +446,7 @@ function ChatPage() {
 
 
 function ChatThread({
-  conv, currentUserId, currentRole, currentName, showSituation, now, onBack,
+  conv, currentUserId, currentRole, currentName, showSituation, now, displayed, onBack,
 }: {
   conv: Conv;
   currentUserId: string | null;
@@ -454,6 +454,7 @@ function ChatThread({
   currentName: string;
   showSituation: boolean;
   now: number;
+  displayed: boolean;
   onBack: () => void;
 }) {
   const qc = useQueryClient();
@@ -461,6 +462,7 @@ function ChatThread({
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const markedRef = useRef<string | null>(null);
 
   const { data: messages = [], isLoading: loadingMessages, error: messagesError } = useQuery({
     queryKey: ["chat-msgs", conv.id],
