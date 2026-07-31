@@ -138,6 +138,7 @@ function AuthedLayout() {
           </main>
         </div>
       </div>
+      <NotificationBanners />
       <Toaster richColors closeButton position="top-right" />
     </SidebarProvider>
   );
