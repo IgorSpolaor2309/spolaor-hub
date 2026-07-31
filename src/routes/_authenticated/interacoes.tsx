@@ -425,6 +425,8 @@ function ChatPage() {
               currentName={profile?.full_name ?? "Você"}
               showSituation={showSituation}
               now={now}
+              /* Mobile: a coluna fica oculta enquanto só a lista é exibida. */
+              displayed={!isMobile || !!selectedId}
               onBack={backToList}
             />
           ) : (
