@@ -73,6 +73,8 @@ type Conv = {
   id: string;
   client_id: string;
   last_message_at: string | null;
+  last_sender_role: string | null;
+  last_message_created_at: string | null;
   clients?: { razao_social: string; nome_fantasia: string | null } | null;
 };
 
@@ -88,38 +90,57 @@ type Msg = {
   created_at: string;
 };
 
+function SituationBadge({ conv, className }: { conv: Conv; className?: string }) {
+  const situation = deriveChatSituation(conv.last_sender_role, conv.last_message_created_at);
+  return (
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[10px] font-medium leading-4",
+        CHAT_SITUATION_TONES[situation],
+        className,
+      )}
+    >
+      {CHAT_SITUATION_LABELS[situation]}
+    </span>
+  );
+}
+
 function ChatPage() {
   const { role, userId, profile, loading } = useCurrentUser();
   const qc = useQueryClient();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const isStaff = role === "admin" || role === "collaborator";
+  const showSituation = canSeeChatSituation(role);
   const [q, setQ] = useState("");
-  const [activeId, setActiveId] = useState<string | null>(search.conversation ?? null);
 
-  useEffect(() => {
-    if (search.conversation) setActiveId(search.conversation);
-  }, [search.conversation]);
+  // Estado da seleção vive na URL (sem matchMedia): mobile mostra lista OU
+  // conversa conforme ?conversation; desktop mantém duas colunas.
+  const selectedId = search.conversation ?? null;
 
-  // Lista de conversas (RLS já filtra por permissão)
+  // Lista de conversas — fonte única: RPC de metadados (sem conteúdo de mensagem)
   const { data: conversations = [], isLoading: loadingConvs, error: convsError } = useQuery({
     queryKey: ["chat-convs", userId, role],
     enabled: !loading && !!userId && !!role,
     retry: 1,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("chat_conversations")
-        .select("id, client_id, last_message_at, clients(razao_social, nome_fantasia)")
-        .order("last_message_at", { ascending: false, nullsFirst: false });
+      const { data, error } = await supabase.rpc("list_chat_conversations_overview");
       if (error) {
-        logChatError("chat_conversations.select", error, { table: "chat_conversations" });
+        logChatError("rpc.list_chat_conversations_overview", error, { rpc: "list_chat_conversations_overview" });
         throw error;
       }
-      return (data ?? []) as Conv[];
+      return (data ?? []).map((r) => ({
+        id: r.conversation_id,
+        client_id: r.client_id,
+        last_message_at: r.last_message_at,
+        last_sender_role: r.last_sender_role,
+        last_message_created_at: r.last_message_created_at,
+        clients: { razao_social: r.razao_social, nome_fantasia: r.nome_fantasia },
+      })) as Conv[];
     },
   });
 
-  // Realtime: novas conversas
+  // Realtime: novas conversas / last_message_at
   useEffect(() => {
     if (loading || !userId) return;
     const ch = supabase
@@ -131,13 +152,25 @@ function ChatPage() {
     return () => { supabase.removeChannel(ch); };
   }, [qc, loading, userId]);
 
-  // Se veio ?client=ID, garante conversa
+  // Se veio ?client=ID, abre a conversa da empresa.
   useEffect(() => {
-    if (!search.client || loading || !userId) return;
+    if (!search.client || loading || !userId || !role) return;
+    if (!isStaff && loadingConvs) return;
     (async () => {
       try {
+        // Cliente não insere direto em chat_conversations (RLS): reaproveita a
+        // conversa existente; a criação continua pelo botão "Nova conversa".
+        if (!isStaff) {
+          const existing = conversations.find((c) => c.client_id === search.client);
+          if (!existing) {
+            toast.info("Use “Nova conversa” para falar com a equipe.");
+            navigate({ to: "/interacoes", search: {}, replace: true });
+            return;
+          }
+          navigate({ to: "/interacoes", search: { conversation: existing.id }, replace: true });
+          return;
+        }
         const id = await ensureConversation(search.client!);
-        setActiveId(id);
         qc.invalidateQueries({ queryKey: ["chat-convs"] });
         navigate({ to: "/interacoes", search: { conversation: id }, replace: true });
       } catch (e: any) {
@@ -145,16 +178,7 @@ function ChatPage() {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search.client, loading, userId]);
-
-  // Auto-seleciona a primeira conversa existente. Nada é criado automaticamente:
-  // o cliente abre a conversa pelo botão "Nova conversa" (RPC client_open_interaction),
-  // sempre com a primeira mensagem — nunca uma conversa vazia.
-  useEffect(() => {
-    if (loading || !userId || loadingConvs) return;
-    if (activeId) return;
-    if (conversations.length > 0) setActiveId(conversations[0].id);
-  }, [activeId, conversations, loadingConvs, userId, loading]);
+  }, [search.client, loading, userId, role, loadingConvs]);
 
   const filteredConvs = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -164,7 +188,10 @@ function ChatPage() {
     );
   }, [conversations, q]);
 
-  const activeConv = conversations.find((c) => c.id === activeId);
+  // Desktop pode cair na primeira conversa; no mobile isso nunca acontece
+  // porque o painel só aparece quando existe ?conversation.
+  const effectiveId = selectedId ?? conversations[0]?.id ?? null;
+  const activeConv = conversations.find((c) => c.id === effectiveId);
 
   // client_id -> conversation_id: usado para reaproveitar a conversa única da empresa.
   const existingByClientId = useMemo(() => {
@@ -173,15 +200,19 @@ function ChatPage() {
     return map;
   }, [conversations]);
 
-  const openConversation = (id: string) => {
-    setActiveId(id);
-    navigate({ to: "/interacoes", search: { conversation: id }, replace: false });
+  const openConversation = (id: string, replace = false) => {
+    navigate({ to: "/interacoes", search: { conversation: id }, replace });
+  };
+
+  const backToList = () => {
+    const { conversation: _drop, ...rest } = search;
+    navigate({ to: "/interacoes", search: rest, replace: true });
   };
 
   if (loading || !userId || !role) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] flex-col">
+    <div className="flex h-[calc(100vh-8rem)] flex-col overflow-x-hidden supports-[height:100dvh]:h-[calc(100dvh-8rem)]">
       <PageHeader
         title="Mensagens"
         description={isStaff
@@ -196,18 +227,21 @@ function ChatPage() {
         }
       />
 
-
-
-      <Card className="flex flex-1 overflow-hidden p-0">
+      <Card className="flex min-h-0 flex-1 overflow-hidden p-0">
         {/* Lista de conversas */}
-        <aside className="flex w-72 shrink-0 flex-col border-r">
+        <aside
+          className={cn(
+            "min-w-0 flex-col border-r md:flex md:w-80 md:shrink-0",
+            selectedId ? "hidden md:flex" : "flex w-full",
+          )}
+        >
           <div className="border-b p-3">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input placeholder="Buscar cliente…" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto">
             {convsError ? (
               <div className="p-4 text-xs text-destructive">Falha ao carregar conversas.</div>
             ) : loadingConvs ? (
@@ -217,18 +251,23 @@ function ChatPage() {
             ) : filteredConvs.map((c) => (
               <button
                 key={c.id}
-                onClick={() => { setActiveId(c.id); navigate({ to: "/interacoes", search: { conversation: c.id }, replace: true }); }}
+                onClick={() => openConversation(c.id, true)}
                 className={cn(
                   "block w-full border-b px-3 py-3 text-left transition hover:bg-muted/50",
-                  activeId === c.id && "bg-muted",
+                  selectedId === c.id ? "bg-muted" : effectiveId === c.id && "md:bg-muted",
                 )}
               >
-                <div className="truncate text-sm font-medium">{c.clients?.nome_fantasia || c.clients?.razao_social || "Empresa"}</div>
-                {c.clients?.nome_fantasia && c.clients?.razao_social && c.clients.nome_fantasia !== c.clients.razao_social && (
-                  <div className="truncate text-[11px] text-muted-foreground">{c.clients.razao_social}</div>
-                )}
-                <div className="mt-0.5 text-[10px] text-muted-foreground">
-                  {c.last_message_at ? new Date(c.last_message_at).toLocaleString("pt-BR") : "Sem mensagens"}
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium">{c.clients?.nome_fantasia || c.clients?.razao_social || "Empresa"}</div>
+                    {c.clients?.nome_fantasia && c.clients?.razao_social && c.clients.nome_fantasia !== c.clients.razao_social && (
+                      <div className="truncate text-[11px] text-muted-foreground">{c.clients.razao_social}</div>
+                    )}
+                    <div className="mt-0.5 text-[10px] text-muted-foreground">
+                      {c.last_message_at ? new Date(c.last_message_at).toLocaleString("pt-BR") : "Sem mensagens"}
+                    </div>
+                  </div>
+                  {showSituation && <SituationBadge conv={c} />}
                 </div>
               </button>
             ))}
@@ -236,13 +275,20 @@ function ChatPage() {
         </aside>
 
         {/* Painel da conversa */}
-        <section className="flex min-w-0 flex-1 flex-col">
+        <section
+          className={cn(
+            "min-h-0 min-w-0 flex-1 flex-col md:flex",
+            selectedId ? "flex" : "hidden md:flex",
+          )}
+        >
           {activeConv ? (
             <ChatThread
               conv={activeConv}
               currentUserId={userId}
               currentRole={role as any}
               currentName={profile?.full_name ?? "Você"}
+              showSituation={showSituation}
+              onBack={backToList}
             />
           ) : (
             <div className="flex flex-1 items-center justify-center p-8">
@@ -258,6 +304,7 @@ function ChatPage() {
     </div>
   );
 }
+
 
 function ChatThread({
   conv, currentUserId, currentRole, currentName,
