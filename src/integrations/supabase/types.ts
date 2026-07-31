@@ -3530,6 +3530,18 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      list_chat_conversations_overview: {
+        Args: never
+        Returns: {
+          client_id: string
+          conversation_id: string
+          last_message_at: string
+          last_message_created_at: string
+          last_sender_role: string
+          nome_fantasia: string
+          razao_social: string
+        }[]
+      }
       list_checklist_responsibles: {
         Args: { _client_id?: string }
         Returns: {

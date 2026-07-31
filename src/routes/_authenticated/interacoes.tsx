@@ -12,13 +12,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { AttachmentButton } from "@/components/sc/AttachmentButton";
-import { MessageSquare, Paperclip, Send, Search, Wand2, Plus } from "lucide-react";
+import { ArrowLeft, MessageSquare, Paperclip, Send, Search, Wand2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { ensureConversation } from "@/lib/chat";
 import { ClientNewConversationDialog } from "@/components/sc/ClientNewConversationDialog";
 import { applyTemplateVars, pendingVars, type TemplateVars } from "@/lib/template-vars";
 import { TEMPLATE_CATEGORIES, labelOf } from "@/lib/sc-types";
 import { cn } from "@/lib/utils";
+import {
+  CHAT_SITUATION_LABELS, CHAT_SITUATION_TONES, canSeeChatSituation, deriveChatSituation,
+} from "@/lib/chat-situation";
 import { z } from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
 
@@ -73,6 +76,8 @@ type Conv = {
   id: string;
   client_id: string;
   last_message_at: string | null;
+  last_sender_role: string | null;
+  last_message_created_at: string | null;
   clients?: { razao_social: string; nome_fantasia: string | null } | null;
 };
 
@@ -88,38 +93,57 @@ type Msg = {
   created_at: string;
 };
 
+function SituationBadge({ conv, className }: { conv: Conv; className?: string }) {
+  const situation = deriveChatSituation(conv.last_sender_role, conv.last_message_created_at);
+  return (
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[10px] font-medium leading-4",
+        CHAT_SITUATION_TONES[situation],
+        className,
+      )}
+    >
+      {CHAT_SITUATION_LABELS[situation]}
+    </span>
+  );
+}
+
 function ChatPage() {
   const { role, userId, profile, loading } = useCurrentUser();
   const qc = useQueryClient();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const isStaff = role === "admin" || role === "collaborator";
+  const showSituation = canSeeChatSituation(role);
   const [q, setQ] = useState("");
-  const [activeId, setActiveId] = useState<string | null>(search.conversation ?? null);
 
-  useEffect(() => {
-    if (search.conversation) setActiveId(search.conversation);
-  }, [search.conversation]);
+  // Estado da seleção vive na URL (sem matchMedia): mobile mostra lista OU
+  // conversa conforme ?conversation; desktop mantém duas colunas.
+  const selectedId = search.conversation ?? null;
 
-  // Lista de conversas (RLS já filtra por permissão)
+  // Lista de conversas — fonte única: RPC de metadados (sem conteúdo de mensagem)
   const { data: conversations = [], isLoading: loadingConvs, error: convsError } = useQuery({
     queryKey: ["chat-convs", userId, role],
     enabled: !loading && !!userId && !!role,
     retry: 1,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("chat_conversations")
-        .select("id, client_id, last_message_at, clients(razao_social, nome_fantasia)")
-        .order("last_message_at", { ascending: false, nullsFirst: false });
+      const { data, error } = await supabase.rpc("list_chat_conversations_overview");
       if (error) {
-        logChatError("chat_conversations.select", error, { table: "chat_conversations" });
+        logChatError("rpc.list_chat_conversations_overview", error, { rpc: "list_chat_conversations_overview" });
         throw error;
       }
-      return (data ?? []) as Conv[];
+      return (data ?? []).map((r) => ({
+        id: r.conversation_id,
+        client_id: r.client_id,
+        last_message_at: r.last_message_at,
+        last_sender_role: r.last_sender_role,
+        last_message_created_at: r.last_message_created_at,
+        clients: { razao_social: r.razao_social, nome_fantasia: r.nome_fantasia },
+      })) as Conv[];
     },
   });
 
-  // Realtime: novas conversas
+  // Realtime: novas conversas / last_message_at
   useEffect(() => {
     if (loading || !userId) return;
     const ch = supabase
@@ -131,13 +155,25 @@ function ChatPage() {
     return () => { supabase.removeChannel(ch); };
   }, [qc, loading, userId]);
 
-  // Se veio ?client=ID, garante conversa
+  // Se veio ?client=ID, abre a conversa da empresa.
   useEffect(() => {
-    if (!search.client || loading || !userId) return;
+    if (!search.client || loading || !userId || !role) return;
+    if (!isStaff && loadingConvs) return;
     (async () => {
       try {
+        // Cliente não insere direto em chat_conversations (RLS): reaproveita a
+        // conversa existente; a criação continua pelo botão "Nova conversa".
+        if (!isStaff) {
+          const existing = conversations.find((c) => c.client_id === search.client);
+          if (!existing) {
+            toast.info("Use “Nova conversa” para falar com a equipe.");
+            navigate({ to: "/interacoes", search: {}, replace: true });
+            return;
+          }
+          navigate({ to: "/interacoes", search: { conversation: existing.id }, replace: true });
+          return;
+        }
         const id = await ensureConversation(search.client!);
-        setActiveId(id);
         qc.invalidateQueries({ queryKey: ["chat-convs"] });
         navigate({ to: "/interacoes", search: { conversation: id }, replace: true });
       } catch (e: any) {
@@ -145,16 +181,7 @@ function ChatPage() {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search.client, loading, userId]);
-
-  // Auto-seleciona a primeira conversa existente. Nada é criado automaticamente:
-  // o cliente abre a conversa pelo botão "Nova conversa" (RPC client_open_interaction),
-  // sempre com a primeira mensagem — nunca uma conversa vazia.
-  useEffect(() => {
-    if (loading || !userId || loadingConvs) return;
-    if (activeId) return;
-    if (conversations.length > 0) setActiveId(conversations[0].id);
-  }, [activeId, conversations, loadingConvs, userId, loading]);
+  }, [search.client, loading, userId, role, loadingConvs]);
 
   const filteredConvs = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -164,7 +191,10 @@ function ChatPage() {
     );
   }, [conversations, q]);
 
-  const activeConv = conversations.find((c) => c.id === activeId);
+  // Desktop pode cair na primeira conversa; no mobile isso nunca acontece
+  // porque o painel só aparece quando existe ?conversation.
+  const effectiveId = selectedId ?? conversations[0]?.id ?? null;
+  const activeConv = conversations.find((c) => c.id === effectiveId);
 
   // client_id -> conversation_id: usado para reaproveitar a conversa única da empresa.
   const existingByClientId = useMemo(() => {
@@ -173,15 +203,19 @@ function ChatPage() {
     return map;
   }, [conversations]);
 
-  const openConversation = (id: string) => {
-    setActiveId(id);
-    navigate({ to: "/interacoes", search: { conversation: id }, replace: false });
+  const openConversation = (id: string, replace = false) => {
+    navigate({ to: "/interacoes", search: { conversation: id }, replace });
+  };
+
+  const backToList = () => {
+    const { conversation: _drop, ...rest } = search;
+    navigate({ to: "/interacoes", search: rest, replace: true });
   };
 
   if (loading || !userId || !role) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] flex-col">
+    <div className="flex h-[calc(100vh-8rem)] flex-col overflow-x-hidden supports-[height:100dvh]:h-[calc(100dvh-8rem)]">
       <PageHeader
         title="Mensagens"
         description={isStaff
@@ -196,18 +230,21 @@ function ChatPage() {
         }
       />
 
-
-
-      <Card className="flex flex-1 overflow-hidden p-0">
+      <Card className="flex min-h-0 flex-1 overflow-hidden p-0">
         {/* Lista de conversas */}
-        <aside className="flex w-72 shrink-0 flex-col border-r">
+        <aside
+          className={cn(
+            "min-w-0 flex-col border-r md:flex md:w-80 md:shrink-0",
+            selectedId ? "hidden md:flex" : "flex w-full",
+          )}
+        >
           <div className="border-b p-3">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input placeholder="Buscar cliente…" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto">
             {convsError ? (
               <div className="p-4 text-xs text-destructive">Falha ao carregar conversas.</div>
             ) : loadingConvs ? (
@@ -217,18 +254,23 @@ function ChatPage() {
             ) : filteredConvs.map((c) => (
               <button
                 key={c.id}
-                onClick={() => { setActiveId(c.id); navigate({ to: "/interacoes", search: { conversation: c.id }, replace: true }); }}
+                onClick={() => openConversation(c.id, true)}
                 className={cn(
                   "block w-full border-b px-3 py-3 text-left transition hover:bg-muted/50",
-                  activeId === c.id && "bg-muted",
+                  selectedId === c.id ? "bg-muted" : effectiveId === c.id && "md:bg-muted",
                 )}
               >
-                <div className="truncate text-sm font-medium">{c.clients?.nome_fantasia || c.clients?.razao_social || "Empresa"}</div>
-                {c.clients?.nome_fantasia && c.clients?.razao_social && c.clients.nome_fantasia !== c.clients.razao_social && (
-                  <div className="truncate text-[11px] text-muted-foreground">{c.clients.razao_social}</div>
-                )}
-                <div className="mt-0.5 text-[10px] text-muted-foreground">
-                  {c.last_message_at ? new Date(c.last_message_at).toLocaleString("pt-BR") : "Sem mensagens"}
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium">{c.clients?.nome_fantasia || c.clients?.razao_social || "Empresa"}</div>
+                    {c.clients?.nome_fantasia && c.clients?.razao_social && c.clients.nome_fantasia !== c.clients.razao_social && (
+                      <div className="truncate text-[11px] text-muted-foreground">{c.clients.razao_social}</div>
+                    )}
+                    <div className="mt-0.5 text-[10px] text-muted-foreground">
+                      {c.last_message_at ? new Date(c.last_message_at).toLocaleString("pt-BR") : "Sem mensagens"}
+                    </div>
+                  </div>
+                  {showSituation && <SituationBadge conv={c} />}
                 </div>
               </button>
             ))}
@@ -236,13 +278,20 @@ function ChatPage() {
         </aside>
 
         {/* Painel da conversa */}
-        <section className="flex min-w-0 flex-1 flex-col">
+        <section
+          className={cn(
+            "min-h-0 min-w-0 flex-1 flex-col md:flex",
+            selectedId ? "flex" : "hidden md:flex",
+          )}
+        >
           {activeConv ? (
             <ChatThread
               conv={activeConv}
               currentUserId={userId}
               currentRole={role as any}
               currentName={profile?.full_name ?? "Você"}
+              showSituation={showSituation}
+              onBack={backToList}
             />
           ) : (
             <div className="flex flex-1 items-center justify-center p-8">
@@ -259,13 +308,16 @@ function ChatPage() {
   );
 }
 
+
 function ChatThread({
-  conv, currentUserId, currentRole, currentName,
+  conv, currentUserId, currentRole, currentName, showSituation, onBack,
 }: {
   conv: Conv;
   currentUserId: string | null;
   currentRole: "admin" | "collaborator" | "client" | null;
   currentName: string;
+  showSituation: boolean;
+  onBack: () => void;
 }) {
   const qc = useQueryClient();
   const [text, setText] = useState("");
@@ -375,7 +427,17 @@ function ChatThread({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex items-center justify-between border-b px-4 py-3">
+      <header className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b px-3 py-3 sm:px-4">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 md:hidden"
+          onClick={onBack}
+          aria-label="Voltar para a lista de conversas"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
         <div className="min-w-0">
           <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Chat — Empresa</div>
           <div className="truncate font-medium">{conv.clients?.nome_fantasia || conv.clients?.razao_social || "Cliente"}</div>
@@ -383,9 +445,11 @@ function ChatThread({
             <div className="truncate text-xs text-muted-foreground">{conv.clients.razao_social}</div>
           )}
         </div>
+        {showSituation ? <SituationBadge conv={conv} className="justify-self-end" /> : <span />}
       </header>
 
-      <div ref={scrollerRef} className="flex-1 space-y-3 overflow-y-auto bg-muted/30 p-4">
+      <div ref={scrollerRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto overflow-x-hidden bg-muted/30 p-3 sm:p-4">
+
         {messagesError ? (
           <div className="mt-12 text-center text-xs text-destructive">Falha ao carregar mensagens.</div>
         ) : loadingMessages ? (
@@ -456,12 +520,13 @@ function ChatThread({
         })}
       </div>
 
-      <footer className="border-t bg-background p-3">
-        <div className="flex items-end gap-2">
+      <footer className="shrink-0 border-t bg-background p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:p-3">
+        <div className="flex items-end gap-1 sm:gap-2">
           <Button
             type="button"
             variant="ghost"
             size="icon"
+            className="h-10 w-10 shrink-0"
             onClick={() => fileRef.current?.click()}
             disabled={sendAttachment.isPending}
             aria-label="Anexar arquivo"
@@ -471,7 +536,7 @@ function ChatThread({
           <input ref={fileRef} type="file" className="hidden" onChange={handleFileChange} />
 
           {(currentRole === "admin" || currentRole === "collaborator") && (
-            <Button type="button" variant="ghost" size="icon" onClick={() => setTemplatesOpen(true)} aria-label="Mensagens rápidas">
+            <Button type="button" variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={() => setTemplatesOpen(true)} aria-label="Mensagens rápidas">
               <Wand2 className="h-4 w-4" />
             </Button>
           )}
@@ -481,7 +546,7 @@ function ChatThread({
             onChange={(e) => setText(e.target.value)}
             rows={1}
             placeholder="Escreva uma mensagem…"
-            className="max-h-32 min-h-10 flex-1 resize-none"
+            className="max-h-32 min-h-10 min-w-0 flex-1 resize-none text-base sm:text-sm"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -490,10 +555,13 @@ function ChatThread({
             }}
           />
           <Button
+            className="h-10 shrink-0 px-3 sm:px-4"
             onClick={() => text.trim() && sendText.mutate(text.trim())}
             disabled={!text.trim() || sendText.isPending}
+            aria-label="Enviar mensagem"
           >
-            <Send className="mr-1 h-4 w-4" /> Enviar
+            <Send className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Enviar</span>
+
           </Button>
         </div>
         {pendingVars(text).length > 0 && (
