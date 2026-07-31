@@ -23,7 +23,7 @@ import {
   CHAT_SITUATION_FILTERS, CHAT_SITUATION_LABELS, CHAT_SITUATION_TONES, canSeeChatSituation,
   chatSituationEmptyMessage, deriveChatSituation, filterConversationsBySituation,
   parseChatSituationFilter, serializeChatSituationFilter, type ChatSituationFilter,
-  CHAT_OVERDUE_TOOLTIP, chatResponsibleLabel, isChatResponseOverdue,
+  CHAT_OVERDUE_TOOLTIP, chatResponsibleLabel, isChatResponseOverdue, clientOperationalNotice,
 } from "@/lib/chat-situation";
 import { z } from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
@@ -86,6 +86,8 @@ type Conv = {
   responsible_profile_id: string | null;
   responsible_name: string | null;
   waiting_since: string | null;
+  /** Fase E2.4 — derivado na RPC (active | inactive | deleted); NULL para Cliente. */
+  client_operational_status: string | null;
   clients?: { razao_social: string; nome_fantasia: string | null } | null;
 };
 
@@ -116,6 +118,23 @@ function SituationBadge({ conv, className }: { conv: Conv; className?: string })
   );
 }
 
+/** Fase E2.4 — aviso compacto de empresa inativa/excluída (somente staff). */
+function OperationalNotice({ status, className }: { status: string | null; className?: string }) {
+  const label = clientOperationalNotice(status);
+  if (!label) return null;
+  return (
+    <span
+      title={label}
+      className={cn(
+        "inline-flex max-w-[9rem] shrink-0 items-center truncate rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-medium leading-4 text-muted-foreground",
+        className,
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
 /** Indicador discreto de atraso (staff): ponto vermelho + tooltip nativo. */
 function OverdueDot({ className }: { className?: string }) {
   return (
@@ -127,6 +146,7 @@ function OverdueDot({ className }: { className?: string }) {
     />
   );
 }
+
 
 /**
  * Relógio compartilhado (60s): o atraso precisa aparecer sem nova mensagem e
@@ -180,6 +200,7 @@ function ChatPage() {
         responsible_profile_id: r.responsible_profile_id ?? null,
         responsible_name: r.responsible_name ?? null,
         waiting_since: r.waiting_since ?? null,
+        client_operational_status: (r as { client_operational_status?: string | null }).client_operational_status ?? null,
         clients: { razao_social: r.razao_social, nome_fantasia: r.nome_fantasia },
       })) as Conv[];
     },
@@ -372,12 +393,14 @@ function ChatPage() {
                     )}
                   </div>
                   {showSituation && (
-                    <div className="flex shrink-0 items-center gap-1">
+                    <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+                      <OperationalNotice status={c.client_operational_status} />
                       <SituationBadge conv={c} />
                       {isChatResponseOverdue(
                         deriveChatSituation(c.last_sender_role, c.last_message_created_at),
                         c.waiting_since,
                         now,
+                        c.client_operational_status,
                       ) && <OverdueDot />}
                     </div>
                   )}
@@ -559,12 +582,14 @@ function ChatThread({
         </div>
         {showSituation ? (
           <div className="flex shrink-0 flex-col items-end gap-1 justify-self-end">
-            <div className="flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center justify-end gap-1.5">
+              <OperationalNotice status={conv.client_operational_status} />
               <SituationBadge conv={conv} />
               {isChatResponseOverdue(
                 deriveChatSituation(conv.last_sender_role, conv.last_message_created_at),
                 conv.waiting_since,
                 now,
+                conv.client_operational_status,
               ) && (
                 <span className="inline-flex items-center gap-1 text-[10px] font-medium text-destructive" title={CHAT_OVERDUE_TOOLTIP}>
                   <OverdueDot />

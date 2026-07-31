@@ -107,23 +107,53 @@ export const CHAT_NO_RESPONSIBLE_LABEL = "Sem responsável principal";
 
 export const CHAT_OVERDUE_TOOLTIP = `Aguardando resposta da equipe há ${CHAT_TEAM_RESPONSE_TARGET_HOURS} horas ou mais`;
 
+/* ------------------------------------------------------------------ *
+ * Fase E2.4 — situação operacional da empresa (derivada, sem coluna)  *
+ * ------------------------------------------------------------------ */
+
+/** Espelho do campo derivado devolvido pela RPC (NULL para o perfil Cliente). */
+export type ClientOperationalStatus = "active" | "inactive" | "deleted";
+
+export const CLIENT_OPERATIONAL_STATUS_LABELS: Record<Exclude<ClientOperationalStatus, "active">, string> = {
+  inactive: "Empresa inativa",
+  deleted: "Empresa excluída",
+};
+
+/** Só empresa operacional (ativa) entra no cálculo de atraso. */
+export function isClientOperational(status: string | null | undefined): boolean {
+  // Cliente recebe NULL: nesse perfil não há indicador de atraso na interface.
+  return status === "active";
+}
+
+/** Rótulo do aviso interno; null quando não há nada a sinalizar. */
+export function clientOperationalNotice(status: string | null | undefined): string | null {
+  if (status === "inactive" || status === "deleted") {
+    return CLIENT_OPERATIONAL_STATUS_LABELS[status];
+  }
+  return null;
+}
+
 /**
  * Função pura de atraso. Só há atraso quando a conversa está aguardando a
- * equipe, `waitingSince` é um timestamp válido e no passado, e a espera já
- * atingiu (>=) o alvo. Sem fim de semana/feriado/expediente nesta fase.
+ * equipe, `waitingSince` é um timestamp válido e no passado, a espera já
+ * atingiu (>=) o alvo e a empresa está operacionalmente ativa (Fase E2.4).
+ * Sem fim de semana/feriado/expediente nesta fase.
  */
 export function isChatResponseOverdue(
   situation: ChatSituation,
   waitingSince: string | null | undefined,
   now: number = Date.now(),
+  clientOperationalStatus: string | null | undefined = "active",
 ): boolean {
   if (situation !== "aguardando_equipe") return false;
+  if (!isClientOperational(clientOperationalStatus)) return false;
   if (!waitingSince) return false;
   const started = new Date(waitingSince).getTime();
   if (!Number.isFinite(started)) return false;
   if (started > now) return false; // timestamp futuro nunca gera atraso
   return now - started >= CHAT_TEAM_RESPONSE_TARGET_HOURS * 3_600_000;
 }
+
 
 /** Rótulo do responsável para a lista/cabeçalho (somente staff). */
 export function chatResponsibleLabel(name: string | null | undefined): string {

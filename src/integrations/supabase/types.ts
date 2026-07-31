@@ -3534,6 +3534,7 @@ export type Database = {
         Args: never
         Returns: {
           client_id: string
+          client_operational_status: string
           conversation_id: string
           last_message_at: string
           last_message_created_at: string
