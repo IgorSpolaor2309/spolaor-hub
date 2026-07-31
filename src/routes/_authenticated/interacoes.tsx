@@ -520,12 +520,13 @@ function ChatThread({
         })}
       </div>
 
-      <footer className="border-t bg-background p-3">
-        <div className="flex items-end gap-2">
+      <footer className="shrink-0 border-t bg-background p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:p-3">
+        <div className="flex items-end gap-1 sm:gap-2">
           <Button
             type="button"
             variant="ghost"
             size="icon"
+            className="h-10 w-10 shrink-0"
             onClick={() => fileRef.current?.click()}
             disabled={sendAttachment.isPending}
             aria-label="Anexar arquivo"
@@ -535,7 +536,7 @@ function ChatThread({
           <input ref={fileRef} type="file" className="hidden" onChange={handleFileChange} />
 
           {(currentRole === "admin" || currentRole === "collaborator") && (
-            <Button type="button" variant="ghost" size="icon" onClick={() => setTemplatesOpen(true)} aria-label="Mensagens rápidas">
+            <Button type="button" variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={() => setTemplatesOpen(true)} aria-label="Mensagens rápidas">
               <Wand2 className="h-4 w-4" />
             </Button>
           )}
@@ -545,7 +546,7 @@ function ChatThread({
             onChange={(e) => setText(e.target.value)}
             rows={1}
             placeholder="Escreva uma mensagem…"
-            className="max-h-32 min-h-10 flex-1 resize-none"
+            className="max-h-32 min-h-10 min-w-0 flex-1 resize-none text-base sm:text-sm"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -554,10 +555,13 @@ function ChatThread({
             }}
           />
           <Button
+            className="h-10 shrink-0 px-3 sm:px-4"
             onClick={() => text.trim() && sendText.mutate(text.trim())}
             disabled={!text.trim() || sendText.isPending}
+            aria-label="Enviar mensagem"
           >
-            <Send className="mr-1 h-4 w-4" /> Enviar
+            <Send className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Enviar</span>
+
           </Button>
         </div>
         {pendingVars(text).length > 0 && (
