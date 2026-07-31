@@ -200,6 +200,7 @@ function ChatPage() {
         responsible_profile_id: r.responsible_profile_id ?? null,
         responsible_name: r.responsible_name ?? null,
         waiting_since: r.waiting_since ?? null,
+        client_operational_status: (r as { client_operational_status?: string | null }).client_operational_status ?? null,
         clients: { razao_social: r.razao_social, nome_fantasia: r.nome_fantasia },
       })) as Conv[];
     },
