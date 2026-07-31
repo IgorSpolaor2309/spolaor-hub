@@ -20,7 +20,9 @@ import { applyTemplateVars, pendingVars, type TemplateVars } from "@/lib/templat
 import { TEMPLATE_CATEGORIES, labelOf } from "@/lib/sc-types";
 import { cn } from "@/lib/utils";
 import {
-  CHAT_SITUATION_LABELS, CHAT_SITUATION_TONES, canSeeChatSituation, deriveChatSituation,
+  CHAT_SITUATION_FILTERS, CHAT_SITUATION_LABELS, CHAT_SITUATION_TONES, canSeeChatSituation,
+  chatSituationEmptyMessage, deriveChatSituation, filterConversationsBySituation,
+  parseChatSituationFilter, serializeChatSituationFilter, type ChatSituationFilter,
 } from "@/lib/chat-situation";
 import { z } from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
@@ -28,6 +30,7 @@ import { zodValidator } from "@tanstack/zod-adapter";
 const searchSchema = z.object({
   client: z.string().optional(),
   conversation: z.string().optional(),
+  situacao: z.string().optional(),
 });
 
 function logChatError(action: string, error: unknown, extra?: Record<string, unknown>) {
