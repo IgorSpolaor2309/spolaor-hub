@@ -362,7 +362,10 @@ function AdminDashboard({ name }: { name: string }) {
 function CollabDashboard({ name, userId }: { name: string; userId: string }) {
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
+  // Fase B3 — mesma fonte mensal do Administrador; a RLS já limita à carteira.
+  const { competencia, summary, error: overviewError } = useCurrentCompetenceSummary(!!userId);
   const { data, error } = useQuery({
+
     queryKey: ["dash-collab-v2", userId, range.from, range.to],
     enabled: !!userId,
     retry: 1,
