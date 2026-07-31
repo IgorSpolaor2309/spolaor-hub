@@ -23,7 +23,7 @@ import {
   CHAT_SITUATION_FILTERS, CHAT_SITUATION_LABELS, CHAT_SITUATION_TONES, canSeeChatSituation,
   chatSituationEmptyMessage, deriveChatSituation, filterConversationsBySituation,
   parseChatSituationFilter, serializeChatSituationFilter, type ChatSituationFilter,
-  CHAT_OVERDUE_TOOLTIP, chatResponsibleLabel, isChatResponseOverdue,
+  CHAT_OVERDUE_TOOLTIP, chatResponsibleLabel, isChatResponseOverdue, clientOperationalNotice,
 } from "@/lib/chat-situation";
 import { z } from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
