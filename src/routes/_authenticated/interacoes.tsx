@@ -86,6 +86,8 @@ type Conv = {
   responsible_profile_id: string | null;
   responsible_name: string | null;
   waiting_since: string | null;
+  /** Fase E2.4 — derivado na RPC (active | inactive | deleted); NULL para Cliente. */
+  client_operational_status: string | null;
   clients?: { razao_social: string; nome_fantasia: string | null } | null;
 };
 
