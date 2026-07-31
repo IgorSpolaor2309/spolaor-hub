@@ -269,39 +269,55 @@ function AdminDashboard({ name }: { name: string }) {
 
         <Card className="p-5">
           <h3 className="mb-3 font-display text-lg">Empresas sem documentos do mês</h3>
-          {!(data?.clientsNoDocs?.length) ? <p className="text-sm text-muted-foreground">Todos receberam documentos este mês.</p> : (
+          {!clientsNoDocs.length ? <p className="text-sm text-muted-foreground">Todos receberam documentos este mês.</p> : (
             <ul className="divide-y">
-              {data!.clientsNoDocs.map((c: any) => (
-                <li key={c.id} className="flex items-center justify-between py-2.5">
-                  <Link to="/clientes/$id" params={{ id: c.id }} className="text-sm font-medium text-primary hover:underline">{c.razao_social}</Link>
-                  <Badge variant="outline">{currentCompetencia()}</Badge>
+              {clientsNoDocs.map((c) => (
+                <li key={c.client_id} className="flex items-center justify-between py-2.5">
+                  <Link to="/clientes/$id" params={{ id: c.client_id }} className="text-sm font-medium text-primary hover:underline">{c.razao_social}</Link>
+                  <Badge variant="outline">{competencia}</Badge>
                 </li>
               ))}
             </ul>
           )}
         </Card>
 
+        {/* Fase B3 — mesmo espaço do antigo "Competências do mês em aberto",
+            agora alimentado pela mesma RPC de /competencias. */}
         <Card className="p-5">
-          <h3 className="mb-3 font-display text-lg">Competências do mês em aberto</h3>
-          {!(data?.openCompetences?.length) ? <p className="text-sm text-muted-foreground">Todas as competências do mês estão concluídas.</p> : (
-            <ul className="divide-y">
-              {data!.openCompetences.map((c: any) => {
-                const st = c.compStatus as OfficialStatus | null;
-                return (
-                  <li key={c.id} className="flex items-center justify-between py-2.5">
-                    <Link to="/clientes/$id" params={{ id: c.id }} className="text-sm font-medium text-primary hover:underline">{c.razao_social}</Link>
-                    {st ? (
-                      <Badge className={OFFICIAL_TONE[st]}>{OFFICIAL_LABEL[st]}</Badge>
-                    ) : (
-                      <Badge variant="outline">Competência não iniciada</Badge>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h3 className="font-display text-lg flex items-center gap-2">
+              <Layers className="h-4 w-4 text-primary" /> Situação das competências — {formatCompetenciaLong(competencia)}
+            </h3>
+            <Link to="/competencias" search={{ comp: competencia }} className="text-xs font-medium text-primary hover:underline">
+              Ver Competências
+            </Link>
+          </div>
+          {overviewError ? (
+            <p className="text-sm text-muted-foreground">Não foi possível carregar a situação do mês.</p>
+          ) : (
+            <>
+              <SituacaoCounts summary={summary} />
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                <span>{summary.total} competência{summary.total === 1 ? "" : "s"} no mês</span>
+                <span aria-hidden>·</span>
+                <Link to="/processos" search={{} as any} className="font-medium text-primary hover:underline">
+                  {summary.procAtrasados} processo{summary.procAtrasados === 1 ? "" : "s"} atrasado{summary.procAtrasados === 1 ? "" : "s"}
+                </Link>
+              </div>
+              {atencao.length > 0 && (
+                <ul className="mt-3 divide-y">
+                  {atencao.map((c) => (
+                    <li key={c.client_id} className="flex items-center justify-between gap-2 py-2">
+                      <Link to="/clientes/$id" params={{ id: c.client_id }} className="min-w-0 truncate text-sm font-medium text-primary hover:underline">{c.razao_social}</Link>
+                      <Badge className={SITUACAO_TONE[c.situacao]}>{SITUACAO_LABEL[c.situacao]}</Badge>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
           )}
         </Card>
+
 
         <Card className="p-5">
           <h3 className="mb-3 font-display text-lg">Colaboradores com mais pendências abertas</h3>
