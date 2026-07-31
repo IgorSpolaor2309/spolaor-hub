@@ -51,3 +51,46 @@ export function chatSituationLabel(situation: ChatSituation): string {
 export function canSeeChatSituation(role: string | null | undefined): boolean {
   return role === "admin" || role === "collaborator";
 }
+
+/* ------------------------------------------------------------------ *
+ * Fase E2.2 — filtro operacional por situação (staff)                 *
+ * ------------------------------------------------------------------ */
+
+/** "all" nunca vai para a URL: ausência do parâmetro = Todas. */
+export type ChatSituationFilter = "all" | "aguardando_equipe" | "aguardando_cliente";
+
+export const CHAT_SITUATION_FILTERS: { value: ChatSituationFilter; label: string }[] = [
+  { value: "all", label: "Todas" },
+  { value: "aguardando_equipe", label: CHAT_SITUATION_LABELS.aguardando_equipe },
+  { value: "aguardando_cliente", label: CHAT_SITUATION_LABELS.aguardando_cliente },
+];
+
+/** Valor inválido/ausente → "all". */
+export function parseChatSituationFilter(v: unknown): ChatSituationFilter {
+  return v === "aguardando_equipe" || v === "aguardando_cliente" ? v : "all";
+}
+
+/** Serializa para a URL: "all" vira undefined (parâmetro removido). */
+export function serializeChatSituationFilter(f: ChatSituationFilter): string | undefined {
+  return f === "all" ? undefined : f;
+}
+
+/** Estado vazio por filtro — mesma linguagem da tela. */
+export function chatSituationEmptyMessage(f: ChatSituationFilter): string {
+  if (f === "aguardando_equipe") return "Nenhuma conversa aguardando a equipe.";
+  if (f === "aguardando_cliente") return "Nenhuma conversa aguardando o cliente.";
+  return "Nenhuma conversa ainda.";
+}
+
+/**
+ * Aplica o filtro sobre metadados já autorizados pela RPC/RLS.
+ * Regra de situação vem sempre de deriveChatSituation — sem duplicação.
+ */
+export function filterConversationsBySituation<
+  T extends { last_sender_role?: ChatSenderRole; last_message_created_at?: string | null },
+>(rows: T[], filter: ChatSituationFilter): T[] {
+  if (filter === "all") return rows;
+  return rows.filter(
+    (r) => deriveChatSituation(r.last_sender_role, r.last_message_created_at) === filter,
+  );
+}
