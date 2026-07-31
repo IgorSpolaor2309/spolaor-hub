@@ -25,6 +25,8 @@ import {
   parseChatSituationFilter, serializeChatSituationFilter, type ChatSituationFilter,
   CHAT_OVERDUE_TOOLTIP, chatResponsibleLabel, isChatResponseOverdue, clientOperationalNotice,
 } from "@/lib/chat-situation";
+import { conversationLink, CHAT_NOTIFICATION_TYPE } from "@/lib/notification-banner";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { z } from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
 
@@ -170,6 +172,7 @@ function ChatPage() {
   const showSituation = canSeeChatSituation(role);
   const [q, setQ] = useState("");
   const now = useSharedClock();
+  const isMobile = useIsMobile();
 
   // Fase E2.2 — filtro de situação (staff). Cliente ignora o parâmetro.
   const situationFilter: ChatSituationFilter = showSituation
