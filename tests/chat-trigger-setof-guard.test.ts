@@ -23,7 +23,8 @@ function latestTriggerDefinition(): string {
     if (match) def = match[0];
   }
   if (!def) throw new Error("definição de on_chat_message_insert() não encontrada nas migrations");
-  return def;
+  // remove comentários SQL antes da análise estrutural
+  return def.replace(/--[^\n]*/g, "");
 }
 
 describe("on_chat_message_insert — guarda contra função set-returning em CASE", () => {
