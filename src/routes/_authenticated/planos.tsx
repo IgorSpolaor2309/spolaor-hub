@@ -191,16 +191,27 @@ function PlanDialog({ initial, onDone }: { initial: any; onDone: () => void }) {
     periodicidade: initial?.periodicidade ?? "mensal",
     status: initial?.status ?? "ativo",
     descricao: initial?.descricao ?? "",
+    publico_alvo: initial?.publico_alvo ?? "",
+    limite_faturamento: initial?.limite_faturamento ?? "",
+    tipo_preco: initial?.tipo_preco ?? "fixo",
+    valor_provisorio: initial?.valor_provisorio ?? true,
+    observacoes_comerciais: initial?.observacoes_comerciais ?? "",
   });
+  const sobOrcamento = f.tipo_preco === "sob_orcamento";
   const save = useMutation({
     mutationFn: async () => {
       const payload: any = {
         nome: f.nome.trim(),
         tipo_cliente: f.tipo_cliente,
-        valor_padrao: f.valor_padrao === "" ? null : Number(f.valor_padrao),
+        valor_padrao: sobOrcamento || f.valor_padrao === "" ? null : Number(f.valor_padrao),
         periodicidade: f.periodicidade,
         status: f.status,
         descricao: f.descricao || null,
+        publico_alvo: f.publico_alvo || null,
+        limite_faturamento: f.limite_faturamento === "" ? null : Number(f.limite_faturamento),
+        tipo_preco: f.tipo_preco,
+        valor_provisorio: f.valor_provisorio,
+        observacoes_comerciais: f.observacoes_comerciais || null,
       };
       if (isEdit) {
         const { error } = await (supabase as any).from("plans").update(payload).eq("id", initial.id);
@@ -216,10 +227,14 @@ function PlanDialog({ initial, onDone }: { initial: any; onDone: () => void }) {
   return (
     <DialogContent className="max-w-lg">
       <DialogHeader><DialogTitle>{isEdit ? "Editar plano" : "Novo plano"}</DialogTitle></DialogHeader>
-      <div className="grid gap-3">
+      <div className="grid max-h-[70vh] gap-3 overflow-y-auto">
         <div className="space-y-1.5">
           <Label>Nome *</Label>
           <Input value={f.nome} onChange={(e) => setF({ ...f, nome: e.target.value })} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Público-alvo</Label>
+          <Input placeholder="ex.: Simples Nacional, Anexo III" value={f.publico_alvo} onChange={(e) => setF({ ...f, publico_alvo: e.target.value })} />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
@@ -237,8 +252,20 @@ function PlanDialog({ initial, onDone }: { initial: any; onDone: () => void }) {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label>Valor padrão (R$)</Label>
-            <Input type="number" step="0.01" value={f.valor_padrao} onChange={(e) => setF({ ...f, valor_padrao: e.target.value })} />
+            <Label>Tipo de preço</Label>
+            <Select value={f.tipo_preco} onValueChange={(v) => setF({ ...f, tipo_preco: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{TIPO_PRECO_PLANO.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Valor mensal (R$)</Label>
+            <Input type="number" step="0.01" disabled={sobOrcamento} value={sobOrcamento ? "" : f.valor_padrao}
+              onChange={(e) => setF({ ...f, valor_padrao: e.target.value })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Limite de faturamento mensal (R$)</Label>
+            <Input type="number" step="0.01" value={f.limite_faturamento} onChange={(e) => setF({ ...f, limite_faturamento: e.target.value })} />
           </div>
           <div className="space-y-1.5">
             <Label>Status</Label>
@@ -251,11 +278,20 @@ function PlanDialog({ initial, onDone }: { initial: any; onDone: () => void }) {
             </Select>
           </div>
         </div>
+        <label className="flex items-center gap-2 text-sm">
+          <Checkbox checked={f.valor_provisorio} onCheckedChange={(v) => setF({ ...f, valor_provisorio: !!v })} />
+          Valor provisório
+        </label>
         <div className="space-y-1.5">
           <Label>Descrição</Label>
           <Textarea rows={2} value={f.descricao} onChange={(e) => setF({ ...f, descricao: e.target.value })} />
         </div>
+        <div className="space-y-1.5">
+          <Label>Observações comerciais preliminares (não publicadas)</Label>
+          <Textarea rows={3} value={f.observacoes_comerciais} onChange={(e) => setF({ ...f, observacoes_comerciais: e.target.value })} />
+        </div>
       </div>
+
       <DialogFooter>
         <Button disabled={!f.nome.trim() || save.isPending} onClick={() => save.mutate()}>
           {save.isPending ? "Salvando…" : isEdit ? "Salvar" : "Criar plano"}
