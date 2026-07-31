@@ -118,6 +118,23 @@ function SituationBadge({ conv, className }: { conv: Conv; className?: string })
   );
 }
 
+/** Fase E2.4 — aviso compacto de empresa inativa/excluída (somente staff). */
+function OperationalNotice({ status, className }: { status: string | null; className?: string }) {
+  const label = clientOperationalNotice(status);
+  if (!label) return null;
+  return (
+    <span
+      title={label}
+      className={cn(
+        "inline-flex max-w-[9rem] shrink-0 items-center truncate rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-medium leading-4 text-muted-foreground",
+        className,
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
 /** Indicador discreto de atraso (staff): ponto vermelho + tooltip nativo. */
 function OverdueDot({ className }: { className?: string }) {
   return (
@@ -129,6 +146,7 @@ function OverdueDot({ className }: { className?: string }) {
     />
   );
 }
+
 
 /**
  * Relógio compartilhado (60s): o atraso precisa aparecer sem nova mensagem e
