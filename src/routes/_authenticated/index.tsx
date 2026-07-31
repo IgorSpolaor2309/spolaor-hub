@@ -132,14 +132,14 @@ function Dashboard() {
 function AdminDashboard({ name }: { name: string }) {
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
+  const { competencia, summary, error: overviewError } = useCurrentCompetenceSummary(true);
   const { data, error } = useQuery({
-    queryKey: ["dash-admin-v2", range.from, range.to],
+    queryKey: ["dash-admin-v3", range.from, range.to],
     retry: 1,
     queryFn: async () => {
       const t = today();
       const in7 = inDays(7);
       const in30 = inDays(30);
-      const competencia = currentCompetencia();
       const dFrom = range.from ? `${range.from}T00:00:00` : null;
       const dTo = range.to ? `${range.to}T23:59:59` : null;
       const scope = (q: any) => {
@@ -157,7 +157,6 @@ function AdminDashboard({ name }: { name: string }) {
         recentEvents,
         unassignedClients,
         collabTaskCounts,
-        clientsActiveForMonth, monthOverview, monthStatuses,
       ] = await Promise.all([
         supabase.from("clients").select("id", { head: true, count: "exact" }).eq("status", "active").is("deleted_at", null),
         supabase.from("collaborators").select("id", { head: true, count: "exact" }).eq("status", "active"),
@@ -174,14 +173,8 @@ function AdminDashboard({ name }: { name: string }) {
           .order("created_at", { ascending: false }).limit(6)),
         supabase.from("clients").select("id, razao_social, client_collaborators(collaborator_id)").eq("status", "active").is("deleted_at", null),
         supabase.from("pending_tasks").select("collaborator_id").not("status", "in", "(concluida,cancelada)").not("collaborator_id", "is", null),
-        supabase.from("clients").select("id, razao_social").eq("status", "active").is("deleted_at", null),
-        // Fase B2: fonte única dos contadores do mês (mesma de /competencias).
-        supabase.rpc("get_competence_overview", { p_competence: competencia }),
-        // Fonte oficial do status mensal (Fase A2): client_competences.
-        supabase.from("client_competences").select("client_id, status, competence").eq("competence", competencia),
-
       ]);
-      const failures = [clients, collabs, tasksOverdue, tasksToday, reqPending, docsAnalysis, guidesSoon, guidesOverdue, certsSoon, recentEvents, unassignedClients, collabTaskCounts, clientsActiveForMonth, monthOverview, monthStatuses].filter((r) => r.error);
+      const failures = [clients, collabs, tasksOverdue, tasksToday, reqPending, docsAnalysis, guidesSoon, guidesOverdue, certsSoon, recentEvents, unassignedClients, collabTaskCounts].filter((r) => r.error);
 
       if (failures.length) console.warn("[dashboard-admin] consultas parciais falharam", failures.map((r) => r.error?.message));
 
@@ -202,26 +195,6 @@ function AdminDashboard({ name }: { name: string }) {
         return { id, n, nome: p?.full_name || p?.email || "Sem nome" };
       });
 
-
-      // Fase B2: "sem documentos do mês" usa doc_total da visão de competências
-      // (competência AAAA-MM), não mais uma contagem por created_at.
-      const overviewRows = ((monthOverview as any)?.data ?? []) as { client_id: string; razao_social: string; doc_total: number }[];
-      const clientsNoDocs = overviewRows
-        .filter((r) => (r.doc_total ?? 0) === 0)
-        .slice(0, 8)
-        .map((r) => ({ id: r.client_id, razao_social: r.razao_social }));
-
-
-      // Fase A2: máquina oficial de estados. "completed" = concluída.
-      // Tudo o que não está concluído continua em aberto para a equipe.
-      const statusByClient = new Map<string, string>();
-      for (const s of (monthStatuses.data ?? [])) statusByClient.set(s.client_id as string, s.status as string);
-      const openCompetences = (clientsActiveForMonth.data ?? [])
-        .map((c: any) => ({ ...c, compStatus: (statusByClient.get(c.id) ?? null) as OfficialStatus | null }))
-        .filter((c: any) => c.compStatus !== "completed")
-        .slice(0, 8);
-
-
       return {
         clients: clients.count ?? 0, collabs: collabs.count ?? 0,
         tasksOverdue: tasksOverdue.count ?? 0, tasksToday: tasksToday.count ?? 0,
@@ -229,10 +202,16 @@ function AdminDashboard({ name }: { name: string }) {
         guidesSoon: guidesSoon.count ?? 0, guidesOverdue: guidesOverdue.count ?? 0,
         certsSoon: certsSoon.data ?? [],
         recentEvents: recentEvents.data ?? [],
-        clientsNoCollab, topCollabs, clientsNoDocs, openCompetences,
+        clientsNoCollab, topCollabs,
       };
     },
   });
+
+  // Fase B3: "sem documentos do mês" e a situação mensal saem da MESMA linha do
+  // overview (doc_total / computeSituacao) — nenhuma contagem por created_at.
+  const clientsNoDocs = summary.semDocumentos.slice(0, 8);
+  const atencao = summary.atencao.slice(0, 8);
+
 
   return (
     <div>
