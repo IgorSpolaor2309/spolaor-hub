@@ -19,6 +19,9 @@ import { ClientNewConversationDialog } from "@/components/sc/ClientNewConversati
 import { applyTemplateVars, pendingVars, type TemplateVars } from "@/lib/template-vars";
 import { TEMPLATE_CATEGORIES, labelOf } from "@/lib/sc-types";
 import { cn } from "@/lib/utils";
+import {
+  CHAT_SITUATION_LABELS, CHAT_SITUATION_TONES, canSeeChatSituation, deriveChatSituation,
+} from "@/lib/chat-situation";
 import { z } from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
 
