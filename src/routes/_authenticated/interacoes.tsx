@@ -277,11 +277,32 @@ function ChatPage() {
             selectedId ? "hidden md:flex" : "flex w-full",
           )}
         >
-          <div className="border-b p-3">
+          <div className="space-y-2 border-b p-3">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input placeholder="Buscar cliente…" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
             </div>
+            {showSituation && (
+              <div
+                role="group"
+                aria-label="Filtrar por situação"
+                className="flex flex-wrap gap-1.5 overflow-x-auto"
+              >
+                {CHAT_SITUATION_FILTERS.map((f) => (
+                  <Button
+                    key={f.value}
+                    type="button"
+                    size="sm"
+                    variant={situationFilter === f.value ? "default" : "outline"}
+                    aria-pressed={situationFilter === f.value}
+                    className="h-7 shrink-0 rounded-full px-2.5 text-[11px]"
+                    onClick={() => setSituationFilter(f.value)}
+                  >
+                    {f.label}
+                  </Button>
+                ))}
+              </div>
+            )}
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto">
             {convsError ? (
@@ -289,7 +310,9 @@ function ChatPage() {
             ) : loadingConvs ? (
               <p className="p-4 text-sm text-muted-foreground">Carregando…</p>
             ) : filteredConvs.length === 0 ? (
-              <div className="p-4 text-xs text-muted-foreground">Nenhuma conversa ainda.</div>
+              <div className="p-4 text-xs text-muted-foreground">
+                {q.trim() ? "Nenhuma conversa ainda." : chatSituationEmptyMessage(situationFilter)}
+              </div>
             ) : filteredConvs.map((c) => (
               <button
                 key={c.id}
