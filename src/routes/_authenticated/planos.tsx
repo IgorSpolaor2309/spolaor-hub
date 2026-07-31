@@ -84,58 +84,91 @@ function PlansPage() {
   return (
     <div>
       <PageHeader
-        title="Planos"
-        description="Catálogo de planos comerciais e itens mensais do checklist."
-        action={isAdmin && (
-          <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null); }}>
-            <DialogTrigger asChild>
-              <Button><Plus className="mr-2 h-4 w-4" /> Novo plano</Button>
-            </DialogTrigger>
-            {open && <PlanDialog initial={editing} onDone={() => { setOpen(false); setEditing(null); qc.invalidateQueries({ queryKey: ["plans"] }); }} />}
-          </Dialog>
-        )}
+        title="Planos e serviços"
+        description="Catálogo de planos comerciais, itens mensais do checklist e serviços extraordinários."
       />
 
-      <Card className="p-2">
-        {plansQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
-          : (plansQ.data ?? []).length === 0 ? <EmptyState icon={<Briefcase className="h-6 w-6" />} title="Nenhum plano cadastrado" description="Crie o primeiro plano para começar." />
-          : (
-            <ul className="divide-y">
-              {(plansQ.data ?? []).map((p: any) => (
-                <li key={p.id} className="p-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0"
-                      onClick={() => setExpanded((e) => ({ ...e, [p.id]: !e[p.id] }))}>
-                      {expanded[p.id] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                    </Button>
-                    <span className="font-medium">{p.nome}</span>
-                    <Badge variant="outline">{p.tipo_cliente}</Badge>
-                    <Badge variant="secondary">{PERIODICIDADES.find((x) => x.value === p.periodicidade)?.label}</Badge>
-                    <Badge className={p.status === "ativo" ? "bg-emerald-100 text-emerald-800" : "bg-zinc-200 text-zinc-700"}>
-                      {p.status === "ativo" ? "Ativo" : "Inativo"}
-                    </Badge>
-                    <span className="text-sm text-muted-foreground">{brl(p.valor_padrao)}</span>
-                    <span className="text-xs text-muted-foreground">· {p.plan_items?.length ?? 0} itens</span>
-                    <div className="ml-auto flex items-center gap-1">
-                      {isAdmin && (
+      <Tabs defaultValue="planos">
+        <TabsList>
+          <TabsTrigger value="planos">Planos</TabsTrigger>
+          <TabsTrigger value="servicos">Serviços extraordinários</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="planos" className="space-y-3">
+          {isAdmin && (
+            <div className="flex justify-end">
+              <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null); }}>
+                <DialogTrigger asChild>
+                  <Button><Plus className="mr-2 h-4 w-4" /> Novo plano</Button>
+                </DialogTrigger>
+                {open && <PlanDialog initial={editing} onDone={() => { setOpen(false); setEditing(null); qc.invalidateQueries({ queryKey: ["plans"] }); }} />}
+              </Dialog>
+            </div>
+          )}
+          <Card className="p-2">
+            {plansQ.isLoading ? <p className="p-3 text-sm text-muted-foreground">Carregando…</p>
+              : (plansQ.data ?? []).length === 0 ? <EmptyState icon={<Briefcase className="h-6 w-6" />} title="Nenhum plano cadastrado" description="Crie o primeiro plano para começar." />
+              : (
+                <ul className="divide-y">
+                  {(plansQ.data ?? []).map((p: any) => (
+                    <li key={p.id} className="p-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0"
+                          onClick={() => setExpanded((e) => ({ ...e, [p.id]: !e[p.id] }))}>
+                          {expanded[p.id] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                        </Button>
+                        <span className="font-medium">{p.nome}</span>
+                        <Badge variant="outline">{p.tipo_cliente}</Badge>
+                        <Badge variant="secondary">{PERIODICIDADES.find((x) => x.value === p.periodicidade)?.label}</Badge>
+                        <Badge className={p.status === "ativo" ? "bg-emerald-100 text-emerald-800" : "bg-zinc-200 text-zinc-700"}>
+                          {p.status === "ativo" ? "Ativo" : "Inativo"}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">
+                          {p.tipo_preco === "sob_orcamento" ? "Sob orçamento" : `${brl(p.valor_padrao)}/mês`}
+                        </span>
+                        {p.valor_provisorio && <Badge className="bg-amber-100 text-amber-800">Valor provisório</Badge>}
+                        {p.limite_faturamento != null && (
+                          <span className="text-xs text-muted-foreground">· até {brl(p.limite_faturamento)}/mês</span>
+                        )}
+                        <span className="text-xs text-muted-foreground">· {p.plan_items?.length ?? 0} itens</span>
+                        <div className="ml-auto flex items-center gap-1">
+                          {isAdmin && (
+                            <>
+                              <Button size="sm" variant="ghost" onClick={() => { setEditing(p); setOpen(true); }}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <DeletePlanButton planId={p.id} onDone={() => qc.invalidateQueries({ queryKey: ["plans"] })} />
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      {p.publico_alvo && <p className="ml-9 mt-1 text-xs text-muted-foreground">{p.publico_alvo}</p>}
+                      {expanded[p.id] && (
                         <>
-                          <Button size="sm" variant="ghost" onClick={() => { setEditing(p); setOpen(true); }}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <DeletePlanButton planId={p.id} onDone={() => qc.invalidateQueries({ queryKey: ["plans"] })} />
+                          {p.observacoes_comerciais && (
+                            <p className="ml-9 mt-2 text-xs text-muted-foreground">
+                              <span className="font-medium">Observações comerciais preliminares: </span>
+                              {p.observacoes_comerciais}
+                            </p>
+                          )}
+                          <PlanItemsSection planId={p.id} canEdit={isAdmin} />
                         </>
                       )}
-                    </div>
-                  </div>
-                  {expanded[p.id] && <PlanItemsSection planId={p.id} canEdit={isAdmin} />}
-                </li>
-              ))}
-            </ul>
-          )}
-      </Card>
+                    </li>
+                  ))}
+                </ul>
+              )}
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="servicos">
+          <ServicesSection canEdit={isAdmin} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
+
 
 function DeletePlanButton({ planId, onDone }: { planId: string; onDone: () => void }) {
   const m = useMutation({
