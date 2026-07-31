@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/sc/AppSidebar";
 import { AppHeader } from "@/components/sc/AppHeader";
+import { NotificationBanners } from "@/components/sc/NotificationBanners";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -138,6 +139,7 @@ function AuthedLayout() {
           </main>
         </div>
       </div>
+      <NotificationBanners />
       <Toaster richColors closeButton position="top-right" />
     </SidebarProvider>
   );

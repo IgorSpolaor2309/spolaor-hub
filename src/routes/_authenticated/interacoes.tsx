@@ -25,6 +25,8 @@ import {
   parseChatSituationFilter, serializeChatSituationFilter, type ChatSituationFilter,
   CHAT_OVERDUE_TOOLTIP, chatResponsibleLabel, isChatResponseOverdue, clientOperationalNotice,
 } from "@/lib/chat-situation";
+import { conversationLink, CHAT_NOTIFICATION_TYPE } from "@/lib/notification-banner";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { z } from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
 
@@ -170,6 +172,7 @@ function ChatPage() {
   const showSituation = canSeeChatSituation(role);
   const [q, setQ] = useState("");
   const now = useSharedClock();
+  const isMobile = useIsMobile();
 
   // Fase E2.2 — filtro de situação (staff). Cliente ignora o parâmetro.
   const situationFilter: ChatSituationFilter = showSituation
@@ -425,6 +428,8 @@ function ChatPage() {
               currentName={profile?.full_name ?? "Você"}
               showSituation={showSituation}
               now={now}
+              /* Mobile: a coluna fica oculta enquanto só a lista é exibida. */
+              displayed={!isMobile || !!selectedId}
               onBack={backToList}
             />
           ) : (
@@ -444,7 +449,7 @@ function ChatPage() {
 
 
 function ChatThread({
-  conv, currentUserId, currentRole, currentName, showSituation, now, onBack,
+  conv, currentUserId, currentRole, currentName, showSituation, now, displayed, onBack,
 }: {
   conv: Conv;
   currentUserId: string | null;
@@ -452,6 +457,7 @@ function ChatThread({
   currentName: string;
   showSituation: boolean;
   now: number;
+  displayed: boolean;
   onBack: () => void;
 }) {
   const qc = useQueryClient();
@@ -459,6 +465,7 @@ function ChatThread({
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const markedRef = useRef<string | null>(null);
 
   const { data: messages = [], isLoading: loadingMessages, error: messagesError } = useQuery({
     queryKey: ["chat-msgs", conv.id],
@@ -492,6 +499,41 @@ function ChatThread({
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [conv.id, qc]);
+
+  /**
+   * Fase E2.5 — leitura vinculada à exibição real da conversa.
+   * Marca como lidas apenas as notificações de chat do próprio usuário
+   * cujo link é exatamente o desta conversa. RLS garante o escopo.
+   */
+  const lastMsgId = messages.length ? (messages[messages.length - 1] as any).id as string : null;
+  useEffect(() => {
+    if (!displayed || !currentUserId || !conv.id) return;
+    const key = `${currentUserId}:${conv.id}:${lastMsgId ?? "empty"}`;
+    if (markedRef.current === key) return;
+    markedRef.current = key;
+    let cancelled = false;
+    (async () => {
+      const { error, count } = await supabase
+        .from("notifications")
+        .update({ lida: true }, { count: "exact" })
+        .eq("user_id", currentUserId)
+        .eq("tipo", CHAT_NOTIFICATION_TYPE)
+        .eq("link", conversationLink(conv.id))
+        .eq("lida", false);
+      if (cancelled) return;
+      if (error) {
+        markedRef.current = null;
+        logChatError("notifications.markConversationRead", error, { conversationId: conv.id });
+        return;
+      }
+      if (count) {
+        qc.invalidateQueries({ queryKey: ["notif-unread", currentUserId] });
+        qc.invalidateQueries({ queryKey: ["notif", currentUserId] });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [displayed, currentUserId, conv.id, lastMsgId, qc]);
+
 
   useEffect(() => {
     if (scrollerRef.current) scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight;
