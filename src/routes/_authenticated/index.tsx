@@ -13,15 +13,19 @@ import { DateRangeFilter, EMPTY_DATE_FILTER, type DateFilterValue } from "@/comp
 import { resolveRange } from "@/lib/date-ranges";
 import {
   Users, UserCog, ClipboardList, AlertTriangle, FileText, Clock,
-  Inbox, Receipt, ShieldCheck, MessageSquare,
+  Inbox, Receipt, ShieldCheck, MessageSquare, Layers,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { formatBR, todayLocalYmd, localYmdInDays } from "@/lib/dates";
-import { OFFICIAL_LABEL, OFFICIAL_TONE, type OfficialStatus } from "@/lib/competence-status";
 import { clientStatusLabel, clientStatusTone } from "@/lib/competence-client-labels";
-import { TAX_GUIDE_CLOSED_STATUSES_PG } from "@/lib/competence-progress";
+import {
+  SITUACAO_LABEL, TAX_GUIDE_CLOSED_STATUSES_PG,
+  type CompetenceOverviewRow, type Situacao,
+} from "@/lib/competence-progress";
+import { summarizeCompetenceOverview, type CompetenceSummary } from "@/lib/competence-summary";
+import { currentCompetencia, formatCompetenciaLong } from "@/lib/competencia";
 
 
 
@@ -33,14 +37,60 @@ export const Route = createFileRoute("/_authenticated/")({
 /* ---------- helpers ---------- */
 const today = () => todayLocalYmd();
 const inDays = (n: number) => localYmdInDays(n);
-const currentCompetencia = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-};
 
 // Fase A2: a fonte oficial do status mensal é public.client_competences.
-// Os status internos vivem em competence-status.ts (equipe) e
-// competence-client-labels.ts (cliente). Nada mais lê client_month_status.
+// Fase B3: o Dashboard lê a competência atual por get_competence_overview —
+// a mesma RPC de /competencias — e agrega com summarizeCompetenceOverview.
+
+const SITUACAO_TONE: Record<Situacao, string> = {
+  sem_atividade: "bg-zinc-100 text-zinc-700",
+  com_atrasos: "bg-red-100 text-red-800",
+  aguardando_cliente: "bg-amber-100 text-amber-800",
+  pronta_revisao: "bg-emerald-100 text-emerald-800",
+  em_andamento: "bg-blue-100 text-blue-800",
+};
+
+/**
+ * Fase B3 — chamada ÚNICA por Dashboard à visão mensal.
+ * Mesma query key de /competencias: cache compartilhado, zero N+1,
+ * e o filtro de período do Dashboard não participa da chave.
+ */
+function useCurrentCompetenceSummary(enabled: boolean) {
+  const competencia = currentCompetencia();
+  const { data, error } = useQuery({
+    queryKey: ["competence-overview", competencia],
+    enabled,
+    staleTime: 30_000,
+    retry: 1,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("get_competence_overview", {
+        p_competence: competencia,
+      });
+      if (error) throw error;
+      return (data ?? []) as CompetenceOverviewRow[];
+    },
+  });
+  // Dashboard operacional = ambiente Real. Inativas/excluídas já não vêm da RPC.
+  const summary = useMemo(() => summarizeCompetenceOverview(data), [data]);
+  return { competencia, summary, error, isLoading: !data && !error };
+}
+
+/** Contagens por situação canônica, em linha e sem cards adicionais. */
+function SituacaoCounts({ summary }: { summary: CompetenceSummary }) {
+  const ordered: Situacao[] = ["com_atrasos", "aguardando_cliente", "sem_atividade", "em_andamento", "pronta_revisao"];
+  const visible = ordered.filter((s) => summary.bySituacao[s] > 0);
+  if (!visible.length) return <span className="text-sm text-muted-foreground">Sem competências no mês.</span>;
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {visible.map((s) => (
+        <Badge key={s} className={SITUACAO_TONE[s]}>
+          {SITUACAO_LABEL[s]} <span className="ml-1 font-semibold">{summary.bySituacao[s]}</span>
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
 
 
 /* ---------- shared UI ---------- */
@@ -82,14 +132,14 @@ function Dashboard() {
 function AdminDashboard({ name }: { name: string }) {
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
+  const { competencia, summary, error: overviewError } = useCurrentCompetenceSummary(true);
   const { data, error } = useQuery({
-    queryKey: ["dash-admin-v2", range.from, range.to],
+    queryKey: ["dash-admin-v3", range.from, range.to],
     retry: 1,
     queryFn: async () => {
       const t = today();
       const in7 = inDays(7);
       const in30 = inDays(30);
-      const competencia = currentCompetencia();
       const dFrom = range.from ? `${range.from}T00:00:00` : null;
       const dTo = range.to ? `${range.to}T23:59:59` : null;
       const scope = (q: any) => {
@@ -107,7 +157,6 @@ function AdminDashboard({ name }: { name: string }) {
         recentEvents,
         unassignedClients,
         collabTaskCounts,
-        clientsActiveForMonth, monthOverview, monthStatuses,
       ] = await Promise.all([
         supabase.from("clients").select("id", { head: true, count: "exact" }).eq("status", "active").is("deleted_at", null),
         supabase.from("collaborators").select("id", { head: true, count: "exact" }).eq("status", "active"),
@@ -124,14 +173,8 @@ function AdminDashboard({ name }: { name: string }) {
           .order("created_at", { ascending: false }).limit(6)),
         supabase.from("clients").select("id, razao_social, client_collaborators(collaborator_id)").eq("status", "active").is("deleted_at", null),
         supabase.from("pending_tasks").select("collaborator_id").not("status", "in", "(concluida,cancelada)").not("collaborator_id", "is", null),
-        supabase.from("clients").select("id, razao_social").eq("status", "active").is("deleted_at", null),
-        // Fase B2: fonte única dos contadores do mês (mesma de /competencias).
-        supabase.rpc("get_competence_overview", { p_competence: competencia }),
-        // Fonte oficial do status mensal (Fase A2): client_competences.
-        supabase.from("client_competences").select("client_id, status, competence").eq("competence", competencia),
-
       ]);
-      const failures = [clients, collabs, tasksOverdue, tasksToday, reqPending, docsAnalysis, guidesSoon, guidesOverdue, certsSoon, recentEvents, unassignedClients, collabTaskCounts, clientsActiveForMonth, monthOverview, monthStatuses].filter((r) => r.error);
+      const failures = [clients, collabs, tasksOverdue, tasksToday, reqPending, docsAnalysis, guidesSoon, guidesOverdue, certsSoon, recentEvents, unassignedClients, collabTaskCounts].filter((r) => r.error);
 
       if (failures.length) console.warn("[dashboard-admin] consultas parciais falharam", failures.map((r) => r.error?.message));
 
@@ -152,26 +195,6 @@ function AdminDashboard({ name }: { name: string }) {
         return { id, n, nome: p?.full_name || p?.email || "Sem nome" };
       });
 
-
-      // Fase B2: "sem documentos do mês" usa doc_total da visão de competências
-      // (competência AAAA-MM), não mais uma contagem por created_at.
-      const overviewRows = ((monthOverview as any)?.data ?? []) as { client_id: string; razao_social: string; doc_total: number }[];
-      const clientsNoDocs = overviewRows
-        .filter((r) => (r.doc_total ?? 0) === 0)
-        .slice(0, 8)
-        .map((r) => ({ id: r.client_id, razao_social: r.razao_social }));
-
-
-      // Fase A2: máquina oficial de estados. "completed" = concluída.
-      // Tudo o que não está concluído continua em aberto para a equipe.
-      const statusByClient = new Map<string, string>();
-      for (const s of (monthStatuses.data ?? [])) statusByClient.set(s.client_id as string, s.status as string);
-      const openCompetences = (clientsActiveForMonth.data ?? [])
-        .map((c: any) => ({ ...c, compStatus: (statusByClient.get(c.id) ?? null) as OfficialStatus | null }))
-        .filter((c: any) => c.compStatus !== "completed")
-        .slice(0, 8);
-
-
       return {
         clients: clients.count ?? 0, collabs: collabs.count ?? 0,
         tasksOverdue: tasksOverdue.count ?? 0, tasksToday: tasksToday.count ?? 0,
@@ -179,10 +202,16 @@ function AdminDashboard({ name }: { name: string }) {
         guidesSoon: guidesSoon.count ?? 0, guidesOverdue: guidesOverdue.count ?? 0,
         certsSoon: certsSoon.data ?? [],
         recentEvents: recentEvents.data ?? [],
-        clientsNoCollab, topCollabs, clientsNoDocs, openCompetences,
+        clientsNoCollab, topCollabs,
       };
     },
   });
+
+  // Fase B3: "sem documentos do mês" e a situação mensal saem da MESMA linha do
+  // overview (doc_total / computeSituacao) — nenhuma contagem por created_at.
+  const clientsNoDocs = summary.semDocumentos.slice(0, 8);
+  const atencao = summary.atencao.slice(0, 8);
+
 
   return (
     <div>
@@ -240,39 +269,55 @@ function AdminDashboard({ name }: { name: string }) {
 
         <Card className="p-5">
           <h3 className="mb-3 font-display text-lg">Empresas sem documentos do mês</h3>
-          {!(data?.clientsNoDocs?.length) ? <p className="text-sm text-muted-foreground">Todos receberam documentos este mês.</p> : (
+          {!clientsNoDocs.length ? <p className="text-sm text-muted-foreground">Todos receberam documentos este mês.</p> : (
             <ul className="divide-y">
-              {data!.clientsNoDocs.map((c: any) => (
-                <li key={c.id} className="flex items-center justify-between py-2.5">
-                  <Link to="/clientes/$id" params={{ id: c.id }} className="text-sm font-medium text-primary hover:underline">{c.razao_social}</Link>
-                  <Badge variant="outline">{currentCompetencia()}</Badge>
+              {clientsNoDocs.map((c) => (
+                <li key={c.client_id} className="flex items-center justify-between py-2.5">
+                  <Link to="/clientes/$id" params={{ id: c.client_id }} className="text-sm font-medium text-primary hover:underline">{c.razao_social}</Link>
+                  <Badge variant="outline">{competencia}</Badge>
                 </li>
               ))}
             </ul>
           )}
         </Card>
 
+        {/* Fase B3 — mesmo espaço do antigo "Competências do mês em aberto",
+            agora alimentado pela mesma RPC de /competencias. */}
         <Card className="p-5">
-          <h3 className="mb-3 font-display text-lg">Competências do mês em aberto</h3>
-          {!(data?.openCompetences?.length) ? <p className="text-sm text-muted-foreground">Todas as competências do mês estão concluídas.</p> : (
-            <ul className="divide-y">
-              {data!.openCompetences.map((c: any) => {
-                const st = c.compStatus as OfficialStatus | null;
-                return (
-                  <li key={c.id} className="flex items-center justify-between py-2.5">
-                    <Link to="/clientes/$id" params={{ id: c.id }} className="text-sm font-medium text-primary hover:underline">{c.razao_social}</Link>
-                    {st ? (
-                      <Badge className={OFFICIAL_TONE[st]}>{OFFICIAL_LABEL[st]}</Badge>
-                    ) : (
-                      <Badge variant="outline">Competência não iniciada</Badge>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h3 className="font-display text-lg flex items-center gap-2">
+              <Layers className="h-4 w-4 text-primary" /> Situação das competências — {formatCompetenciaLong(competencia)}
+            </h3>
+            <Link to="/competencias" search={{ comp: competencia }} className="text-xs font-medium text-primary hover:underline">
+              Ver Competências
+            </Link>
+          </div>
+          {overviewError ? (
+            <p className="text-sm text-muted-foreground">Não foi possível carregar a situação do mês.</p>
+          ) : (
+            <>
+              <SituacaoCounts summary={summary} />
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                <span>{summary.total} competência{summary.total === 1 ? "" : "s"} no mês</span>
+                <span aria-hidden>·</span>
+                <Link to="/processos" search={{} as any} className="font-medium text-primary hover:underline">
+                  {summary.procAtrasados} processo{summary.procAtrasados === 1 ? "" : "s"} atrasado{summary.procAtrasados === 1 ? "" : "s"}
+                </Link>
+              </div>
+              {atencao.length > 0 && (
+                <ul className="mt-3 divide-y">
+                  {atencao.map((c) => (
+                    <li key={c.client_id} className="flex items-center justify-between gap-2 py-2">
+                      <Link to="/clientes/$id" params={{ id: c.client_id }} className="min-w-0 truncate text-sm font-medium text-primary hover:underline">{c.razao_social}</Link>
+                      <Badge className={SITUACAO_TONE[c.situacao]}>{SITUACAO_LABEL[c.situacao]}</Badge>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
           )}
         </Card>
+
 
         <Card className="p-5">
           <h3 className="mb-3 font-display text-lg">Colaboradores com mais pendências abertas</h3>
@@ -317,7 +362,10 @@ function AdminDashboard({ name }: { name: string }) {
 function CollabDashboard({ name, userId }: { name: string; userId: string }) {
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
+  // Fase B3 — mesma fonte mensal do Administrador; a RLS já limita à carteira.
+  const { competencia, summary, error: overviewError } = useCurrentCompetenceSummary(!!userId);
   const { data, error } = useQuery({
+
     queryKey: ["dash-collab-v2", userId, range.from, range.to],
     enabled: !!userId,
     retry: 1,
@@ -390,6 +438,32 @@ function CollabDashboard({ name, userId }: { name: string; userId: string }) {
         <StatCard icon={Inbox} label="Solicitações pendentes" value={data?.reqPending ?? "—"} accent="bg-secondary/10 text-secondary" to="/documentos" search={{ tab: "aguardando_cliente" }} />
         <StatCard icon={Users} label="Empresas vinculadas" value={data?.clients ?? "—"} to="/clientes" />
       </div>
+
+      {/* Fase B3 — linha compacta da competência atual (carteira via RLS). */}
+      <Card className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 p-4">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Layers className="h-4 w-4 text-primary" />
+          {formatCompetenciaLong(competencia)}
+        </div>
+        {overviewError ? (
+          <span className="text-sm text-muted-foreground">Situação do mês indisponível.</span>
+        ) : (
+          <>
+            <span className="text-xs text-muted-foreground">
+              {summary.total} competência{summary.total === 1 ? "" : "s"}
+            </span>
+            <SituacaoCounts summary={summary} />
+            <span className="text-xs text-muted-foreground">
+              {summary.procAtrasados} processo{summary.procAtrasados === 1 ? "" : "s"} atrasado{summary.procAtrasados === 1 ? "" : "s"}
+            </span>
+          </>
+        )}
+        <Link to="/competencias" search={{ comp: competencia }} className="ml-auto text-xs font-medium text-primary hover:underline">
+          Ver Competências
+        </Link>
+      </Card>
+
+
 
       <div className="mt-6">
         <Card className="p-5">
