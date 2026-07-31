@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/sc/EmptyState";
 import { AttachmentButton } from "@/components/sc/AttachmentButton";
-import { MessageSquare, Paperclip, Send, Search, Wand2, Plus } from "lucide-react";
+import { ArrowLeft, MessageSquare, Paperclip, Send, Search, Wand2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { ensureConversation } from "@/lib/chat";
 import { ClientNewConversationDialog } from "@/components/sc/ClientNewConversationDialog";
