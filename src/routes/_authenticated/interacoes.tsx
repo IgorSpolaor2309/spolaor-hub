@@ -120,6 +120,11 @@ function ChatPage() {
   const showSituation = canSeeChatSituation(role);
   const [q, setQ] = useState("");
 
+  // Fase E2.2 — filtro de situação (staff). Cliente ignora o parâmetro.
+  const situationFilter: ChatSituationFilter = showSituation
+    ? parseChatSituationFilter(search.situacao)
+    : "all";
+
   // Estado da seleção vive na URL (sem matchMedia): mobile mostra lista OU
   // conversa conforme ?conversation; desktop mantém duas colunas.
   const selectedId = search.conversation ?? null;
