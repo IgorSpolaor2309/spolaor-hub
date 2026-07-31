@@ -310,12 +310,14 @@ function ChatPage() {
 
 
 function ChatThread({
-  conv, currentUserId, currentRole, currentName,
+  conv, currentUserId, currentRole, currentName, showSituation, onBack,
 }: {
   conv: Conv;
   currentUserId: string | null;
   currentRole: "admin" | "collaborator" | "client" | null;
   currentName: string;
+  showSituation: boolean;
+  onBack: () => void;
 }) {
   const qc = useQueryClient();
   const [text, setText] = useState("");
