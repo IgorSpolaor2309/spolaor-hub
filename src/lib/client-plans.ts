@@ -67,9 +67,9 @@ export function isValidCompetence(comp: string): boolean {
  * Formats a range of competences (Start - End or Present).
  */
 export function formatCompetenceRange(start: string, end: string | null): string {
-  const startFmt = isValidCompetence(start) ? formatCompetence(start) : start;
+  const startFmt = isValidCompetence(start) ? formatCompetenceShort(start) : start;
   if (!end) return `${startFmt} - Presente`;
-  const endFmt = isValidCompetence(end) ? formatCompetence(end) : end;
+  const endFmt = isValidCompetence(end) ? formatCompetenceShort(end) : end;
   return `${startFmt} - ${endFmt}`;
 }
 
