@@ -1,68 +1,65 @@
+# Plan: FASE S3 — VÍNCULO EMPRESA × PLANO E HISTÓRICO DE VIGÊNCIA
 
-# Manutenção final — módulo Processos
+This phase implements a secure, historical tracking system for company-plan associations. It ensures that changes to a company's plan are recorded over time, preventing retrospective changes to operation and maintaining a clear audit trail of which plan was active during any given competence.
 
-Escopo real medido no repositório:
+## Structural Audit & Diagnosis
 
-- `processos-modelos.tsx` — 1.200 linhas
-- `processos.tsx` — 519 linhas
-- `processos.$id.tsx` — 496 linhas (contém o optimistic locking)
-- `ProcessDocumentsSection.tsx` — 490 linhas
-- ~10 pontos de `Carregando…` no módulo Processos
-- 1 `.limit(500)` e 2 usos de `confirm()` nativos em `ProcessDocumentsSection.tsx`
-- 8 erros de typecheck nos arquivos do módulo (`search`/`params` obrigatórios do TanStack Router)
+1.  **`plans` & `services`:** Catalog structures from S1/S2 are stable and will be reused as the source for valid plans and services.
+2.  **`client_commercial`:** Currently acts as a flat record of commercial data (`plan_id`, `valor_mensalidade`, etc.). While it could hold a "current" pointer, it doesn't naturally support historical competence-based lookups.
+3.  **Historical Source of Truth:** We will introduce a new table `client_plan_history` as the canonical source for historical vigency. `client_commercial.plan_id` will be kept as a "denormalized current plan" for fast lookups, but the history table will be the source of truth for specific competences.
 
-O item que exige mais cuidado é a divisão de god components: `processos.$id.tsx` contém o optimistic locking validado pela suíte de concorrência; `processos-modelos.tsx` tem estado interligado entre types/steps/requirements. Refatorar tudo em uma pasada, com testes, sem regredir comportamento, é inviável com qualidade em uma única entrega.
+## Technical Details
 
-Proponho executar em duas fases dentro deste pacote, entregando a Fase 1 agora e a Fase 2 em seguida se aprovada. Assim mantenho baixa regressão e cada arquivo criado com responsabilidade clara.
+### Database Changes (Migration)
 
-## Fase 1 — Correções e padronizações (esta rodada)
+1.  **Create `public.client_plan_history`**:
+    *   `id` (uuid, PK)
+    *   `client_id` (uuid, FK to clients)
+    *   `plan_id` (uuid, FK to plans)
+    *   `competencia_inicio` (text, e.g., '2026-08')
+    *   `competencia_fim` (text, nullable)
+    *   `status` (text: 'ativo', 'encerrado')
+    *   `created_at`, `updated_at`, `created_by` (audit fields)
+    *   **Constraint**: No overlapping periods for the same `client_id`.
 
-1. **Typecheck do módulo Processos** — corrigir os 8 erros usando tipagens corretas:
-   - `search={{}}` → padrão adequado (função updater ou objeto tipado) em `ProcessListItem.tsx`, `ProcessDocumentsSection.tsx`, `meus-processos.tsx`, `processos.$id.tsx`, `portal-processos.$id.tsx`, `documentos.tsx`.
-   - Sem `as any`, `ts-ignore` ou desativações.
-2. **AlertDialog** — substituir `window.confirm` / `confirm()` em `ProcessDocumentsSection.tsx` por AlertDialog do design system:
-   - Mensagens explícitas: qual documento, que só o vínculo é removido, arquivo original preservado.
-   - Botão Remover com estado de carregamento; bloqueio contra duplo clique.
-   - Busca por outros `confirm/alert` no módulo.
-3. **`.limit(500)` em `PickDocInline`** — reescrita:
-   - Busca server-side (`.ilike` em `nome`/`tipo`/`competencia`) com debounce.
-   - Paginação limitada (ex.: 50 por página) com indicador de "mais resultados".
-   - Preserva `client_id` (isolamento por cliente).
-4. **Skeletons compartilhados** — criar `src/components/sc/Skeletons.tsx` com `ListSkeleton`, `DetailSkeleton`, `CardSkeleton`, `TableSkeleton` (usando o `Skeleton` shadcn já presente).
-5. **Aplicar skeletons apenas nas rotas do módulo Processos**:
-   - `processos.tsx`, `meus-processos.tsx`, `processos.$id.tsx`, `processos-modelos.tsx`, `portal-processos.tsx`, `portal-processos.$id.tsx`, `ProcessDocumentsSection.tsx`.
-   - Preserva layout aproximado para evitar salto visual.
-6. **Testes**:
-   - Novo `scripts/tests/process-docs-limit.test.mjs`: verifica ausência de `.limit(500)` e presença de busca server-side no arquivo.
-   - Novo `scripts/tests/process-docs-alert.test.mjs`: verifica ausência de `confirm(`/`alert(` no módulo, presença de `AlertDialog` no arquivo.
-   - Reexecutar as 4 suítes existentes.
-7. **Verificações finais**: `bunx tsgo --noEmit` (Processos = 0), `bun run build`, grep por `window.confirm|window.alert|.limit(500)|Carregando…` restringido ao módulo.
+2.  **Security (RLS)**:
+    *   `Admin`: Full CRUD.
+    *   `Staff`: SELECT only.
+    *   `Client`: No access.
+    *   `GRANT` statements for `authenticated` and `service_role`.
 
-## Fase 2 — Divisão dos god components (rodada seguinte)
+3.  **Functions/RPCs**:
+    *   `get_plan_for_competence(p_client_id uuid, p_competence text)`: STABLE function to find the effective plan.
+    *   `assign_client_plan(p_client_id uuid, p_plan_id uuid, p_start_competence text)`: Procedure to handle new assignments and close existing ones.
 
-- Extrair de `processos-modelos.tsx` (1.200 → ~250 no arquivo raiz):
-  - `ProcessTypeList.tsx`, `ProcessTypeEditor.tsx`, `ProcessStepsEditor.tsx`, `ProcessStepRequirementsEditor.tsx`, `NewProcessTypeDialog.tsx`, `DuplicateProcessTypeDialog.tsx`.
-  - Hook `useProcessModels` se emergir uma responsabilidade clara.
-- Extrair de `processos.$id.tsx` (496 → ~200 no arquivo raiz):
-  - `ProcessHeader.tsx`, `ProcessMetadata.tsx`, `ProcessStepsList.tsx`, `ProcessTimeline.tsx`, `ProcessObservations.tsx`.
-  - Optimistic locking permanece no arquivo raiz (a rota mantém `updateProc`/`updateStep`, `expectedVersion`, `scope`) — subcomponentes recebem callbacks e valores.
-- Extrair de `ProcessDocumentsSection.tsx` (490 → ~150 no arquivo raiz):
-  - `RequirementRow.tsx`, `RequestFromRequirementDialog.tsx`, `LinkDocDialog.tsx`, `PickDocDialog.tsx`, `PickDocInline.tsx`.
-- Rodar novamente todas as suítes, `tsgo`, `build` e concorrência.
+### Logic (Shared Library)
 
-`processos.tsx` (519 linhas) tem responsabilidade única (listagem + filtros + paginação); não é god component. Não divido a menos que apareça necessidade real durante a Fase 2.
+*   **`src/lib/client-plans.ts`**:
+    *   `getEffectivePlan(history, competence)`: Helper to find the plan in a list of history rows.
+    *   `validatePeriod(history, newStart)`: Check for overlaps.
 
-## Fora de escopo (respeitando os limites)
+### User Interface
 
-Sem alterações em: banco, RLS, RPCs, MCP, Portal do Cliente (comportamento), regras de negócio, constantes de domínio, novas telas/métricas/status. Erros de typecheck em arquivos fora do módulo (sidebar, segurança, interações, clientes, meu-mês) permanecem no baseline salvo correção natural compartilhada.
+*   **Update `/planos`**:
+    *   Add a new tab/section "Vínculos de Empresas".
+    *   Allow Admins to select a company and assign a plan with a starting competence.
+    *   Display a table of current company -> plan mappings.
+    *   Provide a "Historico" view per company to see past vigencies.
 
-## Entrega da Fase 1 incluirá
+## Validation Plan
 
-- Arquivos criados/alterados, linhas antes/depois de `ProcessDocumentsSection.tsx`.
-- Decisão detalhada sobre `.limit(500)` (busca server-side + paginação).
-- Loaders padronizados listados por rota.
-- AlertDialog demonstrado.
-- Typecheck do módulo = 0; typecheck total comparado ao baseline.
-- Resultado das 6 suítes (4 existentes + 2 novas) e do build.
+1.  **Test Suite (`tests/client-plans.test.ts`)**:
+    *   Assign first plan: Verify record created with no end date.
+    *   Change plan: Verify previous record closed at `N-1` and new record starts at `N`.
+    *   Historical query: Verify `get_plan_for_competence` returns correct plan for past, current, and future months.
+    *   Overlap prevention: Attempt to insert a start date that falls within an existing range.
+    *   RLS check: Ensure clients cannot read history.
+    *   Regression: Run full 252-test suite.
 
-Ao aprovar, executo a Fase 1 imediatamente. A Fase 2 só entra na sequência quando a Fase 1 estiver validada, para manter a bisseção clara em caso de regressão.
+2.  **Visual Check**:
+    *   Verify BRL formatting in plan selection.
+    *   Ensure no mobile overflow in the new history table.
+
+3.  **Constraint Check**:
+    *   Confirm no automatic backfill occurred.
+    *   Confirm no checklists or competences were generated.
