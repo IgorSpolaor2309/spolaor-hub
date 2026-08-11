@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { formatCompetence } from "./competencia";
+import { formatCompetenciaShort } from "./competencia";
 
 export type ClientPlanVigency = {
   id: string;
