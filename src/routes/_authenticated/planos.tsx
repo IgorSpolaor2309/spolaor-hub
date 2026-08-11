@@ -17,6 +17,7 @@ import { DeleteButton } from "@/components/sc/DeleteButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ServicesSection } from "@/components/planos/ServicesSection";
 import { PlanServicesSection } from "@/components/planos/PlanServicesSection";
+import { ClientPlansVigencySection } from "@/components/planos/ClientPlansVigencySection";
 
 import { TIPO_PRECO_PLANO } from "@/lib/services-catalog";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -93,6 +94,7 @@ function PlansPage() {
       <Tabs defaultValue="planos">
         <TabsList>
           <TabsTrigger value="planos">Planos</TabsTrigger>
+          <TabsTrigger value="vinculos">Empresas e Vigência</TabsTrigger>
           <TabsTrigger value="servicos">Serviços extraordinários</TabsTrigger>
         </TabsList>
 
@@ -163,6 +165,10 @@ function PlansPage() {
                 </ul>
               )}
           </Card>
+        </TabsContent>
+
+        <TabsContent value="vinculos">
+          <ClientPlansVigencySection isAdmin={isAdmin} />
         </TabsContent>
 
         <TabsContent value="servicos">
