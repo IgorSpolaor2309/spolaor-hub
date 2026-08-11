@@ -67,9 +67,9 @@ export function isValidCompetence(comp: string): boolean {
  * Formats a range of competences (Start - End or Present).
  */
 export function formatCompetenceRange(start: string, end: string | null): string {
-  const startFmt = isValidCompetence(start) ? formatCompetenceShort(start) : start;
+  const startFmt = isValidCompetence(start) ? formatCompetenciaShort(start) : start;
   if (!end) return `${startFmt} - Presente`;
-  const endFmt = isValidCompetence(end) ? formatCompetenceShort(end) : end;
+  const endFmt = isValidCompetence(end) ? formatCompetenciaShort(end) : end;
   return `${startFmt} - ${endFmt}`;
 }
 
@@ -82,4 +82,3 @@ export function validateVigency(draft: VigencyDraft): string | null {
   if (!isValidCompetence(draft.start_competence)) return "Competência inicial inválida (use AAAA-MM)";
   return null;
 }
-
