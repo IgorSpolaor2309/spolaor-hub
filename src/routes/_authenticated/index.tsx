@@ -215,7 +215,7 @@ function AdminDashboard({ name }: { name: string }) {
 
   return (
     <div>
-      <PageHeader title={`Bem-vindo, ${name?.split(" ")[0] || "administrador"}`} description="Visão operacional da SC Central." />
+      <PageHeader title={`Bem-vindo, ${name?.split(" ")[0] || "administrador"}`} description="Visão operacional da Digital SC." />
       {error && <Card className="mb-4 p-4 text-sm text-muted-foreground">Não foi possível carregar todos os dados. Tente novamente.</Card>}
 
       <Card className="mb-4 flex flex-wrap items-end gap-3 p-4">
