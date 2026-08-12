@@ -24,7 +24,7 @@ const SECTIONS: Section[] = [
   {
     title: "Visão geral",
     items: [
-      { to: "/", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "collaborator", "client"] },
+      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "collaborator", "client"] },
       { to: "/clientes", label: "Minhas empresas", icon: Briefcase, roles: ["collaborator"] },
     ],
   },
