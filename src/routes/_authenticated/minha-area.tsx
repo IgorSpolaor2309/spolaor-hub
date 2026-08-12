@@ -38,7 +38,7 @@ function MyAreaPage() {
         title="Minha área"
         description={clients.length > 1
           ? `Você tem acesso a ${clients.length} empresas.`
-          : "Suas informações na Spolaor Company."}
+          : "Suas informações na Digital SC."}
       />
       {clients.length === 0 ? (
         <EmptyState icon={<Briefcase className="h-6 w-6" />} title="Sem vínculo de cliente" description="Aguarde a equipe da Spolaor vincular sua conta." />

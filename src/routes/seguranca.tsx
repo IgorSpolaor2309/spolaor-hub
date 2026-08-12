@@ -6,17 +6,17 @@ import { ShieldCheck, Lock, Database, UserCheck, FileText, Mail } from "lucide-r
 export const Route = createFileRoute("/seguranca")({
   head: () => ({
     meta: [
-      { title: "Segurança e Privacidade — Spolaor Hub" },
+      { title: "Segurança e Privacidade — Digital SC" },
       {
         name: "description",
         content:
-          "Práticas de segurança, privacidade e tratamento de dados do Spolaor Hub: autenticação, controle de acesso, infraestrutura e contato.",
+          "Práticas de segurança, privacidade e tratamento de dados da Digital SC: autenticação, controle de acesso, infraestrutura e contato.",
       },
-      { property: "og:title", content: "Segurança e Privacidade — Spolaor Hub" },
+      { property: "og:title", content: "Segurança e Privacidade — Digital SC" },
       {
         property: "og:description",
         content:
-          "Como o Spolaor Hub protege os dados de clientes, colaboradores e empresas vinculadas.",
+          "Como a Digital SC protege os dados de clientes, colaboradores e empresas vinculadas.",
       },
     ],
   }),
@@ -77,7 +77,7 @@ function TrustPage() {
             Como protegemos seus dados
           </h1>
           <p className="text-muted-foreground">
-            Esta página é mantida pela equipe do Spolaor Hub para responder dúvidas
+            Esta página é mantida pela equipe da Digital SC para responder dúvidas
             comuns sobre segurança, privacidade e tratamento de dados na plataforma.
             O conteúdo é editorial: não é uma certificação independente nem uma
             verificação emitida por terceiros.

@@ -79,19 +79,19 @@ function AuthPage() {
             <SpolaorLogo className="h-10 w-10 object-contain" />
           </div>
           <div>
-            <div className="font-display text-xl leading-none">SC Central</div>
-            <div className="text-xs text-primary-foreground/70">Spolaor Company</div>
+            <div className="font-display text-xl leading-none">Digital SC</div>
+            <div className="text-xs text-primary-foreground/70">Sua contabilidade digital</div>
           </div>
         </div>
         <div className="max-w-md">
           <h2 className="font-display text-4xl leading-tight">
-            Central Operacional Interna da Spolaor Company
+            Central Operacional da Digital SC
           </h2>
           <p className="mt-4 text-primary-foreground/80">
             Gestão de clientes, documentos e pendências em um só lugar.
           </p>
         </div>
-        <div className="text-xs text-primary-foreground/60">© Spolaor Company</div>
+        <div className="text-xs text-primary-foreground/60">© Digital SC</div>
       </div>
 
       {/* Formulário */}
@@ -99,8 +99,8 @@ function AuthPage() {
         <div className="w-full max-w-md">
           <div className="mb-8 flex flex-col items-center text-center lg:hidden">
             <SpolaorLogo className="h-20 w-20 object-contain" />
-            <h1 className="mt-4 font-display text-2xl">SC Central</h1>
-            <p className="text-sm text-muted-foreground">Central Operacional Interna da Spolaor Company</p>
+            <h1 className="mt-4 font-display text-2xl">Digital SC</h1>
+            <p className="text-sm text-muted-foreground">Central Operacional da Digital SC</p>
           </div>
 
           <Card className="border-border/60 p-8 shadow-[var(--shadow-card)]">

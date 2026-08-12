@@ -101,8 +101,8 @@ export function AppSidebar() {
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <div className="font-display text-base leading-tight text-sidebar-foreground">SC Central</div>
-              <div className="truncate text-[11px] text-sidebar-foreground/70">Spolaor Company</div>
+              <div className="font-display text-base leading-tight text-sidebar-foreground">Digital SC</div>
+              <div className="truncate text-[11px] text-sidebar-foreground/70">Contabilidade Digital</div>
             </div>
           )}
         </div>

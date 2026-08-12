@@ -19,10 +19,10 @@ const projectRef = import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "project-ref-unse
 
 export default defineMcp({
   name: "sc-central-mcp",
-  title: "SC Central",
+  title: "Digital SC",
   version: "0.3.0",
   instructions:
-    "Ferramentas do SC Central (Spolaor Company). Cada chamada roda como o usuário autenticado, respeitando papel (admin, colaborador, cliente) e políticas de acesso.",
+    "Ferramentas da Digital SC. Cada chamada roda como o usuário autenticado, respeitando papel (admin, colaborador, cliente) e políticas de acesso.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",
