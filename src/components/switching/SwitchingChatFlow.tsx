@@ -78,6 +78,14 @@ export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
     return plans.find((p: any) => p.nome === 'Plano C') || plans[0];
   };
 
+  const getContactData = () => {
+    return {
+      name: extractedData?.name || contact.email.split('@')[0] || "Interessado",
+      email: contact.email || extractedData?.email || "",
+      phone: contact.phone || extractedData?.phone || ""
+    };
+  };
+
   if (step === 'confirm') {
     return (
       <div className="max-w-2xl mx-auto py-8 px-4">
@@ -236,13 +244,6 @@ export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
     );
   }
 
-  const getContactData = () => {
-    return {
-      name: extractedData?.name || contact.email.split('@')[0] || "Interessado",
-      email: contact.email || extractedData?.email || "",
-      phone: contact.phone || extractedData?.phone || ""
-    };
-  };
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4 flex flex-col h-[700px]">
