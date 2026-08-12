@@ -36,34 +36,39 @@ export const lookupCNPJ = createServerFn({ method: "POST" })
         },
         body: JSON.stringify({ cnpj: digits }),
       });
-
+      
+      const status = response.status;
+      const responseText = await response.text();
+      
+      console.log(`[CNPJ DEBUG] Response Status: ${status}`);
+      
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[CNPJ DEBUG] Edge Function HTTP Error ${response.status}:`, errorText);
+        console.error(`[CNPJ DEBUG] HTTP Error ${status}: ${responseText}`);
         
-        // Se o status for 404, provavelmente é CNPJ não encontrado
-        if (response.status === 404) {
-          throw new Error("CNPJ não encontrado na base da Receita.");
-        }
+        if (status === 404) throw new Error("CNPJ não encontrado na base da Receita.");
+        if (status === 400) throw new Error("CNPJ inválido para consulta.");
         
-        // Se for 400, CNPJ inválido
-        if (response.status === 400) {
-          throw new Error("CNPJ informado é inválido para consulta.");
-        }
-
-        throw new Error(`Serviço de consulta indisponível no momento (Erro ${response.status}).`);
+        // Se cair aqui, é um erro inesperado (5xx ou 401/403)
+        throw new Error(`Falha técnica no serviço de consulta (Status ${status})`);
       }
 
-      const result = await response.json();
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseErr) {
+        console.error("[CNPJ DEBUG] JSON Parse Error:", responseText);
+        throw new Error("Resposta inválida do serviço de consulta.");
+      }
 
       if (result.error) {
-        console.warn("[CNPJ DEBUG] API Error:", result.error);
+        console.warn("[CNPJ DEBUG] API Logical Error:", result.error);
         throw new Error(result.error);
       }
 
       return result;
     } catch (err: any) {
-      console.error("[CNPJ DEBUG] Exception:", err);
-      throw new Error(err.message || "Falha na comunicação com o serviço de consulta.");
+      console.error("[CNPJ DEBUG] Handler Exception:", err);
+      // Aqui garantimos que a mensagem final do throw seja a que o usuário verá
+      throw new Error(err.message || "Erro inesperado ao consultar CNPJ.");
     }
   });
