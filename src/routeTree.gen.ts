@@ -33,6 +33,7 @@ import { Route as AuthenticatedHomologacaoRouteImport } from './routes/_authenti
 import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
 import { Route as AuthenticatedGuiasRouteImport } from './routes/_authenticated/guias'
 import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authenticated/documentos'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedCompetenciasRouteImport } from './routes/_authenticated/competencias'
 import { Route as AuthenticatedColaboradoresRouteImport } from './routes/_authenticated/colaboradores'
@@ -178,6 +179,11 @@ const AuthenticatedDocumentosRoute = AuthenticatedDocumentosRouteImport.update({
   path: '/documentos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedConfiguracoesRoute =
   AuthenticatedConfiguracoesRouteImport.update({
     id: '/configuracoes',
@@ -289,6 +295,7 @@ export interface FileRoutesByFullPath {
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/competencias': typeof AuthenticatedCompetenciasRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/documentos': typeof AuthenticatedDocumentosRoute
   '/guias': typeof AuthenticatedGuiasRoute
   '/historico': typeof AuthenticatedHistoricoRoute
@@ -331,6 +338,7 @@ export interface FileRoutesByTo {
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/competencias': typeof AuthenticatedCompetenciasRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/documentos': typeof AuthenticatedDocumentosRoute
   '/guias': typeof AuthenticatedGuiasRoute
   '/historico': typeof AuthenticatedHistoricoRoute
@@ -375,6 +383,7 @@ export interface FileRoutesById {
   '/_authenticated/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/_authenticated/competencias': typeof AuthenticatedCompetenciasRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/documentos': typeof AuthenticatedDocumentosRoute
   '/_authenticated/guias': typeof AuthenticatedGuiasRoute
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
@@ -419,6 +428,7 @@ export interface FileRouteTypes {
     | '/colaboradores'
     | '/competencias'
     | '/configuracoes'
+    | '/dashboard'
     | '/documentos'
     | '/guias'
     | '/historico'
@@ -461,6 +471,7 @@ export interface FileRouteTypes {
     | '/colaboradores'
     | '/competencias'
     | '/configuracoes'
+    | '/dashboard'
     | '/documentos'
     | '/guias'
     | '/historico'
@@ -504,6 +515,7 @@ export interface FileRouteTypes {
     | '/_authenticated/colaboradores'
     | '/_authenticated/competencias'
     | '/_authenticated/configuracoes'
+    | '/_authenticated/dashboard'
     | '/_authenticated/documentos'
     | '/_authenticated/guias'
     | '/_authenticated/historico'
@@ -719,6 +731,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDocumentosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/configuracoes': {
       id: '/_authenticated/configuracoes'
       path: '/configuracoes'
@@ -888,6 +907,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedColaboradoresRoute: typeof AuthenticatedColaboradoresRoute
   AuthenticatedCompetenciasRoute: typeof AuthenticatedCompetenciasRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRoute
   AuthenticatedGuiasRoute: typeof AuthenticatedGuiasRoute
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
@@ -918,6 +938,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedColaboradoresRoute: AuthenticatedColaboradoresRoute,
   AuthenticatedCompetenciasRoute: AuthenticatedCompetenciasRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDocumentosRoute: AuthenticatedDocumentosRoute,
   AuthenticatedGuiasRoute: AuthenticatedGuiasRoute,
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
