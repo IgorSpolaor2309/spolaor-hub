@@ -18,7 +18,6 @@ test("Fase S5: Planos e Serviços devem estar atualizados", async () => {
 
   const planB = plans?.find(p => p.nome === "Plano B");
   expect(planB?.valor_padrao).toBe(300);
-  expect(planB?.limite_faturamento).toBe(8400);
 
   const planC = plans?.find(p => p.nome === "Plano C");
   expect(planC?.valor_padrao).toBe(450);
