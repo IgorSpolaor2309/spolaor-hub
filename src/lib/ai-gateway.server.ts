@@ -30,11 +30,12 @@ export async function getDetailedCatalogContext() {
     getPublicServices()
   ]);
 
-  const plansCtx = plans.map(p => 
+  const plansCtx = plans.map((p: any) => 
     `- ${p.nome}: ${p.publico_alvo}. Preço: ${p.tipo_preco === 'sob_orcamento' ? 'Sob orçamento' : 'R$ ' + p.valor_padrao + '/mês'}. Faturamento até: ${p.limite_faturamento || 'Ilimitado'}.`
   ).join('\n');
 
-  const servicesCtx = services.map(s => `- ${s.nome}: ${s.descricao}`).join('\n');
+  const servicesCtx = services.map((s: any) => `- ${s.nome}: ${s.descricao}`).join('\n');
+
 
   return `
 PLANOS DISPONÍVEIS:
