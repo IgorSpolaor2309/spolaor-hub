@@ -209,11 +209,11 @@ function LandingPage() {
         {/* CTA Final */}
         <section className="py-20 bg-primary text-primary-foreground">
           <div className="container mx-auto px-4 text-center">
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-6">Pronto para digitalizar sua contabilidade?</h2>
-            <p className="text-primary-foreground/80 mb-10 max-w-xl mx-auto">Junte-se a centenas de empresas que já transformaram sua gestão com a Digital SC.</p>
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-6">Pronto para cuidar da sua empresa de um jeito mais simples?</h2>
+            <p className="text-primary-foreground/80 mb-10 max-w-xl mx-auto">Dê o próximo passo para uma contabilidade mais simples, digital e transparente.</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-               <Button size="lg" variant="secondary" className="w-full sm:w-auto font-bold">Começar agora</Button>
-               <Button size="lg" variant="outline" className="w-full sm:w-auto border-primary-foreground/20 hover:bg-primary-foreground/10 text-primary-foreground font-bold">Falar com especialista</Button>
+               <Button size="lg" variant="secondary" className="w-full sm:w-auto font-bold text-primary hover:bg-white focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-primary">Abrir minha empresa</Button>
+               <Button size="lg" variant="outline" className="w-full sm:w-auto border-white/20 hover:bg-white/10 text-white font-bold focus:ring-2 focus:ring-white">Trocar de contador</Button>
             </div>
           </div>
         </section>
