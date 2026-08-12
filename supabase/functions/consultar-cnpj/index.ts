@@ -21,12 +21,11 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Método não suportado." }, 405);
 
   // Se houver Authorization, valida o usuário. 
-  // Se NÃO houver, permitimos a consulta mas com o entendimento que a Server Function do TanStack 
-  // atuará como o gatekeeper de rate-limit e validação adicional.
+  // Se NÃO houver, permitimos a consulta mas sem validação de sessão (uso via Server Function).
   const authHeader = req.headers.get("Authorization") ?? "";
   const token = authHeader.replace(/^Bearer\s+/i, "").trim();
   
-  if (token) {
+  if (token && token !== Deno.env.get("SUPABASE_ANON_KEY") && token !== Deno.env.get("SUPABASE_PUBLISHABLE_KEY")) {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? "";
     
@@ -35,8 +34,10 @@ Deno.serve(async (req) => {
         const userResp = await fetch(`${supabaseUrl}/auth/v1/user`, {
           headers: { Authorization: `Bearer ${token}`, apikey: anonKey },
         });
-        // Se o token existe mas é inválido, barramos.
-        if (!userResp.ok) return json({ error: "Sessão inválida." }, 401);
+        if (!userResp.ok) {
+           console.error("consultar-cnpj: invalid user session token");
+           return json({ error: "Sessão inválida." }, 401);
+        }
       } catch (e) {
         console.error("auth validation error", e);
       }
