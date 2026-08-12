@@ -41,6 +41,7 @@ import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedChecklistRouteImport } from './routes/_authenticated/checklist'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
+import { Route as ApiPublicTestAiRouteImport } from './routes/api/public/test-ai'
 import { Route as ApiPublicDebugAiRouteImport } from './routes/api/public/debug-ai'
 import { Route as AuthenticatedProcessosIdRouteImport } from './routes/_authenticated/processos.$id'
 import { Route as AuthenticatedPortalProcessosIdRouteImport } from './routes/_authenticated/portal-processos.$id'
@@ -225,6 +226,11 @@ const Char91DotmcpChar93ListToolsRoute =
     path: '/.mcp/list-tools',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicTestAiRoute = ApiPublicTestAiRouteImport.update({
+  id: '/api/public/test-ai',
+  path: '/api/public/test-ai',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicDebugAiRoute = ApiPublicDebugAiRouteImport.update({
   id: '/api/public/debug-ai',
   path: '/api/public/debug-ai',
@@ -328,6 +334,7 @@ export interface FileRoutesByFullPath {
   '/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
   '/api/public/debug-ai': typeof ApiPublicDebugAiRoute
+  '/api/public/test-ai': typeof ApiPublicTestAiRoute
   '/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/meu-mes/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
   '/api/public/hooks/cleanup-chat-orphans': typeof ApiPublicHooksCleanupChatOrphansRoute
@@ -372,6 +379,7 @@ export interface FileRoutesByTo {
   '/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
   '/api/public/debug-ai': typeof ApiPublicDebugAiRoute
+  '/api/public/test-ai': typeof ApiPublicTestAiRoute
   '/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/meu-mes/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
   '/api/public/hooks/cleanup-chat-orphans': typeof ApiPublicHooksCleanupChatOrphansRoute
@@ -418,6 +426,7 @@ export interface FileRoutesById {
   '/_authenticated/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/_authenticated/processos/$id': typeof AuthenticatedProcessosIdRoute
   '/api/public/debug-ai': typeof ApiPublicDebugAiRoute
+  '/api/public/test-ai': typeof ApiPublicTestAiRoute
   '/_authenticated/competencias_/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/_authenticated/meu-mes_/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
   '/api/public/hooks/cleanup-chat-orphans': typeof ApiPublicHooksCleanupChatOrphansRoute
@@ -464,6 +473,7 @@ export interface FileRouteTypes {
     | '/portal-processos/$id'
     | '/processos/$id'
     | '/api/public/debug-ai'
+    | '/api/public/test-ai'
     | '/competencias/$clientId/$competence'
     | '/meu-mes/$clientId/$competence'
     | '/api/public/hooks/cleanup-chat-orphans'
@@ -508,6 +518,7 @@ export interface FileRouteTypes {
     | '/portal-processos/$id'
     | '/processos/$id'
     | '/api/public/debug-ai'
+    | '/api/public/test-ai'
     | '/competencias/$clientId/$competence'
     | '/meu-mes/$clientId/$competence'
     | '/api/public/hooks/cleanup-chat-orphans'
@@ -553,6 +564,7 @@ export interface FileRouteTypes {
     | '/_authenticated/portal-processos/$id'
     | '/_authenticated/processos/$id'
     | '/api/public/debug-ai'
+    | '/api/public/test-ai'
     | '/_authenticated/competencias_/$clientId/$competence'
     | '/_authenticated/meu-mes_/$clientId/$competence'
     | '/api/public/hooks/cleanup-chat-orphans'
@@ -570,6 +582,7 @@ export interface RootRouteChildren {
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicDebugAiRoute: typeof ApiPublicDebugAiRoute
+  ApiPublicTestAiRoute: typeof ApiPublicTestAiRoute
   ApiPublicHooksCleanupChatOrphansRoute: typeof ApiPublicHooksCleanupChatOrphansRoute
   ApiPublicHooksCompetenceMonthlyGenerationRoute: typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
 }
@@ -800,6 +813,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/test-ai': {
+      id: '/api/public/test-ai'
+      path: '/api/public/test-ai'
+      fullPath: '/api/public/test-ai'
+      preLoaderRoute: typeof ApiPublicTestAiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/debug-ai': {
       id: '/api/public/debug-ai'
       path: '/api/public/debug-ai'
@@ -1001,6 +1021,7 @@ const rootRouteChildren: RootRouteChildren = {
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicDebugAiRoute: ApiPublicDebugAiRoute,
+  ApiPublicTestAiRoute: ApiPublicTestAiRoute,
   ApiPublicHooksCleanupChatOrphansRoute: ApiPublicHooksCleanupChatOrphansRoute,
   ApiPublicHooksCompetenceMonthlyGenerationRoute:
     ApiPublicHooksCompetenceMonthlyGenerationRoute,
