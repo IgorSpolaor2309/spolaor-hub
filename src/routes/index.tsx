@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +7,7 @@ import { AppLogo } from "@/components/sc/Logo";
 import { useQuery } from "@tanstack/react-query";
 import { getPublicPlans, getPublicServices } from "@/lib/public-catalog.functions";
 import { Check, ArrowRight, ShieldCheck, Clock, Inbox, FileText, Receipt, Users, UserCog, MessageSquare, Workflow, Briefcase } from "lucide-react";
+import { OpeningChatFlow } from "@/components/opening/OpeningChatFlow";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -15,6 +17,8 @@ const brl = (n: number | null | undefined) =>
   n == null ? "—" : Number(n).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 function LandingPage() {
+  const [showOpeningFlow, setShowOpeningFlow] = useState(false);
+  
   const plansQ = useQuery({
     queryKey: ["public-plans"],
     queryFn: () => getPublicPlans(),
@@ -24,6 +28,22 @@ function LandingPage() {
     queryKey: ["public-services"],
     queryFn: () => getPublicServices(),
   });
+
+  if (showOpeningFlow) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+          <div className="container mx-auto h-16 flex items-center px-4">
+            <AppLogo className="h-8 w-auto" />
+            <span className="font-display text-xl font-bold ml-3 text-primary">Digital SC</span>
+          </div>
+        </header>
+        <main className="flex-1 py-12">
+          <OpeningChatFlow onBack={() => setShowOpeningFlow(false)} />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -59,7 +79,7 @@ function LandingPage() {
             Planos e serviços adaptados ao perfil do seu negócio, atendimento digital e acompanhamento em um só lugar.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
-            <Button size="lg" className="w-full sm:w-auto">Quero abrir minha empresa</Button>
+            <Button size="lg" className="w-full sm:w-auto" onClick={() => setShowOpeningFlow(true)}>Quero abrir minha empresa</Button>
             <Button size="lg" variant="outline" className="w-full sm:w-auto">Quero trocar de contador</Button>
           </div>
           <div className="mt-8 animate-in fade-in duration-1000 delay-500">
@@ -105,7 +125,7 @@ function LandingPage() {
             <h2 className="font-display text-3xl font-bold mb-4">Descubra a solução ideal para sua empresa</h2>
             <p className="text-muted-foreground mb-12">Escolha uma das opções abaixo para começarmos.</p>
             <div className="grid gap-6 md:grid-cols-3">
-              <Card className="p-6 cursor-pointer hover:border-primary transition-all group">
+              <Card className="p-6 cursor-pointer hover:border-primary transition-all group" onClick={() => setShowOpeningFlow(true)}>
                 <h3 className="font-bold mb-2 group-hover:text-primary transition-colors">Quero abrir uma empresa</h3>
                 <p className="text-xs text-muted-foreground">Acompanhamento na abertura e nos primeiros passos da sua empresa.</p>
               </Card>
@@ -212,7 +232,7 @@ function LandingPage() {
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-6">Pronto para cuidar da sua empresa de um jeito mais simples?</h2>
             <p className="text-primary-foreground/80 mb-10 max-w-xl mx-auto">Dê o próximo passo para uma contabilidade mais simples, digital e transparente.</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-               <Button size="lg" variant="secondary" className="w-full sm:w-auto font-bold text-primary hover:bg-white focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-primary">Abrir minha empresa</Button>
+               <Button size="lg" variant="secondary" className="w-full sm:w-auto font-bold text-primary hover:bg-white focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-primary" onClick={() => setShowOpeningFlow(true)}>Abrir minha empresa</Button>
                <Button size="lg" variant="outline" className="w-full sm:w-auto border-white/20 hover:bg-white/10 text-white font-bold focus:ring-2 focus:ring-white">Trocar de contador</Button>
             </div>
           </div>
