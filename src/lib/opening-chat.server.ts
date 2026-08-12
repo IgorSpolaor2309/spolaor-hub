@@ -1,7 +1,6 @@
 import { getOpenAIClient, BASE_SYSTEM_PROMPT, getDetailedCatalogContext } from "./ai-gateway.server";
 
 export async function aiAnalyzeOpening(context: string, history: any[]) {
-  console.log('[AI Opening] Request received:', { context, historyLength: history.length });
   const client = await getOpenAIClient();
   const catalogContext = await getDetailedCatalogContext();
 
@@ -63,10 +62,7 @@ Pergunte o que falta de forma natural. Se já tiver o básico (tipo de negócio,
     }
   });
 
-  const rawContent = response.choices[0].message.content || "{}";
-  console.log('[AI Opening] Raw response:', rawContent);
-  
-  const result = JSON.parse(rawContent);
+  const result = JSON.parse(response.choices[0].message.content || "{}");
   return result;
 }
 

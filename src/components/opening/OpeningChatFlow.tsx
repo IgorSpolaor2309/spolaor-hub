@@ -31,17 +31,16 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
   }, [messages, loading]);
 
   const sendMessage = async () => {
-    console.log('[OpeningChat] sendMessage triggered', { input, loading });
-    if (!input.trim() || loading) return;
+    const trimmedInput = input.trim();
+    if (!trimmedInput || loading) return;
     
-    const userMsg = input;
+    const userMsg = trimmedInput;
     setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
     setInput("");
     setLoading(true);
 
     try {
-      console.log('[OpeningChat] Calling processMessage with history length:', messages.length);
-      const result = await processMessage({ 
+      const result = await processMessage({
         data: { 
           context: userMsg,
           history: messages
@@ -55,7 +54,7 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
         setTimeout(() => setStep('confirm'), 2000);
       }
     } catch (e) {
-      console.error('[OpeningChat] Error in sendMessage:', e);
+      console.error(e);
       setMessages(prev => [...prev, { role: 'ai', content: "Desculpe, tive um problema técnico. Pode repetir?" }]);
     } finally {
       setLoading(false);
