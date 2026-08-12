@@ -90,7 +90,7 @@ function CollaboratorsPage() {
     <div>
       <PageHeader
         title="Colaboradores"
-        description="Equipe interna da Spolaor Company. O cadastro do colaborador não exige conta de acesso — contas de login são criadas em Configurações."
+        description="Equipe interna da Digital SC. O cadastro do colaborador não exige conta de acesso — contas de login são criadas em Configurações."
         action={
           <Button onClick={openNew}>
             <Plus className="mr-2 h-4 w-4" /> Novo colaborador

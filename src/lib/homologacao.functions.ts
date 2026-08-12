@@ -33,7 +33,7 @@ type PersonaSpec = {
 
 function buildPersonaSpecs(): PersonaSpec[] {
   const t = timestampSuffix();
-  const domain = "homolog.spolaor.local";
+  const domain = "homolog.digitalsc.local";
   return [
     { label: "Admin (demo)",           role: "admin",        full_name: "[DEMO] Admin Homologação",       email: `demo-admin-${t}@${domain}` },
     { label: "Colaborador Contábil (demo)", role: "collaborator", full_name: "[DEMO] Colaborador Contábil",  email: `demo-collab1-${t}@${domain}` },

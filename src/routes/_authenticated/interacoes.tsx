@@ -317,7 +317,7 @@ function ChatPage() {
         title="Mensagens"
         description={isStaff
           ? "Converse com clientes e acompanhe as mensagens por empresa."
-          : "Converse com a equipe da Spolaor Company e acompanhe suas mensagens."}
+          : "Converse com a equipe da Digital SC e acompanhe suas mensagens."}
         action={
           isStaff ? (
             <NewConversationButton />

@@ -18,7 +18,7 @@ const DEDUPE_LIMIT = 200;
  * Fase E2.5 — assinatura Realtime única de notificações do usuário autenticado.
  *
  * Montado uma única vez no layout autenticado. Não cria central paralela:
- * apenas reaproveita o toast (sonner) já usado pelo SC Central e invalida as
+ * apenas reaproveita o toast (sonner) já usado pela Digital SC e invalida as
  * query keys existentes do sino e da página /notificacoes.
  */
 export function NotificationBanners() {

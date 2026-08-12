@@ -8,7 +8,7 @@ export default defineTool({
   name: "list_clients",
   title: "Listar clientes",
   description:
-    "Lista os clientes visíveis ao usuário autenticado, respeitando as políticas de acesso do SC Central.",
+    "Lista os clientes visíveis ao usuário autenticado, respeitando as políticas de acesso da Digital SC.",
   inputSchema: {
     limit: z.number().int().min(1).max(100).default(20).describe("Máximo de clientes a retornar."),
     offset: z.number().int().min(0).max(10000).default(0).describe("Deslocamento para paginação."),

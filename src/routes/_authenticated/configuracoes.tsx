@@ -122,7 +122,7 @@ function SettingsPage() {
       <Card className="mb-4 p-5">
         <h3 className="font-display text-lg">Módulos administrativos</h3>
         <p className="mb-4 text-sm text-muted-foreground">
-          Áreas de configuração e catálogos usados pelo SC Central. Não fazem parte da rotina
+          Áreas de configuração e catálogos usados pela Digital SC. Não fazem parte da rotina
           diária e ficam concentrados aqui para não poluir o menu operacional.
         </p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -130,7 +130,7 @@ function SettingsPage() {
             { to: "/planos", label: "Planos e Checklist", desc: "Catálogo de planos e itens mensais do checklist.", icon: Package },
             { to: "/processos-modelos", label: "Modelos de processos", desc: "Modelos e etapas padrão para novos processos.", icon: GitBranch },
             { to: "/modelos", label: "Modelos de mensagens", desc: "Modelos reutilizáveis para comunicação.", icon: MessagesSquare },
-            { to: "/homologacao", label: "Central de Homologação", desc: "Ambiente de homologação e testes.", icon: FlaskConical },
+            { to: "/homologacao", label: "Central de Homologação Digital", desc: "Ambiente de homologação e testes.", icon: FlaskConical },
             { to: "/integracoes/omie", label: "Integração OMIE", desc: "Configuração da integração com o OMIE.", icon: Plug },
           ].map((m) => (
             <Link
@@ -795,7 +795,7 @@ function UnlinkedClientAccounts({ accounts }: { accounts: { user_id: string; ema
   );
 }
 
-const DEFAULT_PROVISIONAL_PASSWORD = "Spolaor@123";
+const DEFAULT_PROVISIONAL_PASSWORD = "DigitalSC@123";
 
 function NewUserDialog({ onDone }: { onDone: () => void }) {
   const [form, setForm] = useState({
@@ -994,7 +994,7 @@ function NewUserDialog({ onDone }: { onDone: () => void }) {
             <Label>Senha provisória *</Label>
             <Input type="text" minLength={8} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
             <p className="mt-1 text-xs text-muted-foreground">
-              Padrão sugerido: <code>Spolaor@123</code>. O usuário será obrigado a alterar a senha no primeiro acesso.
+              Padrão sugerido: <code>DigitalSC@123</code>. O usuário será obrigado a alterar a senha no primeiro acesso.
             </p>
           </div>
         </section>

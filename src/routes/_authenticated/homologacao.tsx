@@ -276,7 +276,7 @@ function HomologPage() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Remover contas de autenticação demo órfãs?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Serão removidas apenas contas com e-mail <code>demo-*@homolog.spolaor.local</code>
+                    Serão removidas apenas contas com e-mail <code>demo-*@homolog.digitalsc.local</code>
                     {" "}que <strong>não possuem mais perfil</strong> no banco (sobras de lotes apagados diretamente pelo banco).
                     Nenhuma conta real será afetada.
                   </AlertDialogDescription>

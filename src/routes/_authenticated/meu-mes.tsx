@@ -120,7 +120,7 @@ function MyMonthPage() {
       <EmptyState
         icon={<Briefcase className="h-6 w-6" />}
         title="Área do cliente"
-        description="Esta página é destinada aos clientes da Spolaor."
+        description="Esta página é destinada aos clientes da Digital SC."
       />
     );
   }
@@ -128,11 +128,11 @@ function MyMonthPage() {
   if ((clientsQ.data ?? []).length === 0 && !clientsQ.isLoading) {
     return (
       <div>
-        <PageHeader title="Meu mês" description="Acompanhe a competência atual da sua empresa." />
+        <PageHeader title="Meu mês" description="Acompanhe a competência atual da sua empresa na Digital SC." />
         <EmptyState
           icon={<Briefcase className="h-6 w-6" />}
           title="Sem vínculo de empresa"
-          description="Aguarde a equipe da Spolaor vincular sua conta."
+          description="Aguarde a equipe da Digital SC vincular sua conta."
         />
       </div>
     );

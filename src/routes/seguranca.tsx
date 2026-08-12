@@ -1,22 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
-import { SpolaorLogo } from "@/components/sc/Logo";
+import { AppLogo } from "@/components/sc/Logo";
 import { ShieldCheck, Lock, Database, UserCheck, FileText, Mail } from "lucide-react";
 
 export const Route = createFileRoute("/seguranca")({
   head: () => ({
     meta: [
-      { title: "Segurança e Privacidade — Spolaor Hub" },
+      { title: "Segurança e Privacidade — Digital SC" },
       {
         name: "description",
         content:
-          "Práticas de segurança, privacidade e tratamento de dados do Spolaor Hub: autenticação, controle de acesso, infraestrutura e contato.",
+          "Práticas de segurança, privacidade e tratamento de dados da Digital SC: autenticação, controle de acesso, infraestrutura e contato.",
       },
-      { property: "og:title", content: "Segurança e Privacidade — Spolaor Hub" },
+      { property: "og:title", content: "Segurança e Privacidade — Digital SC" },
       {
         property: "og:description",
         content:
-          "Como o Spolaor Hub protege os dados de clientes, colaboradores e empresas vinculadas.",
+          "Como a Digital SC protege os dados de clientes, colaboradores e empresas vinculadas.",
       },
     ],
   }),
@@ -55,7 +55,7 @@ function TrustPage() {
       <header className="border-b">
         <div className="container mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
           <Link to="/" className="flex items-center gap-2">
-            <SpolaorLogo className="h-7 w-auto" />
+            <AppLogo className="h-7 w-auto" />
           </Link>
           <Link
             to="/auth"
@@ -77,7 +77,7 @@ function TrustPage() {
             Como protegemos seus dados
           </h1>
           <p className="text-muted-foreground">
-            Esta página é mantida pela equipe do Spolaor Hub para responder dúvidas
+            Esta página é mantida pela equipe da Digital SC para responder dúvidas
             comuns sobre segurança, privacidade e tratamento de dados na plataforma.
             O conteúdo é editorial: não é uma certificação independente nem uma
             verificação emitida por terceiros.
@@ -142,7 +142,7 @@ function TrustPage() {
               A aplicação é construída sobre a plataforma Lovable e utiliza
               infraestrutura gerenciada para banco de dados, autenticação e
               armazenamento de arquivos. O provedor é responsável pela camada de
-              infraestrutura; a equipe do Spolaor Hub é responsável pela
+              infraestrutura; a equipe da Digital SC é responsável pela
               configuração da aplicação, pelas regras de acesso e pelo
               tratamento dos dados dos clientes.
             </p>
@@ -164,8 +164,8 @@ function TrustPage() {
         </div>
 
         <p className="mt-10 text-center text-xs text-muted-foreground">
-          Última atualização: Junho de 2026 · Conteúdo editável pela equipe do
-          Spolaor Hub.
+          Última atualização: Junho de 2026 · Conteúdo editável pela equipe da
+          Digital SC.
         </p>
       </main>
     </div>

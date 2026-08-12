@@ -8,7 +8,7 @@ export default defineTool({
   name: "get_process_details",
   title: "Detalhes do processo",
   description:
-    "Retorna os detalhes de um processo (company_processes) visível ao usuário autenticado, respeitando as políticas do SC Central. Cliente vê apenas informações liberadas no portal (visivel_cliente).",
+    "Retorna os detalhes de um processo (company_processes) visível ao usuário autenticado, respeitando as políticas da Digital SC. Cliente vê apenas informações liberadas no portal (visivel_cliente).",
   inputSchema: {
     process_id: z.string().uuid().describe("UUID do processo (company_processes.id)."),
   },

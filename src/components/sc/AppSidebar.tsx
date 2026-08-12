@@ -10,7 +10,7 @@ import {
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { SpolaorLogo } from "@/components/sc/Logo";
+import { AppLogo } from "@/components/sc/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import type { AppRole } from "@/lib/sc-types";
@@ -97,12 +97,12 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-3 px-2 py-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-white">
-            <SpolaorLogo className="h-8 w-8 object-contain" />
+            <AppLogo className="h-8 w-8 object-contain" />
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <div className="font-display text-base leading-tight text-sidebar-foreground">SC Central</div>
-              <div className="truncate text-[11px] text-sidebar-foreground/70">Spolaor Company</div>
+              <div className="font-display text-base leading-tight text-sidebar-foreground">Digital SC</div>
+              <div className="truncate text-[11px] text-sidebar-foreground/70">Contabilidade Digital</div>
             </div>
           )}
         </div>
