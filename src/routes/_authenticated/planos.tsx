@@ -16,6 +16,7 @@ import { EmptyState } from "@/components/sc/EmptyState";
 import { DeleteButton } from "@/components/sc/DeleteButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ServicesSection } from "@/components/planos/ServicesSection";
+import { CouponsSection } from "@/components/planos/CouponsSection";
 import { PlanServicesSection } from "@/components/planos/PlanServicesSection";
 import { ClientPlansVigencySection } from "@/components/planos/ClientPlansVigencySection";
 
