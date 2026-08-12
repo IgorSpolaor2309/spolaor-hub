@@ -649,6 +649,51 @@ export type Database = {
           },
         ]
       }
+      client_plan_history: {
+        Row: {
+          client_id: string
+          competencia_fim: string | null
+          competencia_inicio: string
+          created_at: string | null
+          id: string
+          plan_id: string
+          status: string | null
+        }
+        Insert: {
+          client_id: string
+          competencia_fim?: string | null
+          competencia_inicio: string
+          created_at?: string | null
+          id?: string
+          plan_id: string
+          status?: string | null
+        }
+        Update: {
+          client_id?: string
+          competencia_fim?: string | null
+          competencia_inicio?: string
+          created_at?: string | null
+          id?: string
+          plan_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_plan_history_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_plan_history_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_users: {
         Row: {
           ativo: boolean
