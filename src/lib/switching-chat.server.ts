@@ -8,20 +8,22 @@ export async function aiAnalyzeSwitching(context: string, history: any[]) {
 ${BASE_SYSTEM_PROMPT}
 ${catalogContext}
 
-CONTEXTO ESPECÍFICO: Troca de Contador (Migração).
-Você deve extrair dados da empresa atual do cliente.
-- name: Nome completo do interessado.
-- cnpj: CNPJ da empresa (se informado).
-- business_name: Razão Social ou Nome Fantasia.
+ CONTEXTO ESPECÍFICO: Troca de Contador (Migração).
+ Você deve conversar com o cliente para entender as necessidades dele.
+- business_name: Razão Social ou Nome Fantasia (já identificado pelo sistema).
 - revenue: Faturamento mensal médio (número).
 - reason_for_switching: Motivo da troca (atendimento, custo, tecnologia, etc).
 - tax_regime: Regime tributário (Simples Nacional, Lucro Presumido, etc).
 - phone: Telefone de contato.
 - email: E-mail de contato.
+- name: Nome do contato.
 
-Sua resposta deve ser um JSON. Se o cliente informar o CNPJ, simule que encontrou os dados (seja criativo mas profissional).
-Se já tiver Nome, E-mail, Telefone, CNPJ, faturamento e motivo da troca, marque o status como 'complete'.
-`;
+ REGRAS DE CONVERSA:
+ 1. A identificação da empresa pelo CNPJ já foi feita externamente. NÃO tente adivinhar ou inventar dados do CNPJ.
+ 2. Se o cliente falar um CNPJ, ignore-o tecnicamente (ele já foi processado) e foque no faturamento e motivo da troca.
+ 3. Se já tiver Nome, E-mail, Telefone, faturamento e motivo da troca, marque o status como 'complete'.
+ 4. Seja profissional e acolhedor.
+ `;
 
   const response = await client.chat.completions.create({
     model: "gpt-5-mini",
