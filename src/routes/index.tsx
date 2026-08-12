@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getPublicPlans, getPublicServices } from "@/lib/public-catalog.functions";
 import { Check, ArrowRight, ShieldCheck, Clock, Inbox, FileText, Receipt, Users, UserCog, MessageSquare, Workflow, Briefcase } from "lucide-react";
 import { OpeningChatFlow } from "@/components/opening/OpeningChatFlow";
+import { SwitchingChatFlow } from "@/components/switching/SwitchingChatFlow";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -18,6 +19,7 @@ const brl = (n: number | null | undefined) =>
 
 function LandingPage() {
   const [showOpeningFlow, setShowOpeningFlow] = useState(false);
+  const [showSwitchingFlow, setShowSwitchingFlow] = useState(false);
   
   const plansQ = useQuery({
     queryKey: ["public-plans"],
@@ -29,7 +31,7 @@ function LandingPage() {
     queryFn: () => getPublicServices(),
   });
 
-  if (showOpeningFlow) {
+  if (showOpeningFlow || showSwitchingFlow) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
@@ -39,7 +41,8 @@ function LandingPage() {
           </div>
         </header>
         <main className="flex-1 py-12">
-          <OpeningChatFlow onBack={() => setShowOpeningFlow(false)} />
+          {showOpeningFlow && <OpeningChatFlow onBack={() => setShowOpeningFlow(false)} />}
+          {showSwitchingFlow && <SwitchingChatFlow onBack={() => setShowSwitchingFlow(false)} />}
         </main>
       </div>
     );
@@ -80,7 +83,7 @@ function LandingPage() {
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
             <Button size="lg" className="w-full sm:w-auto" onClick={() => setShowOpeningFlow(true)}>Quero abrir minha empresa</Button>
-            <Button size="lg" variant="outline" className="w-full sm:w-auto">Quero trocar de contador</Button>
+            <Button size="lg" variant="outline" className="w-full sm:w-auto" onClick={() => setShowSwitchingFlow(true)}>Quero trocar de contador</Button>
           </div>
           <div className="mt-8 animate-in fade-in duration-1000 delay-500">
             <a href="#planos" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">
@@ -129,7 +132,7 @@ function LandingPage() {
                 <h3 className="font-bold mb-2 group-hover:text-primary transition-colors">Quero abrir uma empresa</h3>
                 <p className="text-xs text-muted-foreground">Acompanhamento na abertura e nos primeiros passos da sua empresa.</p>
               </Card>
-              <Card className="p-6 cursor-pointer hover:border-primary transition-all group">
+              <Card className="p-6 cursor-pointer hover:border-primary transition-all group" onClick={() => setShowSwitchingFlow(true)}>
                 <h3 className="font-bold mb-2 group-hover:text-primary transition-colors">Trocar de contador</h3>
                 <p className="text-xs text-muted-foreground">Transição organizada e acompanhada para a Digital SC.</p>
               </Card>
@@ -233,7 +236,7 @@ function LandingPage() {
             <p className="text-primary-foreground/80 mb-10 max-w-xl mx-auto">Dê o próximo passo para uma contabilidade mais simples, digital e transparente.</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                <Button size="lg" variant="secondary" className="w-full sm:w-auto font-bold text-primary hover:bg-white focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-primary" onClick={() => setShowOpeningFlow(true)}>Abrir minha empresa</Button>
-               <Button size="lg" variant="outline" className="w-full sm:w-auto border-white/20 hover:bg-white/10 text-white font-bold focus:ring-2 focus:ring-white">Trocar de contador</Button>
+               <Button size="lg" variant="outline" className="w-full sm:w-auto border-white/20 hover:bg-white/10 text-white font-bold focus:ring-2 focus:ring-white" onClick={() => setShowSwitchingFlow(true)}>Trocar de contador</Button>
             </div>
           </div>
         </section>
