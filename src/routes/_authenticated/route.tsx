@@ -206,7 +206,7 @@ function ChangePasswordScreen({ onDone }: { onDone: () => void }) {
       toast.error("As senhas informadas não conferem.");
       return;
     }
-    if (pwd === "Spolaor@123") {
+    if (pwd === "DigitalSC@123") {
       toast.error("Escolha uma nova senha, diferente da senha provisória.");
       return;
     }

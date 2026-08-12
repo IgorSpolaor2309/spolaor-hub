@@ -91,14 +91,14 @@ function Consent() {
         <div className="mb-6 flex items-center gap-3">
           <SpolaorLogo className="h-10 w-10 object-contain" />
           <div>
-            <div className="font-display text-lg leading-none">SC Central</div>
+            <div className="font-display text-lg leading-none">Digital SC</div>
             <div className="text-xs text-muted-foreground">Autorização de acesso</div>
           </div>
         </div>
 
         <h1 className="font-display text-2xl">Conectar {clientName} à sua conta</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Ao aprovar, <strong>{clientName}</strong> poderá usar as ferramentas do SC Central como você,
+          Ao aprovar, <strong>{clientName}</strong> poderá usar as ferramentas da Digital SC como você,
           respeitando seu papel e as políticas de acesso.
         </p>
 
@@ -120,7 +120,7 @@ function Consent() {
         )}
 
         <p className="mt-4 rounded-md border border-border/60 bg-muted/40 p-3 text-xs text-muted-foreground">
-          Isto não substitui as políticas de acesso do SC Central. As ferramentas continuam limitadas
+          Isto não substitui as políticas de acesso da Digital SC. As ferramentas continuam limitadas
           ao que seu usuário pode ver e fazer.
         </p>
 

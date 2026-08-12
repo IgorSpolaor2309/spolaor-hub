@@ -41,7 +41,7 @@ function MyAreaPage() {
           : "Suas informações na Digital SC."}
       />
       {clients.length === 0 ? (
-        <EmptyState icon={<Briefcase className="h-6 w-6" />} title="Sem vínculo de cliente" description="Aguarde a equipe da Spolaor vincular sua conta." />
+        <EmptyState icon={<Briefcase className="h-6 w-6" />} title="Sem vínculo de cliente" description="Aguarde a equipe da Digital SC vincular sua conta." />
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {clients.map((c) => {

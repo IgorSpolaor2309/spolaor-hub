@@ -14,7 +14,7 @@ async function ensureAdmin(supabase: any, userId: string) {
   if (!data) throw new Error("Apenas administradores podem realizar esta ação.");
 }
 
-const DEFAULT_PROVISIONAL_PASSWORD = "Spolaor@123";
+const DEFAULT_PROVISIONAL_PASSWORD = "DigitalSC@123";
 
 type CollaboratorData = {
   cargo?: string | null;

@@ -89,7 +89,7 @@ function MyMonthDetailPage() {
       <EmptyState
         icon={<CalendarClock className="h-6 w-6" />}
         title="Área do cliente"
-        description="Esta página é destinada aos clientes da Spolaor."
+        description="Esta página é destinada aos clientes da Digital SC."
       />
     );
   }
