@@ -1,46 +1,46 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/dashboardreact-router";
 import { useMemo, useState } from "react";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useCurrentUser } from "@/hooks/use-current-user";
-import { PageHeader } from "@/components/sc/PageHeader";
-import { Card } from "@/components/ui/card";
-import { EmptyState } from "@/components/sc/EmptyState";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DateRangeFilter, EMPTY_DATE_FILTER, type DateFilterValue } from "@/components/sc/DateRangeFilter";
-import { resolveRange } from "@/lib/date-ranges";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/dashboardreact-query";
+import { supabase } from "@/dashboardintegrations/supabase/client";
+import { useCurrentUser } from "@/dashboardhooks/use-current-user";
+import { PageHeader } from "@/dashboardcomponents/sc/PageHeader";
+import { Card } from "@/dashboardcomponents/ui/card";
+import { EmptyState } from "@/dashboardcomponents/sc/EmptyState";
+import { Badge } from "@/dashboardcomponents/ui/badge";
+import { Button } from "@/dashboardcomponents/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/dashboardcomponents/ui/select";
+import { DateRangeFilter, EMPTY_DATE_FILTER, type DateFilterValue } from "@/dashboardcomponents/sc/DateRangeFilter";
+import { resolveRange } from "@/dashboardlib/date-ranges";
 import {
   Users, UserCog, ClipboardList, AlertTriangle, FileText, Clock,
   Inbox, Receipt, ShieldCheck, MessageSquare, Layers,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { ptBR } from "date-fns/dashboardlocale";
 import { toast } from "sonner";
-import { formatBR, todayLocalYmd, localYmdInDays } from "@/lib/dates";
-import { clientStatusLabel, clientStatusTone } from "@/lib/competence-client-labels";
+import { formatBR, todayLocalYmd, localYmdInDays } from "@/dashboardlib/dates";
+import { clientStatusLabel, clientStatusTone } from "@/dashboardlib/competence-client-labels";
 import {
   SITUACAO_LABEL, TAX_GUIDE_CLOSED_STATUSES_PG,
   type CompetenceOverviewRow, type Situacao,
-} from "@/lib/competence-progress";
-import { summarizeCompetenceOverview, type CompetenceSummary } from "@/lib/competence-summary";
-import { currentCompetencia, formatCompetenciaLong } from "@/lib/competencia";
+} from "@/dashboardlib/competence-progress";
+import { summarizeCompetenceOverview, type CompetenceSummary } from "@/dashboardlib/competence-summary";
+import { currentCompetencia, formatCompetenciaLong } from "@/dashboardlib/competencia";
 
 
 
-export const Route = createFileRoute("/_authenticated/")({
+export const Route = createFileRoute("/dashboard_authenticated/")({
   component: Dashboard,
-  errorComponent: () => <EmptyState icon={<AlertTriangle className="h-6 w-6" />} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />,
+  errorComponent: () => <EmptyState icon={<AlertTriangle className="h-6 w-6" /dashboard>} title="Não foi possível carregar os dados" description="Tente novamente em instantes." />,
 });
 
-/* ---------- helpers ---------- */
+/dashboard* ---------- helpers ---------- */
 const today = () => todayLocalYmd();
 const inDays = (n: number) => localYmdInDays(n);
 
-// Fase A2: a fonte oficial do status mensal é public.client_competences.
-// Fase B3: o Dashboard lê a competência atual por get_competence_overview —
-// a mesma RPC de /competencias — e agrega com summarizeCompetenceOverview.
+/dashboard/ Fase A2: a fonte oficial do status mensal é public.client_competences.
+/dashboard/ Fase B3: o Dashboard lê a competência atual por get_competence_overview —
+/dashboard/ a mesma RPC de /competencias — e agrega com summarizeCompetenceOverview.
 
 const SITUACAO_TONE: Record<Situacao, string> = {
   sem_atividade: "bg-zinc-100 text-zinc-700",
@@ -50,11 +50,11 @@ const SITUACAO_TONE: Record<Situacao, string> = {
   em_andamento: "bg-blue-100 text-blue-800",
 };
 
-/**
+/dashboard**
  * Fase B3 — chamada ÚNICA por Dashboard à visão mensal.
- * Mesma query key de /competencias: cache compartilhado, zero N+1,
+ * Mesma query key de /dashboardcompetencias: cache compartilhado, zero N+1,
  * e o filtro de período do Dashboard não participa da chave.
- */
+ */dashboard
 function useCurrentCompetenceSummary(enabled: boolean) {
   const competencia = currentCompetencia();
   const { data, error } = useQuery({
@@ -70,30 +70,30 @@ function useCurrentCompetenceSummary(enabled: boolean) {
       return (data ?? []) as CompetenceOverviewRow[];
     },
   });
-  // Dashboard operacional = ambiente Real. Inativas/excluídas já não vêm da RPC.
+  /dashboard/ Dashboard operacional = ambiente Real. Inativas/excluídas já não vêm da RPC.
   const summary = useMemo(() => summarizeCompetenceOverview(data), [data]);
   return { competencia, summary, error, isLoading: !data && !error };
 }
 
-/** Contagens por situação canônica, em linha e sem cards adicionais. */
+/dashboard** Contagens por situação canônica, em linha e sem cards adicionais. */
 function SituacaoCounts({ summary }: { summary: CompetenceSummary }) {
   const ordered: Situacao[] = ["com_atrasos", "aguardando_cliente", "sem_atividade", "em_andamento", "pronta_revisao"];
   const visible = ordered.filter((s) => summary.bySituacao[s] > 0);
-  if (!visible.length) return <span className="text-sm text-muted-foreground">Sem competências no mês.</span>;
+  if (!visible.length) return <span className="text-sm text-muted-foreground">Sem competências no mês.</dashboardspan>;
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {visible.map((s) => (
         <Badge key={s} className={SITUACAO_TONE[s]}>
-          {SITUACAO_LABEL[s]} <span className="ml-1 font-semibold">{summary.bySituacao[s]}</span>
-        </Badge>
+          {SITUACAO_LABEL[s]} <span className="ml-1 font-semibold">{summary.bySituacao[s]}</dashboardspan>
+        </dashboardBadge>
       ))}
-    </div>
+    </dashboarddiv>
   );
 }
 
 
 
-/* ---------- shared UI ---------- */
+/dashboard* ---------- shared UI ---------- */
 function StatCard({
   icon: Icon, label, value, accent, to, search,
 }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string | number; accent?: string; to?: string; search?: Record<string, string | number | undefined> }) {
@@ -101,34 +101,34 @@ function StatCard({
     <Card className="h-full p-5 transition hover:shadow-md">
       <div className="flex items-start justify-between">
         <div>
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
-          <div className="mt-2 font-display text-3xl">{value}</div>
-        </div>
-        <div className={`rounded-lg p-2 ${accent ?? "bg-primary/10 text-primary"}`}>
-          <Icon className="h-5 w-5" />
-        </div>
-      </div>
-    </Card>
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dashboarddiv>
+          <div className="mt-2 font-display text-3xl">{value}</dashboarddiv>
+        </dashboarddiv>
+        <div className={`rounded-lg p-2 ${accent ?? "bg-primary/dashboard10 text-primary"}`}>
+          <Icon className="h-5 w-5" /dashboard>
+        </dashboarddiv>
+      </dashboarddiv>
+    </dashboardCard>
   );
-  return to ? <Link to={to as any} search={(search ?? {}) as any}>{inner}</Link> : inner;
+  return to ? <Link to={to as any} search={(search ?? {}) as any}>{inner}</dashboardLink> : inner;
 }
 
-/* ---------- root ---------- */
+/dashboard* ---------- root ---------- */
 function Dashboard() {
   const { role, profile, userId, loading } = useCurrentUser();
 
   if (loading || !userId) {
-    return <div className="text-sm text-muted-foreground">Carregando informações...</div>;
+    return <div className="text-sm text-muted-foreground">Carregando informações...</dashboarddiv>;
   }
-  if (role === "admin") return <AdminDashboard name={profile?.full_name ?? ""} />;
-  if (role === "collaborator") return <CollabDashboard name={profile?.full_name ?? ""} userId={userId} />;
-  if (role === "client") return <ClientDashboard name={profile?.full_name ?? ""} userId={userId} />;
-  return <div className="text-sm text-muted-foreground">Carregando informações...</div>;
+  if (role === "admin") return <AdminDashboard name={profile?.full_name ?? ""} /dashboard>;
+  if (role === "collaborator") return <CollabDashboard name={profile?.full_name ?? ""} userId={userId} /dashboard>;
+  if (role === "client") return <ClientDashboard name={profile?.full_name ?? ""} userId={userId} /dashboard>;
+  return <div className="text-sm text-muted-foreground">Carregando informações...</dashboarddiv>;
 }
 
-/* ============================================================
+/dashboard* ============================================================
    ADMIN
-   ============================================================ */
+   ============================================================ */dashboard
 function AdminDashboard({ name }: { name: string }) {
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
@@ -207,162 +207,162 @@ function AdminDashboard({ name }: { name: string }) {
     },
   });
 
-  // Fase B3: "sem documentos do mês" e a situação mensal saem da MESMA linha do
-  // overview (doc_total / computeSituacao) — nenhuma contagem por created_at.
+  /dashboard/ Fase B3: "sem documentos do mês" e a situação mensal saem da MESMA linha do
+  /dashboard/ overview (doc_total / computeSituacao) — nenhuma contagem por created_at.
   const clientsNoDocs = summary.semDocumentos.slice(0, 8);
   const atencao = summary.atencao.slice(0, 8);
 
 
   return (
     <div>
-      <PageHeader title={`Bem-vindo, ${name?.split(" ")[0] || "administrador"}`} description="Visão operacional da Digital SC." />
-      {error && <Card className="mb-4 p-4 text-sm text-muted-foreground">Não foi possível carregar todos os dados. Tente novamente.</Card>}
+      <PageHeader title={`Bem-vindo, ${name?.split(" ")[0] || "administrador"}`} description="Visão operacional da Digital SC." /dashboard>
+      {error && <Card className="mb-4 p-4 text-sm text-muted-foreground">Não foi possível carregar todos os dados. Tente novamente.</dashboardCard>}
 
       <Card className="mb-4 flex flex-wrap items-end gap-3 p-4">
-        <DateRangeFilter value={dateF} onChange={setDateF} label="Período" />
-        <Button variant="ghost" size="sm" onClick={() => setDateF(EMPTY_DATE_FILTER)}>Limpar</Button>
-      </Card>
+        <DateRangeFilter value={dateF} onChange={setDateF} label="Período" /dashboard>
+        <Button variant="ghost" size="sm" onClick={() => setDateF(EMPTY_DATE_FILTER)}>Limpar</dashboardButton>
+      </dashboardCard>
 
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={AlertTriangle} label="Pendências vencidas" value={data?.tasksOverdue ?? "—"} accent="bg-destructive/10 text-destructive" to="/pendencias" />
-        <StatCard icon={Clock} label="Pendências de hoje" value={data?.tasksToday ?? "—"} accent="bg-amber-100 text-amber-800" to="/pendencias" />
-        <StatCard icon={Inbox} label="Solicitações pendentes" value={data?.reqPending ?? "—"} accent="bg-sky-100 text-sky-800" to="/documentos" search={{ tab: "aguardando_cliente" }} />
-        <StatCard icon={FileText} label="DOCUMENTOS RECEBIDOS" value={data?.docsAnalysis ?? "—"} accent="bg-blue-100 text-blue-800" to="/documentos" search={{ tab: "recebidos" }} />
-        <StatCard icon={Receipt} label="Guias vencendo (7 dias)" value={data?.guidesSoon ?? "—"} accent="bg-orange-100 text-orange-800" to="/guias" />
-        <StatCard icon={Receipt} label="Guias vencidas" value={data?.guidesOverdue ?? "—"} accent="bg-destructive/10 text-destructive" to="/guias" />
-        <StatCard icon={Users} label="Empresas ativas" value={data?.clients ?? "—"} to="/clientes" />
-        <StatCard icon={UserCog} label="Colaboradores ativos" value={data?.collabs ?? "—"} accent="bg-secondary/10 text-secondary" to="/colaboradores" />
-      </div>
+        <StatCard icon={AlertTriangle} label="Pendências vencidas" value={data?.tasksOverdue ?? "—"} accent="bg-destructive/dashboard10 text-destructive" to="/pendencias" />
+        <StatCard icon={Clock} label="Pendências de hoje" value={data?.tasksToday ?? "—"} accent="bg-amber-100 text-amber-800" to="/dashboardpendencias" />
+        <StatCard icon={Inbox} label="Solicitações pendentes" value={data?.reqPending ?? "—"} accent="bg-sky-100 text-sky-800" to="/dashboarddocumentos" search={{ tab: "aguardando_cliente" }} />
+        <StatCard icon={FileText} label="DOCUMENTOS RECEBIDOS" value={data?.docsAnalysis ?? "—"} accent="bg-blue-100 text-blue-800" to="/dashboarddocumentos" search={{ tab: "recebidos" }} />
+        <StatCard icon={Receipt} label="Guias vencendo (7 dias)" value={data?.guidesSoon ?? "—"} accent="bg-orange-100 text-orange-800" to="/dashboardguias" />
+        <StatCard icon={Receipt} label="Guias vencidas" value={data?.guidesOverdue ?? "—"} accent="bg-destructive/dashboard10 text-destructive" to="/guias" />
+        <StatCard icon={Users} label="Empresas ativas" value={data?.clients ?? "—"} to="/dashboardclientes" />
+        <StatCard icon={UserCog} label="Colaboradores ativos" value={data?.collabs ?? "—"} accent="bg-secondary/dashboard10 text-secondary" to="/colaboradores" />
+      </dashboarddiv>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card className="p-5">
-          <h3 className="mb-3 font-display text-lg flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" /> Certificados vencendo em 30 dias</h3>
-          {!(data?.certsSoon?.length) ? <p className="text-sm text-muted-foreground">Nenhum certificado próximo do vencimento.</p> : (
+          <h3 className="mb-3 font-display text-lg flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" /dashboard> Certificados vencendo em 30 dias</h3>
+          {!(data?.certsSoon?.length) ? <p className="text-sm text-muted-foreground">Nenhum certificado próximo do vencimento.</dashboardp> : (
             <ul className="divide-y">
               {data!.certsSoon.map((d: any) => (
                 <li key={d.id} className="flex items-center justify-between py-2.5">
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-medium">{d.nome}</div>
-                    <div className="truncate text-xs text-muted-foreground">{d.clients?.razao_social ?? "—"}</div>
-                  </div>
-                  <Badge className="bg-orange-100 text-orange-800">{formatBR(d.data_validade)}</Badge>
-                </li>
+                    <div className="truncate text-sm font-medium">{d.nome}</dashboarddiv>
+                    <div className="truncate text-xs text-muted-foreground">{d.clients?.razao_social ?? "—"}</dashboarddiv>
+                  </dashboarddiv>
+                  <Badge className="bg-orange-100 text-orange-800">{formatBR(d.data_validade)}</dashboardBadge>
+                </dashboardli>
               ))}
-            </ul>
+            </dashboardul>
           )}
-        </Card>
+        </dashboardCard>
 
         <Card className="p-5">
-          <h3 className="mb-3 font-display text-lg">Empresas sem colaborador atribuído</h3>
-          {!(data?.clientsNoCollab?.length) ? <p className="text-sm text-muted-foreground">Todas as empresas têm colaborador.</p> : (
+          <h3 className="mb-3 font-display text-lg">Empresas sem colaborador atribuído</dashboardh3>
+          {!(data?.clientsNoCollab?.length) ? <p className="text-sm text-muted-foreground">Todas as empresas têm colaborador.</dashboardp> : (
             <ul className="divide-y">
               {data!.clientsNoCollab.map((c: any) => (
                 <li key={c.id} className="flex items-center justify-between py-2.5">
-                  <Link to="/clientes/$id" params={{ id: c.id }} className="text-sm font-medium text-primary hover:underline">{c.razao_social}</Link>
-                  <Badge className="bg-amber-100 text-amber-800">sem colaborador</Badge>
-                </li>
+                  <Link to="/dashboardclientes/$id" params={{ id: c.id }} className="text-sm font-medium text-primary hover:underline">{c.razao_social}</Link>
+                  <Badge className="bg-amber-100 text-amber-800">sem colaborador</dashboardBadge>
+                </dashboardli>
               ))}
-            </ul>
+            </dashboardul>
           )}
-        </Card>
+        </dashboardCard>
 
         <Card className="p-5">
-          <h3 className="mb-3 font-display text-lg">Empresas sem documentos do mês</h3>
-          {!clientsNoDocs.length ? <p className="text-sm text-muted-foreground">Todos receberam documentos este mês.</p> : (
+          <h3 className="mb-3 font-display text-lg">Empresas sem documentos do mês</dashboardh3>
+          {!clientsNoDocs.length ? <p className="text-sm text-muted-foreground">Todos receberam documentos este mês.</dashboardp> : (
             <ul className="divide-y">
               {clientsNoDocs.map((c) => (
                 <li key={c.client_id} className="flex items-center justify-between py-2.5">
-                  <Link to="/clientes/$id" params={{ id: c.client_id }} className="text-sm font-medium text-primary hover:underline">{c.razao_social}</Link>
-                  <Badge variant="outline">{competencia}</Badge>
-                </li>
+                  <Link to="/dashboardclientes/$id" params={{ id: c.client_id }} className="text-sm font-medium text-primary hover:underline">{c.razao_social}</Link>
+                  <Badge variant="outline">{competencia}</dashboardBadge>
+                </dashboardli>
               ))}
-            </ul>
+            </dashboardul>
           )}
-        </Card>
+        </dashboardCard>
 
-        {/* Fase B3 — mesmo espaço do antigo "Competências do mês em aberto",
-            agora alimentado pela mesma RPC de /competencias. */}
+        {/dashboard* Fase B3 — mesmo espaço do antigo "Competências do mês em aberto",
+            agora alimentado pela mesma RPC de /dashboardcompetencias. */}
         <Card className="p-5">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h3 className="font-display text-lg flex items-center gap-2">
-              <Layers className="h-4 w-4 text-primary" /> Situação das competências — {formatCompetenciaLong(competencia)}
-            </h3>
-            <Link to="/competencias" search={{ comp: competencia }} className="text-xs font-medium text-primary hover:underline">
+              <Layers className="h-4 w-4 text-primary" /dashboard> Situação das competências — {formatCompetenciaLong(competencia)}
+            </dashboardh3>
+            <Link to="/dashboardcompetencias" search={{ comp: competencia }} className="text-xs font-medium text-primary hover:underline">
               Ver Competências
-            </Link>
-          </div>
+            </dashboardLink>
+          </dashboarddiv>
           {overviewError ? (
-            <p className="text-sm text-muted-foreground">Não foi possível carregar a situação do mês.</p>
+            <p className="text-sm text-muted-foreground">Não foi possível carregar a situação do mês.</dashboardp>
           ) : (
             <>
-              <SituacaoCounts summary={summary} />
+              <SituacaoCounts summary={summary} /dashboard>
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                <span>{summary.total} competência{summary.total === 1 ? "" : "s"} no mês</span>
-                <span aria-hidden>·</span>
-                <Link to="/processos" search={{} as any} className="font-medium text-primary hover:underline">
+                <span>{summary.total} competência{summary.total === 1 ? "" : "s"} no mês</dashboardspan>
+                <span aria-hidden>·</dashboardspan>
+                <Link to="/dashboardprocessos" search={{} as any} className="font-medium text-primary hover:underline">
                   {summary.procAtrasados} processo{summary.procAtrasados === 1 ? "" : "s"} atrasado{summary.procAtrasados === 1 ? "" : "s"}
-                </Link>
-              </div>
+                </dashboardLink>
+              </dashboarddiv>
               {atencao.length > 0 && (
                 <ul className="mt-3 divide-y">
                   {atencao.map((c) => (
                     <li key={c.client_id} className="flex items-center justify-between gap-2 py-2">
-                      <Link to="/clientes/$id" params={{ id: c.client_id }} className="min-w-0 truncate text-sm font-medium text-primary hover:underline">{c.razao_social}</Link>
-                      <Badge className={SITUACAO_TONE[c.situacao]}>{SITUACAO_LABEL[c.situacao]}</Badge>
-                    </li>
+                      <Link to="/dashboardclientes/$id" params={{ id: c.client_id }} className="min-w-0 truncate text-sm font-medium text-primary hover:underline">{c.razao_social}</Link>
+                      <Badge className={SITUACAO_TONE[c.situacao]}>{SITUACAO_LABEL[c.situacao]}</dashboardBadge>
+                    </dashboardli>
                   ))}
-                </ul>
+                </dashboardul>
               )}
-            </>
+            </dashboard>
           )}
-        </Card>
+        </dashboardCard>
 
 
         <Card className="p-5">
-          <h3 className="mb-3 font-display text-lg">Colaboradores com mais pendências abertas</h3>
-          {!(data?.topCollabs?.length) ? <p className="text-sm text-muted-foreground">Nenhuma pendência atribuída.</p> : (
+          <h3 className="mb-3 font-display text-lg">Colaboradores com mais pendências abertas</dashboardh3>
+          {!(data?.topCollabs?.length) ? <p className="text-sm text-muted-foreground">Nenhuma pendência atribuída.</dashboardp> : (
             <ul className="divide-y">
               {data!.topCollabs.map((c: any) => (
                 <li key={c.id} className="flex items-center justify-between py-2.5">
-                  <div className="text-sm font-medium">{c.nome}</div>
-                  <Badge>{c.n}</Badge>
-                </li>
+                  <div className="text-sm font-medium">{c.nome}</dashboarddiv>
+                  <Badge>{c.n}</dashboardBadge>
+                </dashboardli>
               ))}
-            </ul>
+            </dashboardul>
           )}
-        </Card>
+        </dashboardCard>
 
         <Card className="p-5">
-          <h3 className="mb-3 font-display text-lg">Atividade recente</h3>
-          {!(data?.recentEvents?.length) ? <p className="text-sm text-muted-foreground">Sem eventos.</p> : (
+          <h3 className="mb-3 font-display text-lg">Atividade recente</dashboardh3>
+          {!(data?.recentEvents?.length) ? <p className="text-sm text-muted-foreground">Sem eventos.</dashboardp> : (
             <ul className="space-y-3">
               {data!.recentEvents.map((e: any) => (
                 <li key={e.id} className="flex gap-3">
-                  <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-secondary" />
+                  <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-secondary" /dashboard>
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm">{e.descricao}</div>
+                    <div className="text-sm">{e.descricao}</dashboarddiv>
                     <div className="text-xs text-muted-foreground">
                       {e.clients?.razao_social} · {formatDistanceToNow(new Date(e.created_at), { addSuffix: true, locale: ptBR })}
-                    </div>
-                  </div>
-                </li>
+                    </dashboarddiv>
+                  </dashboarddiv>
+                </dashboardli>
               ))}
-            </ul>
+            </dashboardul>
           )}
-        </Card>
-      </div>
-    </div>
+        </dashboardCard>
+      </dashboarddiv>
+    </dashboarddiv>
   );
 }
 
-/* ============================================================
+/dashboard* ============================================================
    COLABORADOR
-   ============================================================ */
+   ============================================================ */dashboard
 function CollabDashboard({ name, userId }: { name: string; userId: string }) {
   const [dateF, setDateF] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const range = useMemo(() => resolveRange(dateF.preset, dateF.from, dateF.to), [dateF]);
-  // Fase B3 — mesma fonte mensal do Administrador; a RLS já limita à carteira.
+  /dashboard/ Fase B3 — mesma fonte mensal do Administrador; a RLS já limita à carteira.
   const { competencia, summary, error: overviewError } = useCurrentCompetenceSummary(!!userId);
   const { data, error } = useQuery({
 
@@ -412,91 +412,91 @@ function CollabDashboard({ name, userId }: { name: string; userId: string }) {
 
   return (
     <div>
-      <PageHeader title={`Olá, ${name?.split(" ")[0] || "colaborador"}`} description="Operação das empresas vinculadas a você." />
-      {error && <Card className="mb-4 p-4 text-sm text-muted-foreground">Não foi possível carregar todos os dados. Tente novamente.</Card>}
+      <PageHeader title={`Olá, ${name?.split(" ")[0] || "colaborador"}`} description="Operação das empresas vinculadas a você." /dashboard>
+      {error && <Card className="mb-4 p-4 text-sm text-muted-foreground">Não foi possível carregar todos os dados. Tente novamente.</dashboardCard>}
       {noClients && (
         <Card className="mb-4 p-4">
           <EmptyState
-            icon={<Users className="h-6 w-6" />}
+            icon={<Users className="h-6 w-6" /dashboard>}
             title="Você ainda não está vinculado a nenhuma empresa"
             description="Assim que um administrador te designar como responsável por uma empresa, ela aparecerá aqui."
-          />
-        </Card>
+          /dashboard>
+        </dashboardCard>
       )}
       <Card className="mb-4 flex flex-wrap items-end gap-3 p-4">
-        <DateRangeFilter value={dateF} onChange={setDateF} label="Período" />
-        <Button variant="ghost" size="sm" onClick={() => setDateF(EMPTY_DATE_FILTER)}>Limpar</Button>
-      </Card>
+        <DateRangeFilter value={dateF} onChange={setDateF} label="Período" /dashboard>
+        <Button variant="ghost" size="sm" onClick={() => setDateF(EMPTY_DATE_FILTER)}>Limpar</dashboardButton>
+      </dashboardCard>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
 
 
-        <StatCard icon={AlertTriangle} label="Minhas vencidas" value={data?.tasksOverdue ?? "—"} accent="bg-destructive/10 text-destructive" to="/pendencias" />
-        <StatCard icon={Clock} label="Pendências de hoje" value={data?.tasksToday ?? "—"} accent="bg-amber-100 text-amber-800" to="/pendencias" />
-        <StatCard icon={FileText} label="Docs para analisar" value={data?.docsAnalysis ?? "—"} accent="bg-blue-100 text-blue-800" to="/documentos" search={{ tab: "recebidos" }} />
-        <StatCard icon={Inbox} label="Solicitações recebidas para análise" value={data?.awaiting ?? "—"} accent="bg-sky-100 text-sky-800" to="/documentos" search={{ tab: "recebidos" }} />
-        <StatCard icon={Receipt} label="Guias vencendo (7 dias)" value={data?.guidesSoon ?? "—"} accent="bg-orange-100 text-orange-800" to="/guias" />
-        <StatCard icon={Inbox} label="Solicitações pendentes" value={data?.reqPending ?? "—"} accent="bg-secondary/10 text-secondary" to="/documentos" search={{ tab: "aguardando_cliente" }} />
-        <StatCard icon={Users} label="Empresas vinculadas" value={data?.clients ?? "—"} to="/clientes" />
-      </div>
+        <StatCard icon={AlertTriangle} label="Minhas vencidas" value={data?.tasksOverdue ?? "—"} accent="bg-destructive/dashboard10 text-destructive" to="/pendencias" />
+        <StatCard icon={Clock} label="Pendências de hoje" value={data?.tasksToday ?? "—"} accent="bg-amber-100 text-amber-800" to="/dashboardpendencias" />
+        <StatCard icon={FileText} label="Docs para analisar" value={data?.docsAnalysis ?? "—"} accent="bg-blue-100 text-blue-800" to="/dashboarddocumentos" search={{ tab: "recebidos" }} />
+        <StatCard icon={Inbox} label="Solicitações recebidas para análise" value={data?.awaiting ?? "—"} accent="bg-sky-100 text-sky-800" to="/dashboarddocumentos" search={{ tab: "recebidos" }} />
+        <StatCard icon={Receipt} label="Guias vencendo (7 dias)" value={data?.guidesSoon ?? "—"} accent="bg-orange-100 text-orange-800" to="/dashboardguias" />
+        <StatCard icon={Inbox} label="Solicitações pendentes" value={data?.reqPending ?? "—"} accent="bg-secondary/dashboard10 text-secondary" to="/documentos" search={{ tab: "aguardando_cliente" }} />
+        <StatCard icon={Users} label="Empresas vinculadas" value={data?.clients ?? "—"} to="/dashboardclientes" />
+      </dashboarddiv>
 
-      {/* Fase B3 — linha compacta da competência atual (carteira via RLS). */}
+      {/dashboard* Fase B3 — linha compacta da competência atual (carteira via RLS). */}
       <Card className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 p-4">
         <div className="flex items-center gap-2 text-sm font-medium">
-          <Layers className="h-4 w-4 text-primary" />
+          <Layers className="h-4 w-4 text-primary" /dashboard>
           {formatCompetenciaLong(competencia)}
-        </div>
+        </dashboarddiv>
         {overviewError ? (
-          <span className="text-sm text-muted-foreground">Situação do mês indisponível.</span>
+          <span className="text-sm text-muted-foreground">Situação do mês indisponível.</dashboardspan>
         ) : (
           <>
             <span className="text-xs text-muted-foreground">
               {summary.total} competência{summary.total === 1 ? "" : "s"}
-            </span>
-            <SituacaoCounts summary={summary} />
+            </dashboardspan>
+            <SituacaoCounts summary={summary} /dashboard>
             <span className="text-xs text-muted-foreground">
               {summary.procAtrasados} processo{summary.procAtrasados === 1 ? "" : "s"} atrasado{summary.procAtrasados === 1 ? "" : "s"}
-            </span>
-          </>
+            </dashboardspan>
+          </dashboard>
         )}
-        <Link to="/competencias" search={{ comp: competencia }} className="ml-auto text-xs font-medium text-primary hover:underline">
+        <Link to="/dashboardcompetencias" search={{ comp: competencia }} className="ml-auto text-xs font-medium text-primary hover:underline">
           Ver Competências
-        </Link>
-      </Card>
+        </dashboardLink>
+      </dashboardCard>
 
 
 
       <div className="mt-6">
         <Card className="p-5">
-          <h3 className="mb-3 font-display text-lg flex items-center gap-2"><MessageSquare className="h-4 w-4 text-primary" /> Atividades recentes das minhas empresas</h3>
-          {!(data?.events?.length) ? <p className="text-sm text-muted-foreground">Sem atividade.</p> : (
+          <h3 className="mb-3 font-display text-lg flex items-center gap-2"><MessageSquare className="h-4 w-4 text-primary" /dashboard> Atividades recentes das minhas empresas</h3>
+          {!(data?.events?.length) ? <p className="text-sm text-muted-foreground">Sem atividade.</dashboardp> : (
             <ul className="space-y-3">
               {data!.events.map((e: any) => (
                 <li key={e.id} className="flex gap-3">
-                  <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-secondary" />
+                  <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-secondary" /dashboard>
                   <div className="min-w-0">
-                    <div className="text-sm">{e.descricao}</div>
+                    <div className="text-sm">{e.descricao}</dashboarddiv>
                     <div className="text-xs text-muted-foreground">
                       {e.clients?.razao_social} · {formatDistanceToNow(new Date(e.created_at), { addSuffix: true, locale: ptBR })}
-                    </div>
-                  </div>
-                </li>
+                    </dashboarddiv>
+                  </dashboarddiv>
+                </dashboardli>
               ))}
-            </ul>
+            </dashboardul>
           )}
-        </Card>
-      </div>
-    </div>
+        </dashboardCard>
+      </dashboarddiv>
+    </dashboarddiv>
   );
 }
 
-/* ============================================================
+/dashboard* ============================================================
    CLIENTE — Status do mês
-   ============================================================ */
+   ============================================================ */dashboard
 function ClientDashboard({ name, userId }: { name: string; userId: string }) {
   const qc = useQueryClient();
   const competencia = currentCompetencia();
 
-  // Lista as empresas/CNPJs do cliente (RLS filtra; suporta multiempresa).
+  /dashboard/ Lista as empresas/CNPJs do cliente (RLS filtra; suporta multiempresa).
   const { data: myCompanies = [], error: companiesError } = useQuery({
     queryKey: ["dash-client-companies", userId],
     enabled: !!userId,
@@ -511,13 +511,13 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
     },
   });
 
-  // "" = todas; senão um id específico.
+  /dashboard/ "" = todas; senão um id específico.
   const STORAGE_KEY = "sc.dashboardSelectedClient";
   const initial = (typeof window !== "undefined" && window.localStorage.getItem(STORAGE_KEY)) || "";
   const [selected, setSelected] = useState<string>(initial);
   const onSelectChange = (v: string) => {
     setSelected(v);
-    try { window.localStorage.setItem(STORAGE_KEY, v); } catch { /* noop */ }
+    try { window.localStorage.setItem(STORAGE_KEY, v); } catch { /dashboard* noop */ }
   };
 
   const allIds = myCompanies.map((c: any) => c.id);
@@ -542,7 +542,7 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
         if (dTo) q = q.lte("created_at", dTo);
         return q;
       };
-      // Cliente: leitura de solicitações via RPC segura (sem observacoes_internas).
+      /dashboard/ Cliente: leitura de solicitações via RPC segura (sem observacoes_internas).
       const reqCalls = ids.map((cid) =>
         supabase.rpc("client_list_document_requests", { p_client_id: cid, p_limit: 20, p_offset: 0 })
       );
@@ -552,7 +552,7 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
         scope(supabase.from("pending_tasks").select("id, titulo, prazo, status, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).not("status", "in", "(concluida,cancelada)").order("prazo", { ascending: true }).limit(8)),
         supabase.from("tax_guides").select("id, tipo, vencimento, valor, status, storage_path, client_id, clients(razao_social, nome_fantasia)").in("client_id", ids).not("status", "in", TAX_GUIDE_CLOSED_STATUSES_PG).order("vencimento", { ascending: true }).limit(8),
         supabase.from("tax_guides").select("id", { head: true, count: "exact" }).in("client_id", ids).gte("vencimento", t).lte("vencimento", in7).not("status", "in", TAX_GUIDE_CLOSED_STATUSES_PG),
-        // Fase A2: fonte oficial segura para o cliente (mesma usada em /meu-mes).
+        /dashboard/ Fase A2: fonte oficial segura para o cliente (mesma usada em /meu-mes).
         !isAll && primary
           ? supabase.rpc("get_client_competence_portal", { p_client_id: primary.id, p_competence: competencia })
           : Promise.resolve({ data: null }),
@@ -586,11 +586,11 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
     },
   });
 
-  if (companiesError) return <div className="text-sm text-muted-foreground">Não foi possível carregar os dados. Tente novamente.</div>;
-  if (myCompanies.length === 0) return <div className="text-sm text-muted-foreground">Sem empresa vinculada.</div>;
-  if (!data) return <div className="text-sm text-muted-foreground">Carregando…</div>;
+  if (companiesError) return <div className="text-sm text-muted-foreground">Não foi possível carregar os dados. Tente novamente.</dashboarddiv>;
+  if (myCompanies.length === 0) return <div className="text-sm text-muted-foreground">Sem empresa vinculada.</dashboarddiv>;
+  if (!data) return <div className="text-sm text-muted-foreground">Carregando…</dashboarddiv>;
 
-  // Linguagem externa (nunca expõe status interno, responsável ou notas internas).
+  /dashboard/ Linguagem externa (nunca expõe status interno, responsável ou notas internas).
   const clientLabel = data.hasCompetence ? clientStatusLabel(data.status) : "Ainda não iniciada";
   const clientTone = data.hasCompetence ? clientStatusTone(data.status) : clientStatusTone(null);
 
@@ -598,130 +598,130 @@ function ClientDashboard({ name, userId }: { name: string; userId: string }) {
 
   return (
     <div>
-      <PageHeader title={`Olá, ${name?.split(" ")[0] || "cliente"}`} description={`Status do mês ${competencia}`} />
-      {dataError && <Card className="mb-4 p-4 text-sm text-muted-foreground">Não foi possível carregar todos os dados. Tente novamente.</Card>}
+      <PageHeader title={`Olá, ${name?.split(" ")[0] || "cliente"}`} description={`Status do mês ${competencia}`} /dashboard>
+      {dataError && <Card className="mb-4 p-4 text-sm text-muted-foreground">Não foi possível carregar todos os dados. Tente novamente.</dashboardCard>}
 
       {myCompanies.length > 1 && (
         <Card className="mb-4 flex flex-wrap items-center gap-3 p-4">
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">Empresa</div>
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Empresa</dashboarddiv>
           <Select value={selected || "__all__"} onValueChange={(v) => onSelectChange(v === "__all__" ? "" : v)}>
-            <SelectTrigger className="w-[280px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-[280px]"><SelectValue /dashboard></SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all__">Todas as empresas ({myCompanies.length})</SelectItem>
+              <SelectItem value="__all__">Todas as empresas ({myCompanies.length})</dashboardSelectItem>
               {myCompanies.map((c: any) => (
                 <SelectItem key={c.id} value={c.id}>
                   {empresaName(c)}{c.documento ? ` · ${c.documento}` : ""}
-                </SelectItem>
+                </dashboardSelectItem>
               ))}
-            </SelectContent>
-          </Select>
-        </Card>
+            </dashboardSelectContent>
+          </dashboardSelect>
+        </dashboardCard>
       )}
 
       <Card className="mb-4 flex flex-wrap items-end gap-3 p-4">
-        <DateRangeFilter value={dateF} onChange={setDateF} label="Período" />
-        <Button variant="ghost" size="sm" onClick={() => setDateF(EMPTY_DATE_FILTER)}>Limpar</Button>
-      </Card>
+        <DateRangeFilter value={dateF} onChange={setDateF} label="Período" /dashboard>
+        <Button variant="ghost" size="sm" onClick={() => setDateF(EMPTY_DATE_FILTER)}>Limpar</dashboardButton>
+      </dashboardCard>
 
 
       {!isAll && (
         <Card className="mb-4 border-l-4 border-primary p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div className="text-xs uppercase tracking-wide text-muted-foreground">Status geral do mês</div>
-              <div className="mt-1 font-display text-xl">{clientLabel}</div>
-              {data.primary && <div className="mt-0.5 text-xs text-muted-foreground">{empresaName(data.primary)}</div>}
-            </div>
-            <Badge className={`${clientTone} text-sm`}>{clientLabel}</Badge>
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Status geral do mês</dashboarddiv>
+              <div className="mt-1 font-display text-xl">{clientLabel}</dashboarddiv>
+              {data.primary && <div className="mt-0.5 text-xs text-muted-foreground">{empresaName(data.primary)}</dashboarddiv>}
+            </dashboarddiv>
+            <Badge className={`${clientTone} text-sm`}>{clientLabel}</dashboardBadge>
 
-          </div>
-        </Card>
+          </dashboarddiv>
+        </dashboardCard>
       )}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={Inbox} label="Documentos solicitados" value={data.reqAll.length} to="/meus-documentos" search={{ section: "precisa_enviar", client: data.primary?.id }} />
-        <StatCard icon={FileText} label="Enviados" value={data.reqSent.length} accent="bg-emerald-100 text-emerald-800" to="/meus-documentos" />
-        <StatCard icon={AlertTriangle} label="Pendências" value={data.reqPending.length + data.openTasks.length} accent="bg-orange-100 text-orange-800" to="/pendencias" />
-        <StatCard icon={Receipt} label="Guias próximas (7d)" value={data.guidesSoon} accent="bg-amber-100 text-amber-800" to="/guias" />
-      </div>
+        <StatCard icon={Inbox} label="Documentos solicitados" value={data.reqAll.length} to="/dashboardmeus-documentos" search={{ section: "precisa_enviar", client: data.primary?.id }} />
+        <StatCard icon={FileText} label="Enviados" value={data.reqSent.length} accent="bg-emerald-100 text-emerald-800" to="/dashboardmeus-documentos" />
+        <StatCard icon={AlertTriangle} label="Pendências" value={data.reqPending.length + data.openTasks.length} accent="bg-orange-100 text-orange-800" to="/dashboardpendencias" />
+        <StatCard icon={Receipt} label="Guias próximas (7d)" value={data.guidesSoon} accent="bg-amber-100 text-amber-800" to="/dashboardguias" />
+      </dashboarddiv>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card className="p-5">
-          <h3 className="mb-3 font-display text-lg">Guias disponíveis</h3>
-          {!data.guides.length ? <p className="text-sm text-muted-foreground">Nenhuma guia em aberto.</p> : (
+          <h3 className="mb-3 font-display text-lg">Guias disponíveis</dashboardh3>
+          {!data.guides.length ? <p className="text-sm text-muted-foreground">Nenhuma guia em aberto.</dashboardp> : (
             <ul className="divide-y">
               {data.guides.map((g: any) => (
                 <li key={g.id} className="flex items-center justify-between py-2.5">
                   <div>
-                    <div className="text-sm font-medium">{g.tipo}</div>
+                    <div className="text-sm font-medium">{g.tipo}</dashboarddiv>
                     <div className="text-xs text-muted-foreground">
                       {isAll && (g.clients?.nome_fantasia || g.clients?.razao_social) && (
-                        <>Empresa: {g.clients?.nome_fantasia || g.clients?.razao_social} · </>
+                        <>Empresa: {g.clients?.nome_fantasia || g.clients?.razao_social} · </dashboard>
                       )}
                       {g.vencimento ? `Vence ${formatBR(g.vencimento)}` : "—"}
                       {g.valor != null ? ` · R$ ${Number(g.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : ""}
-                    </div>
-                  </div>
-                  <Badge variant="outline">{g.status}</Badge>
-                </li>
+                    </dashboarddiv>
+                  </dashboarddiv>
+                  <Badge variant="outline">{g.status}</dashboardBadge>
+                </dashboardli>
               ))}
-            </ul>
+            </dashboardul>
           )}
-        </Card>
+        </dashboardCard>
 
         <Card className="p-5">
-          <h3 className="mb-3 font-display text-lg">Pendências abertas</h3>
-          {!data.openTasks.length ? <p className="text-sm text-muted-foreground">Nenhuma pendência. 🎉</p> : (
+          <h3 className="mb-3 font-display text-lg">Pendências abertas</dashboardh3>
+          {!data.openTasks.length ? <p className="text-sm text-muted-foreground">Nenhuma pendência. 🎉</dashboardp> : (
             <ul className="divide-y">
               {data.openTasks.map((t: any) => (
                 <li key={t.id} className="flex items-center justify-between py-2.5">
                   <div>
-                    <div className="text-sm">{t.titulo}</div>
+                    <div className="text-sm">{t.titulo}</dashboarddiv>
                     {isAll && (t.clients?.nome_fantasia || t.clients?.razao_social) && (
-                      <div className="text-xs text-muted-foreground">Empresa: {t.clients?.nome_fantasia || t.clients?.razao_social}</div>
+                      <div className="text-xs text-muted-foreground">Empresa: {t.clients?.nome_fantasia || t.clients?.razao_social}</dashboarddiv>
                     )}
-                  </div>
-                  <Badge variant="outline">{t.prazo ? formatBR(t.prazo) : "—"}</Badge>
-                </li>
+                  </dashboarddiv>
+                  <Badge variant="outline">{t.prazo ? formatBR(t.prazo) : "—"}</dashboardBadge>
+                </dashboardli>
               ))}
-            </ul>
+            </dashboardul>
           )}
-        </Card>
+        </dashboardCard>
 
         <Card className="p-5">
-          <h3 className="mb-3 font-display text-lg">Documentos pendentes (solicitados)</h3>
-          {!data.reqPending.length ? <p className="text-sm text-muted-foreground">Nenhum documento pendente.</p> : (
+          <h3 className="mb-3 font-display text-lg">Documentos pendentes (solicitados)</dashboardh3>
+          {!data.reqPending.length ? <p className="text-sm text-muted-foreground">Nenhum documento pendente.</dashboardp> : (
             <ul className="divide-y">
               {data.reqPending.map((r: any) => (
                 <li key={r.id} className="flex items-center justify-between py-2.5">
                   <div>
-                    <div className="text-sm font-medium">{r.titulo}</div>
+                    <div className="text-sm font-medium">{r.titulo}</dashboarddiv>
                     <div className="text-xs text-muted-foreground">
                       {r.categoria}
                       {isAll && (r.clients?.nome_fantasia || r.clients?.razao_social) && (
-                        <>{r.categoria ? " · " : ""}Empresa: {r.clients?.nome_fantasia || r.clients?.razao_social}</>
+                        <>{r.categoria ? " · " : ""}Empresa: {r.clients?.nome_fantasia || r.clients?.razao_social}</dashboard>
                       )}
-                    </div>
-                  </div>
-                  <Badge className="bg-orange-100 text-orange-800">{r.status}</Badge>
-                </li>
+                    </dashboarddiv>
+                  </dashboarddiv>
+                  <Badge className="bg-orange-100 text-orange-800">{r.status}</dashboardBadge>
+                </dashboardli>
               ))}
-            </ul>
+            </dashboardul>
           )}
-        </Card>
-      </div>
+        </dashboardCard>
+      </dashboarddiv>
 
 
-      <button hidden onClick={() => { void qc; void toast; }} />
-    </div>
+      <button hidden onClick={() => { void qc; void toast; }} /dashboard>
+    </dashboarddiv>
   );
 }
 
-/* ============================================================
+/dashboard* ============================================================
    Fase A2 — MonthStatusSelector removido.
    O status mensal passou a ser controlado exclusivamente pelo ciclo oficial
    da competência (public.client_competences) na Central de Competências.
    Escritas em client_month_status foram revogadas no banco.
-   Exibição inline: @/components/sc/CompetenceStatusInline
-   ============================================================ */
+   Exibição inline: @/dashboardcomponents/sc/CompetenceStatusInline
+   ============================================================ */dashboard
 
