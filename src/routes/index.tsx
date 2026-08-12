@@ -186,8 +186,8 @@ function LandingPage() {
         <section className="py-20 bg-background" id="servicos">
           <div className="container mx-auto px-4 max-w-5xl">
             <div className="text-center mb-16">
-              <h2 className="font-display text-3xl font-bold mb-4">Serviços e Especialidades</h2>
-              <p className="text-muted-foreground">Atendimento especializado em diversas áreas para garantir sua conformidade.</p>
+              <h2 className="font-display text-3xl font-bold mb-4">Serviços e especialidades</h2>
+              <p className="text-muted-foreground">Atendimento especializado em diversas áreas para apoiar a rotina contábil e manter sua empresa em conformidade.</p>
             </div>
             
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
