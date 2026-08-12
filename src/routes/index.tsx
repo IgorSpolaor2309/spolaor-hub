@@ -125,8 +125,8 @@ function LandingPage() {
         <section className="py-20 bg-secondary/5" id="planos">
           <div className="container mx-auto px-4">
             <div className="text-center mb-16">
-              <h2 className="font-display text-3xl font-bold mb-4">Nossos Planos</h2>
-              <p className="text-muted-foreground">Estruturas completas para cada fase do seu negócio.</p>
+              <h2 className="font-display text-3xl font-bold mb-4">Nossos planos</h2>
+              <p className="text-muted-foreground">Planos pensados para diferentes perfis e necessidades de negócio.</p>
             </div>
 
             {plansQ.isLoading ? (
