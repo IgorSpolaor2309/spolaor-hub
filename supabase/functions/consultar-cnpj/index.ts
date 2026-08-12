@@ -20,30 +20,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Método não suportado." }, 405);
 
-  // A validação de sessão agora é opcional para permitir consultas via Server Function
-  const authHeader = req.headers.get("Authorization") ?? "";
-  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
-  
-  // Só validamos se houver um token que NÃO seja a própria anon key (que o SDK as vezes envia automaticamente)
-  const isUserToken = token && token.length > 50; 
-  
-  if (isUserToken) {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? "";
-    
-    try {
-      const userResp = await fetch(`${supabaseUrl}/auth/v1/user`, {
-        headers: { Authorization: `Bearer ${token}`, apikey: anonKey },
-      });
-      // Se o token foi enviado mas a resposta da auth não for 200, ignoramos ou barramos?
-      // Para garantir segurança, se o token existe mas é inválido, retornamos erro.
-      if (!userResp.ok && userResp.status !== 401) {
-         console.error("consultar-cnpj: auth check failed with status", userResp.status);
-      }
-    } catch (e) {
-      console.error("auth validation error", e);
-    }
-  }
+  // A validação de sessão é ignorada para permitir o uso via Server Function (proxy seguro).
+  // O Supabase injeta automaticamente headers de Auth em chamadas via SDK, 
+  // mas aqui permitimos o fluxo direto para o processamento do CNPJ.
+
 
 
   let payload: { cnpj?: string };
