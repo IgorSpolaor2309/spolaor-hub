@@ -17,6 +17,7 @@ export const lookupCNPJ = createServerFn({ method: "POST" })
 
     try {
       console.log(`[CNPJ DEBUG] Fetching Minha Receita directly for CNPJ: ${digits}`);
+      // Tentamos o serviço público gratuito diretamente
       const response = await fetch(`https://minhareceita.org/${digits}`);
       
       const status = response.status;
