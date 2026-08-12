@@ -3735,6 +3735,8 @@ export type Database = {
         Returns: Json
       }
       get_feature_flag: { Args: { _key: string }; Returns: boolean }
+      get_public_plans: { Args: never; Returns: Json }
+      get_public_services: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
