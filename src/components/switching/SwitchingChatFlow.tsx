@@ -2,14 +2,16 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Loader2, Send, Check, Briefcase, TrendingUp, Building2, AlertCircle } from "lucide-react";
+import { Loader2, Send, Check, Briefcase, TrendingUp, Building2, AlertCircle, ShoppingCart } from "lucide-react";
+import { CheckoutView } from "@/components/commercial/CheckoutView";
+import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { processSwitchingMessage } from "@/lib/switching-chat.functions";
 import { useQuery } from "@tanstack/react-query";
 import { getPublicPlans } from "@/lib/public-catalog.functions";
 
 export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
-  const [step, setStep] = useState<'chat' | 'confirm' | 'diagnostic'>('chat');
+  const [step, setStep] = useState<'chat' | 'confirm' | 'diagnostic' | 'checkout'>('chat');
   const [messages, setMessages] = useState<{role: 'user' | 'ai', content: string}[]>([
     { role: 'ai', content: "Olá! Sou o assistente da Digital SC. Para começarmos a planejar sua migração, por favor, me informe o CNPJ da sua empresa." }
   ]);
@@ -191,7 +193,7 @@ export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
                     ))}
                   </ul>
                 </div>
-                <Button variant="secondary" className="w-full mt-6 text-primary font-bold">Confirmar Migração</Button>
+                <Button variant="secondary" className="w-full mt-6 text-primary font-bold" onClick={() => setStep('checkout')}>Confirmar Migração</Button>
               </>
             ) : (
               <p>Carregando recomendação...</p>
@@ -202,6 +204,33 @@ export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
         <div className="text-center">
           <Button variant="link" onClick={onBack} className="text-muted-foreground">Voltar para a Home</Button>
         </div>
+      </div>
+    );
+  }
+
+  if (step === 'checkout') {
+    const plan = getRecommendedPlan();
+    return (
+      <div className="animate-in fade-in duration-500">
+        <div className="max-w-5xl mx-auto pt-8 px-4 flex items-center justify-between">
+           <h1 className="font-display text-2xl font-bold">Finalizar Contratação</h1>
+           <Button variant="ghost" onClick={() => setStep('diagnostic')}>Voltar ao diagnóstico</Button>
+        </div>
+        <CheckoutView 
+          flowType="switching"
+          initialPlanId={plan?.id}
+          extractedData={extractedData}
+          contactData={{
+            name: contact.email.split('@')[0],
+            email: contact.email,
+            phone: contact.phone
+          }}
+          onBack={() => setStep('diagnostic')}
+          onConfirm={() => {
+            toast.success("Migração confirmada! Nossa equipe entrará em contato para iniciar o processo.");
+            onBack();
+          }}
+        />
       </div>
     );
   }

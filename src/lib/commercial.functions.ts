@@ -5,7 +5,7 @@ import { z } from "zod";
 export const validateCoupon = createServerFn({ method: "GET" })
   .inputValidator((data) => z.object({ code: z.string() }).parse(data))
   .handler(async ({ data }) => {
-    const { data: coupon, error } = await supabase
+    const { data: coupon, error } = await (supabase as any)
       .from("coupons")
       .select("*")
       .eq("code", data.code.toUpperCase())
@@ -16,8 +16,8 @@ export const validateCoupon = createServerFn({ method: "GET" })
     if (!coupon) return { valid: false, message: "Cupom inválido ou expirado" };
 
     const now = new Date();
-    if (coupon.valid_from && new Date(coupon.valid_from) > now) return { valid: false, message: "Cupom ainda não está ativo" };
-    if (coupon.valid_until && new Date(coupon.valid_until) < now) return { valid: false, message: "Cupom expirado" };
+    if (coupon.start_date && new Date(coupon.start_date) > now) return { valid: false, message: "Cupom ainda não está ativo" };
+    if (coupon.end_date && new Date(coupon.end_date) < now) return { valid: false, message: "Cupom expirado" };
 
     return { valid: true, coupon };
   });
