@@ -40,15 +40,17 @@ export const lookupCNPJ = createServerFn({ method: "POST" })
       const status = response.status;
       const responseText = await response.text();
       
-      console.log(`[CNPJ DEBUG] Response Status: ${status}`);
+      console.log(`[CNPJ DEBUG] Raw Response:`, { status, responseText });
       
       if (!response.ok) {
         console.error(`[CNPJ DEBUG] HTTP Error ${status}: ${responseText}`);
         
         if (status === 404) throw new Error("CNPJ não encontrado na base da Receita.");
         if (status === 400) throw new Error("CNPJ inválido para consulta.");
+        if (status === 401 || status === 403) {
+          throw new Error("Erro de autorização no serviço de consulta. Contate o suporte.");
+        }
         
-        // Se cair aqui, é um erro inesperado (5xx ou 401/403)
         throw new Error(`Falha técnica no serviço de consulta (Status ${status})`);
       }
 
@@ -68,7 +70,7 @@ export const lookupCNPJ = createServerFn({ method: "POST" })
       return result;
     } catch (err: any) {
       console.error("[CNPJ DEBUG] Handler Exception:", err);
-      // Aqui garantimos que a mensagem final do throw seja a que o usuário verá
-      throw new Error(err.message || "Erro inesperado ao consultar CNPJ.");
+      // Aqui garantimos que a mensagem final seja capturada pelo componente
+      throw err;
     }
   });
