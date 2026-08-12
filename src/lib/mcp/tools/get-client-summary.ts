@@ -8,7 +8,7 @@ export default defineTool({
   name: "get_client_summary",
   title: "Resumo da empresa",
   description:
-    "Retorna resumo de uma empresa (cliente) à qual o usuário autenticado possui acesso, respeitando as políticas do SC Central.",
+    "Retorna resumo de uma empresa (cliente) à qual o usuário autenticado possui acesso, respeitando as políticas da Digital SC.",
   inputSchema: {
     client_id: z.string().uuid().describe("UUID da empresa (client_id)."),
   },

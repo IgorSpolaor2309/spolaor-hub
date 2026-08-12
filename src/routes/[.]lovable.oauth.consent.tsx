@@ -3,7 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { SpolaorLogo } from "@/components/sc/Logo";
+import { AppLogo } from "@/components/sc/Logo";
 
 // Typed wrapper for the beta supabase.auth.oauth namespace.
 type OAuthDetails = {
@@ -89,7 +89,7 @@ function Consent() {
     <div className="flex min-h-screen items-center justify-center bg-background p-6">
       <Card className="w-full max-w-md p-8">
         <div className="mb-6 flex items-center gap-3">
-          <SpolaorLogo className="h-10 w-10 object-contain" />
+          <AppLogo className="h-10 w-10 object-contain" />
           <div>
             <div className="font-display text-lg leading-none">Digital SC</div>
             <div className="text-xs text-muted-foreground">Autorização de acesso</div>

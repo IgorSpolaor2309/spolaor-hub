@@ -1,5 +1,5 @@
 /**
- * Utilitários de data centralizados para o SC Central.
+ * Utilitários de data centralizados para a Digital SC.
  *
  * Regras:
  * - Datas em campos sem horário (prazo, vencimento, data_validade, competência, etc.)

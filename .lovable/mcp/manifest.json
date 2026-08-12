@@ -19,7 +19,7 @@
       {
         "name": "whoami",
         "title": "Identidade do usuário conectado",
-        "description": "Retorna o perfil e o papel (admin, collaborator, client) do usuário do SC Central autenticado nesta sessão MCP.",
+        "description": "Retorna o perfil e o papel (admin, collaborator, client) do usuário da Digital SC autenticado nesta sessão MCP.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -35,7 +35,7 @@
       {
         "name": "list_clients",
         "title": "Listar clientes",
-        "description": "Lista os clientes visíveis ao usuário autenticado, respeitando as políticas de acesso do SC Central.",
+        "description": "Lista os clientes visíveis ao usuário autenticado, respeitando as políticas de acesso da Digital SC.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -107,7 +107,7 @@
       {
         "name": "list_pending_tasks",
         "title": "Listar pendências",
-        "description": "Lista as pendências (pending_tasks) visíveis ao usuário autenticado, respeitando as políticas de acesso do SC Central.",
+        "description": "Lista as pendências (pending_tasks) visíveis ao usuário autenticado, respeitando as políticas de acesso da Digital SC.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -138,7 +138,7 @@
       {
         "name": "get_client_summary",
         "title": "Resumo da empresa",
-        "description": "Retorna resumo de uma empresa (cliente) à qual o usuário autenticado possui acesso, respeitando as políticas do SC Central.",
+        "description": "Retorna resumo de uma empresa (cliente) à qual o usuário autenticado possui acesso, respeitando as políticas da Digital SC.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -164,7 +164,7 @@
       {
         "name": "get_process_details",
         "title": "Detalhes do processo",
-        "description": "Retorna os detalhes de um processo (company_processes) visível ao usuário autenticado, respeitando as políticas do SC Central. Cliente vê apenas informações liberadas no portal (visivel_cliente).",
+        "description": "Retorna os detalhes de um processo (company_processes) visível ao usuário autenticado, respeitando as políticas da Digital SC. Cliente vê apenas informações liberadas no portal (visivel_cliente).",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,

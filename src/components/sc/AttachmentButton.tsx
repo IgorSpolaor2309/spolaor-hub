@@ -22,7 +22,7 @@ type Props = {
  * Botão padronizado para abrir anexos do bucket privado `documents`.
  * - Gera URL assinada (60s) sob demanda;
  * - Abre em nova aba (target="_blank", rel="noopener noreferrer"),
- *   mantendo o usuário dentro do SC Central;
+ *   mantendo o usuário dentro da Digital SC;
  * - Respeita permissões do storage/RLS já existentes.
  */
 export function AttachmentButton({

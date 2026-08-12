@@ -105,7 +105,7 @@ function OmiePage() {
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning-foreground" />
         <div>
           <p className="font-medium text-foreground">A integração com OMIE ainda não está ativa.</p>
-          <p className="text-muted-foreground">Esta área prepara o SC Central para uma conexão futura. Nenhuma chamada externa é feita.</p>
+          <p className="text-muted-foreground">Esta área prepara a Digital SC para uma conexão futura. Nenhuma chamada externa é feita.</p>
         </div>
       </div>
 

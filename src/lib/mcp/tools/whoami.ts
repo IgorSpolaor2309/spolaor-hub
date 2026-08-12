@@ -5,7 +5,7 @@ export default defineTool({
   name: "whoami",
   title: "Identidade do usuário conectado",
   description:
-    "Retorna o perfil e o papel (admin, collaborator, client) do usuário do SC Central autenticado nesta sessão MCP.",
+    "Retorna o perfil e o papel (admin, collaborator, client) do usuário da Digital SC autenticado nesta sessão MCP.",
   inputSchema: {},
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: withMcpAudit("whoami", async (_input, ctx, supabase) => {

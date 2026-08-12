@@ -1,5 +1,5 @@
 /**
- * Filtros de data padronizados (presets) para listagens do SC Central.
+ * Filtros de data padronizados (presets) para listagens da Digital SC.
  * Trabalha com datas LOCAIS. Aceita valores no formato "YYYY-MM-DD"
  * (data pura) ou ISO completo (timestamps como created_at).
  */

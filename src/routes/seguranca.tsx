@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
-import { SpolaorLogo } from "@/components/sc/Logo";
+import { AppLogo } from "@/components/sc/Logo";
 import { ShieldCheck, Lock, Database, UserCheck, FileText, Mail } from "lucide-react";
 
 export const Route = createFileRoute("/seguranca")({
@@ -55,7 +55,7 @@ function TrustPage() {
       <header className="border-b">
         <div className="container mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
           <Link to="/" className="flex items-center gap-2">
-            <SpolaorLogo className="h-7 w-auto" />
+            <AppLogo className="h-7 w-auto" />
           </Link>
           <Link
             to="/auth"
