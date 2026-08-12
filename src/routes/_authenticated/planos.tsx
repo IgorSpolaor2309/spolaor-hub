@@ -16,6 +16,7 @@ import { EmptyState } from "@/components/sc/EmptyState";
 import { DeleteButton } from "@/components/sc/DeleteButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ServicesSection } from "@/components/planos/ServicesSection";
+import { CouponsSection } from "@/components/planos/CouponsSection";
 import { PlanServicesSection } from "@/components/planos/PlanServicesSection";
 import { ClientPlansVigencySection } from "@/components/planos/ClientPlansVigencySection";
 
@@ -96,6 +97,7 @@ function PlansPage() {
           <TabsTrigger value="planos">Planos</TabsTrigger>
           <TabsTrigger value="vinculos">Empresas e Vigência</TabsTrigger>
           <TabsTrigger value="servicos">Serviços extraordinários</TabsTrigger>
+          <TabsTrigger value="cupons">Cupons</TabsTrigger>
         </TabsList>
 
         <TabsContent value="planos" className="space-y-3">
@@ -173,6 +175,10 @@ function PlansPage() {
 
         <TabsContent value="servicos">
           <ServicesSection canEdit={isAdmin} />
+        </TabsContent>
+
+        <TabsContent value="cupons">
+          <CouponsSection canEdit={isAdmin} />
         </TabsContent>
       </Tabs>
     </div>

@@ -36,6 +36,7 @@ import { AlertTriangle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ClientCollaboratorsManager } from "@/components/sc/ClientCollaboratorsManager";
+import { CommercialHiringDialog } from "@/components/clientes/CommercialHiringDialog";
 
 export const Route = createFileRoute("/_authenticated/clientes/$id")({
   component: ClientDetail,
@@ -1000,10 +1001,14 @@ function CommercialCard({ clientId, canEdit }: { clientId: string; canEdit: bool
       )}
       {canEdit && open && (
         <Dialog open={open} onOpenChange={setOpen}>
-          <CommercialDialog
+          <CommercialHiringDialog
             clientId={clientId}
             current={data ?? null}
-            onDone={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["client-commercial", clientId] }); qc.invalidateQueries({ queryKey: ["clients"] }); qc.invalidateQueries({ queryKey: ["client-events", clientId] }); }}
+            onDone={() => { 
+              setOpen(false); 
+              qc.invalidateQueries({ queryKey: ["client-commercial", clientId] }); 
+              qc.invalidateQueries({ queryKey: ["clients"] }); 
+            }}
           />
         </Dialog>
       )}
