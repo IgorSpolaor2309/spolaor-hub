@@ -170,10 +170,12 @@ export type Database = {
           is_demo: boolean
           observacao: string | null
           origem: string
+          plan_id: string | null
           plan_item_id: string | null
           prazo: string | null
           received_at: string | null
           responsavel_profile_id: string | null
+          service_id: string | null
           status: string
           titulo: string
           updated_at: string
@@ -198,10 +200,12 @@ export type Database = {
           is_demo?: boolean
           observacao?: string | null
           origem?: string
+          plan_id?: string | null
           plan_item_id?: string | null
           prazo?: string | null
           received_at?: string | null
           responsavel_profile_id?: string | null
+          service_id?: string | null
           status?: string
           titulo: string
           updated_at?: string
@@ -226,10 +230,12 @@ export type Database = {
           is_demo?: boolean
           observacao?: string | null
           origem?: string
+          plan_id?: string | null
           plan_item_id?: string | null
           prazo?: string | null
           received_at?: string | null
           responsavel_profile_id?: string | null
+          service_id?: string | null
           status?: string
           titulo?: string
           updated_at?: string
@@ -286,6 +292,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "client_checklist_items_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "client_checklist_items_plan_item_id_fkey"
             columns: ["plan_item_id"]
             isOneToOne: false
@@ -297,6 +310,13 @@ export type Database = {
             columns: ["responsavel_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_checklist_items_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
             referencedColumns: ["id"]
           },
         ]
