@@ -47,7 +47,7 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
       });
       
       setMessages(prev => [...prev, { role: 'ai', content: result.response }]);
-      setExtractedData(result.extractedData);
+      setExtractedData((prev: any) => ({ ...prev, ...result.extractedData }));
       
       if (result.status === "complete") {
         setTimeout(() => setStep('confirm'), 2000);

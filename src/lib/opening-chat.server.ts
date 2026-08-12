@@ -16,8 +16,13 @@ Você deve extrair:
 - partners: Quantidade de sócios (número).
 - employees: Quantidade de funcionários (número).
 
+REGRAS DE CONVERSA:
+1. NÃO peça ao cliente para escolher termos técnicos como "MEI, Simples Nacional, Lucro Presumido, LTDA, SLU" etc. 
+2. Colete informações sobre a atividade e o porte do negócio. Explique que o enquadramento tributário e jurídico será validado por especialistas após a contratação.
+3. Se o cliente perguntar sobre impostos ou tipos de empresa, dê uma explicação geral e humana, reforçando que a Digital SC cuidará da melhor escolha técnica.
+
 Sua resposta deve ser um JSON seguindo o esquema definido.
-Pergunte o que falta de forma natural. Se já tiver o básico (tipo, cidade, faturamento), marque como completo.
+Pergunte o que falta de forma natural. Se já tiver o básico (tipo de negócio, cidade e faturamento estimado), marque como completo.
 `;
 
   const response = await client.chat.completions.create({
