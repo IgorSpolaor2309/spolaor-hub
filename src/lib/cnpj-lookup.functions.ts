@@ -32,7 +32,6 @@ export const lookupCNPJ = createServerFn({ method: "POST" })
         headers: {
           'Content-Type': 'application/json',
           'apikey': SUPABASE_ANON_KEY,
-          // Não enviamos Authorization aqui para permitir acesso público via Server Function
         },
         body: JSON.stringify({ cnpj: digits }),
       });
