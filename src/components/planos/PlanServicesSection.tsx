@@ -136,6 +136,20 @@ export function PlanServicesSection({ planId, canEdit, showOperationLink }: { pl
               <li key={service.id} className="flex flex-wrap items-center gap-2 p-2 text-sm">
                 <span className="font-medium">{service.nome}</span>
                 <Badge variant="outline">{service.categoria}</Badge>
+                {showOperationLink && rule && (rule.tipo_inclusao === 'incluido' || rule.tipo_inclusao === 'incluido_com_limite') && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                          <Check className="mr-1 h-3 w-3" /> Gera operação
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Este serviço gera automaticamente itens no checklist mensal quando incluído no plano.
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
                 {rule ? (
                   <Badge variant="secondary">{labelOf(TIPO_INCLUSAO, rule.tipo_inclusao)}</Badge>
                 ) : (
