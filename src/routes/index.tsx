@@ -227,28 +227,27 @@ function LandingPage() {
               <span className="font-display text-xl font-bold text-white">Digital SC</span>
             </div>
             <p className="max-w-sm text-sm">
-              Sua parceira na jornada digital. Contabilidade clara, ágil e focada no crescimento do seu negócio.
+              Contabilidade digital, clara e organizada para você acompanhar sua empresa de perto.
             </p>
           </div>
           <div>
-            <h4 className="text-white font-bold mb-6">Links</h4>
+            <h4 className="text-white font-bold mb-6 text-sm">Rodapé</h4>
             <ul className="space-y-3 text-sm">
               <li><a href="#" className="hover:text-white transition-colors">Sobre nós</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Planos</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Privacidade</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Segurança</a></li>
+              <li><a href="#planos" className="hover:text-white transition-colors">Nossos planos</a></li>
+              <li><a href="/privacidade" className="hover:text-white transition-colors">Privacidade</a></li>
+              <li><a href="/seguranca" className="hover:text-white transition-colors">Segurança</a></li>
             </ul>
           </div>
           <div>
-            <h4 className="text-white font-bold mb-6">Contato</h4>
+            <h4 className="text-white font-bold mb-6 text-sm">Contato</h4>
             <ul className="space-y-3 text-sm">
               <li>atendimento@digitalsc.com.br</li>
-              <li>0800 000 0000</li>
             </ul>
           </div>
         </div>
         <div className="container mx-auto px-4 mt-16 pt-8 border-t border-zinc-800 text-xs text-center">
-          © 2026 Digital SC. Todos os direitos reservados. CNPJ 00.000.000/0000-00
+          © 2026 Digital SC. Todos os direitos reservados.
         </div>
       </footer>
     </div>
