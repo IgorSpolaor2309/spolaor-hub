@@ -10,7 +10,6 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Plus, Ticket, Pencil, Trash2 } from "lucide-react";
-import { format } from "date-fns";
 
 export function CouponsSection({ canEdit }: { canEdit: boolean }) {
   const qc = useQueryClient();
@@ -21,20 +20,20 @@ export function CouponsSection({ canEdit }: { canEdit: boolean }) {
   const { data: coupons = [], isLoading } = useQuery({
     queryKey: ["coupons"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("coupons").select("*").order("created_at", { ascending: false });
+      const { data, error } = await (supabase as any).from("coupons").select("*").order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return (data || []) as any[];
     },
   });
 
   const filtered = useMemo(() => {
     const t = busca.toLowerCase();
-    return coupons.filter(c => c.code.toLowerCase().includes(t) || (c.name || "").toLowerCase().includes(t));
+    return coupons.filter((c: any) => c.code.toLowerCase().includes(t) || (c.name || "").toLowerCase().includes(t));
   }, [coupons, busca]);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("coupons").delete().eq("id", id);
+      const { error } = await (supabase as any).from("coupons").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -72,7 +71,7 @@ export function CouponsSection({ canEdit }: { canEdit: boolean }) {
           </div>
         ) : (
           <div className="divide-y">
-            {filtered.map(c => (
+            {filtered.map((c: any) => (
               <div key={c.id} className="p-4 flex items-center justify-between group hover:bg-muted/30 transition-colors">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -120,16 +119,20 @@ function CouponDialog({ initial, onDone }: { initial: any; onDone: () => void })
 
   const save = useMutation({
     mutationFn: async () => {
-      const payload = {
-        ...f,
+      const payload: any = {
+        code: f.code.trim(),
+        name: f.name.trim() || null,
+        discount_type: f.discount_type,
         discount_value: Number(f.discount_value),
-        max_discount: f.max_discount ? Number(f.max_discount) : null
+        max_discount: f.max_discount ? Number(f.max_discount) : null,
+        status: f.status,
+        apply_to: f.apply_to
       };
       if (initial) {
-        const { error } = await supabase.from("coupons").update(payload).eq("id", initial.id);
+        const { error } = await (supabase as any).from("coupons").update(payload).eq("id", initial.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("coupons").insert(payload);
+        const { error } = await (supabase as any).from("coupons").insert(payload);
         if (error) throw error;
       }
     },
