@@ -41,6 +41,7 @@ import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedChecklistRouteImport } from './routes/_authenticated/checklist'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
+import { Route as ApiPublicTestSwitchingRouteImport } from './routes/api/public/test-switching'
 import { Route as AuthenticatedProcessosIdRouteImport } from './routes/_authenticated/processos.$id'
 import { Route as AuthenticatedPortalProcessosIdRouteImport } from './routes/_authenticated/portal-processos.$id'
 import { Route as AuthenticatedIntegracoesOmieRouteImport } from './routes/_authenticated/integracoes.omie'
@@ -224,6 +225,11 @@ const Char91DotmcpChar93ListToolsRoute =
     path: '/.mcp/list-tools',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicTestSwitchingRoute = ApiPublicTestSwitchingRouteImport.update({
+  id: '/api/public/test-switching',
+  path: '/api/public/test-switching',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedProcessosIdRoute =
   AuthenticatedProcessosIdRouteImport.update({
     id: '/$id',
@@ -321,6 +327,7 @@ export interface FileRoutesByFullPath {
   '/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
   '/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
+  '/api/public/test-switching': typeof ApiPublicTestSwitchingRoute
   '/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/meu-mes/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
   '/api/public/hooks/cleanup-chat-orphans': typeof ApiPublicHooksCleanupChatOrphansRoute
@@ -364,6 +371,7 @@ export interface FileRoutesByTo {
   '/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
   '/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
+  '/api/public/test-switching': typeof ApiPublicTestSwitchingRoute
   '/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/meu-mes/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
   '/api/public/hooks/cleanup-chat-orphans': typeof ApiPublicHooksCleanupChatOrphansRoute
@@ -409,6 +417,7 @@ export interface FileRoutesById {
   '/_authenticated/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
   '/_authenticated/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/_authenticated/processos/$id': typeof AuthenticatedProcessosIdRoute
+  '/api/public/test-switching': typeof ApiPublicTestSwitchingRoute
   '/_authenticated/competencias_/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/_authenticated/meu-mes_/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
   '/api/public/hooks/cleanup-chat-orphans': typeof ApiPublicHooksCleanupChatOrphansRoute
@@ -454,6 +463,7 @@ export interface FileRouteTypes {
     | '/integracoes/omie'
     | '/portal-processos/$id'
     | '/processos/$id'
+    | '/api/public/test-switching'
     | '/competencias/$clientId/$competence'
     | '/meu-mes/$clientId/$competence'
     | '/api/public/hooks/cleanup-chat-orphans'
@@ -497,6 +507,7 @@ export interface FileRouteTypes {
     | '/integracoes/omie'
     | '/portal-processos/$id'
     | '/processos/$id'
+    | '/api/public/test-switching'
     | '/competencias/$clientId/$competence'
     | '/meu-mes/$clientId/$competence'
     | '/api/public/hooks/cleanup-chat-orphans'
@@ -541,6 +552,7 @@ export interface FileRouteTypes {
     | '/_authenticated/integracoes/omie'
     | '/_authenticated/portal-processos/$id'
     | '/_authenticated/processos/$id'
+    | '/api/public/test-switching'
     | '/_authenticated/competencias_/$clientId/$competence'
     | '/_authenticated/meu-mes_/$clientId/$competence'
     | '/api/public/hooks/cleanup-chat-orphans'
@@ -557,6 +569,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiPublicTestSwitchingRoute: typeof ApiPublicTestSwitchingRoute
   ApiPublicHooksCleanupChatOrphansRoute: typeof ApiPublicHooksCleanupChatOrphansRoute
   ApiPublicHooksCompetenceMonthlyGenerationRoute: typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
 }
@@ -787,6 +800,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/test-switching': {
+      id: '/api/public/test-switching'
+      path: '/api/public/test-switching'
+      fullPath: '/api/public/test-switching'
+      preLoaderRoute: typeof ApiPublicTestSwitchingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/processos/$id': {
       id: '/_authenticated/processos/$id'
       path: '/$id'
@@ -980,6 +1000,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiPublicTestSwitchingRoute: ApiPublicTestSwitchingRoute,
   ApiPublicHooksCleanupChatOrphansRoute: ApiPublicHooksCleanupChatOrphansRoute,
   ApiPublicHooksCompetenceMonthlyGenerationRoute:
     ApiPublicHooksCompetenceMonthlyGenerationRoute,
