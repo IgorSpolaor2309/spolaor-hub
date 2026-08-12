@@ -17,33 +17,30 @@ export const lookupCNPJ = createServerFn({ method: "POST" })
       throw new Error("O CNPJ informado é inválido (dígitos verificadores incorretos).");
     }
 
-    // No TanStack Start, o handlers roda no servidor (Worker/Node).
-    // Se o usuário estiver logado, o cliente `supabase` usará a sessão dele se o middleware estiver configurado.
-    // No entanto, para a Edge Function 'consultar-cnpj', queremos garantir que a chamada aconteça
-    // mesmo sem sessão de usuário no frontend, pois o serverFn é nosso proxy seguro.
+    // A Server Function roda no servidor (Worker). 
+    // Como a Edge Function 'consultar-cnpj' foi ajustada para aceitar chamadas anon,
+    // o cliente padrão do supabase aqui já funcionará, pois ele usará a ANON_KEY
+    // configurada no ambiente para invocar a função.
     
-    let result, error;
-
     try {
-      // Tentamos invocar com o cliente padrão (que pode ou não ter sessão)
-      const resp = await supabase.functions.invoke("consultar-cnpj", {
+      const { data: result, error } = await supabase.functions.invoke("consultar-cnpj", {
         body: { cnpj: digits },
       });
-      result = resp.data;
-      error = resp.error;
-    } catch (err) {
-      console.error("CNPJ Lookup Invoke Error:", err);
-      throw new Error("Falha na comunicação com o serviço de consulta.");
-    }
 
-    if (error) {
-      console.error("CNPJ Lookup Error Response:", error);
-      throw new Error("Erro ao consultar CNPJ na base da Receita.");
-    }
+      if (error) {
+        // Se der erro de autorização ou outro erro técnico do Supabase
+        console.error("CNPJ Lookup Invoke Error:", error);
+        throw new Error("Erro técnico ao tentar consultar o CNPJ.");
+      }
 
-    if (!result || result.error) {
-      throw new Error(result?.error || "CNPJ não encontrado.");
-    }
+      if (!result || result.error) {
+        // Erro retornado pela API Minha Receita ou regra de negócio da função
+        throw new Error(result?.error || "CNPJ não encontrado.");
+      }
 
-    return result;
+      return result;
+    } catch (err: any) {
+      console.error("CNPJ Lookup Handler Error:", err);
+      throw new Error(err.message || "Falha na comunicação com o serviço de consulta.");
+    }
   });
