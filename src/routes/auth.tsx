@@ -75,8 +75,8 @@ function AuthPage() {
       {/* Painel institucional */}
       <div className="hidden bg-primary p-12 text-primary-foreground lg:flex lg:flex-col lg:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white">
-            <AppLogo className="h-10 w-10 object-contain" />
+          <div className="flex h-14 w-auto min-w-[3.5rem] items-center justify-center rounded-lg bg-white p-2">
+            <AppLogo className="h-10 w-auto" />
           </div>
           <div>
             <div className="font-display text-xl leading-none">Digital SC</div>
@@ -98,7 +98,7 @@ function AuthPage() {
       <div className="flex items-center justify-center bg-background p-6">
         <div className="w-full max-w-md">
           <div className="mb-8 flex flex-col items-center text-center lg:hidden">
-            <AppLogo className="h-20 w-20 object-contain" />
+            <AppLogo className="h-16 w-auto" />
             <h1 className="mt-4 font-display text-2xl">Digital SC</h1>
             <p className="text-sm text-muted-foreground">Central Operacional da Digital SC</p>
           </div>
