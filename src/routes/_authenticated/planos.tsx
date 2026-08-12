@@ -176,6 +176,10 @@ function PlansPage() {
         <TabsContent value="servicos">
           <ServicesSection canEdit={isAdmin} />
         </TabsContent>
+
+        <TabsContent value="cupons">
+          <CouponsSection canEdit={isAdmin} />
+        </TabsContent>
       </Tabs>
     </div>
   );
