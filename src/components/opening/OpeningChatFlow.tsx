@@ -31,15 +31,16 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
   }, [messages, loading]);
 
   const sendMessage = async () => {
-    if (!input.trim() || loading) return;
+    const trimmedInput = input.trim();
+    if (!trimmedInput || loading) return;
     
-    const userMsg = input;
+    const userMsg = trimmedInput;
     setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
     setInput("");
     setLoading(true);
 
     try {
-      const result = await processMessage({ 
+      const result = await processMessage({
         data: { 
           context: userMsg,
           history: messages
@@ -47,7 +48,7 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
       });
       
       setMessages(prev => [...prev, { role: 'ai', content: result.response }]);
-      setExtractedData(result.extractedData);
+      setExtractedData((prev: any) => ({ ...prev, ...result.extractedData }));
       
       if (result.status === "complete") {
         setTimeout(() => setStep('confirm'), 2000);
