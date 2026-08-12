@@ -13,7 +13,7 @@ import { Route as SegurancaRouteImport } from './routes/seguranca'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedValidadesRouteImport } from './routes/_authenticated/validades'
 import { Route as AuthenticatedSolicitacoesRouteImport } from './routes/_authenticated/solicitacoes'
 import { Route as AuthenticatedProcessosModelosRouteImport } from './routes/_authenticated/processos-modelos'
@@ -70,10 +70,10 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AuthenticatedRouteRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedValidadesRoute = AuthenticatedValidadesRouteImport.update({
   id: '/validades',
@@ -278,7 +278,7 @@ const AuthenticatedCompetenciasClientIdCompetenceRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthenticatedIndexRoute
+  '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/mcp': typeof McpRoute
   '/seguranca': typeof SegurancaRoute
@@ -320,6 +320,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/competence-monthly-generation': typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/mcp': typeof McpRoute
   '/seguranca': typeof SegurancaRoute
@@ -349,7 +350,6 @@ export interface FileRoutesByTo {
   '/processos-modelos': typeof AuthenticatedProcessosModelosRoute
   '/solicitacoes': typeof AuthenticatedSolicitacoesRoute
   '/validades': typeof AuthenticatedValidadesRoute
-  '/': typeof AuthenticatedIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
@@ -363,6 +363,7 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/mcp': typeof McpRoute
@@ -393,7 +394,6 @@ export interface FileRoutesById {
   '/_authenticated/processos-modelos': typeof AuthenticatedProcessosModelosRoute
   '/_authenticated/solicitacoes': typeof AuthenticatedSolicitacoesRoute
   '/_authenticated/validades': typeof AuthenticatedValidadesRoute
-  '/_authenticated/': typeof AuthenticatedIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/clientes/$id': typeof AuthenticatedClientesIdRoute
@@ -450,6 +450,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/competence-monthly-generation'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/auth'
     | '/mcp'
     | '/seguranca'
@@ -479,7 +480,6 @@ export interface FileRouteTypes {
     | '/processos-modelos'
     | '/solicitacoes'
     | '/validades'
-    | '/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/clientes/$id'
@@ -492,6 +492,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/competence-monthly-generation'
   id:
     | '__root__'
+    | '/'
     | '/_authenticated'
     | '/auth'
     | '/mcp'
@@ -522,7 +523,6 @@ export interface FileRouteTypes {
     | '/_authenticated/processos-modelos'
     | '/_authenticated/solicitacoes'
     | '/_authenticated/validades'
-    | '/_authenticated/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/clientes/$id'
@@ -536,6 +536,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   McpRoute: typeof McpRoute
@@ -578,12 +579,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/': {
-      id: '/_authenticated/'
+    '/': {
+      id: '/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/validades': {
       id: '/_authenticated/validades'
@@ -906,7 +907,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProcessosModelosRoute: typeof AuthenticatedProcessosModelosRoute
   AuthenticatedSolicitacoesRoute: typeof AuthenticatedSolicitacoesRoute
   AuthenticatedValidadesRoute: typeof AuthenticatedValidadesRoute
-  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedIntegracoesOmieRoute: typeof AuthenticatedIntegracoesOmieRoute
   AuthenticatedCompetenciasClientIdCompetenceRoute: typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   AuthenticatedMeuMesClientIdCompetenceRoute: typeof AuthenticatedMeuMesClientIdCompetenceRoute
@@ -938,7 +938,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProcessosModelosRoute: AuthenticatedProcessosModelosRoute,
   AuthenticatedSolicitacoesRoute: AuthenticatedSolicitacoesRoute,
   AuthenticatedValidadesRoute: AuthenticatedValidadesRoute,
-  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedIntegracoesOmieRoute: AuthenticatedIntegracoesOmieRoute,
   AuthenticatedCompetenciasClientIdCompetenceRoute:
     AuthenticatedCompetenciasClientIdCompetenceRoute,
@@ -950,6 +949,7 @@ const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   McpRoute: McpRoute,
