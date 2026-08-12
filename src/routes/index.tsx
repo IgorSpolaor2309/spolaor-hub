@@ -36,14 +36,15 @@ function LandingPage() {
           </div>
           <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
             <a href="#funciona" className="text-muted-foreground hover:text-primary transition-colors">Como funciona</a>
-            <a href="#planos" className="text-muted-foreground hover:text-primary transition-colors">Planos</a>
-            <a href="#servicos" className="text-muted-foreground hover:text-primary transition-colors">Serviços</a>
-            <a href="#duvidas" className="text-muted-foreground hover:text-primary transition-colors">Dúvidas</a>
+            <a href="#planos" className="text-muted-foreground hover:text-primary transition-colors">Nossos planos</a>
+            <a href="#servicos" className="text-muted-foreground hover:text-primary transition-colors">Serviços e especialidades</a>
+            <a href="#duvidas" className="text-muted-foreground hover:text-primary transition-colors">Perguntas frequentes</a>
           </nav>
           <div className="flex items-center gap-2 sm:gap-3">
-            <a href="/auth" className="hidden text-sm font-medium text-muted-foreground hover:text-primary md:block">Já sou cliente</a>
-            <Button size="sm" className="hidden sm:inline-flex">Abrir minha empresa</Button>
-            <Button size="sm" variant="outline">Entrar</Button>
+            <a href="/auth" className="text-sm font-medium text-muted-foreground hover:text-primary">Já sou cliente</a>
+            <Button size="sm" className="hidden sm:inline-flex" asChild>
+              <a href="/auth">Abrir minha empresa</a>
+            </Button>
           </div>
         </div>
       </header>
@@ -106,15 +107,15 @@ function LandingPage() {
             <div className="grid gap-6 md:grid-cols-3">
               <Card className="p-6 cursor-pointer hover:border-primary transition-all group">
                 <h3 className="font-bold mb-2 group-hover:text-primary transition-colors">Quero abrir uma empresa</h3>
-                <p className="text-xs text-muted-foreground">Apoio total no registro e primeiros passos.</p>
+                <p className="text-xs text-muted-foreground">Acompanhamento na abertura e nos primeiros passos da sua empresa.</p>
               </Card>
               <Card className="p-6 cursor-pointer hover:border-primary transition-all group">
                 <h3 className="font-bold mb-2 group-hover:text-primary transition-colors">Trocar de contador</h3>
-                <p className="text-xs text-muted-foreground">Migração rápida e segura para a Digital SC.</p>
+                <p className="text-xs text-muted-foreground">Transição organizada e acompanhada para a Digital SC.</p>
               </Card>
               <Card className="p-6 cursor-pointer hover:border-primary transition-all group" onClick={() => document.getElementById('planos')?.scrollIntoView({ behavior: 'smooth' })}>
                 <h3 className="font-bold mb-2 group-hover:text-primary transition-colors">Conhecer os planos</h3>
-                <p className="text-xs text-muted-foreground">Veja qual plano se adapta ao seu faturamento.</p>
+                <p className="text-xs text-muted-foreground">Veja qual plano combina com o perfil e as necessidades da sua empresa.</p>
               </Card>
             </div>
           </div>
@@ -124,8 +125,8 @@ function LandingPage() {
         <section className="py-20 bg-secondary/5" id="planos">
           <div className="container mx-auto px-4">
             <div className="text-center mb-16">
-              <h2 className="font-display text-3xl font-bold mb-4">Nossos Planos</h2>
-              <p className="text-muted-foreground">Estruturas completas para cada fase do seu negócio.</p>
+              <h2 className="font-display text-3xl font-bold mb-4">Nossos planos</h2>
+              <p className="text-muted-foreground">Planos pensados para diferentes perfis e necessidades de negócio.</p>
             </div>
 
             {plansQ.isLoading ? (
@@ -185,8 +186,8 @@ function LandingPage() {
         <section className="py-20 bg-background" id="servicos">
           <div className="container mx-auto px-4 max-w-5xl">
             <div className="text-center mb-16">
-              <h2 className="font-display text-3xl font-bold mb-4">Serviços e Especialidades</h2>
-              <p className="text-muted-foreground">Atendimento especializado em diversas áreas para garantir sua conformidade.</p>
+              <h2 className="font-display text-3xl font-bold mb-4">Serviços e especialidades</h2>
+              <p className="text-muted-foreground">Atendimento especializado em diversas áreas para apoiar a rotina contábil e manter sua empresa em conformidade.</p>
             </div>
             
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -208,11 +209,11 @@ function LandingPage() {
         {/* CTA Final */}
         <section className="py-20 bg-primary text-primary-foreground">
           <div className="container mx-auto px-4 text-center">
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-6">Pronto para digitalizar sua contabilidade?</h2>
-            <p className="text-primary-foreground/80 mb-10 max-w-xl mx-auto">Junte-se a centenas de empresas que já transformaram sua gestão com a Digital SC.</p>
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-6">Pronto para cuidar da sua empresa de um jeito mais simples?</h2>
+            <p className="text-primary-foreground/80 mb-10 max-w-xl mx-auto">Dê o próximo passo para uma contabilidade mais simples, digital e transparente.</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-               <Button size="lg" variant="secondary" className="w-full sm:w-auto font-bold">Começar agora</Button>
-               <Button size="lg" variant="outline" className="w-full sm:w-auto border-primary-foreground/20 hover:bg-primary-foreground/10 text-primary-foreground font-bold">Falar com especialista</Button>
+               <Button size="lg" variant="secondary" className="w-full sm:w-auto font-bold text-primary hover:bg-white focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-primary">Abrir minha empresa</Button>
+               <Button size="lg" variant="outline" className="w-full sm:w-auto border-white/20 hover:bg-white/10 text-white font-bold focus:ring-2 focus:ring-white">Trocar de contador</Button>
             </div>
           </div>
         </section>
@@ -226,28 +227,27 @@ function LandingPage() {
               <span className="font-display text-xl font-bold text-white">Digital SC</span>
             </div>
             <p className="max-w-sm text-sm">
-              Sua parceira na jornada digital. Contabilidade clara, ágil e focada no crescimento do seu negócio.
+              Contabilidade digital, clara e organizada para você acompanhar sua empresa de perto.
             </p>
           </div>
           <div>
-            <h4 className="text-white font-bold mb-6">Links</h4>
+            <h4 className="text-white font-bold mb-6 text-sm">Rodapé</h4>
             <ul className="space-y-3 text-sm">
               <li><a href="#" className="hover:text-white transition-colors">Sobre nós</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Planos</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Privacidade</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Segurança</a></li>
+              <li><a href="#planos" className="hover:text-white transition-colors">Nossos planos</a></li>
+              <li><a href="/privacidade" className="hover:text-white transition-colors">Privacidade</a></li>
+              <li><a href="/seguranca" className="hover:text-white transition-colors">Segurança</a></li>
             </ul>
           </div>
           <div>
-            <h4 className="text-white font-bold mb-6">Contato</h4>
+            <h4 className="text-white font-bold mb-6 text-sm">Contato</h4>
             <ul className="space-y-3 text-sm">
               <li>atendimento@digitalsc.com.br</li>
-              <li>0800 000 0000</li>
             </ul>
           </div>
         </div>
         <div className="container mx-auto px-4 mt-16 pt-8 border-t border-zinc-800 text-xs text-center">
-          © 2026 Digital SC. Todos os direitos reservados. CNPJ 00.000.000/0000-00
+          © 2026 Digital SC. Todos os direitos reservados.
         </div>
       </footer>
     </div>
