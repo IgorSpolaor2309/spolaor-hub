@@ -36,14 +36,15 @@ function LandingPage() {
           </div>
           <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
             <a href="#funciona" className="text-muted-foreground hover:text-primary transition-colors">Como funciona</a>
-            <a href="#planos" className="text-muted-foreground hover:text-primary transition-colors">Planos</a>
-            <a href="#servicos" className="text-muted-foreground hover:text-primary transition-colors">Serviços</a>
-            <a href="#duvidas" className="text-muted-foreground hover:text-primary transition-colors">Dúvidas</a>
+            <a href="#planos" className="text-muted-foreground hover:text-primary transition-colors">Nossos planos</a>
+            <a href="#servicos" className="text-muted-foreground hover:text-primary transition-colors">Serviços e especialidades</a>
+            <a href="#duvidas" className="text-muted-foreground hover:text-primary transition-colors">Perguntas frequentes</a>
           </nav>
           <div className="flex items-center gap-2 sm:gap-3">
-            <a href="/auth" className="hidden text-sm font-medium text-muted-foreground hover:text-primary md:block">Já sou cliente</a>
-            <Button size="sm" className="hidden sm:inline-flex">Abrir minha empresa</Button>
-            <Button size="sm" variant="outline">Entrar</Button>
+            <a href="/auth" className="text-sm font-medium text-muted-foreground hover:text-primary">Já sou cliente</a>
+            <Button size="sm" className="hidden sm:inline-flex" asChild>
+              <a href="/auth">Abrir minha empresa</a>
+            </Button>
           </div>
         </div>
       </header>
