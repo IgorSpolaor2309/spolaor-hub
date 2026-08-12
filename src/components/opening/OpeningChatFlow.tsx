@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Loader2, Send, ArrowRight, Check, FileText, User, MapPin, Briefcase, TrendingUp, ShoppingCart } from "lucide-react";
 import { CheckoutView } from "@/components/commercial/CheckoutView";
+import { SuccessScreen } from "@/components/commercial/SuccessScreen";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { processOpeningMessage } from "@/lib/opening-chat.functions";
@@ -11,7 +12,8 @@ import { useQuery } from "@tanstack/react-query";
 import { getPublicPlans } from "@/lib/public-catalog.functions";
 
 export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
-  const [step, setStep] = useState<'chat' | 'confirm' | 'diagnostic' | 'checkout'>('chat');
+  const [step, setStep] = useState<'chat' | 'confirm' | 'diagnostic' | 'checkout' | 'success'>('chat');
+  const [prospectId, setProspectId] = useState<string>("");
   const [messages, setMessages] = useState<{role: 'user' | 'ai', content: string}[]>([
     { role: 'ai', content: "Olá! Sou o assistente da Digital SC. Me conte um pouco sobre o negócio que você pretende abrir. Por exemplo: 'Quero abrir uma hamburgueria em Santos com meu irmão'." }
   ]);
@@ -235,12 +237,23 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
           extractedData={extractedData}
           contactData={getContactData()}
           onBack={() => setStep('diagnostic')}
-          onConfirm={() => {
-            toast.success("Contratação realizada com sucesso! Nossa equipe entrará em contato.");
-            onBack();
+          onConfirm={(id) => {
+            setProspectId(id);
+            setStep('success');
           }}
         />
       </div>
+    );
+  }
+
+  if (step === 'success') {
+    const plan = getRecommendedPlan();
+    return (
+      <SuccessScreen 
+        prospectId={prospectId}
+        planName={plan?.nome || "Plano Selecionado"}
+        onDone={onBack}
+      />
     );
   }
 

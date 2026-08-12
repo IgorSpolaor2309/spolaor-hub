@@ -2,8 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Loader2, Send, Check, Briefcase, TrendingUp, Building2, AlertCircle, ShoppingCart } from "lucide-react";
+import { Loader2, Send, Check, Briefcase, TrendingUp, Building2, AlertCircle } from "lucide-react";
 import { CheckoutView } from "@/components/commercial/CheckoutView";
+import { SuccessScreen } from "@/components/commercial/SuccessScreen";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { processSwitchingMessage } from "@/lib/switching-chat.functions";
@@ -13,7 +14,8 @@ import { getPublicPlans } from "@/lib/public-catalog.functions";
 import { onlyDigits, isValidCnpjLength, validateCnpj } from "@/lib/cnpj";
 
 export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
-  const [step, setStep] = useState<'chat' | 'confirm' | 'diagnostic' | 'checkout'>('chat');
+  const [step, setStep] = useState<'chat' | 'confirm' | 'diagnostic' | 'checkout' | 'success'>('chat');
+  const [prospectId, setProspectId] = useState<string>("");
   const [messages, setMessages] = useState<{role: 'user' | 'ai', content: string}[]>([
     { role: 'ai', content: "Olá! Sou o assistente da Digital SC. Para começarmos a planejar sua migração, por favor, me informe o CNPJ da sua empresa." }
   ]);
@@ -276,12 +278,23 @@ export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
           extractedData={extractedData}
           contactData={getContactData()}
           onBack={() => setStep('diagnostic')}
-          onConfirm={() => {
-            toast.success("Migração confirmada! Nossa equipe entrará em contato para iniciar o processo.");
-            onBack();
+          onConfirm={(id) => {
+            setProspectId(id);
+            setStep('success');
           }}
         />
       </div>
+    );
+  }
+
+  if (step === 'success') {
+    const plan = getRecommendedPlan();
+    return (
+      <SuccessScreen 
+        prospectId={prospectId}
+        planName={plan?.nome || "Plano Selecionado"}
+        onDone={onBack}
+      />
     );
   }
 
