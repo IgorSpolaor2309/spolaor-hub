@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabase } from "@/integrations/supabase/client";
 import { validateCnpj, onlyDigits } from "./cnpj";
 
 export const lookupCNPJ = createServerFn({ method: "POST" })
@@ -8,7 +7,6 @@ export const lookupCNPJ = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const digits = onlyDigits(data.cnpj);
     
-    // Validação rigorosa antes de chamar a API
     if (digits.length !== 14) {
       throw new Error("CNPJ deve ter exatos 14 dígitos.");
     }
@@ -17,40 +15,44 @@ export const lookupCNPJ = createServerFn({ method: "POST" })
       throw new Error("O CNPJ informado é inválido (dígitos verificadores incorretos).");
     }
 
-    // A Server Function roda no servidor (Worker). 
-    // Como a Edge Function 'consultar-cnpj' foi ajustada para aceitar chamadas anon,
-    // o cliente padrão do supabase aqui já funcionará, pois ele usará a ANON_KEY
-    // configurada no ambiente para invocar a função.
-    
+    const SUPABASE_URL = process.env['SUPABASE_URL'];
+    const SUPABASE_ANON_KEY = process.env['SUPABASE_ANON_KEY'] || process.env['SUPABASE_PUBLISHABLE_KEY'];
+
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      console.error("[CNPJ DEBUG] Missing env vars:", { SUPABASE_URL: !!SUPABASE_URL, SUPABASE_ANON_KEY: !!SUPABASE_ANON_KEY });
+      throw new Error("Configuração de servidor incompleta.");
+    }
+
     try {
-      console.log(`[CNPJ DEBUG] Iniciando consulta para: ${digits}`);
-      const { data: result, error } = await supabase.functions.invoke("consultar-cnpj", {
-        body: { cnpj: digits },
+      const url = `${SUPABASE_URL}/functions/v1/consultar-cnpj`;
+      console.log(`[CNPJ DEBUG] Fetching Edge Function: ${url}`);
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          // Não enviamos Authorization aqui para permitir acesso público via Server Function
+        },
+        body: JSON.stringify({ cnpj: digits }),
       });
 
-      if (error) {
-        console.error("[CNPJ DEBUG] Invoke Error:", error);
-        // Tenta extrair a mensagem de erro da resposta se disponível
-        let errorMessage = "Erro técnico ao tentar consultar o CNPJ.";
-        if (error instanceof Error) errorMessage = error.message;
-        
-        throw new Error(errorMessage);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[CNPJ DEBUG] Edge Function HTTP Error ${response.status}:`, errorText);
+        throw new Error(`Serviço indisponível (${response.status})`);
       }
 
-      if (!result) {
-        console.error("[CNPJ DEBUG] Resposta vazia da Edge Function");
-        throw new Error("Não recebemos dados do serviço de consulta.");
-      }
+      const result = await response.json();
 
       if (result.error) {
-        console.warn("[CNPJ DEBUG] Erro reportado pela função:", result.error);
+        console.warn("[CNPJ DEBUG] API Error:", result.error);
         throw new Error(result.error);
       }
 
-      console.log("[CNPJ DEBUG] Consulta bem-sucedida:", result.razao_social);
       return result;
     } catch (err: any) {
-      console.error("[CNPJ DEBUG] Exception capturada:", err);
+      console.error("[CNPJ DEBUG] Exception:", err);
       throw new Error(err.message || "Falha na comunicação com o serviço de consulta.");
     }
   });
