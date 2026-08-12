@@ -30,8 +30,8 @@ function LandingPage() {
       {/* Header Fixo */}
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <AppLogo className="h-8 w-8" />
+          <div className="flex items-center gap-3">
+            <AppLogo className="h-10 w-auto" />
             <span className="font-display text-xl font-bold tracking-tight text-primary">Digital SC</span>
           </div>
           <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
@@ -222,8 +222,8 @@ function LandingPage() {
       <footer className="bg-zinc-950 text-zinc-400 py-16" id="duvidas">
         <div className="container mx-auto px-4 grid gap-12 md:grid-cols-4">
           <div className="col-span-2">
-            <div className="flex items-center gap-2 mb-6">
-              <AppLogo className="h-8 w-8 brightness-0 invert" />
+            <div className="flex items-center gap-3 mb-6">
+              <AppLogo className="h-10 w-auto brightness-0 invert" />
               <span className="font-display text-xl font-bold text-white">Digital SC</span>
             </div>
             <p className="max-w-sm text-sm">

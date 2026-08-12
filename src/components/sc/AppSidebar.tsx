@@ -96,8 +96,8 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-3 px-2 py-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-white">
-            <AppLogo className="h-8 w-8 object-contain" />
+          <div className="flex h-10 w-auto min-w-[2.5rem] shrink-0 items-center justify-center rounded-md bg-white p-1">
+            <AppLogo className="h-8 w-auto" />
           </div>
           {!collapsed && (
             <div className="min-w-0">
