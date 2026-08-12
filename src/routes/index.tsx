@@ -107,15 +107,15 @@ function LandingPage() {
             <div className="grid gap-6 md:grid-cols-3">
               <Card className="p-6 cursor-pointer hover:border-primary transition-all group">
                 <h3 className="font-bold mb-2 group-hover:text-primary transition-colors">Quero abrir uma empresa</h3>
-                <p className="text-xs text-muted-foreground">Apoio total no registro e primeiros passos.</p>
+                <p className="text-xs text-muted-foreground">Acompanhamento na abertura e nos primeiros passos da sua empresa.</p>
               </Card>
               <Card className="p-6 cursor-pointer hover:border-primary transition-all group">
                 <h3 className="font-bold mb-2 group-hover:text-primary transition-colors">Trocar de contador</h3>
-                <p className="text-xs text-muted-foreground">Migração rápida e segura para a Digital SC.</p>
+                <p className="text-xs text-muted-foreground">Transição organizada e acompanhada para a Digital SC.</p>
               </Card>
               <Card className="p-6 cursor-pointer hover:border-primary transition-all group" onClick={() => document.getElementById('planos')?.scrollIntoView({ behavior: 'smooth' })}>
                 <h3 className="font-bold mb-2 group-hover:text-primary transition-colors">Conhecer os planos</h3>
-                <p className="text-xs text-muted-foreground">Veja qual plano se adapta ao seu faturamento.</p>
+                <p className="text-xs text-muted-foreground">Veja qual plano combina com o perfil e as necessidades da sua empresa.</p>
               </Card>
             </div>
           </div>
