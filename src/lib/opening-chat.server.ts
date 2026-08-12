@@ -21,7 +21,7 @@ Pergunte o que falta de forma natural. Se já tiver o básico (tipo, cidade, fat
 `;
 
   const response = await client.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5-mini",
     messages: [
       { role: "system", content: systemPrompt },
       ...history.map(h => ({ role: h.role === 'ai' ? 'assistant' as const : 'user' as const, content: h.content })),
