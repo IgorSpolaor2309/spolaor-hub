@@ -49,7 +49,7 @@
 :root {
   --radius: 0.625rem;
 
-  /* Spolaor Company brand */
+  /* Digital SC brand */
   --brand-blue: oklch(0.396 0.122 250);        /* #044C85 */
   --brand-turquoise: oklch(0.622 0.144 230);   /* #0594C3 */
   --brand-orange: oklch(0.760 0.155 65);       /* #FCA229 */
