@@ -24,12 +24,15 @@ function LandingPage() {
   const plansQ = useQuery({
     queryKey: ["public-plans"],
     queryFn: () => getPublicPlans(),
+    staleTime: 1000 * 60 * 60, // Avoid hydration mismatch on first load by marking data as fresh for an hour
   });
 
   const servicesQ = useQuery({
     queryKey: ["public-services"],
     queryFn: () => getPublicServices(),
+    staleTime: 1000 * 60 * 60,
   });
+
 
   if (showOpeningFlow || showSwitchingFlow) {
     return (
