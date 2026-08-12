@@ -70,7 +70,10 @@ export const lookupCNPJ = createServerFn({ method: "POST" })
       return result;
     } catch (err: any) {
       console.error("[CNPJ DEBUG] Handler Exception:", err);
-      // Aqui garantimos que a mensagem final seja capturada pelo componente
+      // Se a mensagem for a padrão do SDK que vimos no screenshot, traduzimos
+      if (err.message?.includes("non-2xx status code")) {
+        throw new Error("O servidor de consulta retornou um erro inesperado.");
+      }
       throw err;
     }
   });
