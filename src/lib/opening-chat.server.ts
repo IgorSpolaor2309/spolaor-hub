@@ -10,11 +10,14 @@ ${catalogContext}
 
 CONTEXTO ESPECÍFICO: Abertura de Empresa.
 Você deve extrair:
+- name: Nome completo do interessado.
 - business_type: Tipo de negócio (ex: Hamburgueria, Consultoria, E-commerce).
 - city: Cidade onde a empresa será aberta.
 - revenue: Faturamento mensal estimado (apenas números).
 - partners: Quantidade de sócios (número).
 - employees: Quantidade de funcionários (número).
+- phone: Telefone de contato (preferencialmente WhatsApp).
+- email: E-mail de contato.
 
 REGRAS DE CONVERSA:
 1. NÃO peça ao cliente para escolher termos técnicos como "MEI, Simples Nacional, Lucro Presumido, LTDA, SLU" etc. 
@@ -22,7 +25,7 @@ REGRAS DE CONVERSA:
 3. Se o cliente perguntar sobre impostos ou tipos de empresa, dê uma explicação geral e humana, reforçando que a Digital SC cuidará da melhor escolha técnica.
 
 Sua resposta deve ser um JSON seguindo o esquema definido.
-Pergunte o que falta de forma natural. Se já tiver o básico (tipo de negócio, cidade e faturamento estimado), marque como completo.
+Pergunte o que falta de forma natural. Se já tiver o básico (nome, e-mail, telefone, tipo de negócio, cidade e faturamento estimado), marque como completo.
 `;
 
   const response = await client.chat.completions.create({
@@ -44,13 +47,16 @@ Pergunte o que falta de forma natural. Se já tiver o básico (tipo de negócio,
             extractedData: {
               type: "object",
               properties: {
+                name: { type: ["string", "null"] },
                 business_type: { type: ["string", "null"] },
                 city: { type: ["string", "null"] },
                 revenue: { type: ["number", "null"] },
                 partners: { type: ["number", "null"] },
-                employees: { type: ["number", "null"] }
+                employees: { type: ["number", "null"] },
+                phone: { type: ["string", "null"] },
+                email: { type: ["string", "null"] }
               },
-              required: ["business_type", "city", "revenue", "partners", "employees"],
+              required: ["name", "business_type", "city", "revenue", "partners", "employees", "phone", "email"],
               additionalProperties: false
             },
             isComplete: { type: "boolean", description: "Verdadeiro se você já tiver informações suficientes (tipo, cidade, faturamento) para recomendar um plano." }

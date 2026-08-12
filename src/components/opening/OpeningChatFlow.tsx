@@ -50,7 +50,12 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
       });
       
       setMessages(prev => [...prev, { role: 'ai', content: result.response }]);
-      setExtractedData((prev: any) => ({ ...prev, ...result.extractedData }));
+      setExtractedData((prev: any) => {
+        const newData = { ...prev, ...result.extractedData };
+        if (result.extractedData.email) setContact(c => ({ ...c, email: result.extractedData.email }));
+        if (result.extractedData.phone) setContact(c => ({ ...c, phone: result.extractedData.phone }));
+        return newData;
+      });
       
       if (result.status === "complete") {
         setTimeout(() => setStep('confirm'), 2000);
@@ -220,11 +225,7 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
           flowType="opening"
           initialPlanId={plan?.id}
           extractedData={extractedData}
-          contactData={{
-            name: contact.email.split('@')[0], // Fallback if name not extracted
-            email: contact.email,
-            phone: contact.phone
-          }}
+          contactData={getContactData()}
           onBack={() => setStep('diagnostic')}
           onConfirm={() => {
             toast.success("Contratação realizada com sucesso! Nossa equipe entrará em contato.");
@@ -234,6 +235,14 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
       </div>
     );
   }
+
+  const getContactData = () => {
+    return {
+      name: extractedData?.name || contact.email.split('@')[0] || "Interessado",
+      email: contact.email || extractedData?.email || "",
+      phone: contact.phone || extractedData?.phone || ""
+    };
+  };
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4 flex flex-col h-[700px]">
