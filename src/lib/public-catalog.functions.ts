@@ -21,7 +21,6 @@ export const getPublicPlans = createServerFn({ method: "GET" })
         )
       `)
       .eq("status", "ativo")
-      .order("ordem", { ascending: true })
       .order("nome");
 
     if (plansError) throw plansError;
@@ -35,7 +34,6 @@ export const getPublicServices = createServerFn({ method: "GET" })
       .select("*")
       .eq("status", "ativo")
       .order("categoria")
-      .order("ordem")
       .order("nome");
 
     if (servicesError) throw servicesError;
