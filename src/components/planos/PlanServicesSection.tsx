@@ -12,8 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil, Plus, Check } from "lucide-react";
 import { brl, labelOf } from "@/lib/services-catalog";
 import {
   PERIODICIDADE_LIMITE,
