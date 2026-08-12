@@ -23,24 +23,34 @@ export const lookupCNPJ = createServerFn({ method: "POST" })
     // configurada no ambiente para invocar a função.
     
     try {
+      console.log(`[CNPJ DEBUG] Iniciando consulta para: ${digits}`);
       const { data: result, error } = await supabase.functions.invoke("consultar-cnpj", {
         body: { cnpj: digits },
       });
 
       if (error) {
-        // Se der erro de autorização ou outro erro técnico do Supabase
-        console.error("CNPJ Lookup Invoke Error:", error);
-        throw new Error("Erro técnico ao tentar consultar o CNPJ.");
+        console.error("[CNPJ DEBUG] Invoke Error:", error);
+        // Tenta extrair a mensagem de erro da resposta se disponível
+        let errorMessage = "Erro técnico ao tentar consultar o CNPJ.";
+        if (error instanceof Error) errorMessage = error.message;
+        
+        throw new Error(errorMessage);
       }
 
-      if (!result || result.error) {
-        // Erro retornado pela API Minha Receita ou regra de negócio da função
-        throw new Error(result?.error || "CNPJ não encontrado.");
+      if (!result) {
+        console.error("[CNPJ DEBUG] Resposta vazia da Edge Function");
+        throw new Error("Não recebemos dados do serviço de consulta.");
       }
 
+      if (result.error) {
+        console.warn("[CNPJ DEBUG] Erro reportado pela função:", result.error);
+        throw new Error(result.error);
+      }
+
+      console.log("[CNPJ DEBUG] Consulta bem-sucedida:", result.razao_social);
       return result;
     } catch (err: any) {
-      console.error("CNPJ Lookup Handler Error:", err);
+      console.error("[CNPJ DEBUG] Exception capturada:", err);
       throw new Error(err.message || "Falha na comunicação com o serviço de consulta.");
     }
   });
