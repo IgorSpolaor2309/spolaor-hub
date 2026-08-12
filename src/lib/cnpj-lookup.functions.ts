@@ -40,7 +40,18 @@ export const lookupCNPJ = createServerFn({ method: "POST" })
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`[CNPJ DEBUG] Edge Function HTTP Error ${response.status}:`, errorText);
-        throw new Error(`Serviço indisponível (${response.status})`);
+        
+        // Se o status for 404, provavelmente é CNPJ não encontrado
+        if (response.status === 404) {
+          throw new Error("CNPJ não encontrado na base da Receita.");
+        }
+        
+        // Se for 400, CNPJ inválido
+        if (response.status === 400) {
+          throw new Error("CNPJ informado é inválido para consulta.");
+        }
+
+        throw new Error(`Serviço de consulta indisponível no momento (Erro ${response.status}).`);
       }
 
       const result = await response.json();
