@@ -156,7 +156,7 @@ function PlansPage() {
                             </p>
                           )}
                           <PlanItemsSection planId={p.id} canEdit={isAdmin} />
-                          <PlanServicesSection planId={p.id} canEdit={isAdmin} />
+                          <PlanServicesSection planId={p.id} canEdit={isAdmin} showOperationLink={true} />
 
                         </>
                       )}
