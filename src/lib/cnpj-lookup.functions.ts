@@ -15,65 +15,27 @@ export const lookupCNPJ = createServerFn({ method: "POST" })
       throw new Error("O CNPJ informado é inválido (dígitos verificadores incorretos).");
     }
 
-    const SUPABASE_URL = process.env['SUPABASE_URL'];
-    const SUPABASE_ANON_KEY = process.env['SUPABASE_ANON_KEY'] || process.env['SUPABASE_PUBLISHABLE_KEY'];
-
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-      console.error("[CNPJ DEBUG] Missing env vars:", { SUPABASE_URL: !!SUPABASE_URL, SUPABASE_ANON_KEY: !!SUPABASE_ANON_KEY });
-      throw new Error("Configuração de servidor incompleta.");
-    }
-
     try {
-      const url = `${SUPABASE_URL}/functions/v1/consultar-cnpj`;
-      console.log(`[CNPJ DEBUG] Fetching Edge Function: ${url}`);
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify({ cnpj: digits }),
-      });
+      console.log(`[CNPJ DEBUG] Fetching Minha Receita directly for CNPJ: ${digits}`);
+      const response = await fetch(`https://minhareceita.org/${digits}`);
       
       const status = response.status;
       const responseText = await response.text();
       
-      console.log(`[CNPJ DEBUG] Raw Response:`, { status, responseText });
-      
       if (!response.ok) {
-        console.error(`[CNPJ DEBUG] HTTP Error ${status}: ${responseText}`);
-        
+        console.error(`[CNPJ DEBUG] Minha Receita HTTP Error ${status}: ${responseText}`);
         if (status === 404) throw new Error("CNPJ não encontrado na base da Receita.");
-        if (status === 400) throw new Error("CNPJ inválido para consulta.");
-        if (status === 401 || status === 403) {
-          throw new Error("Erro de autorização no serviço de consulta. Contate o suporte.");
-        }
-        
-        throw new Error(`Falha técnica no serviço de consulta (Status ${status})`);
+        throw new Error(`Serviço da Receita indisponível (Erro ${status}).`);
       }
 
-      let result;
       try {
-        result = JSON.parse(responseText);
+        return JSON.parse(responseText);
       } catch (parseErr) {
-        console.error("[CNPJ DEBUG] JSON Parse Error:", responseText);
-        throw new Error("Resposta inválida do serviço de consulta.");
+        console.error("[CNPJ DEBUG] JSON Parse Error from Minha Receita:", responseText);
+        throw new Error("Resposta inválida da base da Receita.");
       }
-
-      if (result.error) {
-        console.warn("[CNPJ DEBUG] API Logical Error:", result.error);
-        throw new Error(result.error);
-      }
-
-      return result;
     } catch (err: any) {
       console.error("[CNPJ DEBUG] Handler Exception:", err);
-      // Se a mensagem for a padrão do SDK que vimos no screenshot, traduzimos
-      if (err.message?.includes("non-2xx status code")) {
-        throw new Error("O servidor de consulta retornou um erro inesperado.");
-      }
-      throw err;
+      throw new Error(err.message || "Erro inesperado ao consultar CNPJ.");
     }
   });
