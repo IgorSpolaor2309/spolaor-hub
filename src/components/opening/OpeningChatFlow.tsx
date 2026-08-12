@@ -2,14 +2,16 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Loader2, Send, ArrowRight, Check, FileText, User, MapPin, Briefcase, TrendingUp } from "lucide-react";
+import { Loader2, Send, ArrowRight, Check, FileText, User, MapPin, Briefcase, TrendingUp, ShoppingCart } from "lucide-react";
+import { CheckoutView } from "@/components/commercial/CheckoutView";
+import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { processOpeningMessage } from "@/lib/opening-chat.functions";
 import { useQuery } from "@tanstack/react-query";
 import { getPublicPlans } from "@/lib/public-catalog.functions";
 
 export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
-  const [step, setStep] = useState<'chat' | 'confirm' | 'diagnostic'>('chat');
+  const [step, setStep] = useState<'chat' | 'confirm' | 'diagnostic' | 'checkout'>('chat');
   const [messages, setMessages] = useState<{role: 'user' | 'ai', content: string}[]>([
     { role: 'ai', content: "Olá! Sou o assistente da Digital SC. Me conte um pouco sobre o negócio que você pretende abrir. Por exemplo: 'Quero abrir uma hamburgueria em Santos com meu irmão'." }
   ]);
@@ -48,7 +50,12 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
       });
       
       setMessages(prev => [...prev, { role: 'ai', content: result.response }]);
-      setExtractedData((prev: any) => ({ ...prev, ...result.extractedData }));
+      setExtractedData((prev: any) => {
+        const newData = { ...prev, ...result.extractedData };
+        if (result.extractedData.email) setContact(c => ({ ...c, email: result.extractedData.email }));
+        if (result.extractedData.phone) setContact(c => ({ ...c, phone: result.extractedData.phone }));
+        return newData;
+      });
       
       if (result.status === "complete") {
         setTimeout(() => setStep('confirm'), 2000);
@@ -70,6 +77,14 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
     if (rev <= 15000) return plans.find((p: any) => p.nome === 'Plano A');
     if (rev <= 50000) return plans.find((p: any) => p.nome === 'Plano B');
     return plans.find((p: any) => p.nome === 'Plano C') || plans[0];
+  };
+
+  const getContactData = () => {
+    return {
+      name: extractedData?.name || contact.email.split('@')[0] || "Interessado",
+      email: contact.email || extractedData?.email || "",
+      phone: contact.phone || extractedData?.phone || ""
+    };
   };
 
   if (step === 'confirm') {
@@ -191,7 +206,7 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
                     ))}
                   </ul>
                 </div>
-                <Button variant="secondary" className="w-full mt-6 text-primary font-bold">Iniciar Abertura</Button>
+                <Button variant="secondary" className="w-full mt-6 text-primary font-bold" onClick={() => setStep('checkout')}>Iniciar Abertura</Button>
               </>
             ) : (
               <p>Carregando recomendação...</p>
@@ -205,6 +220,30 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
       </div>
     );
   }
+  
+  if (step === 'checkout') {
+    const plan = getRecommendedPlan();
+    return (
+      <div className="animate-in fade-in duration-500">
+        <div className="max-w-5xl mx-auto pt-8 px-4 flex items-center justify-between">
+           <h1 className="font-display text-2xl font-bold">Finalizar Contratação</h1>
+           <Button variant="ghost" onClick={() => setStep('diagnostic')}>Voltar ao diagnóstico</Button>
+        </div>
+        <CheckoutView 
+          flowType="opening"
+          initialPlanId={plan?.id}
+          extractedData={extractedData}
+          contactData={getContactData()}
+          onBack={() => setStep('diagnostic')}
+          onConfirm={() => {
+            toast.success("Contratação realizada com sucesso! Nossa equipe entrará em contato.");
+            onBack();
+          }}
+        />
+      </div>
+    );
+  }
+
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4 flex flex-col h-[700px]">
