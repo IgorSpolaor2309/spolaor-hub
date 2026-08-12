@@ -10,7 +10,7 @@ import { processSwitchingMessage } from "@/lib/switching-chat.functions";
 import { lookupCNPJ } from "@/lib/cnpj-lookup.functions";
 import { useQuery } from "@tanstack/react-query";
 import { getPublicPlans } from "@/lib/public-catalog.functions";
-import { onlyDigits, isValidCnpjLength } from "@/lib/cnpj";
+import { onlyDigits, isValidCnpjLength, validateCnpj } from "@/lib/cnpj";
 
 export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
   const [step, setStep] = useState<'chat' | 'confirm' | 'diagnostic' | 'checkout'>('chat');
@@ -47,7 +47,13 @@ export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
       // Regra: Se ainda não temos CNPJ e o input parece um CNPJ (ou contém um), tentamos validar via API real
       const digits = onlyDigits(trimmedInput);
       if (!extractedData?.cnpj && digits.length >= 11) {
-        if (isValidCnpjLength(digits)) {
+        if (digits.length === 14) {
+          if (!validateCnpj(digits)) {
+            setMessages(prev => [...prev, { role: 'ai', content: "Este número não parece um CNPJ válido (falha no dígito verificador). Pode conferir?" }]);
+            setLoading(false);
+            return;
+          }
+
           try {
             const companyData = await cnpjLookupFn({ data: { cnpj: digits } });
             setExtractedData((prev: any) => ({
@@ -55,20 +61,21 @@ export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
               cnpj: digits,
               business_name: companyData.razao_social || companyData.nome_fantasia,
               city: companyData.municipio,
-              uf: companyData.uf
+              uf: companyData.uf,
+              tax_regime: companyData.simples ? "Simples Nacional" : "Lucro Presumido" // Default guess based on simple opt-in
             }));
             
-            const aiResponse = `Encontrei a empresa ${companyData.razao_social || companyData.nome_fantasia} em ${companyData.municipio}/${companyData.uf}. É esta mesmo? Se sim, me conte qual o faturamento mensal médio dela.`;
+            const aiResponse = `Encontrei a empresa ${companyData.razao_social}${companyData.nome_fantasia ? ` (${companyData.nome_fantasia})` : ''} em ${companyData.municipio}/${companyData.uf}. É esta mesmo? Se sim, me conte qual o faturamento mensal médio dela.`;
             setMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
             setLoading(false);
             return;
           } catch (err: any) {
-            setMessages(prev => [...prev, { role: 'ai', content: `Não consegui encontrar o CNPJ ${digits}. Por favor, verifique o número e tente novamente.` }]);
+            setMessages(prev => [...prev, { role: 'ai', content: err.message || "Não consegui encontrar o CNPJ informado na base da Receita. Por favor, verifique o número." }]);
             setLoading(false);
             return;
           }
-        } else if (digits.length > 0 && digits.length < 14) {
-           setMessages(prev => [...prev, { role: 'ai', content: "O CNPJ deve ter 14 dígitos. Pode conferir o número?" }]);
+        } else if (digits.length > 0 && digits.length !== 14) {
+           setMessages(prev => [...prev, { role: 'ai', content: "O CNPJ deve ter exatamente 14 dígitos. Pode conferir o número?" }]);
            setLoading(false);
            return;
         }
