@@ -1,12 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { aiAnalyzeSwitching } from "./switching-chat.server";
 
 export const processSwitchingMessage = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({
     context: z.string(),
-    history: z.array(z.any())
+    history: z.array(z.object({
+      role: z.enum(["user", "ai"]),
+      content: z.string()
+    }))
   }).parse(data))
   .handler(async ({ data }) => {
+    const { aiAnalyzeSwitching } = await import("./switching-chat.server");
     return aiAnalyzeSwitching(data.context, data.history);
   });
+
