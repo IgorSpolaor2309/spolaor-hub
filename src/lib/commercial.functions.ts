@@ -41,7 +41,8 @@ export const confirmContracting = createServerFn({ method: "POST" })
     })
   }).parse(data))
   .handler(async ({ data }) => {
-    const { data: prospect, error } = await supabase
+    // Usamos cast para bypass do erro de tipos enquanto a tabela não é sincronizada no types.ts
+    const { data: prospect, error } = await (supabase as any)
       .from("commercial_prospects")
       .insert({
         flow_origin: data.flow_type,
