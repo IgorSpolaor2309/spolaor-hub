@@ -142,7 +142,7 @@ function TrustPage() {
               A aplicação é construída sobre a plataforma Lovable e utiliza
               infraestrutura gerenciada para banco de dados, autenticação e
               armazenamento de arquivos. O provedor é responsável pela camada de
-              infraestrutura; a equipe do Spolaor Hub é responsável pela
+              infraestrutura; a equipe da Digital SC é responsável pela
               configuração da aplicação, pelas regras de acesso e pelo
               tratamento dos dados dos clientes.
             </p>
@@ -164,8 +164,8 @@ function TrustPage() {
         </div>
 
         <p className="mt-10 text-center text-xs text-muted-foreground">
-          Última atualização: Junho de 2026 · Conteúdo editável pela equipe do
-          Spolaor Hub.
+          Última atualização: Junho de 2026 · Conteúdo editável pela equipe da
+          Digital SC.
         </p>
       </main>
     </div>
