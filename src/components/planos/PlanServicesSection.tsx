@@ -43,7 +43,7 @@ const SERVICE_COLS = "id,nome,categoria,tipo_preco,unidade_cobranca,valor_refere
 const RULE_COLS =
   "id,plan_id,service_id,tipo_inclusao,limite_quantidade,unidade_limite,periodicidade_limite,valor_especifico,valor_especifico_provisorio,observacoes,ordem,status";
 
-export function PlanServicesSection({ planId, canEdit }: { planId: string; canEdit: boolean }) {
+export function PlanServicesSection({ planId, canEdit, showOperationLink }: { planId: string; canEdit: boolean; showOperationLink?: boolean }) {
   const qc = useQueryClient();
   const [filtro, setFiltro] = useState<"configurados" | "todos">("configurados");
   const [busca, setBusca] = useState("");
