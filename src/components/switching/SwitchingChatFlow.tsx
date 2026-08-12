@@ -99,9 +99,10 @@ export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
       if (result.status === "complete") {
         setTimeout(() => setStep('confirm'), 2000);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      setMessages(prev => [...prev, { role: 'ai', content: "Desculpe, tive um problema técnico. Pode repetir?" }]);
+      const errorMessage = e.message || "Desculpe, tive um problema técnico. Pode repetir?";
+      setMessages(prev => [...prev, { role: 'ai', content: errorMessage }]);
     } finally {
       setLoading(false);
     }

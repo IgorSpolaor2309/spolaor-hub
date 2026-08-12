@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabase } from "@/integrations/supabase/client";
 import { validateCnpj, onlyDigits } from "./cnpj";
 
 export const lookupCNPJ = createServerFn({ method: "POST" })
@@ -8,7 +7,6 @@ export const lookupCNPJ = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const digits = onlyDigits(data.cnpj);
     
-    // Validação rigorosa antes de chamar a API
     if (digits.length !== 14) {
       throw new Error("CNPJ deve ter exatos 14 dígitos.");
     }
@@ -17,30 +15,28 @@ export const lookupCNPJ = createServerFn({ method: "POST" })
       throw new Error("O CNPJ informado é inválido (dígitos verificadores incorretos).");
     }
 
-    // A Server Function roda no servidor (Worker). 
-    // Como a Edge Function 'consultar-cnpj' foi ajustada para aceitar chamadas anon,
-    // o cliente padrão do supabase aqui já funcionará, pois ele usará a ANON_KEY
-    // configurada no ambiente para invocar a função.
-    
     try {
-      const { data: result, error } = await supabase.functions.invoke("consultar-cnpj", {
-        body: { cnpj: digits },
-      });
-
-      if (error) {
-        // Se der erro de autorização ou outro erro técnico do Supabase
-        console.error("CNPJ Lookup Invoke Error:", error);
-        throw new Error("Erro técnico ao tentar consultar o CNPJ.");
+      console.log(`[CNPJ DEBUG] Fetching Minha Receita directly for CNPJ: ${digits}`);
+      // Tentamos o serviço público gratuito diretamente
+      const response = await fetch(`https://minhareceita.org/${digits}`);
+      
+      const status = response.status;
+      const responseText = await response.text();
+      
+      if (!response.ok) {
+        console.error(`[CNPJ DEBUG] Minha Receita HTTP Error ${status}: ${responseText}`);
+        if (status === 404) throw new Error("CNPJ não encontrado na base da Receita.");
+        throw new Error(`Serviço da Receita indisponível (Erro ${status}).`);
       }
 
-      if (!result || result.error) {
-        // Erro retornado pela API Minha Receita ou regra de negócio da função
-        throw new Error(result?.error || "CNPJ não encontrado.");
+      try {
+        return JSON.parse(responseText);
+      } catch (parseErr) {
+        console.error("[CNPJ DEBUG] JSON Parse Error from Minha Receita:", responseText);
+        throw new Error("Resposta inválida da base da Receita.");
       }
-
-      return result;
     } catch (err: any) {
-      console.error("CNPJ Lookup Handler Error:", err);
-      throw new Error(err.message || "Falha na comunicação com o serviço de consulta.");
+      console.error("[CNPJ DEBUG] Handler Exception:", err);
+      throw new Error(err.message || "Erro inesperado ao consultar CNPJ.");
     }
   });
