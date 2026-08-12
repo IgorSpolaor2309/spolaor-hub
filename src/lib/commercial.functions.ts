@@ -41,6 +41,34 @@ export const confirmContracting = createServerFn({ method: "POST" })
     })
   }).parse(data))
   .handler(async ({ data }) => {
-    console.log("Contracting confirmed:", data);
-    return { success: true, message: "Contratação confirmada com sucesso!" };
+    const { data: prospect, error } = await supabase
+      .from("commercial_prospects")
+      .insert({
+        flow_origin: data.flow_type,
+        contact_name: data.contact_data.name,
+        contact_email: data.contact_data.email,
+        contact_phone: data.contact_data.phone,
+        cnpj: data.extracted_data?.cnpj || null,
+        ai_extracted_data: data.extracted_data,
+        plan_id: data.plan_id,
+        extra_service_ids: data.extra_service_ids,
+        coupon_id: data.coupon_id || null,
+        original_value: data.totals.originalValue,
+        discount_value: data.totals.discountValue,
+        final_value: data.totals.finalValue,
+        status_comercial: "Aguardando onboarding"
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error saving prospect:", error);
+      throw new Error("Falha ao registrar a contratação.");
+    }
+
+    return { 
+      success: true, 
+      message: "Contratação confirmada com sucesso!",
+      prospectId: prospect.id 
+    };
   });

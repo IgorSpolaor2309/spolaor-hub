@@ -21,7 +21,7 @@ interface CheckoutViewProps {
     phone: string;
   };
   onBack: () => void;
-  onConfirm: () => void;
+  onConfirm: (prospectId: string) => void;
 }
 
 export function CheckoutView({ 
@@ -99,7 +99,7 @@ export function CheckoutView({
   const handleConfirm = async () => {
     setIsConfirming(true);
     try {
-      await confirmContractingFn({
+      const result = await confirmContractingFn({
         data: {
           flow_type: flowType,
           extracted_data: extractedData,
@@ -110,7 +110,7 @@ export function CheckoutView({
           totals
         }
       });
-      onConfirm();
+      onConfirm(result.prospectId);
     } catch (e) {
       toast.error("Erro ao confirmar contratação");
     } finally {
