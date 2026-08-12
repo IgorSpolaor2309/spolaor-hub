@@ -36,6 +36,7 @@ import { AlertTriangle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ClientCollaboratorsManager } from "@/components/sc/ClientCollaboratorsManager";
+import { CommercialHiringDialog } from "@/components/clientes/CommercialHiringDialog";
 
 export const Route = createFileRoute("/_authenticated/clientes/$id")({
   component: ClientDetail,
