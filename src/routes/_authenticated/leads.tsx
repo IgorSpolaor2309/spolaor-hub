@@ -304,8 +304,15 @@ function LeadsPage() {
             <>
               <DialogHeader className="p-6 pb-2">
                 <div className="flex items-start justify-between">
-                  <div>
-                    <DialogTitle className="text-2xl">{selectedLead.contact_name || 'Lead sem nome'}</DialogTitle>
+                  <div className="flex-1">
+                    <DialogTitle className="text-2xl flex items-center gap-3">
+                      {selectedLead.contact_name || 'Lead sem nome'}
+                      {selectedLead.status_comercial === 'contratação_em_andamento' && (
+                        <Link to="/contracts" className="text-primary hover:underline text-xs font-normal flex items-center gap-1 bg-primary/5 px-2 py-1 rounded">
+                          <FileText className="h-3 w-3" /> Ver Contrato
+                        </Link>
+                      )}
+                    </DialogTitle>
                     <DialogDescription className="flex items-center gap-4 mt-1">
                       <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {selectedLead.contact_email || '—'}</span>
                       <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {selectedLead.contact_phone || '—'}</span>
