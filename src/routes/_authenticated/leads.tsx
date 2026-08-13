@@ -272,16 +272,25 @@ function LeadsPage() {
                   {format(new Date(lead.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      setSelectedLead(lead)
-                      setIsRecoveryOpen(true)
-                    }}
-                  >
-                    Gerenciar
-                  </Button>
+                  <div className="flex justify-end gap-2">
+                    {lead.status_comercial === 'contratação_em_andamento' && (
+                      <Button variant="ghost" size="sm" asChild title="Ver Contrato">
+                        <Link to="/contracts">
+                          <FileText className="h-4 w-4 text-primary" />
+                        </Link>
+                      </Button>
+                    )}
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setSelectedLead(lead)
+                        setIsRecoveryOpen(true)
+                      }}
+                    >
+                      Gerenciar
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
