@@ -89,13 +89,14 @@ export function CheckoutView({
       const result = await validateCouponFn({ data: { code: couponCode } });
       if (result.valid && result.coupon) {
         setAppliedCoupon(result.coupon as any);
-        trackJourney({
-          data: {
-            prospectId: initialPlanId, // Aqui precisamos passar o prospectId, mas CheckoutView recebe prospectId via prop ou extraímos?
-            // CheckoutView atual não recebe prospectId. Vou ajustar a prop.
-            journeyStep: 'cupom_aplicado'
-          }
-        }).catch(console.error);
+        if (prospectId) {
+          trackJourney({
+            data: {
+              prospectId,
+              journeyStep: 'cupom_aplicado'
+            }
+          }).catch(console.error);
+        }
         toast.success("Cupom aplicado com sucesso!");
       } else {
         toast.error(result.message || "Cupom inválido");
