@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useSuspenseQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { getLeads, updateLeadRecovery, addLeadHistory, getCollaborators } from '@/lib/leads.functions'
+import { askCommercialAi } from '@/lib/commercial-ai.functions'
 import { Card } from '@/components/ui/card'
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
@@ -8,7 +9,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { User, Mail, Phone, AlertCircle, Clock, Search, Filter, History, MessageSquare, Calendar, UserPlus, CheckCircle2 } from 'lucide-react'
+import { User, Mail, Phone, AlertCircle, Clock, Search, Filter, History, MessageSquare, Calendar, UserPlus, CheckCircle2, Bot, Send, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -45,6 +46,24 @@ function LeadsPage() {
   const [search, setSearch] = useState('')
   const [selectedLead, setSelectedLead] = useState<any>(null)
   const [isRecoveryOpen, setIsRecoveryOpen] = useState(false)
+  const [isAiOpen, setIsAiOpen] = useState(false)
+  const [aiQuestion, setAiQuestion] = useState('')
+  const [aiHistory, setAiHistory] = useState<{q: string, a: string}[]>([])
+  const [isAiLoading, setIsAiLoading] = useState(false)
+
+  const handleAskAi = async () => {
+    if (!aiQuestion.trim() || isAiLoading) return
+    setIsAiLoading(true)
+    try {
+      const res = await askCommercialAi({ data: { question: aiQuestion } })
+      setAiHistory(prev => [...prev, { q: aiQuestion, a: res.answer || '' }])
+      setAiQuestion('')
+    } catch (err: any) {
+      toast.error("Erro ao consultar IA")
+    } finally {
+      setIsAiLoading(false)
+    }
+  }
 
   const { data: leads } = useSuspenseQuery({
     queryKey: ['leads'],
@@ -119,7 +138,73 @@ function LeadsPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+        <Button onClick={() => setIsAiOpen(true)} className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/20" variant="outline">
+          <Bot className="mr-2 h-4 w-4" />
+          IA Comercial
+        </Button>
       </div>
+
+      <Dialog open={isAiOpen} onOpenChange={setIsAiOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              IA Comercial Digital SC
+            </DialogTitle>
+            <DialogDescription>
+              Pergunte sobre métricas, conversão e desempenho dos leads.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex flex-col gap-4 py-4">
+            <ScrollArea className="h-[300px] rounded-md border p-4 bg-muted/20">
+              {aiHistory.length === 0 && (
+                <div className="text-center text-muted-foreground text-sm mt-10">
+                  <Bot className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                  Como posso ajudar hoje?
+                  <div className="mt-4 flex flex-col gap-2">
+                    <button onClick={() => setAiQuestion("Quantos leads chegaram hoje?")} className="text-[10px] hover:underline text-primary">"Quantos leads chegaram hoje?"</button>
+                    <button onClick={() => setAiQuestion("Qual a taxa de conversão?")} className="text-[10px] hover:underline text-primary">"Qual a taxa de conversão?"</button>
+                    <button onClick={() => setAiQuestion("Quais ações estão atrasadas?")} className="text-[10px] hover:underline text-primary">"Quais ações estão atrasadas?"</button>
+                  </div>
+                </div>
+              )}
+              {aiHistory.map((chat, i) => (
+                <div key={i} className="mb-4 space-y-2">
+                  <div className="flex justify-end">
+                    <div className="bg-primary text-primary-foreground text-xs p-2 rounded-lg max-w-[80%]">
+                      {chat.q}
+                    </div>
+                  </div>
+                  <div className="flex justify-start">
+                    <div className="bg-background border text-xs p-2 rounded-lg max-w-[80%]">
+                      {chat.a}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {isAiLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-background border text-xs p-2 rounded-lg animate-pulse">
+                    Analisando dados...
+                  </div>
+                </div>
+              )}
+            </ScrollArea>
+            <div className="flex gap-2">
+              <Input 
+                placeholder="Pergunte sobre os leads..." 
+                value={aiQuestion}
+                onChange={(e) => setAiQuestion(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAskAi()}
+              />
+              <Button size="icon" onClick={handleAskAi} disabled={isAiLoading}>
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <Table>
