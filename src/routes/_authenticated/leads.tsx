@@ -259,7 +259,7 @@ function LeadsPage() {
                       <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Prioridade</label>
                       <Select 
                         defaultValue={selectedLead.priority || 'média'}
-                        onValueChange={(val) => updateMutation.mutate({ id: selectedLead.id, priority: val })}
+                        onValueChange={(val) => updateMutation.mutate({ data: { id: selectedLead.id, priority: val } })}
                       >
                         <SelectTrigger className="h-9">
                           <SelectValue />
@@ -278,7 +278,7 @@ function LeadsPage() {
                     <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Alterar Status Comercial</label>
                     <Select 
                       defaultValue={selectedLead.status_comercial}
-                      onValueChange={(val) => updateMutation.mutate({ id: selectedLead.id, status_comercial: val })}
+                      onValueChange={(val) => updateMutation.mutate({ data: { id: selectedLead.id, status_comercial: val } })}
                     >
                       <SelectTrigger className="h-9">
                         <SelectValue />
@@ -303,7 +303,7 @@ function LeadsPage() {
                       <Input 
                         type="datetime-local" 
                         defaultValue={selectedLead.next_action_date ? format(new Date(selectedLead.next_action_date), "yyyy-MM-dd'T'HH:mm") : ""}
-                        onChange={(e) => updateMutation.mutate({ id: selectedLead.id, next_action_date: e.target.value })}
+                        onChange={(e) => updateMutation.mutate({ data: { id: selectedLead.id, next_action_date: e.target.value } })}
                         className="h-9"
                       />
                     </div>
@@ -312,7 +312,7 @@ function LeadsPage() {
                       <Input 
                         placeholder="Ex: Ligar para confirmar faturamento" 
                         defaultValue={selectedLead.next_action_description || ""}
-                        onBlur={(e) => updateMutation.mutate({ id: selectedLead.id, next_action_description: e.target.value })}
+                        onBlur={(e) => updateMutation.mutate({ data: { id: selectedLead.id, next_action_description: e.target.value } })}
                         className="h-9"
                       />
                     </div>
@@ -324,7 +324,7 @@ function LeadsPage() {
                       placeholder="Notas sobre o perfil do cliente, objeções, etc..."
                       defaultValue={selectedLead.internal_notes || ""}
                       className="min-h-[100px]"
-                      onBlur={(e) => updateMutation.mutate({ id: selectedLead.id, internal_notes: e.target.value })}
+                      onBlur={(e) => updateMutation.mutate({ data: { id: selectedLead.id, internal_notes: e.target.value } })}
                     />
                   </div>
                 </div>
