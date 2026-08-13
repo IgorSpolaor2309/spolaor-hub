@@ -461,9 +461,6 @@ function LandingPage() {
             </div>
           </div>
         </section>
-            </div>
-          </div>
-        </section>
       </main>
 
       <footer className="bg-zinc-950 text-zinc-400 py-16" id="duvidas">
