@@ -958,6 +958,71 @@ export type Database = {
           },
         ]
       }
+      commercial_prospects: {
+        Row: {
+          ai_extracted_data: Json | null
+          cnpj: string | null
+          contact_email: string
+          contact_name: string
+          contact_phone: string
+          coupon_id: string | null
+          created_at: string | null
+          discount_value: number | null
+          extra_service_ids: string[] | null
+          final_value: number
+          flow_origin: string
+          id: string
+          original_value: number
+          plan_id: string | null
+          status_comercial: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_extracted_data?: Json | null
+          cnpj?: string | null
+          contact_email: string
+          contact_name: string
+          contact_phone: string
+          coupon_id?: string | null
+          created_at?: string | null
+          discount_value?: number | null
+          extra_service_ids?: string[] | null
+          final_value: number
+          flow_origin: string
+          id?: string
+          original_value: number
+          plan_id?: string | null
+          status_comercial?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_extracted_data?: Json | null
+          cnpj?: string | null
+          contact_email?: string
+          contact_name?: string
+          contact_phone?: string
+          coupon_id?: string | null
+          created_at?: string | null
+          discount_value?: number | null
+          extra_service_ids?: string[] | null
+          final_value?: number
+          flow_origin?: string
+          id?: string
+          original_value?: number
+          plan_id?: string | null
+          status_comercial?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commercial_prospects_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_process_documents: {
         Row: {
           company_process_id: string
