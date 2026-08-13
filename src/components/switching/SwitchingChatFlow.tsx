@@ -14,7 +14,7 @@ import { getPublicPlans } from "@/lib/public-catalog.functions";
 import { onlyDigits, isValidCnpjLength, validateCnpj } from "@/lib/cnpj";
 import { safeTrackLead as trackJourney, getStoredProspectId } from "@/lib/leads-client";
 
-export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
+export function SwitchingChatFlow({ onBack, preSelectedPlanId }: { onBack: () => void, preSelectedPlanId?: string }) {
   const [step, setStep] = useState<'chat' | 'confirm' | 'diagnostic' | 'checkout' | 'success'>('chat');
   const [prospectId, setProspectId] = useState<string>(getStoredProspectId() || "");
   const [messages, setMessages] = useState<{role: 'user' | 'ai', content: string}[]>([
@@ -149,7 +149,15 @@ export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
     n == null ? "—" : Number(n).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   const getRecommendedPlan = () => {
-    if (!plans || !extractedData) return null;
+    if (!plans) return null;
+
+    // Prioridade para o plano pré-selecionado se não houver faturamento extraído ainda
+    if (preSelectedPlanId && !extractedData?.revenue) {
+      return plans.find((p: any) => p.id === preSelectedPlanId);
+    }
+
+    if (!extractedData) return plans.find((p: any) => p.id === preSelectedPlanId) || null;
+
     const rev = extractedData.revenue || 0;
     if (rev <= 8000) return plans.find((p: any) => p.nome === 'Plano A');
     if (rev <= 15000) return plans.find((p: any) => p.nome === 'Plano B');

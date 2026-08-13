@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AppLogo } from "@/components/sc/Logo";
 import { useQuery } from "@tanstack/react-query";
 import { getPublicPlans, getPublicServices } from "@/lib/public-catalog.functions";
@@ -22,7 +23,8 @@ const brl = (n: number | null | undefined) =>
 function LandingPage() {
   const [showOpeningFlow, setShowOpeningFlow] = useState(false);
   const [showSwitchingFlow, setShowSwitchingFlow] = useState(false);
-  const [prospectId, setProspectId] = useState<string | null>(null);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+  const [showPlanChoice, setShowPlanChoice] = useState(false);
   const { role, userId, loading } = useCurrentUser();
   const navigate = useNavigate();
 
@@ -43,13 +45,20 @@ function LandingPage() {
     }
   };
 
-  // Detect abandonment or track progress
-  useEffect(() => {
-    if (showOpeningFlow || showSwitchingFlow) {
-      // Logic for session storage or similar could go here
+  const handlePlanSelection = (planId: string) => {
+    setSelectedPlanId(planId);
+    setShowPlanChoice(true);
+  };
+
+  const startFlow = (type: 'opening' | 'switching') => {
+    if (type === 'opening') {
+      setShowOpeningFlow(true);
+    } else {
+      setShowSwitchingFlow(true);
     }
-  }, [showOpeningFlow, showSwitchingFlow]);
-  
+    setShowPlanChoice(false);
+  };
+
   const plansQ = useQuery({
     queryKey: ["public-plans"],
     queryFn: () => getPublicPlans(),
@@ -61,7 +70,6 @@ function LandingPage() {
     queryFn: () => getPublicServices(),
     staleTime: 1000 * 60 * 60,
   });
-
 
   if (showOpeningFlow || showSwitchingFlow) {
     return (
@@ -75,8 +83,8 @@ function LandingPage() {
           </div>
         </header>
         <main className="flex-1 py-12">
-          {showOpeningFlow && <OpeningChatFlow onBack={() => setShowOpeningFlow(false)} />}
-          {showSwitchingFlow && <SwitchingChatFlow onBack={() => setShowSwitchingFlow(false)} />}
+          {showOpeningFlow && <OpeningChatFlow onBack={() => { setShowOpeningFlow(false); setSelectedPlanId(null); }} preSelectedPlanId={selectedPlanId || undefined} />}
+          {showSwitchingFlow && <SwitchingChatFlow onBack={() => { setShowSwitchingFlow(false); setSelectedPlanId(null); }} preSelectedPlanId={selectedPlanId || undefined} />}
         </main>
       </div>
     );
@@ -243,10 +251,7 @@ function LandingPage() {
                         <Button 
                           variant={plan.nome === 'Plano B' || plan.nome === 'Plano C' ? 'default' : 'outline'} 
                           className="w-full" 
-                          onClick={() => {
-                            if (plan.nome === 'Plano A' || plan.nome === 'Plano B') setShowOpeningFlow(true);
-                            else setShowSwitchingFlow(true);
-                          }}
+                          onClick={() => handlePlanSelection(plan.id)}
                         >
                           Selecionar plano
                         </Button>
@@ -257,6 +262,36 @@ function LandingPage() {
             )}
           </div>
         </section>
+
+        {/* Dialog de escolha de fluxo quando plano é selecionado */}
+        <Dialog open={showPlanChoice} onOpenChange={setShowPlanChoice}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-center font-display text-xl">Como podemos ajudar sua empresa hoje?</DialogTitle>
+              <DialogDescription className="text-center">
+                Você selecionou o <strong>{plansQ.data?.find((p: any) => p.id === selectedPlanId)?.nome}</strong>. Qual o momento da sua empresa?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid grid-cols-1 gap-4 py-4">
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col gap-1 items-center justify-center hover:border-primary hover:bg-primary/5 transition-all"
+                onClick={() => startFlow('opening')}
+              >
+                <div className="font-bold">Abrir minha empresa</div>
+                <div className="text-[10px] text-muted-foreground font-normal">Ainda não tenho CNPJ e quero começar agora</div>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col gap-1 items-center justify-center hover:border-primary hover:bg-primary/5 transition-all"
+                onClick={() => startFlow('switching')}
+              >
+                <div className="font-bold">Trocar de contador</div>
+                <div className="text-[10px] text-muted-foreground font-normal">Já tenho empresa e quero migrar para a Digital SC</div>
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Serviços */}
         <section className="py-20 bg-background" id="servicos">

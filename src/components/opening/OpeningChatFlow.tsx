@@ -12,7 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getPublicPlans } from "@/lib/public-catalog.functions";
 import { safeTrackLead as trackJourney, getStoredProspectId } from "@/lib/leads-client";
 
-export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
+export function OpeningChatFlow({ onBack, preSelectedPlanId }: { onBack: () => void, preSelectedPlanId?: string }) {
   const [step, setStep] = useState<'chat' | 'confirm' | 'diagnostic' | 'checkout' | 'success'>('chat');
   const [prospectId, setProspectId] = useState<string>(getStoredProspectId() || "");
   const [messages, setMessages] = useState<{role: 'user' | 'ai', content: string}[]>([
@@ -95,7 +95,16 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
     n == null ? "—" : Number(n).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   const getRecommendedPlan = () => {
-    if (!plans || !extractedData) return null;
+    if (!plans) return null;
+    
+    // Se o plano foi pré-selecionado na landing, ele tem prioridade inicial, 
+    // mas a lógica de IA pode sugerir outro depois se houver dados extraídos.
+    if (preSelectedPlanId && !extractedData?.revenue) {
+      return plans.find((p: any) => p.id === preSelectedPlanId);
+    }
+
+    if (!extractedData) return plans.find((p: any) => p.id === preSelectedPlanId) || null;
+    
     const rev = extractedData.revenue || 0;
     if (rev <= 8000) return plans.find((p: any) => p.nome === 'Plano A');
     if (rev <= 15000) return plans.find((p: any) => p.nome === 'Plano B');
