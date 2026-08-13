@@ -59,6 +59,18 @@ function LandingPage() {
     setShowPlanChoice(false);
   };
 
+  const plansQ = useQuery({
+    queryKey: ["public-plans"],
+    queryFn: () => getPublicPlans(),
+    staleTime: 1000 * 60 * 60,
+  });
+
+  const servicesQ = useQuery({
+    queryKey: ["public-services"],
+    queryFn: () => getPublicServices(),
+    staleTime: 1000 * 60 * 60,
+  });
+
   if (showOpeningFlow || showSwitchingFlow) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
@@ -257,7 +269,7 @@ function LandingPage() {
             <DialogHeader>
               <DialogTitle className="text-center font-display text-xl">Como podemos ajudar sua empresa hoje?</DialogTitle>
               <DialogDescription className="text-center">
-                Você selecionou o <strong>{plansQ.data?.find(p => p.id === selectedPlanId)?.nome}</strong>. Qual o momento da sua empresa?
+                Você selecionou o <strong>{plansQ.data?.find((p: any) => p.id === selectedPlanId)?.nome}</strong>. Qual o momento da sua empresa?
               </DialogDescription>
             </DialogHeader>
             <div className="grid grid-cols-1 gap-4 py-4">
