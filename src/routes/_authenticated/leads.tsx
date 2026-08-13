@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useSuspenseQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { getLeads, updateLeadRecovery, addLeadHistory, getCollaborators } from '@/lib/leads.functions'
 import { askCommercialAi } from '@/lib/commercial-ai.functions'
@@ -9,7 +9,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { User, Mail, Phone, AlertCircle, Clock, Search, Filter, History, MessageSquare, Calendar, UserPlus, CheckCircle2, Bot, Send, Sparkles } from 'lucide-react'
+import { User, Mail, Phone, AlertCircle, Clock, Search, Filter, History, MessageSquare, Calendar, UserPlus, CheckCircle2, Bot, Send, Sparkles, FileText } from 'lucide-react'
 import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -272,16 +272,25 @@ function LeadsPage() {
                   {format(new Date(lead.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      setSelectedLead(lead)
-                      setIsRecoveryOpen(true)
-                    }}
-                  >
-                    Gerenciar
-                  </Button>
+                  <div className="flex justify-end gap-2">
+                    {lead.status_comercial === 'contratação_em_andamento' && (
+                      <Button variant="ghost" size="sm" asChild title="Ver Contrato">
+                        <Link to="/contracts">
+                          <FileText className="h-4 w-4 text-primary" />
+                        </Link>
+                      </Button>
+                    )}
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setSelectedLead(lead)
+                        setIsRecoveryOpen(true)
+                      }}
+                    >
+                      Gerenciar
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -295,8 +304,15 @@ function LeadsPage() {
             <>
               <DialogHeader className="p-6 pb-2">
                 <div className="flex items-start justify-between">
-                  <div>
-                    <DialogTitle className="text-2xl">{selectedLead.contact_name || 'Lead sem nome'}</DialogTitle>
+                  <div className="flex-1">
+                    <DialogTitle className="text-2xl flex items-center gap-3">
+                      {selectedLead.contact_name || 'Lead sem nome'}
+                      {selectedLead.status_comercial === 'contratação_em_andamento' && (
+                        <Link to="/contracts" className="text-primary hover:underline text-xs font-normal flex items-center gap-1 bg-primary/5 px-2 py-1 rounded">
+                          <FileText className="h-3 w-3" /> Ver Contrato
+                        </Link>
+                      )}
+                    </DialogTitle>
                     <DialogDescription className="flex items-center gap-4 mt-1">
                       <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {selectedLead.contact_email || '—'}</span>
                       <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {selectedLead.contact_phone || '—'}</span>

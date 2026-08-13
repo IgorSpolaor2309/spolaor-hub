@@ -110,6 +110,7 @@ export function CheckoutView({
   const handleConfirm = async () => {
     setIsConfirming(true);
     try {
+      // 1. Confirmar intenção (cria prospect e contrato)
       const result = await confirmContractingFn({
         data: {
           flow_type: flowType,
@@ -122,21 +123,26 @@ export function CheckoutView({
         }
       });
       
-      trackJourney({
+      // 2. Rastrear jornada final
+      await trackJourney({
         data: {
           prospectId: result.prospectId,
-          journeyStep: 'intencao_contratar',
-          estimatedValue: totals.finalValue
+          journeyStep: 'contratacao_confirmada',
+          estimatedValue: totals.finalValue,
+          lastInteraction: `Contratação confirmada para o plano ${selectedPlan?.name}`
         }
-      }).catch(console.error);
+      });
 
+      toast.success("Solicitação recebida! Em breve entraremos em contato para assinatura.");
       onConfirm(result.prospectId);
     } catch (e) {
+      console.error("Erro no checkout:", e);
       toast.error("Erro ao registrar intenção de contratação");
     } finally {
       setIsConfirming(false);
     }
   };
+
 
   const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 

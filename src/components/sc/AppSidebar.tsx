@@ -34,6 +34,7 @@ const SECTIONS: Section[] = [
       { to: "/clientes", label: "Empresas cadastradas", icon: Users, roles: ["admin"] },
       { to: "/colaboradores", label: "Colaboradores", icon: UserCog, roles: ["admin"] },
       { to: "/leads", label: "Leads", icon: Inbox, roles: ["admin", "collaborator"] },
+      { to: "/contracts", label: "Contratações", icon: FileText, roles: ["admin", "collaborator"] },
     ],
   },
   {
