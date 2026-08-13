@@ -234,7 +234,7 @@ function LeadsPage() {
                       <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Responsável</label>
                       <Select 
                         defaultValue={selectedLead.responsible_profile_id || undefined}
-                        onValueChange={(val) => updateMutation.mutate({ id: selectedLead.id, responsible_profile_id: val })}
+                        onValueChange={(val) => updateMutation.mutate({ data: { id: selectedLead.id, responsible_profile_id: val } })}
                       >
                         <SelectTrigger className="h-9">
                           <SelectValue placeholder="Atribuir..." />
