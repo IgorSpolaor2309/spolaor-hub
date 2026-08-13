@@ -392,9 +392,11 @@ function LeadsPage() {
                             const input = document.getElementById('new-history-content') as HTMLTextAreaElement;
                             if (input?.value.trim()) {
                               historyMutation.mutate({
-                                prospect_id: selectedLead.id,
-                                action_type: 'tentativa_contato',
-                                content: input.value.trim()
+                                data: {
+                                  prospect_id: selectedLead.id,
+                                  action_type: 'tentativa_contato',
+                                  content: input.value.trim()
+                                }
                               });
                               input.value = '';
                             }
