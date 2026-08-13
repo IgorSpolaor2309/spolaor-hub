@@ -12,7 +12,7 @@ import { lookupCNPJ } from "@/lib/cnpj-lookup.functions";
 import { useQuery } from "@tanstack/react-query";
 import { getPublicPlans } from "@/lib/public-catalog.functions";
 import { onlyDigits, isValidCnpjLength, validateCnpj } from "@/lib/cnpj";
-import { trackLeadJourney } from "@/lib/leads.functions";
+import { safeTrackLead as trackJourney } from "@/lib/leads-client";
 
 export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
   const [step, setStep] = useState<'chat' | 'confirm' | 'diagnostic' | 'checkout' | 'success'>('chat');
@@ -28,7 +28,7 @@ export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const processMessage = useServerFn(processSwitchingMessage);
   const cnpjLookupFn = useServerFn(lookupCNPJ);
-  const trackJourney = useServerFn(trackLeadJourney);
+  
   
   const { data: plans } = useQuery({
     queryKey: ["public-plans"],
