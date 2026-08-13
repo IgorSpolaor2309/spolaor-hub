@@ -12,7 +12,9 @@ import { OpeningChatFlow } from "@/components/opening/OpeningChatFlow";
 import { SwitchingChatFlow } from "@/components/switching/SwitchingChatFlow";
 import { safeTrackLead as trackJourney } from "@/lib/leads-client";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { cn } from "@/lib/utils";
 
+import logoAsset from "@/assets/logo-spolaor.png.asset.json";
 import foto1Asset from "@/assets/foto1.jpg.asset.json";
 import foto3Asset from "@/assets/foto3.jpg.asset.json";
 import foto4Asset from "@/assets/foto4.jpg.asset.json";
@@ -35,6 +37,7 @@ function LandingPage() {
   const { role, userId, loading } = useCurrentUser();
   const navigate = useNavigate();
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
   const heroImages = [
     { url: foto4Asset.url, alt: "Ambiente amplo com mesa branca e divisórias de vidro" },
@@ -44,11 +47,19 @@ function LandingPage() {
   ];
 
   useEffect(() => {
+    if (!isAutoPlaying) return;
     const timer = setInterval(() => {
       setCurrentHeroIndex((prev) => (prev + 1) % heroImages.length);
-    }, 7000);
+    }, 4500);
     return () => clearInterval(timer);
-  }, [heroImages.length]);
+  }, [heroImages.length, isAutoPlaying]);
+
+  const handleManualNav = (index: number) => {
+    setCurrentHeroIndex(index);
+    setIsAutoPlaying(false);
+    // Reinicia o autoplay após um tempo de inatividade
+    setTimeout(() => setIsAutoPlaying(true), 10000);
+  };
 
   const handleClientAreaClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -98,8 +109,8 @@ function LandingPage() {
       <div className="min-h-screen bg-background flex flex-col">
         <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
           <div className="container mx-auto h-16 flex items-center px-4">
-            <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <AppLogo className="h-8 w-auto" />
+            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <img src={logoAsset.url} alt="Digital SC" className="h-10 w-auto" />
               <span className="font-display text-xl font-bold text-primary">Digital SC</span>
             </Link>
           </div>
@@ -117,8 +128,8 @@ function LandingPage() {
       {/* Header Fixo */}
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <AppLogo className="h-10 w-auto" />
+          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <img src={logoAsset.url} alt="Digital SC" className="h-12 w-auto" />
             <span className="font-display text-xl font-bold tracking-tight text-primary">Digital SC</span>
           </Link>
           <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
@@ -164,6 +175,23 @@ function LandingPage() {
             {/* Overlays */}
             <div className="absolute inset-0 bg-[#000814]/60 backdrop-blur-[1.5px]" />
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/40" />
+          </div>
+
+          {/* Indicators / Bolinhas */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-3">
+            {heroImages.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => handleManualNav(index)}
+                className={cn(
+                  "w-2.5 h-2.5 rounded-full transition-all duration-300",
+                  index === currentHeroIndex 
+                    ? "bg-white w-6" 
+                    : "bg-white/40 hover:bg-white/60"
+                )}
+                aria-label={`Ir para slide ${index + 1}`}
+              />
+            ))}
           </div>
 
           {/* Content Layer */}
