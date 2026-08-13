@@ -8,7 +8,7 @@ import { calculateCommercialTotal, type CommercialItem, type CouponData } from "
 import { useQuery } from "@tanstack/react-query";
 import { getPublicPlans, getPublicServices } from "@/lib/public-catalog.functions";
 import { validateCoupon, confirmContracting } from "@/lib/commercial.functions";
-import { trackLeadJourney } from "@/lib/leads.functions";
+import { safeTrackLead as trackJourney } from "@/lib/leads-client";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 
@@ -44,7 +44,6 @@ export function CheckoutView({
 
   const validateCouponFn = useServerFn(validateCoupon);
   const confirmContractingFn = useServerFn(confirmContracting);
-  const trackJourney = useServerFn(trackLeadJourney);
 
   const { data: plans = [] } = useQuery({
     queryKey: ["public-plans"],
