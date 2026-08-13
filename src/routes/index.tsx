@@ -33,7 +33,7 @@ function LandingPage() {
   const plansQ = useQuery({
     queryKey: ["public-plans"],
     queryFn: () => getPublicPlans(),
-    staleTime: 1000 * 60 * 60, // Avoid hydration mismatch on first load by marking data as fresh for an hour
+    staleTime: 1000 * 60 * 60,
   });
 
   const servicesQ = useQuery({
@@ -171,7 +171,7 @@ function LandingPage() {
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 {(plansQ.data ?? []).map((plan: any) => {
-                  const isDemais = false; // Removido da estrutura
+                  const isDemais = false;
                   const displayName = plan.nome;
                   const isRecomendado = plan.nome === 'Plano B';
                   
@@ -207,7 +207,10 @@ function LandingPage() {
                         ))}
                       </ul>
                       
-                      <Button variant={plan.nome === 'Plano C' ? 'default' : 'outline'} className="w-full">
+                      <Button variant={plan.nome === 'Plano C' ? 'default' : 'outline'} className="w-full" onClick={() => {
+                        if (plan.nome === 'Plano A' || plan.nome === 'Plano B') setShowOpeningFlow(true);
+                        else setShowSwitchingFlow(true);
+                      }}>
                         Selecionar plano
                       </Button>
                     </Card>
