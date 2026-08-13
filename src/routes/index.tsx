@@ -162,12 +162,13 @@ function LandingPage() {
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 {(plansQ.data ?? []).map((plan: any) => {
-                  const isDemais = plan.nome.toLowerCase() === 'demais';
-                  const displayName = isDemais ? 'Solução personalizada' : plan.nome;
+                  const isDemais = false; // Removido da estrutura
+                  const displayName = plan.nome;
+                  const isRecomendado = plan.nome === 'Plano B';
                   
                   return (
-                    <Card key={plan.id} className={`p-6 flex flex-col relative overflow-hidden ${plan.nome === 'Plano C' ? 'ring-2 ring-primary' : ''}`}>
-                      {plan.nome === 'Plano C' && (
+                    <Card key={plan.id} className={`p-6 flex flex-col relative overflow-hidden ${isRecomendado ? 'ring-2 ring-primary' : ''}`}>
+                      {isRecomendado && (
                         <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-bl-lg">
                           RECOMENDADO
                         </div>
@@ -198,7 +199,7 @@ function LandingPage() {
                       </ul>
                       
                       <Button variant={plan.nome === 'Plano C' ? 'default' : 'outline'} className="w-full">
-                        {isDemais ? 'Falar com consultor' : 'Selecionar plano'}
+                        Selecionar plano
                       </Button>
                     </Card>
                   );
