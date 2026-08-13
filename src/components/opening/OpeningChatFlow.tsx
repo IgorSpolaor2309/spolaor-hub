@@ -50,7 +50,8 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
       trackJourney({ 
         data: { 
           journeyStep: 'conversa_iniciada',
-          flowType: 'opening'
+          flowType: 'opening',
+          lastInteraction: 'Iniciou fluxo de abertura via chat'
         } 
       }).then(res => setProspectId(res.prospectId)).catch(console.error);
     }
