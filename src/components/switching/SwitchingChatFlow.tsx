@@ -12,11 +12,11 @@ import { lookupCNPJ } from "@/lib/cnpj-lookup.functions";
 import { useQuery } from "@tanstack/react-query";
 import { getPublicPlans } from "@/lib/public-catalog.functions";
 import { onlyDigits, isValidCnpjLength, validateCnpj } from "@/lib/cnpj";
-import { safeTrackLead as trackJourney } from "@/lib/leads-client";
+import { safeTrackLead as trackJourney, getStoredProspectId } from "@/lib/leads-client";
 
 export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
   const [step, setStep] = useState<'chat' | 'confirm' | 'diagnostic' | 'checkout' | 'success'>('chat');
-  const [prospectId, setProspectId] = useState<string>("");
+  const [prospectId, setProspectId] = useState<string>(getStoredProspectId() || "");
   const [messages, setMessages] = useState<{role: 'user' | 'ai', content: string}[]>([
     { role: 'ai', content: "Olá! Sou o assistente da Digital SC. Para começarmos a planejar sua migração, por favor, me informe o CNPJ da sua empresa." }
   ]);
