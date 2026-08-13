@@ -28,6 +28,7 @@ import { Route as AuthenticatedMinhaAreaRouteImport } from './routes/_authentica
 import { Route as AuthenticatedMeusProcessosRouteImport } from './routes/_authenticated/meus-processos'
 import { Route as AuthenticatedMeusDocumentosRouteImport } from './routes/_authenticated/meus-documentos'
 import { Route as AuthenticatedMeuMesRouteImport } from './routes/_authenticated/meu-mes'
+import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedInteracoesRouteImport } from './routes/_authenticated/interacoes'
 import { Route as AuthenticatedHomologacaoRouteImport } from './routes/_authenticated/homologacao'
 import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
@@ -152,6 +153,11 @@ const AuthenticatedMeusDocumentosRoute =
 const AuthenticatedMeuMesRoute = AuthenticatedMeuMesRouteImport.update({
   id: '/meu-mes',
   path: '/meu-mes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLeadsRoute = AuthenticatedLeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedInteracoesRoute = AuthenticatedInteracoesRouteImport.update({
@@ -307,6 +313,7 @@ export interface FileRoutesByFullPath {
   '/historico': typeof AuthenticatedHistoricoRoute
   '/homologacao': typeof AuthenticatedHomologacaoRoute
   '/interacoes': typeof AuthenticatedInteracoesRoute
+  '/leads': typeof AuthenticatedLeadsRoute
   '/meu-mes': typeof AuthenticatedMeuMesRoute
   '/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
   '/meus-processos': typeof AuthenticatedMeusProcessosRoute
@@ -351,6 +358,7 @@ export interface FileRoutesByTo {
   '/historico': typeof AuthenticatedHistoricoRoute
   '/homologacao': typeof AuthenticatedHomologacaoRoute
   '/interacoes': typeof AuthenticatedInteracoesRoute
+  '/leads': typeof AuthenticatedLeadsRoute
   '/meu-mes': typeof AuthenticatedMeuMesRoute
   '/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
   '/meus-processos': typeof AuthenticatedMeusProcessosRoute
@@ -397,6 +405,7 @@ export interface FileRoutesById {
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
   '/_authenticated/homologacao': typeof AuthenticatedHomologacaoRoute
   '/_authenticated/interacoes': typeof AuthenticatedInteracoesRoute
+  '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/meu-mes': typeof AuthenticatedMeuMesRoute
   '/_authenticated/meus-documentos': typeof AuthenticatedMeusDocumentosRoute
   '/_authenticated/meus-processos': typeof AuthenticatedMeusProcessosRoute
@@ -443,6 +452,7 @@ export interface FileRouteTypes {
     | '/historico'
     | '/homologacao'
     | '/interacoes'
+    | '/leads'
     | '/meu-mes'
     | '/meus-documentos'
     | '/meus-processos'
@@ -487,6 +497,7 @@ export interface FileRouteTypes {
     | '/historico'
     | '/homologacao'
     | '/interacoes'
+    | '/leads'
     | '/meu-mes'
     | '/meus-documentos'
     | '/meus-processos'
@@ -532,6 +543,7 @@ export interface FileRouteTypes {
     | '/_authenticated/historico'
     | '/_authenticated/homologacao'
     | '/_authenticated/interacoes'
+    | '/_authenticated/leads'
     | '/_authenticated/meu-mes'
     | '/_authenticated/meus-documentos'
     | '/_authenticated/meus-processos'
@@ -707,6 +719,13 @@ declare module '@tanstack/react-router' {
       path: '/meu-mes'
       fullPath: '/meu-mes'
       preLoaderRoute: typeof AuthenticatedMeuMesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/leads': {
+      id: '/_authenticated/leads'
+      path: '/leads'
+      fullPath: '/leads'
+      preLoaderRoute: typeof AuthenticatedLeadsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/interacoes': {
@@ -933,6 +952,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
   AuthenticatedHomologacaoRoute: typeof AuthenticatedHomologacaoRoute
   AuthenticatedInteracoesRoute: typeof AuthenticatedInteracoesRoute
+  AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedMeuMesRoute: typeof AuthenticatedMeuMesRoute
   AuthenticatedMeusDocumentosRoute: typeof AuthenticatedMeusDocumentosRoute
   AuthenticatedMeusProcessosRoute: typeof AuthenticatedMeusProcessosRoute
@@ -964,6 +984,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
   AuthenticatedHomologacaoRoute: AuthenticatedHomologacaoRoute,
   AuthenticatedInteracoesRoute: AuthenticatedInteracoesRoute,
+  AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedMeuMesRoute: AuthenticatedMeuMesRoute,
   AuthenticatedMeusDocumentosRoute: AuthenticatedMeusDocumentosRoute,
   AuthenticatedMeusProcessosRoute: AuthenticatedMeusProcessosRoute,
