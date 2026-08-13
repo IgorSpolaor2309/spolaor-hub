@@ -496,7 +496,7 @@ function LandingPage() {
         <div className="container mx-auto px-4 grid gap-12 md:grid-cols-4">
           <div className="col-span-2">
             <div className="flex items-center gap-3 mb-6">
-              <img src={logoAsset.url} alt="Digital SC" className="h-10 w-auto" />
+              <img src={logoAsset.url} alt="Digital SC" className="h-10 w-auto brightness-0" />
               <span className="font-display text-xl font-bold text-white">Digital SC</span>
             </div>
             <p className="max-w-sm text-sm">
