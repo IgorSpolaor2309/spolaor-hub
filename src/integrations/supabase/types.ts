@@ -3927,6 +3927,7 @@ export type Database = {
         Args: { _action?: string; _client_id?: string; _route: string }
         Returns: string
       }
+      mark_abandoned_leads: { Args: never; Returns: undefined }
       mark_password_changed: { Args: never; Returns: undefined }
       notify_user: {
         Args: {
