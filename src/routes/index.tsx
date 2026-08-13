@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { Check, ArrowRight, ShieldCheck, Clock, Inbox, FileText, Receipt, Users,
 import { OpeningChatFlow } from "@/components/opening/OpeningChatFlow";
 import { SwitchingChatFlow } from "@/components/switching/SwitchingChatFlow";
 import { safeTrackLead as trackJourney } from "@/lib/leads-client";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -22,6 +23,25 @@ function LandingPage() {
   const [showOpeningFlow, setShowOpeningFlow] = useState(false);
   const [showSwitchingFlow, setShowSwitchingFlow] = useState(false);
   const [prospectId, setProspectId] = useState<string | null>(null);
+  const { role, userId, loading } = useCurrentUser();
+  const navigate = useNavigate();
+
+  const handleClientAreaClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (loading) return;
+
+    if (userId) {
+      if (role === 'admin' || role === 'collaborator') {
+        navigate({ to: "/dashboard" });
+      } else if (role === 'client') {
+        navigate({ to: "/meu-mes" });
+      } else {
+        navigate({ to: "/dashboard" });
+      }
+    } else {
+      navigate({ to: "/auth", search: { next: window.location.pathname } });
+    }
+  };
 
   // Detect abandonment or track progress
   useEffect(() => {
@@ -48,8 +68,10 @@ function LandingPage() {
       <div className="min-h-screen bg-background flex flex-col">
         <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
           <div className="container mx-auto h-16 flex items-center px-4">
-            <AppLogo className="h-8 w-auto" />
-            <span className="font-display text-xl font-bold ml-3 text-primary">Digital SC</span>
+            <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+              <AppLogo className="h-8 w-auto" />
+              <span className="font-display text-xl font-bold text-primary">Digital SC</span>
+            </Link>
           </div>
         </header>
         <main className="flex-1 py-12">
@@ -65,10 +87,10 @@ function LandingPage() {
       {/* Header Fixo */}
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <AppLogo className="h-10 w-auto" />
             <span className="font-display text-xl font-bold tracking-tight text-primary">Digital SC</span>
-          </div>
+          </Link>
           <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
             <a href="#funciona" className="text-muted-foreground hover:text-primary transition-colors">Como funciona</a>
             <a href="#planos" className="text-muted-foreground hover:text-primary transition-colors">Nossos planos</a>
@@ -76,13 +98,19 @@ function LandingPage() {
             <a href="#duvidas" className="text-muted-foreground hover:text-primary transition-colors">Perguntas frequentes</a>
           </nav>
           <div className="flex items-center gap-2 sm:gap-3">
-            <a href="/auth" className="text-sm font-medium text-muted-foreground hover:text-primary">Já sou cliente</a>
+            <button 
+              onClick={handleClientAreaClick}
+              className="text-sm font-medium text-muted-foreground hover:text-primary cursor-pointer"
+            >
+              Já sou cliente
+            </button>
             <Button size="sm" className="hidden sm:inline-flex" asChild>
-              <a href="/auth">Abrir minha empresa</a>
+              <Link to="/auth">Abrir minha empresa</Link>
             </Button>
           </div>
         </div>
       </header>
+
 
       <main className="flex-1">
         {/* Hero Section */}
