@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
+import { createContractIntent } from "./contracts.functions";
 
 export const validateCoupon = createServerFn({ method: "GET" })
   .inputValidator((data) => z.object({ code: z.string() }).parse(data))
@@ -41,7 +42,7 @@ export const confirmContracting = createServerFn({ method: "POST" })
     })
   }).parse(data))
   .handler(async ({ data }) => {
-    // Usamos cast para bypass do erro de tipos enquanto a tabela não é sincronizada no types.ts
+    // 1. Registra o Prospect
     const { data: prospect, error } = await (supabase as any)
       .from("commercial_prospects")
       .insert({
@@ -66,6 +67,26 @@ export const confirmContracting = createServerFn({ method: "POST" })
       console.error("Error saving prospect:", error);
       throw new Error("Falha ao registrar a intenção de contratação.");
     }
+
+    // 2. Cria a intenção de Contrato vinculada
+    await createContractIntent({
+      data: {
+        prospect_id: prospect.id,
+        plan_id: data.plan_id,
+        plan_value: data.totals.originalValue, // Valor base do plano
+        final_value: data.totals.finalValue,
+        discount_value: data.totals.discountValue,
+        applied_coupon: data.coupon_id, // Salvando ID por enquanto
+        extra_services: data.extra_service_ids,
+        contract_data: {
+          razao_social: data.extracted_data?.razao_social || data.contact_data.name,
+          cnpj: data.extracted_data?.cnpj || null,
+          email: data.contact_data.email,
+          telefone: data.contact_data.phone,
+          ...data.extracted_data
+        }
+      }
+    });
 
     return { 
       success: true, 
