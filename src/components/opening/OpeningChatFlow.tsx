@@ -50,7 +50,8 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
       trackJourney({ 
         data: { 
           journeyStep: 'conversa_iniciada',
-          flowType: 'opening'
+          flowType: 'opening',
+          lastInteraction: 'Iniciou fluxo de abertura via chat'
         } 
       }).then(res => setProspectId(res.prospectId)).catch(console.error);
     }
@@ -76,7 +77,8 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
           data: {
             prospectId,
             journeyStep: 'diagnostico_concluido',
-            extractedData: result.extractedData
+            extractedData: result.extractedData,
+            lastInteraction: 'Diagnóstico concluído via IA'
           }
         }).catch(console.error);
         setTimeout(() => setStep('confirm'), 2000);
@@ -151,7 +153,8 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
                   journeyStep: 'plano_visualizado',
                   contactData: getContactData(),
                   planId: plan?.id,
-                  estimatedValue: plan?.valor_padrao
+                  estimatedValue: plan?.valor_padrao,
+                  lastInteraction: `Plano visualizado: ${plan?.nome}`
                 }
               }).catch(console.error);
               setStep('diagnostic');
@@ -244,7 +247,8 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
                   trackJourney({
                     data: {
                       prospectId,
-                      journeyStep: 'checkout_iniciado'
+                      journeyStep: 'checkout_iniciado',
+                      lastInteraction: 'Clicou em Iniciar Abertura (Checkout)'
                     }
                   }).catch(console.error);
                   setStep('checkout');

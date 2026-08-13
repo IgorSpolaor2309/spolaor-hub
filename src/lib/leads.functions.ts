@@ -14,7 +14,9 @@ const LeadTrackSchema = z.object({
     phone: z.string().optional()
   }).optional(),
   planId: z.string().optional(),
-  flowType: z.enum(["opening", "switching"]).optional()
+  flowType: z.enum(["opening", "switching"]).optional(),
+  cnpj: z.string().optional(),
+  lastInteraction: z.string().optional()
 });
 
 export const trackLeadJourney = createServerFn({ method: "POST" })
@@ -22,7 +24,8 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const payload: any = {
       journey_step: data.journeyStep,
-      last_interaction_at: new Date().toISOString()
+      last_interaction_at: new Date().toISOString(),
+      last_interaction_description: data.lastInteraction || data.journeyStep
     };
 
     if (data.bottleneckIndicator) payload.bottleneck_indicator = data.bottleneckIndicator;
@@ -33,6 +36,12 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
     if (data.contactData?.phone) payload.contact_phone = data.contactData.phone;
     if (data.planId) payload.plan_id = data.planId;
     if (data.flowType) payload.flow_origin = data.flowType;
+    if (data.cnpj) payload.cnpj = data.cnpj;
+    
+    // Check for "Quero contratar" equivalent
+    if (data.journeyStep === 'checkout_iniciado') {
+      payload.status_comercial = 'contratação_em_andamento';
+    }
 
     let result;
     if (data.prospectId) {

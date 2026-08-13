@@ -52,7 +52,8 @@ export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
       trackJourney({ 
         data: { 
           journeyStep: 'conversa_iniciada',
-          flowType: 'switching'
+          flowType: 'switching',
+          lastInteraction: 'Iniciou fluxo de troca de contador via chat'
         } 
       }).then(res => setProspectId(res.prospectId)).catch(console.error);
     }
@@ -78,6 +79,20 @@ export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
               uf: companyData.uf,
               tax_regime: companyData.simples ? "Simples Nacional" : "Lucro Presumido" // Default guess based on simple opt-in
             }));
+            
+            trackJourney({
+              data: {
+                prospectId,
+                cnpj: digits,
+                journeyStep: 'cnpj_identificado',
+                lastInteraction: `CNPJ ${digits} identificado via Receita`,
+                extractedData: {
+                  business_name: companyData.razao_social || companyData.nome_fantasia,
+                  city: companyData.municipio,
+                  uf: companyData.uf
+                }
+              }
+            }).catch(console.error);
             
             const aiResponse = `Encontrei a empresa ${companyData.razao_social}${companyData.nome_fantasia ? ` (${companyData.nome_fantasia})` : ''} em ${companyData.municipio}/${companyData.uf}. É esta mesmo? Se sim, me conte qual o faturamento mensal médio dela.`;
             setMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
@@ -115,7 +130,8 @@ export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
           data: {
             prospectId,
             journeyStep: 'diagnostico_concluido',
-            extractedData: result.extractedData
+            extractedData: result.extractedData,
+            lastInteraction: 'Diagnóstico de transição concluído via IA'
           }
         }).catch(console.error);
         setTimeout(() => setStep('confirm'), 2000);
@@ -191,7 +207,8 @@ export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
                   journeyStep: 'plano_visualizado',
                   contactData: getContactData(),
                   planId: plan?.id,
-                  estimatedValue: plan?.valor_padrao
+                  estimatedValue: plan?.valor_padrao,
+                  lastInteraction: `Proposta visualizada: ${plan?.nome}`
                 }
               }).catch(console.error);
               setStep('diagnostic');
@@ -285,7 +302,8 @@ export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
                   trackJourney({
                     data: {
                       prospectId,
-                      journeyStep: 'checkout_iniciado'
+                      journeyStep: 'checkout_iniciado',
+                      lastInteraction: 'Clicou em Confirmar Migração (Checkout)'
                     }
                   }).catch(console.error);
                   setStep('checkout');
