@@ -64,7 +64,7 @@ export const confirmContracting = createServerFn({ method: "POST" })
 
     if (error) {
       console.error("Error saving prospect:", error);
-      throw new Error("Falha ao registrar a contratação.");
+      throw new Error("Falha ao registrar a intenção de contratação.");
     }
 
     return { 
