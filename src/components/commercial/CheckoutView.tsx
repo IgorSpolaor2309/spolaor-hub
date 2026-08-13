@@ -112,7 +112,7 @@ export function CheckoutView({
       });
       onConfirm(result.prospectId);
     } catch (e) {
-      toast.error("Erro ao confirmar contratação");
+      toast.error("Erro ao registrar intenção de contratação");
     } finally {
       setIsConfirming(false);
     }
@@ -211,7 +211,7 @@ export function CheckoutView({
       {/* Summary Sidebar */}
       <div className="space-y-6">
         <Card className="p-6 sticky top-8 shadow-lg border-primary/10">
-          <h3 className="font-display text-lg font-bold mb-6">Resumo da Contratação</h3>
+          <h3 className="font-display text-lg font-bold mb-6">Resumo da Proposta</h3>
           
           <div className="space-y-4 mb-6">
             <div className="flex justify-between text-sm">
@@ -264,7 +264,7 @@ export function CheckoutView({
                 </>
               ) : (
                 <>
-                  Confirmar Contratação
+                  Quero contratar
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </>
               )}

@@ -57,19 +57,19 @@ export const confirmContracting = createServerFn({ method: "POST" })
         original_value: data.totals.originalValue,
         discount_value: data.totals.discountValue,
         final_value: data.totals.finalValue,
-        status_comercial: "Aguardando onboarding"
+        status_comercial: "contratação_em_andamento"
       })
       .select()
       .single();
 
     if (error) {
       console.error("Error saving prospect:", error);
-      throw new Error("Falha ao registrar a contratação.");
+      throw new Error("Falha ao registrar a intenção de contratação.");
     }
 
     return { 
       success: true, 
-      message: "Contratação confirmada com sucesso!",
+      message: "Intenção de contratação registrada com sucesso!",
       prospectId: prospect.id 
     };
   });
