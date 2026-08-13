@@ -57,7 +57,7 @@ function LeadsPage() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: (data: Parameters<typeof updateLeadRecovery>[0]["data"]) => updateLeadRecovery({ data }),
+    mutationFn: (payload: any) => updateLeadRecovery(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] })
       toast.success('Lead atualizado com sucesso')
@@ -66,7 +66,7 @@ function LeadsPage() {
   })
 
   const historyMutation = useMutation({
-    mutationFn: (data: Parameters<typeof addLeadHistory>[0]["data"]) => addLeadHistory({ data }),
+    mutationFn: (payload: any) => addLeadHistory(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] })
       toast.success('Interação registrada')
