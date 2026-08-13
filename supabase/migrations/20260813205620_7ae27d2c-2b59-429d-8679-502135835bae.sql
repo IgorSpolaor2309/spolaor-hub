@@ -1,0 +1,1 @@
+UPDATE public.plans SET publico_alvo = 'MEI' WHERE nome = 'Plano A';

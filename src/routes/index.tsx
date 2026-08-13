@@ -197,7 +197,7 @@ function LandingPage() {
           {/* Content Layer */}
           <div className="container relative z-10 mx-auto px-4 text-center">
             <h1 className="font-display text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl animate-in fade-in slide-in-from-bottom-4 duration-1000">
-              Sua contabilidade começa <br className="hidden sm:block" />entendendo sua empresa.
+              CONTABILIDADE QUE <br className="hidden sm:block" />CABE NO SEU BOLSO
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-white/90 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
               Planos e serviços adaptados ao perfil do seu negócio, atendimento digital e acompanhamento em um só lugar.
