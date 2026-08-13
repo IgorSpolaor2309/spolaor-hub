@@ -430,13 +430,37 @@ function LandingPage() {
         </section>
 
         {/* CTA Final */}
-        <section className="py-20 bg-primary text-primary-foreground">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-6">Pronto para cuidar da sua empresa de um jeito mais simples?</h2>
-            <p className="text-primary-foreground/80 mb-10 max-w-xl mx-auto">Dê o próximo passo para uma contabilidade mais simples, digital e transparente.</p>
+        <section className="py-24 bg-primary text-primary-foreground relative overflow-hidden">
+          {/* Subtle decoration */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-black/10 rounded-full -ml-48 -mb-48 blur-3xl pointer-events-none" />
+          
+          <div className="container relative z-10 mx-auto px-4 text-center">
+            <h2 className="font-display text-3xl md:text-5xl font-bold mb-6 text-white">
+              Pronto para cuidar da sua empresa de um jeito mais simples?
+            </h2>
+            <p className="text-white/90 mb-12 max-w-2xl mx-auto text-lg md:text-xl leading-relaxed">
+              Dê o próximo passo para uma contabilidade mais simples, digital e transparente.
+            </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-               <Button size="lg" variant="secondary" className="w-full sm:w-auto font-bold text-primary hover:bg-white focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-primary" onClick={() => setShowOpeningFlow(true)}>Abrir minha empresa</Button>
-               <Button size="lg" variant="outline" className="w-full sm:w-auto border-white/20 hover:bg-white/10 text-white font-bold focus:ring-2 focus:ring-white" onClick={() => setShowSwitchingFlow(true)}>Trocar de contador</Button>
+               <Button 
+                size="lg" 
+                className="w-full sm:w-auto px-10 h-14 text-base font-bold bg-[#0052FF] text-white hover:bg-[#0041CC] shadow-xl transition-all" 
+                onClick={() => setShowOpeningFlow(true)}
+               >
+                 Abrir minha empresa
+               </Button>
+               <Button 
+                size="lg" 
+                variant="secondary" 
+                className="w-full sm:w-auto px-10 h-14 text-base font-bold bg-white text-primary border border-white hover:bg-primary hover:text-white hover:border-white/20 shadow-lg transition-all" 
+                onClick={() => setShowSwitchingFlow(true)}
+               >
+                 Trocar de contador
+               </Button>
+            </div>
+          </div>
+        </section>
             </div>
           </div>
         </section>
