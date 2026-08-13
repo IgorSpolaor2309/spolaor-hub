@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { getPublicPlans, getPublicServices } from "@/lib/public-catalog.function
 import { Check, ArrowRight, ShieldCheck, Clock, Inbox, FileText, Receipt, Users, UserCog, MessageSquare, Workflow, Briefcase } from "lucide-react";
 import { OpeningChatFlow } from "@/components/opening/OpeningChatFlow";
 import { SwitchingChatFlow } from "@/components/switching/SwitchingChatFlow";
+import { safeTrackLead as trackJourney } from "@/lib/leads-client";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -20,6 +21,14 @@ const brl = (n: number | null | undefined) =>
 function LandingPage() {
   const [showOpeningFlow, setShowOpeningFlow] = useState(false);
   const [showSwitchingFlow, setShowSwitchingFlow] = useState(false);
+  const [prospectId, setProspectId] = useState<string | null>(null);
+
+  // Detect abandonment or track progress
+  useEffect(() => {
+    if (showOpeningFlow || showSwitchingFlow) {
+      // Logic for session storage or similar could go here
+    }
+  }, [showOpeningFlow, showSwitchingFlow]);
   
   const plansQ = useQuery({
     queryKey: ["public-plans"],
