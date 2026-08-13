@@ -68,9 +68,67 @@ export const getLeads = createServerFn({ method: "GET" })
       .from("commercial_prospects")
       .select(`
         *,
-        plans:plan_id (nome)
+        plans:plan_id (nome),
+        responsible:responsible_profile_id (full_name, avatar_url),
+        history:commercial_prospect_history (
+          *,
+          profile:profile_id (full_name)
+        )
       `)
       .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return data;
+  });
+
+export const updateLeadRecovery = createServerFn({ method: "POST" })
+  .inputValidator((data) => z.object({
+    id: z.string(),
+    responsible_profile_id: z.string().optional().nullable(),
+    priority: z.string().optional(),
+    status_comercial: z.string().optional(),
+    next_action_description: z.string().optional(),
+    next_action_date: z.string().optional().nullable(),
+    internal_notes: z.string().optional()
+  }).parse(data))
+  .handler(async ({ data }) => {
+    const { id, ...payload } = data;
+    const { error } = await (supabase as any)
+      .from("commercial_prospects")
+      .update(payload)
+      .eq("id", id);
+
+    if (error) throw error;
+    return { success: true };
+  });
+
+export const addLeadHistory = createServerFn({ method: "POST" })
+  .inputValidator((data) => z.object({
+    prospect_id: z.string(),
+    action_type: z.string(),
+    content: z.string()
+  }).parse(data))
+  .handler(async ({ data }) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const { error } = await (supabase as any)
+      .from("commercial_prospect_history")
+      .insert({
+        ...data,
+        profile_id: user.id
+      });
+
+    if (error) throw error;
+    return { success: true };
+  });
+
+export const getCollaborators = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const { data, error } = await (supabase as any)
+      .from("profiles")
+      .select("id, full_name, avatar_url")
+      .or('role.eq.admin,role.eq.collaborator');
 
     if (error) throw error;
     return data;

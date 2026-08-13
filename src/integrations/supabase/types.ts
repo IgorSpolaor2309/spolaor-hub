@@ -958,6 +958,48 @@ export type Database = {
           },
         ]
       }
+      commercial_prospect_history: {
+        Row: {
+          action_type: string
+          content: string | null
+          created_at: string
+          id: string
+          profile_id: string
+          prospect_id: string
+        }
+        Insert: {
+          action_type: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          profile_id: string
+          prospect_id: string
+        }
+        Update: {
+          action_type?: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          profile_id?: string
+          prospect_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commercial_prospect_history_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commercial_prospect_history_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "commercial_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       commercial_prospects: {
         Row: {
           ai_extracted_data: Json | null
@@ -974,10 +1016,15 @@ export type Database = {
           final_value: number
           flow_origin: string
           id: string
+          internal_notes: string | null
           journey_step: string | null
           last_interaction_at: string | null
+          next_action_date: string | null
+          next_action_description: string | null
           original_value: number
           plan_id: string | null
+          priority: string | null
+          responsible_profile_id: string | null
           status_comercial: string | null
           updated_at: string | null
         }
@@ -996,10 +1043,15 @@ export type Database = {
           final_value: number
           flow_origin: string
           id?: string
+          internal_notes?: string | null
           journey_step?: string | null
           last_interaction_at?: string | null
+          next_action_date?: string | null
+          next_action_description?: string | null
           original_value: number
           plan_id?: string | null
+          priority?: string | null
+          responsible_profile_id?: string | null
           status_comercial?: string | null
           updated_at?: string | null
         }
@@ -1018,10 +1070,15 @@ export type Database = {
           final_value?: number
           flow_origin?: string
           id?: string
+          internal_notes?: string | null
           journey_step?: string | null
           last_interaction_at?: string | null
+          next_action_date?: string | null
+          next_action_description?: string | null
           original_value?: number
           plan_id?: string | null
+          priority?: string | null
+          responsible_profile_id?: string | null
           status_comercial?: string | null
           updated_at?: string | null
         }
@@ -1031,6 +1088,13 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commercial_prospects_responsible_profile_id_fkey"
+            columns: ["responsible_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
