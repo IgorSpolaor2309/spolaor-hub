@@ -347,8 +347,9 @@ function LandingPage() {
                             {plan.tipo_preco !== 'sob_orcamento' && <span className="text-sm font-normal text-muted-foreground">/mês</span>}
                           </div>
                           {plan.limite_faturamento && (
-                            <div className="text-[10px] text-muted-foreground mt-1">
+                            <div className="text-[10px] text-muted-foreground mt-1 whitespace-pre-line">
                               Até {brl(plan.limite_faturamento)} de faturamento/mês
+                              {plan.nome === 'Plano B' && "\nSimples Nacional - Anexo III"}
                             </div>
                           )}
                         </div>
