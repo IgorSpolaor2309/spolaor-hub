@@ -961,6 +961,7 @@ export type Database = {
       commercial_prospects: {
         Row: {
           ai_extracted_data: Json | null
+          bottleneck_indicator: string | null
           cnpj: string | null
           contact_email: string
           contact_name: string
@@ -968,10 +969,13 @@ export type Database = {
           coupon_id: string | null
           created_at: string | null
           discount_value: number | null
+          estimated_value: number | null
           extra_service_ids: string[] | null
           final_value: number
           flow_origin: string
           id: string
+          journey_step: string | null
+          last_interaction_at: string | null
           original_value: number
           plan_id: string | null
           status_comercial: string | null
@@ -979,6 +983,7 @@ export type Database = {
         }
         Insert: {
           ai_extracted_data?: Json | null
+          bottleneck_indicator?: string | null
           cnpj?: string | null
           contact_email: string
           contact_name: string
@@ -986,10 +991,13 @@ export type Database = {
           coupon_id?: string | null
           created_at?: string | null
           discount_value?: number | null
+          estimated_value?: number | null
           extra_service_ids?: string[] | null
           final_value: number
           flow_origin: string
           id?: string
+          journey_step?: string | null
+          last_interaction_at?: string | null
           original_value: number
           plan_id?: string | null
           status_comercial?: string | null
@@ -997,6 +1005,7 @@ export type Database = {
         }
         Update: {
           ai_extracted_data?: Json | null
+          bottleneck_indicator?: string | null
           cnpj?: string | null
           contact_email?: string
           contact_name?: string
@@ -1004,10 +1013,13 @@ export type Database = {
           coupon_id?: string | null
           created_at?: string | null
           discount_value?: number | null
+          estimated_value?: number | null
           extra_service_ids?: string[] | null
           final_value?: number
           flow_origin?: string
           id?: string
+          journey_step?: string | null
+          last_interaction_at?: string | null
           original_value?: number
           plan_id?: string | null
           status_comercial?: string | null
