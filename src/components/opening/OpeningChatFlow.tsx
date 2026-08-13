@@ -274,6 +274,7 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
         <CheckoutView 
           flowType="opening"
           initialPlanId={plan?.id}
+          prospectId={prospectId}
           extractedData={extractedData}
           contactData={getContactData()}
           onBack={() => setStep('diagnostic')}

@@ -15,6 +15,7 @@ import { toast } from "sonner";
 interface CheckoutViewProps {
   flowType: "opening" | "switching";
   initialPlanId?: string;
+  prospectId?: string;
   extractedData: any;
   contactData: {
     name: string;
@@ -28,6 +29,7 @@ interface CheckoutViewProps {
 export function CheckoutView({ 
   flowType, 
   initialPlanId, 
+  prospectId,
   extractedData, 
   contactData,
   onBack, 
@@ -119,6 +121,15 @@ export function CheckoutView({
           totals
         }
       });
+      
+      trackJourney({
+        data: {
+          prospectId: result.prospectId,
+          journeyStep: 'intencao_contratar',
+          estimatedValue: totals.finalValue
+        }
+      }).catch(console.error);
+
       onConfirm(result.prospectId);
     } catch (e) {
       toast.error("Erro ao registrar intenção de contratação");

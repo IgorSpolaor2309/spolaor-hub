@@ -315,6 +315,7 @@ export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
         <CheckoutView 
           flowType="switching"
           initialPlanId={plan?.id}
+          prospectId={prospectId}
           extractedData={extractedData}
           contactData={getContactData()}
           onBack={() => setStep('diagnostic')}
