@@ -14,7 +14,9 @@ const LeadTrackSchema = z.object({
     phone: z.string().optional()
   }).optional(),
   planId: z.string().optional(),
-  flowType: z.enum(["opening", "switching"]).optional()
+  flowType: z.enum(["opening", "switching"]).optional(),
+  cnpj: z.string().optional(),
+  lastInteraction: z.string().optional()
 });
 
 export const trackLeadJourney = createServerFn({ method: "POST" })
