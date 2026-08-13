@@ -10,6 +10,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { processOpeningMessage } from "@/lib/opening-chat.functions";
 import { useQuery } from "@tanstack/react-query";
 import { getPublicPlans } from "@/lib/public-catalog.functions";
+import { trackLeadJourney } from "@/lib/leads.functions";
 
 export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
   const [step, setStep] = useState<'chat' | 'confirm' | 'diagnostic' | 'checkout' | 'success'>('chat');
@@ -24,6 +25,7 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
   
   const chatEndRef = useRef<HTMLDivElement>(null);
   const processMessage = useServerFn(processOpeningMessage);
+  const trackJourney = useServerFn(trackLeadJourney);
   
   const { data: plans } = useQuery({
     queryKey: ["public-plans"],
@@ -43,6 +45,16 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
     setInput("");
     setLoading(true);
 
+    // Track initial interaction if it's the first message
+    if (messages.length === 1) {
+      trackJourney({ 
+        data: { 
+          journeyStep: 'conversa_iniciada',
+          flowType: 'opening'
+        } 
+      }).then(res => setProspectId(res.prospectId)).catch(console.error);
+    }
+
     try {
       const result = await processMessage({
         data: { 
@@ -60,6 +72,13 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
       });
       
       if (result.status === "complete") {
+        trackJourney({
+          data: {
+            prospectId,
+            journeyStep: 'diagnostico_concluido',
+            extractedData: result.extractedData
+          }
+        }).catch(console.error);
         setTimeout(() => setStep('confirm'), 2000);
       }
     } catch (e) {
@@ -124,7 +143,19 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
 
           <div className="flex gap-3 pt-4">
             <Button variant="outline" className="flex-1" onClick={() => setStep('chat')}>Corrigir na conversa</Button>
-            <Button className="flex-1" onClick={() => setStep('diagnostic')}>Confirmar e ver diagnóstico</Button>
+            <Button className="flex-1" onClick={() => {
+              const plan = getRecommendedPlan();
+              trackJourney({
+                data: {
+                  prospectId,
+                  journeyStep: 'plano_visualizado',
+                  contactData: getContactData(),
+                  planId: plan?.id,
+                  estimatedValue: plan?.valor_padrao
+                }
+              }).catch(console.error);
+              setStep('diagnostic');
+            }}>Confirmar e ver diagnóstico</Button>
           </div>
         </Card>
       </div>
@@ -209,7 +240,15 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
                     ))}
                   </ul>
                 </div>
-                <Button variant="secondary" className="w-full mt-6 text-primary font-bold" onClick={() => setStep('checkout')}>Iniciar Abertura</Button>
+                <Button variant="secondary" className="w-full mt-6 text-primary font-bold" onClick={() => {
+                  trackJourney({
+                    data: {
+                      prospectId,
+                      journeyStep: 'checkout_iniciado'
+                    }
+                  }).catch(console.error);
+                  setStep('checkout');
+                }}>Iniciar Abertura</Button>
               </>
             ) : (
               <p>Carregando recomendação...</p>

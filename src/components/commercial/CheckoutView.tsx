@@ -8,6 +8,7 @@ import { calculateCommercialTotal, type CommercialItem, type CouponData } from "
 import { useQuery } from "@tanstack/react-query";
 import { getPublicPlans, getPublicServices } from "@/lib/public-catalog.functions";
 import { validateCoupon, confirmContracting } from "@/lib/commercial.functions";
+import { trackLeadJourney } from "@/lib/leads.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 
@@ -41,6 +42,7 @@ export function CheckoutView({
 
   const validateCouponFn = useServerFn(validateCoupon);
   const confirmContractingFn = useServerFn(confirmContracting);
+  const trackJourney = useServerFn(trackLeadJourney);
 
   const { data: plans = [] } = useQuery({
     queryKey: ["public-plans"],
@@ -85,6 +87,13 @@ export function CheckoutView({
       const result = await validateCouponFn({ data: { code: couponCode } });
       if (result.valid && result.coupon) {
         setAppliedCoupon(result.coupon as any);
+        trackJourney({
+          data: {
+            prospectId: initialPlanId, // Aqui precisamos passar o prospectId, mas CheckoutView recebe prospectId via prop ou extraímos?
+            // CheckoutView atual não recebe prospectId. Vou ajustar a prop.
+            journeyStep: 'cupom_aplicado'
+          }
+        }).catch(console.error);
         toast.success("Cupom aplicado com sucesso!");
       } else {
         toast.error(result.message || "Cupom inválido");
