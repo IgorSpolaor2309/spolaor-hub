@@ -105,7 +105,7 @@ function LandingPage() {
               Já sou cliente
             </button>
             <Button size="sm" className="hidden sm:inline-flex" asChild>
-              <Link to="/auth">Abrir minha empresa</Link>
+              <Link to="/auth" search={{ next: "/" }}>Abrir minha empresa</Link>
             </Button>
           </div>
         </div>
