@@ -36,6 +36,12 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
     if (data.contactData?.phone) payload.contact_phone = data.contactData.phone;
     if (data.planId) payload.plan_id = data.planId;
     if (data.flowType) payload.flow_origin = data.flowType;
+    if (data.cnpj) payload.cnpj = data.cnpj;
+    
+    // Check for "Quero contratar" equivalent
+    if (data.journeyStep === 'checkout_iniciado') {
+      payload.status_comercial = 'contratação_em_andamento';
+    }
 
     let result;
     if (data.prospectId) {
