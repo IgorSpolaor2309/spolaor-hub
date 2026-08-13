@@ -13,6 +13,13 @@ import { SwitchingChatFlow } from "@/components/switching/SwitchingChatFlow";
 import { safeTrackLead as trackJourney } from "@/lib/leads-client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
+import foto1Asset from "@/assets/foto1.jpg.asset.json";
+import foto3Asset from "@/assets/foto3.jpg.asset.json";
+import foto4Asset from "@/assets/foto4.jpg.asset.json";
+import foto5Asset from "@/assets/foto5.jpg.asset.json";
+import foto6Asset from "@/assets/foto6.jpg.asset.json";
+import foto7Asset from "@/assets/foto7.jpg.asset.json";
+
 export const Route = createFileRoute("/")({
   component: LandingPage,
 });
@@ -27,6 +34,21 @@ function LandingPage() {
   const [showPlanChoice, setShowPlanChoice] = useState(false);
   const { role, userId, loading } = useCurrentUser();
   const navigate = useNavigate();
+  const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
+
+  const heroImages = [
+    { url: foto4Asset.url, alt: "Ambiente amplo com mesa branca e divisórias de vidro" },
+    { url: foto7Asset.url, alt: "Mesa longa central com salas de vidro" },
+    { url: foto1Asset.url, alt: "Sala com mesa branca próxima às janelas" },
+    { url: foto6Asset.url, alt: "Sala de reunião escura com mesa preta" }
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentHeroIndex((prev) => (prev + 1) % heroImages.length);
+    }, 7000);
+    return () => clearInterval(timer);
+  }, [heroImages.length]);
 
   const handleClientAreaClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -121,22 +143,46 @@ function LandingPage() {
 
 
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="container mx-auto px-4 py-16 md:py-24 text-center">
-          <h1 className="font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl animate-in fade-in slide-in-from-bottom-4 duration-1000">
-            Sua contabilidade começa <br className="hidden sm:block" />entendendo sua empresa.
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
-            Planos e serviços adaptados ao perfil do seu negócio, atendimento digital e acompanhamento em um só lugar.
-          </p>
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
-            <Button size="lg" className="w-full sm:w-auto" onClick={() => setShowOpeningFlow(true)}>Quero abrir minha empresa</Button>
-            <Button size="lg" variant="outline" className="w-full sm:w-auto" onClick={() => setShowSwitchingFlow(true)}>Quero trocar de contador</Button>
+        {/* Hero Section com Carrossel */}
+        <section className="relative h-[600px] md:h-[700px] flex items-center justify-center overflow-hidden">
+          {/* Background Images Layer */}
+          <div className="absolute inset-0 z-0">
+            {heroImages.map((img, index) => (
+              <div
+                key={index}
+                className={`absolute inset-0 transition-opacity duration-[1500ms] ease-in-out ${
+                  index === currentHeroIndex ? 'opacity-100' : 'opacity-0'
+                }`}
+                style={{
+                  backgroundImage: `url(${img.url})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
+                aria-hidden="true"
+              />
+            ))}
+            {/* Overlays */}
+            <div className="absolute inset-0 bg-[#000814]/60 backdrop-blur-[1.5px]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/40" />
           </div>
-          <div className="mt-8 animate-in fade-in duration-1000 delay-500">
-            <a href="#planos" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">
-              Descobrir meu plano <ArrowRight className="h-3.5 w-3.5" />
-            </a>
+
+          {/* Content Layer */}
+          <div className="container relative z-10 mx-auto px-4 text-center">
+            <h1 className="font-display text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl animate-in fade-in slide-in-from-bottom-4 duration-1000">
+              Sua contabilidade começa <br className="hidden sm:block" />entendendo sua empresa.
+            </h1>
+            <p className="mx-auto mt-6 max-w-2xl text-lg text-white/90 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
+              Planos e serviços adaptados ao perfil do seu negócio, atendimento digital e acompanhamento em um só lugar.
+            </p>
+            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
+              <Button size="lg" className="w-full sm:w-auto px-8" onClick={() => setShowOpeningFlow(true)}>Quero abrir minha empresa</Button>
+              <Button size="lg" variant="secondary" className="w-full sm:w-auto px-8 bg-white/10 text-white border-white/20 hover:bg-white/20" onClick={() => setShowSwitchingFlow(true)}>Quero trocar de contador</Button>
+            </div>
+            <div className="mt-8 animate-in fade-in duration-1000 delay-500">
+              <a href="#planos" className="text-sm font-medium text-white hover:underline inline-flex items-center gap-1">
+                Descobrir meu plano <ArrowRight className="h-3.5 w-3.5" />
+              </a>
+            </div>
           </div>
         </section>
 
@@ -188,6 +234,46 @@ function LandingPage() {
                 <h3 className="font-bold mb-2 group-hover:text-primary transition-colors">Conhecer os planos</h3>
                 <p className="text-xs text-muted-foreground">Veja qual plano combina com o perfil e as necessidades da sua empresa.</p>
               </Card>
+            </div>
+          </div>
+        </section>
+
+        {/* Seção Nossa Estrutura */}
+        <section className="py-24 bg-background overflow-hidden">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col lg:flex-row gap-12 items-center">
+              <div className="lg:w-1/3">
+                <h2 className="font-display text-3xl font-bold mb-6">Estrutura real para cuidar da sua empresa</h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  Tecnologia torna o processo mais simples. Pessoas e uma estrutura preparada garantem o acompanhamento que sua empresa precisa.
+                </p>
+              </div>
+              <div className="lg:w-2/3">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 h-full">
+                  <div className="md:col-span-8">
+                    <img 
+                      src={foto7Asset.url} 
+                      alt="Nossa estrutura central" 
+                      className="w-full h-full object-cover rounded-2xl shadow-xl aspect-[16/10] md:aspect-auto"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="md:col-span-4 flex flex-col gap-4">
+                    <img 
+                      src={foto3Asset.url} 
+                      alt="Ambiente de madeira com aquário" 
+                      className="w-full h-full object-cover rounded-2xl shadow-lg aspect-[16/9]"
+                      loading="lazy"
+                    />
+                    <img 
+                      src={foto1Asset.url} 
+                      alt="Escritório próximo às janelas" 
+                      className="w-full h-full object-cover rounded-2xl shadow-lg aspect-[16/9]"
+                      loading="lazy"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -313,6 +399,32 @@ function LandingPage() {
                    </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Seção Humana / Equipe */}
+        <section className="py-24 bg-secondary/10">
+          <div className="container mx-auto px-4">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div className="order-2 md:order-1">
+                <h2 className="font-display text-3xl font-bold mb-6">Tecnologia com atendimento de verdade</h2>
+                <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
+                  A Digital SC combina automação e inteligência artificial com o acompanhamento de uma equipe preparada para cuidar da rotina da sua empresa.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Button onClick={() => setShowOpeningFlow(true)}>Abrir empresa</Button>
+                  <Button variant="outline" onClick={() => setShowSwitchingFlow(true)}>Trocar de contador</Button>
+                </div>
+              </div>
+              <div className="order-1 md:order-2">
+                <img 
+                  src={foto5Asset.url} 
+                  alt="Reunião com equipe Digital SC" 
+                  className="w-full h-auto rounded-3xl shadow-2xl"
+                  loading="lazy"
+                />
+              </div>
             </div>
           </div>
         </section>
