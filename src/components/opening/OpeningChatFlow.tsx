@@ -76,9 +76,10 @@ export function OpeningChatFlow({ onBack }: { onBack: () => void }) {
   const getRecommendedPlan = () => {
     if (!plans || !extractedData) return null;
     const rev = extractedData.revenue || 0;
-    if (rev <= 15000) return plans.find((p: any) => p.nome === 'Plano A');
-    if (rev <= 50000) return plans.find((p: any) => p.nome === 'Plano B');
-    return plans.find((p: any) => p.nome === 'Plano C') || plans[0];
+    if (rev <= 8000) return plans.find((p: any) => p.nome === 'Plano A');
+    if (rev <= 15000) return plans.find((p: any) => p.nome === 'Plano B');
+    if (rev <= 100000) return plans.find((p: any) => p.nome === 'Plano C');
+    return plans.find((p: any) => p.nome === 'Plano D') || plans[0];
   };
 
   const getContactData = () => {
