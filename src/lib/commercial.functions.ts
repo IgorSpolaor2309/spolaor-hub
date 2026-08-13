@@ -57,7 +57,7 @@ export const confirmContracting = createServerFn({ method: "POST" })
         original_value: data.totals.originalValue,
         discount_value: data.totals.discountValue,
         final_value: data.totals.finalValue,
-        status_comercial: "Aguardando onboarding"
+        status_comercial: "contratação_em_andamento"
       })
       .select()
       .single();
@@ -69,7 +69,7 @@ export const confirmContracting = createServerFn({ method: "POST" })
 
     return { 
       success: true, 
-      message: "Contratação confirmada com sucesso!",
+      message: "Intenção de contratação registrada com sucesso!",
       prospectId: prospect.id 
     };
   });
