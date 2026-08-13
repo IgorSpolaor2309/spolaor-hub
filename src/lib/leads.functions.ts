@@ -24,7 +24,8 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const payload: any = {
       journey_step: data.journeyStep,
-      last_interaction_at: new Date().toISOString()
+      last_interaction_at: new Date().toISOString(),
+      last_interaction_description: data.lastInteraction || data.journeyStep
     };
 
     if (data.bottleneckIndicator) payload.bottleneck_indicator = data.bottleneckIndicator;
