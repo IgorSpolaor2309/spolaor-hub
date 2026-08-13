@@ -958,6 +958,69 @@ export type Database = {
           },
         ]
       }
+      commercial_contracts: {
+        Row: {
+          applied_coupon: string | null
+          contract_data: Json | null
+          created_at: string
+          discount_value: number | null
+          extra_services: Json | null
+          final_value: number
+          id: string
+          plan_id: string
+          plan_value: number
+          processed_at: string | null
+          prospect_id: string
+          signed_at: string | null
+          status: string
+        }
+        Insert: {
+          applied_coupon?: string | null
+          contract_data?: Json | null
+          created_at?: string
+          discount_value?: number | null
+          extra_services?: Json | null
+          final_value: number
+          id?: string
+          plan_id: string
+          plan_value: number
+          processed_at?: string | null
+          prospect_id: string
+          signed_at?: string | null
+          status?: string
+        }
+        Update: {
+          applied_coupon?: string | null
+          contract_data?: Json | null
+          created_at?: string
+          discount_value?: number | null
+          extra_services?: Json | null
+          final_value?: number
+          id?: string
+          plan_id?: string
+          plan_value?: number
+          processed_at?: string | null
+          prospect_id?: string
+          signed_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commercial_contracts_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commercial_contracts_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "commercial_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       commercial_prospect_history: {
         Row: {
           action_type: string
@@ -4020,6 +4083,7 @@ export type Database = {
         Args: { _client_id: string; _competencia: string; _new_plan_id: string }
         Returns: Json
       }
+      process_signed_contract: { Args: { _contract_id: string }; Returns: Json }
       processos_indicadores: { Args: never; Returns: Json }
       processos_notificar_vencimentos: { Args: never; Returns: Json }
       profiles_shares_client: {
