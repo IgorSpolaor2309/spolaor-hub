@@ -198,52 +198,61 @@ function LandingPage() {
               </div>
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                {(plansQ.data ?? []).map((plan: any) => {
-                  const isDemais = false;
-                  const displayName = plan.nome;
-                  const isRecomendado = plan.nome === 'Plano B';
-                  
-                  return (
-                    <Card key={plan.id} className={`p-6 flex flex-col relative overflow-hidden ${isRecomendado ? 'ring-2 ring-primary' : ''}`}>
-                      {isRecomendado && (
-                        <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-bl-lg">
-                          RECOMENDADO
-                        </div>
-                      )}
-                      <div className="mb-6">
-                        <h3 className="font-display text-xl font-bold">{displayName}</h3>
-                        <p className="text-xs text-muted-foreground mt-1">{plan.publico_alvo}</p>
-                      </div>
-                      <div className="mb-8">
-                        <div className="text-3xl font-bold">
-                          {plan.tipo_preco === 'sob_orcamento' ? 'Sob orçamento' : brl(plan.valor_padrao)}
-                          {!isDemais && plan.tipo_preco !== 'sob_orcamento' && <span className="text-sm font-normal text-muted-foreground">/mês</span>}
-                        </div>
-                        {plan.limite_faturamento && (
-                          <div className="text-[10px] text-muted-foreground mt-1">
-                            Até {brl(plan.limite_faturamento)} de faturamento/mês
+                {(plansQ.data ?? [])
+                  .filter((p: any) => !p.nome.startsWith('TEMP_') && p.nome !== 'Demais')
+                  .sort((a: any, b: any) => {
+                    const order = { 'Plano A': 1, 'Plano B': 2, 'Plano C': 3, 'Plano D': 4 };
+                    return (order[a.nome as keyof typeof order] || 99) - (order[b.nome as keyof typeof order] || 99);
+                  })
+                  .map((plan: any) => {
+                    const displayName = plan.nome;
+                    const isRecomendado = plan.nome === 'Plano B';
+                    
+                    return (
+                      <Card key={plan.id} className={`p-6 flex flex-col relative overflow-hidden ${isRecomendado ? 'ring-2 ring-primary' : ''}`}>
+                        {isRecomendado && (
+                          <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-bl-lg">
+                            RECOMENDADO
                           </div>
                         )}
-                      </div>
-                      
-                      <ul className="space-y-3 mb-8 flex-1">
-                        {plan.plan_services?.filter((ps: any) => ps.tipo_inclusao === 'included').slice(0, 5).map((ps: any) => (
-                          <li key={ps.id} className="text-xs flex items-start gap-2">
-                            <Check className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
-                            <span>{ps.services?.nome}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      
-                      <Button variant={plan.nome === 'Plano C' ? 'default' : 'outline'} className="w-full" onClick={() => {
-                        if (plan.nome === 'Plano A' || plan.nome === 'Plano B') setShowOpeningFlow(true);
-                        else setShowSwitchingFlow(true);
-                      }}>
-                        Selecionar plano
-                      </Button>
-                    </Card>
-                  );
-                })}
+                        <div className="mb-6">
+                          <h3 className="font-display text-xl font-bold">{displayName}</h3>
+                          <p className="text-xs text-muted-foreground mt-1">{plan.publico_alvo}</p>
+                        </div>
+                        <div className="mb-8">
+                          <div className="text-3xl font-bold">
+                            {plan.tipo_preco === 'sob_orcamento' ? 'Sob orçamento' : brl(plan.valor_padrao)}
+                            {plan.tipo_preco !== 'sob_orcamento' && <span className="text-sm font-normal text-muted-foreground">/mês</span>}
+                          </div>
+                          {plan.limite_faturamento && (
+                            <div className="text-[10px] text-muted-foreground mt-1">
+                              Até {brl(plan.limite_faturamento)} de faturamento/mês
+                            </div>
+                          )}
+                        </div>
+                        
+                        <ul className="space-y-3 mb-8 flex-1">
+                          {plan.plan_services?.filter((ps: any) => ps.tipo_inclusao === 'included').slice(0, 5).map((ps: any) => (
+                            <li key={ps.id} className="text-xs flex items-start gap-2">
+                              <Check className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                              <span>{ps.services?.nome}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        
+                        <Button 
+                          variant={plan.nome === 'Plano B' || plan.nome === 'Plano C' ? 'default' : 'outline'} 
+                          className="w-full" 
+                          onClick={() => {
+                            if (plan.nome === 'Plano A' || plan.nome === 'Plano B') setShowOpeningFlow(true);
+                            else setShowSwitchingFlow(true);
+                          }}
+                        >
+                          Selecionar plano
+                        </Button>
+                      </Card>
+                    );
+                  })}
               </div>
             )}
           </div>
