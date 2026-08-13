@@ -8,12 +8,14 @@ import { calculateCommercialTotal, type CommercialItem, type CouponData } from "
 import { useQuery } from "@tanstack/react-query";
 import { getPublicPlans, getPublicServices } from "@/lib/public-catalog.functions";
 import { validateCoupon, confirmContracting } from "@/lib/commercial.functions";
+import { safeTrackLead as trackJourney } from "@/lib/leads-client";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 
 interface CheckoutViewProps {
   flowType: "opening" | "switching";
   initialPlanId?: string;
+  prospectId?: string;
   extractedData: any;
   contactData: {
     name: string;
@@ -27,6 +29,7 @@ interface CheckoutViewProps {
 export function CheckoutView({ 
   flowType, 
   initialPlanId, 
+  prospectId,
   extractedData, 
   contactData,
   onBack, 
@@ -85,6 +88,14 @@ export function CheckoutView({
       const result = await validateCouponFn({ data: { code: couponCode } });
       if (result.valid && result.coupon) {
         setAppliedCoupon(result.coupon as any);
+        if (prospectId) {
+          trackJourney({
+            data: {
+              prospectId,
+              journeyStep: 'cupom_aplicado'
+            }
+          }).catch(console.error);
+        }
         toast.success("Cupom aplicado com sucesso!");
       } else {
         toast.error(result.message || "Cupom inválido");
@@ -110,6 +121,15 @@ export function CheckoutView({
           totals
         }
       });
+      
+      trackJourney({
+        data: {
+          prospectId: result.prospectId,
+          journeyStep: 'intencao_contratar',
+          estimatedValue: totals.finalValue
+        }
+      }).catch(console.error);
+
       onConfirm(result.prospectId);
     } catch (e) {
       toast.error("Erro ao registrar intenção de contratação");

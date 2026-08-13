@@ -12,10 +12,11 @@ import { lookupCNPJ } from "@/lib/cnpj-lookup.functions";
 import { useQuery } from "@tanstack/react-query";
 import { getPublicPlans } from "@/lib/public-catalog.functions";
 import { onlyDigits, isValidCnpjLength, validateCnpj } from "@/lib/cnpj";
+import { safeTrackLead as trackJourney, getStoredProspectId } from "@/lib/leads-client";
 
 export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
   const [step, setStep] = useState<'chat' | 'confirm' | 'diagnostic' | 'checkout' | 'success'>('chat');
-  const [prospectId, setProspectId] = useState<string>("");
+  const [prospectId, setProspectId] = useState<string>(getStoredProspectId() || "");
   const [messages, setMessages] = useState<{role: 'user' | 'ai', content: string}[]>([
     { role: 'ai', content: "Olá! Sou o assistente da Digital SC. Para começarmos a planejar sua migração, por favor, me informe o CNPJ da sua empresa." }
   ]);
@@ -27,6 +28,7 @@ export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const processMessage = useServerFn(processSwitchingMessage);
   const cnpjLookupFn = useServerFn(lookupCNPJ);
+  
   
   const { data: plans } = useQuery({
     queryKey: ["public-plans"],
@@ -44,6 +46,16 @@ export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
     setMessages(prev => [...prev, { role: 'user', content: trimmedInput }]);
     setInput("");
     setLoading(true);
+
+    // Track initial interaction
+    if (messages.length === 1) {
+      trackJourney({ 
+        data: { 
+          journeyStep: 'conversa_iniciada',
+          flowType: 'switching'
+        } 
+      }).then(res => setProspectId(res.prospectId)).catch(console.error);
+    }
 
     try {
       // Regra: Se ainda não temos CNPJ e o input parece um CNPJ (ou contém um), tentamos validar via API real
@@ -99,6 +111,13 @@ export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
       });
       
       if (result.status === "complete") {
+        trackJourney({
+          data: {
+            prospectId,
+            journeyStep: 'diagnostico_concluido',
+            extractedData: result.extractedData
+          }
+        }).catch(console.error);
         setTimeout(() => setStep('confirm'), 2000);
       }
     } catch (e: any) {
@@ -164,7 +183,19 @@ export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
 
           <div className="flex gap-3 pt-4">
             <Button variant="outline" className="flex-1" onClick={() => setStep('chat')}>Corrigir na conversa</Button>
-            <Button className="flex-1" onClick={() => setStep('diagnostic')}>Confirmar e ver proposta</Button>
+            <Button className="flex-1" onClick={() => {
+              const plan = getRecommendedPlan();
+              trackJourney({
+                data: {
+                  prospectId,
+                  journeyStep: 'plano_visualizado',
+                  contactData: getContactData(),
+                  planId: plan?.id,
+                  estimatedValue: plan?.valor_padrao
+                }
+              }).catch(console.error);
+              setStep('diagnostic');
+            }}>Confirmar e ver proposta</Button>
           </div>
         </Card>
       </div>
@@ -250,7 +281,15 @@ export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
                     ))}
                   </ul>
                 </div>
-                <Button variant="secondary" className="w-full mt-6 text-primary font-bold" onClick={() => setStep('checkout')}>Confirmar Migração</Button>
+                <Button variant="secondary" className="w-full mt-6 text-primary font-bold" onClick={() => {
+                  trackJourney({
+                    data: {
+                      prospectId,
+                      journeyStep: 'checkout_iniciado'
+                    }
+                  }).catch(console.error);
+                  setStep('checkout');
+                }}>Confirmar Migração</Button>
               </>
             ) : (
               <p>Carregando recomendação...</p>
@@ -276,6 +315,7 @@ export function SwitchingChatFlow({ onBack }: { onBack: () => void }) {
         <CheckoutView 
           flowType="switching"
           initialPlanId={plan?.id}
+          prospectId={prospectId}
           extractedData={extractedData}
           contactData={getContactData()}
           onBack={() => setStep('diagnostic')}
