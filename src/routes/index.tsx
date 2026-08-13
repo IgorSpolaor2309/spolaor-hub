@@ -481,7 +481,7 @@ function LandingPage() {
                <Button 
                 size="lg" 
                 variant="secondary" 
-                className="w-full sm:w-auto px-10 h-14 text-base font-bold bg-white text-primary border border-white hover:bg-primary hover:text-white hover:border-white/20 shadow-lg transition-all" 
+                className="w-full sm:w-auto px-10 h-14 text-base font-bold bg-white text-[#000000] border border-white hover:bg-primary hover:text-white hover:border-white/20 shadow-lg transition-all" 
                 onClick={() => setShowSwitchingFlow(true)}
                >
                  Trocar de contador
