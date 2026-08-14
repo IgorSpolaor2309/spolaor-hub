@@ -1582,6 +1582,45 @@ export type Database = {
           },
         ]
       }
+      contract_models: {
+        Row: {
+          content: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          internal_notes: string | null
+          name: string
+          status: string
+          updated_at: string | null
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          internal_notes?: string | null
+          name: string
+          status?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          internal_notes?: string | null
+          name?: string
+          status?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
       custom_proposals: {
         Row: {
           acceptance_snapshot: Json | null
@@ -2249,6 +2288,72 @@ export type Database = {
             columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      generated_contracts: {
+        Row: {
+          content_snapshot: string
+          created_at: string | null
+          created_by: string | null
+          external_signature_id: string | null
+          external_status: string | null
+          id: string
+          model_id: string | null
+          prospect_id: string | null
+          sent_at: string | null
+          signature_provider: string | null
+          signed_at: string | null
+          status: string
+          updated_at: string | null
+          version: number
+        }
+        Insert: {
+          content_snapshot: string
+          created_at?: string | null
+          created_by?: string | null
+          external_signature_id?: string | null
+          external_status?: string | null
+          id?: string
+          model_id?: string | null
+          prospect_id?: string | null
+          sent_at?: string | null
+          signature_provider?: string | null
+          signed_at?: string | null
+          status?: string
+          updated_at?: string | null
+          version: number
+        }
+        Update: {
+          content_snapshot?: string
+          created_at?: string | null
+          created_by?: string | null
+          external_signature_id?: string | null
+          external_status?: string | null
+          id?: string
+          model_id?: string | null
+          prospect_id?: string | null
+          sent_at?: string | null
+          signature_provider?: string | null
+          signed_at?: string | null
+          status?: string
+          updated_at?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_contracts_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "contract_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_contracts_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "commercial_prospects"
             referencedColumns: ["id"]
           },
         ]

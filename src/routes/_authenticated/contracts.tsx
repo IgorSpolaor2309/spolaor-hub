@@ -20,6 +20,7 @@ import {
 import { toast } from 'sonner'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
+import { ContractViewer } from '@/components/commercial/ContractViewer'
 
 export const Route = createFileRoute('/_authenticated/contracts')({
   loader: async ({ context }) => {
@@ -35,6 +36,7 @@ function ContractsPage() {
   const queryClient = useQueryClient()
   const [selectedContract, setSelectedContract] = useState<any>(null)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
+  const [isViewerOpen, setIsViewerOpen] = useState(false)
 
   const { data: contracts } = useSuspenseQuery({
     queryKey: ['commercial-contracts'],
@@ -55,6 +57,7 @@ function ContractsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'aguardando_contrato': return <Badge variant="outline"><Clock className="mr-1 h-3 w-3" /> Aguardando</Badge>
+      case 'contrato_gerado': return <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100"><FileText className="mr-1 h-3 w-3" /> Gerado</Badge>
       case 'contrato_enviado': return <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100"><Send className="mr-1 h-3 w-3" /> Enviado</Badge>
       case 'contrato_assinado': return <Badge variant="default" className="bg-green-500 hover:bg-green-600"><CheckCircle2 className="mr-1 h-3 w-3" /> Assinado</Badge>
       case 'cancelado': return <Badge variant="destructive"><XCircle className="mr-1 h-3 w-3" /> Cancelado</Badge>
@@ -108,18 +111,31 @@ function ContractsPage() {
                 <TableCell className="text-xs text-muted-foreground">
                   {format(new Date(contract.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}
                 </TableCell>
-                <TableCell className="text-right">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      setSelectedContract(contract)
-                      setIsDetailsOpen(true)
-                    }}
-                  >
-                    <Eye className="mr-2 h-4 w-4" />
-                    Ver Detalhes
-                  </Button>
+                 <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setSelectedContract(contract)
+                        setIsViewerOpen(true)
+                      }}
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      Contrato
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setSelectedContract(contract)
+                        setIsDetailsOpen(true)
+                      }}
+                    >
+                      <Eye className="mr-2 h-4 w-4" />
+                      Detalhes
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -210,6 +226,7 @@ function ContractsPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="aguardando_contrato">Aguardando Contrato</SelectItem>
+                        <SelectItem value="contrato_gerado">Contrato Gerado</SelectItem>
                         <SelectItem value="contrato_enviado">Contrato Enviado</SelectItem>
                         <SelectItem value="contrato_assinado">Marcar como Assinado (Gera Cliente)</SelectItem>
                         <SelectItem value="cancelado">Cancelar</SelectItem>
@@ -223,6 +240,14 @@ function ContractsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {selectedContract && (
+        <ContractViewer
+          prospect={selectedContract.prospect}
+          isOpen={isViewerOpen}
+          onOpenChange={setIsViewerOpen}
+        />
+      )}
     </div>
   )
 }
