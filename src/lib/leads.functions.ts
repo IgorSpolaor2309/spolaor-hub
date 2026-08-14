@@ -139,8 +139,12 @@ export const updateLeadRecovery = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({
     id: z.string(),
     status: z.string().optional(),
+    priority: z.string().optional(),
+    responsible_profile_id: z.string().optional().nullable(),
+    next_action_description: z.string().optional(),
+    next_action_date: z.string().optional().nullable(),
+    internal_notes: z.string().optional(),
     last_interaction_description: z.string().optional(),
-    // add other fields as needed
   }).parse(data))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
