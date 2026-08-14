@@ -488,12 +488,14 @@ function LandingPage() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {plansQ.isLoading ? (
                 [1, 2, 3, 4].map(i => <Card key={i} className="h-96 bg-muted/50 animate-pulse" />)
-              ) : filteredPlans.length === 0 ? (
-                <div className="col-span-full py-12 text-center text-muted-foreground border-2 border-dashed rounded-xl">
-                  Carregando catálogo... (Plans: {plansQ.data?.length || 0})
-                </div>
               ) : (
-                filteredPlans.map((plan: any, index: number) => {
+                <>
+                  {filteredPlans.length === 0 && (
+                    <div className="col-span-full py-12 text-center text-muted-foreground border-2 border-dashed rounded-xl">
+                      Carregando catálogo... (Plans: {plansQ.data?.length || 0})
+                    </div>
+                  )}
+                  {filteredPlans.map((plan: any, index: number) => {
                   const prevPlan = index > 0 ? filteredPlans[index - 1] : null;
                   const isRecomendado = plan.nome === 'Plano B';
                   const displayName = plan.nome;
@@ -515,7 +517,8 @@ function LandingPage() {
                       onSelect={handlePlanSelection}
                     />
                   );
-                })
+                  })}
+                </>
               )}
             </div>
           </div>
