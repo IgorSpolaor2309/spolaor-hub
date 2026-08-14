@@ -64,8 +64,11 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
         .update(payload)
         .eq("id", effectiveId)
         .select()
-        .single();
-    } else {
+        .maybeSingle();
+    }
+
+    // No id provided, or the id didn't match any existing lead → create it
+    if (!effectiveId || (!result?.error && !result?.data)) {
       result = await supabaseAdmin
         .from("leads")
         .insert({
@@ -73,8 +76,9 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
           status: payload.status || "novo"
         })
         .select()
-        .single();
+        .maybeSingle();
     }
+
     
     if (result.error) {
       console.error("Error tracking lead (admin):", result.error);
