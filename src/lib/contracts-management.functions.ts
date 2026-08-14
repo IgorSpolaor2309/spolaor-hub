@@ -113,6 +113,8 @@ export const getGeneratedContracts = createServerFn({ method: "GET" })
 export const generateContract = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ prospectId: z.string() }).parse(data))
   .handler(async ({ data }) => {
+    console.log(`[CONTRACT_GENERATION_START] Prospect: ${data.prospectId}`);
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { INSTITUCIONAL_DIGITAL_SC } = await import("./institucional.server");
 
@@ -224,7 +226,12 @@ export const generateContract = createServerFn({ method: "POST" })
       })
       .select().single();
 
-    if (gError) throw gError;
+    if (gError) {
+      console.error("[CONTRACT_GENERATION_ERROR]", gError);
+      throw gError;
+    }
+
+    console.log(`[CONTRACT_CREATED] ID: ${generated.id}, Prospect: ${data.prospectId}, Snapshot length: ${generated.content_snapshot?.length}`);
     return generated;
   });
 
