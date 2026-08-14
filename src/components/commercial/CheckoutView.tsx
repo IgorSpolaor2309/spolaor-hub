@@ -159,14 +159,16 @@ export function CheckoutView({
     try {
       console.log(`[CONTRACT_GENERATION_START] Prospect: ${prospectId}`);
       
+      console.log(`[generateContract_CALL] prospectId: ${prospectId}`);
       const result = await generateContractFn({
         data: { prospectId }
       });
 
-      console.log("GENERATE_CONTRACT_RESULT", result);
+      console.log("[generateContract_RESULT]", result);
 
       const contractId = result.contractId || result.id;
-      console.log("CONTRACT_ID_FOR_NAVIGATION", contractId);
+      console.log("[contractId_FOUND]", contractId);
+
 
       console.log(`[VALIDATION_RESULT] Errors: ${result.missingFields?.length || 0}`);
       
