@@ -231,7 +231,7 @@ export const generateContract = createServerFn({ method: "POST" })
     };
 
     const missingFields = Object.entries(mandatory)
-      .filter(([_, value]) => !value || value === "A informar" || value === "A definir")
+      .filter(([_, value]) => !value || value === "A informar" || value === "A definir" || value === "" || value.includes("..."))
       .map(([key]) => key);
 
     let finalContent = model.content;
