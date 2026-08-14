@@ -178,17 +178,25 @@ export const generateContract = createServerFn({ method: "POST" })
       return clean.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
     };
 
-    
     const finalPlanName = prospect.plan?.nome || "Personalizado";
+
+    // 6.1 Identify Real Company Name vs Representative
+    // Never use contact_name as company name if we have a real company name
+    const companyName = extracted.razao_social || extracted.company_name || "A informar";
+    const repName = extracted.representative_name || extracted.responsavel || prospect.contact_name || "A informar";
     
+    // 6.2 Define Consistant Readjustment Rule
+    // Use IPCA/IBGE as the official rule
+    const readjustmentRule = "IPCA/IBGE anual";
+
     const placeholders: Record<string, string> = {
-      "{{razao_social}}": extracted.razao_social || extracted.company_name || prospect.contact_name || lead?.name || "A informar",
+      "{{razao_social}}": companyName || "A informar",
       "{{cnpj}}": formatCNPJ(prospect.cnpj || lead?.cnpj || extracted.cnpj || "00000000000000"),
       "{{email}}": prospect.contact_email || lead?.email || extracted.email || "A informar",
       "{{telefone}}": prospect.contact_phone || lead?.phone || extracted.phone || "A informar",
       "{{endereco}}": extracted.address || extracted.logradouro || lead?.city || "A informar",
       "{{natureza_juridica}}": extracted.legal_nature || extracted.natureza_juridica || "A informar",
-      "{{nome_responsavel}}": extracted.representative_name || extracted.responsavel || prospect.contact_name || "A informar",
+      "{{nome_responsavel}}": repName,
       "{{cpf_responsavel}}": extracted.representative_cpf || extracted.cpf || "00000000000",
       "{{plano}}": finalPlanName,
       "{{valor_mensal}}": brl(monthlyFee),
@@ -200,7 +208,7 @@ export const generateContract = createServerFn({ method: "POST" })
         : (proposal?.max_revenue ? `Até ${brl(proposal.max_revenue).replace(',00', '')} por mês` : "Conforme Proposta"),
       "{{estrutura_incluida}}": "Atendimento Digital via WhatsApp e Plataforma",
       "{{vigencia}}": "12 meses",
-      "{{reajuste}}": model.internal_notes?.includes("IPCA") ? "IPCA/IBGE anual" : "IGP-M/FGV anual",
+      "{{reajuste}}": readjustmentRule,
       "{{data_contratacao}}": new Date().toLocaleDateString("pt-BR"),
       "{{crc_sp}}": INSTITUCIONAL_DIGITAL_SC.crc_sp,
       "{{cidade_assinatura}}": INSTITUCIONAL_DIGITAL_SC.cidade_assinatura,
@@ -229,11 +237,23 @@ export const generateContract = createServerFn({ method: "POST" })
       "email": placeholders["{{email}}"],
       "endereco": placeholders["{{endereco}}"],
       "nome_responsavel": placeholders["{{nome_responsavel}}"],
-      "cpf_responsavel": placeholders["{{cpf_responsavel}}"]
+      "cpf_responsavel": placeholders["{{cpf_responsavel}}"],
+      "institucional_crc": INSTITUCIONAL_DIGITAL_SC.crc_sp,
+      "institucional_cpf": INSTITUCIONAL_DIGITAL_SC.cpf_representante
     };
 
     const missingFields = Object.entries(mandatory)
-      .filter(([_, value]) => !value || value === "A informar" || value === "A definir" || value === "" || value.includes("..."))
+      .filter(([key, value]) => {
+        if (!value || value === "A informar" || value === "A definir" || value === "" || value.includes("...")) return true;
+        if (key === "cnpj" && (value.includes("00.000.000/0000-00") || value.length < 14)) return true;
+        if (key === "cpf_responsavel" && (value.includes("000.000.000-00") || value.replace(/\D/g, '') === "00000000000")) return true;
+        // Check for Institutional demo values
+        if (Object.values(INSTITUCIONAL_DIGITAL_SC).some(demoVal => typeof demoVal === 'string' && value.includes(demoVal))) {
+          // If it's the contratada's data, it's a demo/pendency
+          if (key.includes("contratada") || key === "crc_sp") return true;
+        }
+        return false;
+      })
       .map(([key]) => key);
 
     let finalContent = model.content;
