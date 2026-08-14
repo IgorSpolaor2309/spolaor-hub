@@ -1,13 +1,13 @@
 export const INSTITUCIONAL_DIGITAL_SC = {
-  razao_social: "Digital SC Contabilidade Digital Ltda",
-  cnpj: "45.123.456/0001-89",
-  endereco: "Rua Particular João Caetano, 117, Santos - SP, CEP 11070-350",
+  razao_social: "SPOLAOR CONTABILIDADE DIGITAL LTDA",
+  cnpj: "68.543.874/0001-29",
+  endereco: "Alameda Armênio Mendes, nº 66, Sala 901 S01, bairro Aparecida, Santos/SP, CEP 11035-260",
   crc_sp: "2SP123456/O-0", // TODO: Cadastrar CRC real
   representante: "Igor Spolaor",
   cpf_representante: "123.456.789-00", // TODO: Cadastrar CPF real
   cidade_assinatura: "Santos - SP",
-  telefone: "(13) 99762-2342",
-  email: "contato@digitalsc.com.br",
+  telefone: "(13) 2191-1246",
+  email: "atendimento@digitalsc.com.br",
   site: "https://digital-sc.com.br",
-  is_demo: true // Mantemos como demo até cadastro dos documentos reais (CRC/CPF)
+  is_demo: true
 };
