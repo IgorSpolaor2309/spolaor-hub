@@ -127,7 +127,8 @@ export const getLeads = createServerFn({ method: "GET" })
     const { data, error } = await supabaseAdmin
       .from("leads")
       .select(`
-        *
+        *,
+        responsible:responsible_profile_id (full_name, avatar_url)
       `)
       .order("created_at", { ascending: false });
 
