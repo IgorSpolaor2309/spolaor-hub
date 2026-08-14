@@ -330,9 +330,17 @@ function LeadsPage() {
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     {getStatusBadge(selectedLead.status_comercial, selectedLead)}
-                    <Badge variant="outline" className="text-[10px]">
-                      Origem: {selectedLead.flow_origin === 'opening' ? 'Abertura' : 'Troca'}
-                    </Badge>
+                    <div className="flex flex-col items-end gap-1 mt-1">
+                      <Badge variant="outline" className="text-[10px]">
+                        Origem: {selectedLead.flow_origin === 'opening' ? 'Abertura' : selectedLead.flow_origin === 'switching' ? 'Troca' : 'Landing Personalizado'}
+                      </Badge>
+                      {selectedLead.requested_personalized_at && (
+                        <span className="text-[9px] text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-2.5 w-2.5" />
+                          Personalizado em {format(new Date(selectedLead.requested_personalized_at), "dd/MM HH:mm", { locale: ptBR })}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </DialogHeader>
