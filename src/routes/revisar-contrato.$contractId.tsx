@@ -16,12 +16,20 @@ function ReviewContractPage() {
   const { contractId } = Route.useParams();
   const navigate = useNavigate();
 
+  console.log(`[REVIEW_ROUTE_ID] Current ID: ${contractId}`);
+
   const fetchContract = useServerFn(getContractForReview);
 
   const { data: contract, isLoading, error } = useQuery({
     queryKey: ["generated-contract-public", contractId],
-    queryFn: () => fetchContract({ data: { contractId } }),
+    queryFn: async () => {
+      console.log(`[CONTRACT_FETCH_START] ID: ${contractId}`);
+      const result = await fetchContract({ data: { contractId } });
+      console.log(`[CONTRACT_FETCH_RESULT] Found: ${!!result}, ID: ${result?.id}, Snapshot length: ${result?.content_snapshot?.length}`);
+      return result;
+    },
     retry: false,
+    enabled: !!contractId,
   });
 
   const brl = (n: number | null | undefined) =>
@@ -71,6 +79,8 @@ function ReviewContractPage() {
     );
   }
 
+  console.log(`[RENDER_CONTRACT] Rendering contract ${contract.id} with snapshot of ${contract.content_snapshot?.length} chars`);
+
   return (
     <div className="min-h-screen bg-muted/30 py-12 px-4">
       <div className="container max-w-4xl mx-auto space-y-8">
@@ -98,12 +108,20 @@ function ReviewContractPage() {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Contract Content */}
           <Card className="lg:col-span-2 p-0 overflow-hidden border-none shadow-2xl bg-white min-h-[800px] flex flex-col">
-            <div className="p-8 md:p-12 prose prose-slate max-w-none flex-1 overflow-y-auto">
+            <div className="p-8 md:p-12 prose prose-slate max-w-none flex-1 overflow-y-auto min-h-[600px]">
               {/* Contrato Formatado */}
-              <div 
-                className="whitespace-pre-wrap font-serif text-[15px] leading-relaxed text-slate-800"
-                dangerouslySetInnerHTML={{ __html: String(contract.content_snapshot || "").replace(/\n/g, '<br />') }}
-              />
+              {contract.content_snapshot ? (
+                <div 
+                  className="whitespace-pre-wrap font-serif text-[15px] leading-relaxed text-slate-800"
+                  dangerouslySetInnerHTML={{ __html: String(contract.content_snapshot).replace(/\n/g, '<br />') }}
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-20">
+                  <FileText className="h-12 w-12 mb-4 opacity-20" />
+                  <p>O conteúdo do contrato não está disponível.</p>
+                  <p className="text-xs">ID: {contract.id}</p>
+                </div>
+              )}
             </div>
             
             <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-center gap-2 text-slate-500 text-xs">

@@ -126,10 +126,13 @@ export function CheckoutView({
       });
       
       // 2. Gerar o contrato automaticamente
-      const generateContractFn = (await import("@/lib/contracts-management.functions")).generateContract;
-      const generated = await generateContractFn({
+      console.log(`[CHECKOUT_CONFIRMED] Prospect: ${result.prospectId}`);
+      const { generateContract } = await import("@/lib/contracts-management.functions");
+      const generated = await generateContract({
         data: { prospectId: result.prospectId }
       });
+
+      console.log(`[CONTRACT_ID_REDIRECT] Navigating to /revisar-contrato/${generated.id}`);
 
       // 3. Rastrear jornada final
       await trackJourney({
@@ -142,6 +145,8 @@ export function CheckoutView({
       });
 
       toast.success("Contrato gerado com sucesso! Redirecionando para revisão.");
+      
+      // Garantir que navegamos usando o ID do contrato gerado
       navigate({ 
         to: "/revisar-contrato/$contractId", 
         params: { contractId: generated.id } 
