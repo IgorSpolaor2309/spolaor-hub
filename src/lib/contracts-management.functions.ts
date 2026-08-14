@@ -135,15 +135,6 @@ export const generateContract = createServerFn({ method: "POST" })
 
     const planServicesList = planServices?.map(ps => (ps.service as any)?.nome).filter(Boolean).join(", ") || "";
 
-    // 2.1. Determine monthly fee and setup fee correctly
-    const monthlyFee = prospect.final_value || 0;
-    const setupFee = prospect.original_value > monthlyFee ? (prospect.original_value - monthlyFee) : 0;
-    // Note: In our current prospect model, original_value often includes setup + first month
-    // or we might need to adjust this logic based on how the total was calculated in CheckoutView.
-    // For now, if original_value is significantly higher, we assume the difference is setup.
-    // If not, we check proposal.
-    const finalSetupValue = proposal?.setup_value ?? setupFee;
-
     // 3. Fetch Lead Data
     const { data: lead } = await supabaseAdmin
       .from("leads")
@@ -167,6 +158,12 @@ export const generateContract = createServerFn({ method: "POST" })
       .eq("lead_id", lead?.id || "")
       .eq("status", "aceita")
       .maybeSingle();
+
+    // 5.1. Determine monthly fee and setup fee correctly
+    const monthlyFee = prospect.final_value || 0;
+    const origValue = prospect.original_value || 0;
+    const setupFee = origValue > monthlyFee ? (origValue - monthlyFee) : 0;
+    const finalSetupValue = (proposal as any)?.setup_value ?? setupFee;
 
     // 6. Base Placeholders Mapping
     const journeyData = (lead?.journey_data as any) || (prospect?.ai_extracted_data as any) || {};
