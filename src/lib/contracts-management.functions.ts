@@ -106,7 +106,7 @@ export const generateContract = createServerFn({ method: "POST" })
     const { data: lead } = await supabaseAdmin
       .from("leads")
       .select("*")
-      .eq("email", prospect.contact_email)
+      .eq("email", prospect.contact_email || "")
       .maybeSingle();
 
     // 3. Get Active Model
