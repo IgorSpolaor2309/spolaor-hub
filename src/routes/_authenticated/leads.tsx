@@ -93,7 +93,17 @@ function LeadsPage() {
     onError: (error: any) => toast.error(`Erro ao registrar interação: ${error.message}`)
   })
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, lead?: any) => {
+    if (lead?.interested_in_personalized_solution) {
+      return (
+        <div className="flex flex-col gap-1 items-start">
+          <Badge variant="default" className="bg-purple-500">Personalizado</Badge>
+          <Badge variant="outline" className="text-[9px] lowercase">
+            {lead.preferred_contact_channel === 'whatsapp' ? 'via WhatsApp' : 'via Vídeo'}
+          </Badge>
+        </div>
+      )
+    }
     switch (status) {
       case 'interessado': return <Badge variant="secondary">Interessado</Badge>
       case 'contratação_em_andamento': return <Badge variant="default" className="bg-blue-500">Em contratação</Badge>
@@ -251,7 +261,7 @@ function LeadsPage() {
                   {getPriorityBadge(lead.priority)}
                 </TableCell>
                 <TableCell>
-                  {getStatusBadge(lead.status_comercial)}
+                  {getStatusBadge(lead.status_comercial, lead)}
                 </TableCell>
                 <TableCell>
                   {lead.next_action_date ? (
@@ -319,7 +329,7 @@ function LeadsPage() {
                     </DialogDescription>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    {getStatusBadge(selectedLead.status_comercial)}
+                    {getStatusBadge(selectedLead.status_comercial, selectedLead)}
                     <Badge variant="outline" className="text-[10px]">
                       Origem: {selectedLead.flow_origin === 'opening' ? 'Abertura' : 'Troca'}
                     </Badge>

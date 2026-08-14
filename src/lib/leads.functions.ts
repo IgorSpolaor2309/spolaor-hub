@@ -16,7 +16,10 @@ const LeadTrackSchema = z.object({
   planId: z.string().optional(),
   flowType: z.enum(["opening", "switching"]).optional(),
   cnpj: z.string().optional(),
-  lastInteraction: z.string().optional()
+  lastInteraction: z.string().optional(),
+  interestedInPersonalized: z.boolean().optional(),
+  preferredChannel: z.enum(["whatsapp", "videoconference"]).optional(),
+  origin: z.string().optional()
 });
 
 export const trackLeadJourney = createServerFn({ method: "POST" })
@@ -37,6 +40,12 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
     if (data.planId) payload.plan_id = data.planId;
     if (data.flowType) payload.flow_origin = data.flowType;
     if (data.cnpj) payload.cnpj = data.cnpj;
+    if (data.interestedInPersonalized !== undefined) {
+      payload.interested_in_personalized_solution = data.interestedInPersonalized;
+      payload.requested_personalized_at = new Date().toISOString();
+    }
+    if (data.preferredChannel) payload.preferred_contact_channel = data.preferredChannel;
+    if (data.origin) payload.flow_origin = data.origin;
     
     // Check for "Quero contratar" equivalent
     if (data.journeyStep === 'checkout_iniciado') {
