@@ -109,7 +109,7 @@ function ReviewContractPage() {
             
             <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-center gap-2 text-slate-500 text-xs">
               <FileText className="h-3 w-3" />
-              <span>Snapshot gerado em {new Date(contract.created_at).toLocaleString('pt-BR')} • Versão {contract.version}</span>
+              <span>Snapshot gerado em {new Date(contract.created_at || new Date().toISOString()).toLocaleString('pt-BR')} • Versão {contract.version}</span>
             </div>
           </Card>
 
