@@ -3,7 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Check, Info, Minus, Plus, Tag, ArrowRight, Loader2 } from "lucide-react";
+import { Check, Info, Minus, Plus, Tag, ArrowRight, Loader2, HelpCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { calculateCommercialTotal, type CommercialItem, type CouponData } from "@/lib/commercial-calculations";
 import { useQuery } from "@tanstack/react-query";
 import { getPublicPlans, getPublicServices } from "@/lib/public-catalog.functions";
@@ -74,6 +77,14 @@ export function CheckoutView({
     queryFn: () => getPublicServices(),
   });
 
+  const activePlan = useMemo(() => {
+    return plans.find(p => p.id === selectedPlanId);
+  }, [plans, selectedPlanId]);
+
+  const includedServiceIds = useMemo(() => {
+    return new Set(activePlan?.plan_services?.map((ps: any) => ps.service_id) || []);
+  }, [activePlan]);
+
   const selectedPlan = useMemo(() => {
     const plan = plans.find(p => p.id === selectedPlanId);
     if (!plan) return null;
@@ -92,9 +103,10 @@ export function CheckoutView({
         id: s.id,
         name: s.nome,
         value: s.valor_referencia || 0,
-        type: 'service' as const
+        type: 'service' as const,
+        isIncluded: includedServiceIds.has(s.id)
       }));
-  }, [services, selectedExtraIds]);
+  }, [services, selectedExtraIds, includedServiceIds]);
 
   const totals = useMemo(() => {
     return calculateCommercialTotal(selectedPlan, extraServices, appliedCoupon);
@@ -267,25 +279,62 @@ export function CheckoutView({
             <span className="text-[10px] text-muted-foreground uppercase font-bold bg-muted px-2 py-0.5 rounded">Opcional</span>
           </div>
           <div className="grid sm:grid-cols-2 gap-3">
-            {services.filter(s => s.status === 'active').map((s) => (
-              <div 
-                key={s.id}
-                className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${selectedExtraIds.includes(s.id) ? 'bg-primary/5 border-primary/20' : 'bg-card hover:bg-muted/50'}`}
-              >
-                <div className="flex-1">
-                  <div className="text-sm font-medium">{s.nome}</div>
-                  <div className="text-xs text-primary font-bold">{brl(s.valor_referencia || 0)}</div>
-                </div>
-                <Button 
-                  size="icon" 
-                  variant={selectedExtraIds.includes(s.id) ? "default" : "outline"}
-                  className="h-8 w-8"
-                  onClick={() => toggleExtra(s.id)}
-                >
-                  {selectedExtraIds.includes(s.id) ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                </Button>
-              </div>
-            ))}
+            {services
+              .filter(s => s.status === 'active' && ['Legalização', 'Administrativo', 'Certificados Digitais'].includes(s.categoria))
+              .map((s) => {
+                const isIncluded = includedServiceIds.has(s.id);
+                const isSelected = selectedExtraIds.includes(s.id);
+                
+                return (
+                  <div 
+                    key={s.id}
+                    className={cn(
+                      "flex items-center justify-between p-3 rounded-lg border transition-all",
+                      isSelected ? 'bg-primary/5 border-primary/20 shadow-sm' : 'bg-card hover:bg-muted/30 border-muted',
+                      isIncluded && isSelected && 'opacity-80 grayscale-[0.5]'
+                    )}
+                  >
+                    <div className="flex-1 pr-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-semibold">{s.nome}</span>
+                        {s.descricao && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-[200px] text-xs">
+                                {s.descricao}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className={cn(
+                          "text-xs font-bold",
+                          isIncluded && isSelected ? "text-muted-foreground line-through" : "text-primary"
+                        )}>
+                          {brl(s.valor_referencia || 0)}
+                        </span>
+                        {isIncluded && isSelected && (
+                          <Badge variant="secondary" className="text-[9px] h-4 px-1.5 bg-green-100 text-green-700 hover:bg-green-100 border-none">
+                            Incluído no plano
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <Button 
+                      size="icon" 
+                      variant={isSelected ? "default" : "outline"}
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => toggleExtra(s.id)}
+                    >
+                      {isSelected ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                );
+              })}
           </div>
         </section>
 
@@ -331,8 +380,13 @@ export function CheckoutView({
             
             {extraServices.map(s => (
               <div key={s.id} className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{s.name}</span>
-                <span className="font-medium">{brl(s.value)}</span>
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                  {s.name}
+                  {s.isIncluded && <Badge variant="secondary" className="text-[8px] h-3 px-1 leading-none uppercase">Incluído</Badge>}
+                </span>
+                <span className={cn("font-medium", s.isIncluded && "line-through text-muted-foreground")}>
+                  {brl(s.value)}
+                </span>
               </div>
             ))}
 

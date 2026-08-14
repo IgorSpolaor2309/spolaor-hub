@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,12 +8,13 @@ import { AppLogo } from "@/components/sc/Logo";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getPublicPlans, getPublicServices } from "@/lib/public-catalog.functions";
-import { Check, ArrowRight, ShieldCheck, Clock, Inbox, FileText, Receipt, Users, UserCog, MessageSquare, Workflow, Briefcase } from "lucide-react";
+import { Check, ArrowRight, ShieldCheck, Clock, Inbox, FileText, Receipt, Users, UserCog, MessageSquare, Workflow, Briefcase, Info, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { OpeningChatFlow } from "@/components/opening/OpeningChatFlow";
 import { SwitchingChatFlow } from "@/components/switching/SwitchingChatFlow";
 import { safeTrackLead as trackJourney } from "@/lib/leads-client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import logoAsset from "@/assets/logo-spolaor.png.asset.json";
 import foto1Asset from "@/assets/foto1.jpg.asset.json";
@@ -135,6 +136,15 @@ function LandingPage() {
     queryFn: () => getPublicServices(),
     staleTime: 1000 * 60 * 60,
   });
+
+  const filteredPlans = useMemo(() => {
+    return (plansQ.data ?? [])
+      .filter((p: any) => p.status === 'ativo' && !p.nome.startsWith('TEMP_') && p.nome !== 'Demais')
+      .sort((a: any, b: any) => {
+        const order = { 'Plano A': 1, 'Plano B': 2, 'Plano C': 3, 'Plano D': 4 };
+        return (order[a.nome as keyof typeof order] || 99) - (order[b.nome as keyof typeof order] || 99);
+      });
+  }, [plansQ.data]);
 
   if (showOpeningFlow || showSwitchingFlow) {
     return (
@@ -352,59 +362,131 @@ function LandingPage() {
               </div>
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                {(plansQ.data ?? [])
-                  .filter((p: any) => !p.nome.startsWith('TEMP_') && p.nome !== 'Demais')
-                  .sort((a: any, b: any) => {
-                    const order = { 'Plano A': 1, 'Plano B': 2, 'Plano C': 3, 'Plano D': 4 };
-                    return (order[a.nome as keyof typeof order] || 99) - (order[b.nome as keyof typeof order] || 99);
-                  })
-                  .map((plan: any) => {
+                {plansQ.isLoading ? (
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 animate-pulse">
+                    {[1, 2, 3, 4].map(i => <Card key={i} className="h-96 bg-muted/50" />)}
+                  </div>
+                ) : (
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                    {filteredPlans.length === 0 ? (
+                      <div className="col-span-full py-12 text-center text-muted-foreground border-2 border-dashed rounded-xl">
+                        Carregando catálogo... (Plans: {plansQ.data?.length || 0})
+                      </div>
+                    ) : (
+                      filteredPlans.map((plan: any, index: number) => {
+                        const prevPlan = index > 0 ? filteredPlans[index - 1] : null;
                     const displayName = plan.nome;
                     const isRecomendado = plan.nome === 'Plano B';
+                    const [isExpanded, setIsExpanded] = useState(false);
                     
+                    const includedServices = plan.plan_services || [];
+                    const prevPlanServiceIds = new Set(prevPlan?.plan_services?.map((ps: any) => ps.service_id) || []);
+                    
+                    // Lógica "Tudo do anterior mais"
+                    const newServices = prevPlan 
+                      ? includedServices.filter((ps: any) => !prevPlanServiceIds.has(ps.service_id))
+                      : includedServices;
+
                     return (
-                      <Card key={plan.id} className={`p-6 flex flex-col relative overflow-hidden ${isRecomendado ? 'ring-2 ring-primary' : ''}`}>
+                      <Card key={plan.id} className={`p-6 flex flex-col relative overflow-hidden transition-all hover:shadow-xl ${isRecomendado ? 'ring-2 ring-primary scale-105 z-10' : 'hover:scale-[1.02]'}`}>
                         {isRecomendado && (
                           <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-bl-lg">
                             RECOMENDADO
                           </div>
                         )}
                         <div className="mb-6">
-                          <h3 className="font-display text-xl font-bold">{displayName}</h3>
-                          <p className="text-xs text-muted-foreground mt-1">{plan.publico_alvo}</p>
+                          <h3 className="font-display text-2xl font-bold">{displayName}</h3>
+                          <p className="text-sm text-muted-foreground mt-2 min-h-[40px] leading-snug">
+                            {plan.publico_alvo || "Solução ideal para sua empresa"}
+                          </p>
                         </div>
-                        <div className="mb-8">
-                          <div className="text-3xl font-bold">
-                            {plan.tipo_preco === 'sob_orcamento' ? 'Sob orçamento' : brl(plan.valor_padrao)}
-                            {plan.tipo_preco !== 'sob_orcamento' && <span className="text-sm font-normal text-muted-foreground">/mês</span>}
+                        <div className="mb-8 border-b pb-6">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-3xl font-bold">
+                              {plan.tipo_preco === 'sob_orcamento' ? 'Sob orçamento' : brl(plan.valor_padrao)}
+                            </span>
+                            {plan.tipo_preco !== 'sob_orcamento' && <span className="text-sm font-medium text-muted-foreground">/mês</span>}
                           </div>
-                          {plan.limite_faturamento && (
-                            <div className="text-[10px] text-muted-foreground mt-1 whitespace-pre-line">
-                              Até {brl(plan.limite_faturamento)} de faturamento/mês
-                              {(plan.nome === 'Plano B' || plan.nome === 'Plano C' || plan.nome === 'Plano D') && "\nSimples Nacional - Anexo III"}
+                          {plan.limite_faturamento > 0 && (
+                            <div className="flex items-center gap-1.5 text-xs text-primary font-medium mt-2 bg-primary/5 w-fit px-2 py-1 rounded">
+                              <Receipt className="h-3 w-3" />
+                              Faturamento até {brl(plan.limite_faturamento).replace(',00', '')}/mês
                             </div>
                           )}
                         </div>
                         
-                        <ul className="space-y-3 mb-8 flex-1">
-                          {plan.plan_services?.filter((ps: any) => ps.tipo_inclusao === 'included').slice(0, 5).map((ps: any) => (
-                            <li key={ps.id} className="text-xs flex items-start gap-2">
-                              <Check className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
-                              <span>{ps.services?.nome}</span>
-                            </li>
-                          ))}
-                        </ul>
+                        <div className="space-y-4 mb-8 flex-1">
+                          {prevPlan && (
+                            <p className="text-xs font-bold text-primary flex items-center gap-1.5">
+                              <Plus className="h-3 w-3" />
+                              Tudo do {prevPlan.nome}, mais:
+                            </p>
+                          )}
+                          
+                          <ul className="space-y-3">
+                            {(isExpanded ? includedServices : (prevPlan ? newServices : includedServices).slice(0, 5)).map((ps: any) => (
+                              <li key={ps.id} className="text-sm flex items-start gap-2 group">
+                                <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                                <div className="flex items-center gap-1">
+                                  <span className="text-muted-foreground group-hover:text-foreground transition-colors">
+                                    {ps.services?.nome}
+                                    {ps.tipo_inclusao === 'incluido_com_limite' && ps.limite_quantidade && (
+                                      <span className="text-[10px] ml-1 opacity-70">
+                                        ({ps.limite_quantidade} {ps.unidade_limite || 'un'})
+                                      </span>
+                                    )}
+                                  </span>
+                                  {ps.services?.descricao && (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <button className="text-muted-foreground hover:text-primary transition-colors">
+                                            <Info className="h-3 w-3" />
+                                          </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-[200px] text-xs">
+                                          {ps.services.descricao}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  )}
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+
+                          {includedServices.length > 5 && (
+                            <button 
+                              onClick={() => setIsExpanded(!isExpanded)}
+                              className="text-primary text-xs font-bold hover:underline flex items-center gap-1 w-fit mt-2"
+                            >
+                              {isExpanded ? (
+                                <>Ver menos <ChevronUp className="h-3 w-3" /></>
+                              ) : (
+                                <>Ver tudo que está incluído <ChevronDown className="h-3 w-3" /></>
+                              )}
+                            </button>
+                          )}
+                        </div>
                         
                         <Button 
-                          variant={plan.nome === 'Plano B' || plan.nome === 'Plano C' ? 'default' : 'outline'} 
-                          className="w-full" 
+                          variant={isRecomendado ? 'default' : 'outline'} 
+                          size="lg"
+                          className={cn(
+                            "w-full font-bold transition-all",
+                            isRecomendado ? "shadow-lg shadow-primary/20 hover:shadow-primary/30" : ""
+                          )} 
                           onClick={() => handlePlanSelection(plan.id)}
                         >
                           Selecionar plano
+                          <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                       </Card>
-                    );
-                  })}
+                        );
+                      })
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>

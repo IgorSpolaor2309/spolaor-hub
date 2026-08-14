@@ -219,14 +219,32 @@ export const generateContract = createServerFn({ method: "POST" })
     if (proposal) {
       const services = (proposal.services as any[]) || [];
       const included = services.filter((s: any) => s.included).map((s: any) => s.name).join(", ");
-      const extras = services.filter((s: any) => !s.included).map((s: any) => s.name).join(", ");
+      
+      // Get explicitly selected extra services from prospect
+      const selectedExtraIds = (prospect.extra_service_ids as string[]) || [];
+      const { data: dbExtraServices } = await supabaseAdmin
+        .from("services")
+        .select("nome")
+        .in("id", selectedExtraIds);
+        
+      const extras = dbExtraServices?.map(s => s.nome).join(", ") || "";
+      
       placeholders["{{servicos_incluidos}}"] = included || planServicesList || "Serviços Contábeis padrão conforme catálogo";
       placeholders["{{servicos_extras}}"] = extras || "Consultoria Especializada, Auditoria Retroativa";
       placeholders["{{descontos}}"] = brl(proposal.discount_value || 0);
       placeholders["{{condicoes_especiais}}"] = (proposal.special_conditions as string) || "Nenhuma";
     } else {
       placeholders["{{servicos_incluidos}}"] = planServicesList || "Serviços Contábeis padrão conforme catálogo";
-      placeholders["{{servicos_extras}}"] = "Consultoria Especializada, Auditoria Retroativa";
+      
+      // Fetch specifically selected services for non-personalized flow
+      const selectedExtraIds = (prospect.extra_service_ids as string[]) || [];
+      const { data: dbExtraServices } = await supabaseAdmin
+        .from("services")
+        .select("nome")
+        .in("id", selectedExtraIds);
+        
+      const extras = dbExtraServices?.map(s => s.nome).join(", ") || "";
+      placeholders["{{servicos_extras}}"] = extras || "Consultoria Especializada, Auditoria Retroativa";
       placeholders["{{descontos}}"] = brl(prospect.discount_value || 0);
       placeholders["{{condicoes_especiais}}"] = "Nenhuma";
     }
