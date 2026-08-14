@@ -1068,9 +1068,9 @@ export type Database = {
           ai_extracted_data: Json | null
           bottleneck_indicator: string | null
           cnpj: string | null
-          contact_email: string
-          contact_name: string
-          contact_phone: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
           coupon_id: string | null
           created_at: string | null
           discount_value: number | null
@@ -1099,9 +1099,9 @@ export type Database = {
           ai_extracted_data?: Json | null
           bottleneck_indicator?: string | null
           cnpj?: string | null
-          contact_email: string
-          contact_name: string
-          contact_phone: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           coupon_id?: string | null
           created_at?: string | null
           discount_value?: number | null
@@ -1130,9 +1130,9 @@ export type Database = {
           ai_extracted_data?: Json | null
           bottleneck_indicator?: string | null
           cnpj?: string | null
-          contact_email?: string
-          contact_name?: string
-          contact_phone?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           coupon_id?: string | null
           created_at?: string | null
           discount_value?: number | null
