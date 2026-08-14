@@ -1083,6 +1083,7 @@ export type Database = {
           internal_notes: string | null
           journey_step: string | null
           last_interaction_at: string | null
+          last_interaction_description: string | null
           next_action_date: string | null
           next_action_description: string | null
           original_value: number
@@ -1113,6 +1114,7 @@ export type Database = {
           internal_notes?: string | null
           journey_step?: string | null
           last_interaction_at?: string | null
+          last_interaction_description?: string | null
           next_action_date?: string | null
           next_action_description?: string | null
           original_value: number
@@ -1143,6 +1145,7 @@ export type Database = {
           internal_notes?: string | null
           journey_step?: string | null
           last_interaction_at?: string | null
+          last_interaction_description?: string | null
           next_action_date?: string | null
           next_action_description?: string | null
           original_value?: number
