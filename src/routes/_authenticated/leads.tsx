@@ -94,24 +94,39 @@ function LeadsPage() {
   })
 
   const getStatusBadge = (status: string, lead?: any) => {
+    const badges = [];
+    
     if (lead?.interested_in_personalized_solution) {
-      return (
-        <div className="flex flex-col gap-1 items-start">
-          <Badge variant="default" className="bg-purple-500">Personalizado</Badge>
-          <Badge variant="outline" className="text-[9px] lowercase">
-            {lead.preferred_contact_channel === 'whatsapp' ? 'via WhatsApp' : 'via Vídeo'}
-          </Badge>
-        </div>
-      )
+      badges.push(<Badge key="pers" variant="default" className="bg-purple-600">Personalizado</Badge>);
     }
-    switch (status) {
-      case 'interessado': return <Badge variant="secondary">Interessado</Badge>
-      case 'contratação_em_andamento': return <Badge variant="default" className="bg-blue-500">Em contratação</Badge>
-      case 'abandonado': return <Badge variant="destructive">Abandonado</Badge>
-      case 'perdido': return <Badge variant="outline">Perdido</Badge>
-      default: return <Badge variant="outline">{status}</Badge>
-    }
-  }
+
+    const statusMap: Record<string, { label: string, color: string }> = {
+      novo: { label: 'Novo', color: 'bg-blue-500' },
+      aguardando_contato: { label: 'Aguardando Contato', color: 'bg-yellow-500' },
+      em_atendimento: { label: 'Em Atendimento', color: 'bg-indigo-500' },
+      proposta_enviada: { label: 'Proposta Enviada', color: 'bg-orange-500' },
+      contratado: { label: 'Contratado', color: 'bg-green-500' },
+      perdido: { label: 'Perdido', color: 'bg-slate-500' },
+      spam: { label: 'Spam', color: 'bg-red-500' },
+      interessado: { label: 'Interessado', color: 'bg-blue-400' },
+      contratação_em_andamento: { label: 'Em contratação', color: 'bg-blue-600' },
+      abandonado: { label: 'Abandonado', color: 'bg-red-400' },
+    };
+
+    const config = statusMap[status] || { label: status, color: 'bg-slate-400' };
+    badges.push(<Badge key="status" className={config.color}>{config.label}</Badge>);
+
+    return (
+      <div className="flex flex-col gap-1 items-start">
+        {badges}
+        {lead?.preferred_contact_channel && (
+          <span className="text-[9px] text-muted-foreground lowercase">
+            via {lead.preferred_contact_channel === 'whatsapp' ? 'WhatsApp' : 'Vídeo'}
+          </span>
+        )}
+      </div>
+    );
+  };
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
