@@ -190,7 +190,7 @@ export const generateContract = createServerFn({ method: "POST" })
       "{{cpf_responsavel}}": extracted.representative_cpf || extracted.cpf || "",
       "{{plano}}": finalPlanName,
       "{{valor_mensal}}": brl(monthlyFee),
-      "{{valor_implantacao}}": finalSetupValue > 0 ? brl(finalSetupValue) : "R$ 0,00",
+      "{{valor_implantacao}}": finalSetupValue > 0 ? brl(finalSetupValue) : "Isento",
       "{{dia_vencimento}}": "10",
       "{{competencia_inicial}}": new Date().toLocaleDateString("pt-BR", { month: 'long', year: 'numeric' }),
       "{{limite_faturamento}}": prospect.plan?.limite_faturamento 
