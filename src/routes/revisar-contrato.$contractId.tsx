@@ -51,13 +51,15 @@ function ReviewContractPage() {
     let title = "Contrato não encontrado";
     let description = "Não conseguimos localizar o contrato solicitado. O link pode ter expirado ou estar incorreto.";
 
-    if (errorMsg === "missing_snapshot") {
-      title = "Contrato ainda não gerado";
-      description = "O conteúdo do contrato ainda não foi processado. Por favor, tente novamente em alguns instantes.";
+    if (errorMsg === "missing_snapshot" || !contract?.content_snapshot) {
+      title = "Contrato sem conteúdo";
+      description = "O conteúdo do contrato não foi processado ou está vazio. Por favor, retorne e tente gerar novamente.";
     } else if (errorMsg === "erro_banco") {
       title = "Erro ao carregar contrato";
       description = "Houve um problema técnico ao acessar a base de dados. Nossa equipe já foi notificada.";
     }
+
+    console.error("[CONTRACT_FETCH_ERROR]", { error, contractId, errorMsg });
 
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -70,6 +72,11 @@ function ReviewContractPage() {
             <p className="text-muted-foreground">
               {description}
             </p>
+            {contractId && (
+              <p className="text-[10px] text-muted-foreground mt-4 font-mono">
+                ID: {contractId}
+              </p>
+            )}
           </div>
           <Button asChild className="w-full">
             <Link to="/">Voltar ao início</Link>
@@ -78,6 +85,7 @@ function ReviewContractPage() {
       </div>
     );
   }
+
 
   console.log(`[RENDER_CONTRACT] Rendering contract ${contract.id} with snapshot of ${contract.content_snapshot?.length} chars`);
 

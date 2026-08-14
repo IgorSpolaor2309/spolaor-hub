@@ -12,6 +12,9 @@ import { safeTrackLead as trackJourney } from "@/lib/leads-client";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { MissingFieldsModal } from "./MissingFieldsModal";
+import { generateContract } from "@/lib/contracts-management.functions";
+
 
 interface CheckoutViewProps {
   flowType: "opening" | "switching";
@@ -42,10 +45,24 @@ export function CheckoutView({
   const [appliedCoupon, setAppliedCoupon] = useState<CouponData | null>(null);
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [missingFieldsModal, setMissingFieldsModal] = useState<{
+    isOpen: boolean;
+    missingFields: string[];
+    prospectId: string;
+    extractedData: any;
+  }>({
+    isOpen: false,
+    missingFields: [],
+    prospectId: "",
+    extractedData: null,
+  });
+
   const navigate = useNavigate();
 
   const validateCouponFn = useServerFn(validateCoupon);
   const confirmContractingFn = useServerFn(confirmContracting);
+  const generateContractFn = useServerFn(generateContract);
+
 
   const { data: plans = [] } = useQuery({
     queryKey: ["public-plans"],
@@ -112,7 +129,7 @@ export function CheckoutView({
   const handleConfirm = async () => {
     setIsConfirming(true);
     try {
-      // 1. Confirmar intenção (cria prospect e contrato)
+      // 1. Confirmar intenção (cria/atualiza prospect e lead)
       const result = await confirmContractingFn({
         data: {
           flow_type: flowType,
@@ -125,19 +142,54 @@ export function CheckoutView({
         }
       });
       
-      // 2. Gerar o contrato automaticamente
       console.log(`[CHECKOUT_CONFIRMED] Prospect: ${result.prospectId}`);
-      const { generateContract } = await import("@/lib/contracts-management.functions");
-      const generated = await generateContract({
-        data: { prospectId: result.prospectId }
+      
+      // 2. Tentar gerar o contrato
+      await processContractGeneration(result.prospectId, result.leadId || leadId);
+
+    } catch (e: any) {
+      console.error("[CONTRACT_GENERATION_ERROR]", e);
+      toast.error(e.message || "Erro ao registrar intenção de contratação");
+    } finally {
+      setIsConfirming(false);
+    }
+  };
+
+  const processContractGeneration = async (prospectId: string, leadIdParam?: string) => {
+    try {
+      console.log(`[CONTRACT_GENERATION_START] Prospect: ${prospectId}`);
+      
+      const generated = await generateContractFn({
+        data: { prospectId }
       });
 
-      console.log(`[CONTRACT_ID_REDIRECT] Navigating to /revisar-contrato/${generated.id}`);
+      console.log(`[VALIDATION_RESULT] Errors: ${generated.missingFields?.length || 0}`);
+      
+      // 3. Se houver campos obrigatórios faltando, abrir o modal
+      if (generated.missingFields && generated.missingFields.length > 0) {
+        console.log(`[MISSING_FIELDS]`, generated.missingFields);
+        setMissingFieldsModal({
+          isOpen: true,
+          missingFields: generated.missingFields,
+          prospectId: prospectId,
+          extractedData: extractedData
+        });
+        return;
+      }
 
-      // 3. Rastrear jornada final
+      // 4. Se não houver erros, validar se tem ID e Snapshot
+      if (!generated.id || !generated.content_snapshot) {
+        console.error("[CONTRACT_GENERATION_ERROR] Missing ID or Snapshot", generated);
+        throw new Error("Erro na geração do conteúdo do contrato.");
+      }
+
+      console.log(`[CONTRACT_GENERATION_SUCCESS] ID: ${generated.id}, Snapshot length: ${generated.content_snapshot.length}`);
+      console.log(`[REVIEW_REDIRECT] Navigating to /revisar-contrato/${generated.id}`);
+
+      // 5. Rastrear jornada final
       await trackJourney({
         data: {
-          leadId: result.leadId || leadId,
+          leadId: leadIdParam || leadId,
           journeyStep: 'contratacao_confirmada',
           estimatedValue: totals.finalValue,
           lastInteraction: `Contrato gerado (${generated.id}) para o plano ${selectedPlan?.name}. Redirecionando para revisão.`
@@ -146,18 +198,17 @@ export function CheckoutView({
 
       toast.success("Contrato gerado com sucesso! Redirecionando para revisão.");
       
-      // Garantir que navegamos usando o ID do contrato gerado
       navigate({ 
         to: "/revisar-contrato/$contractId", 
         params: { contractId: generated.id } 
       });
     } catch (e: any) {
-      console.error("Erro no checkout:", e);
-      toast.error(e.message || "Erro ao registrar intenção de contratação");
-    } finally {
-      setIsConfirming(false);
+      console.error("[CONTRACT_GENERATION_ERROR]", e);
+      toast.error(e.message || "Erro ao gerar contrato");
+      throw e;
     }
   };
+
 
 
   const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -318,6 +369,19 @@ export function CheckoutView({
           </div>
         </Card>
       </div>
+
+      <MissingFieldsModal
+        isOpen={missingFieldsModal.isOpen}
+        onClose={() => setMissingFieldsModal(prev => ({ ...prev, isOpen: false }))}
+        leadId={missingFieldsModal.prospectId}
+        initialData={missingFieldsModal.extractedData}
+        missingFields={missingFieldsModal.missingFields}
+        onSuccess={() => {
+          // Re-trigger generation after data update
+          processContractGeneration(missingFieldsModal.prospectId);
+        }}
+      />
     </div>
+
   );
 }
