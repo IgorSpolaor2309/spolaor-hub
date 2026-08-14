@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
 
 const LeadTrackSchema = z.object({
@@ -26,6 +25,7 @@ const LeadTrackSchema = z.object({
 export const trackLeadJourney = createServerFn({ method: "POST" })
   .inputValidator((data) => LeadTrackSchema.parse(data))
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const payload: any = {
       journey_step: data.journeyStep,
       last_interaction_at: new Date().toISOString(),
