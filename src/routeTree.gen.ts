@@ -36,6 +36,7 @@ import { Route as AuthenticatedGuiasRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authenticated/documentos'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedContractsRouteImport } from './routes/_authenticated/contracts'
+import { Route as AuthenticatedContractModelsRouteImport } from './routes/_authenticated/contract-models'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedCompetenciasRouteImport } from './routes/_authenticated/competencias'
 import { Route as AuthenticatedColaboradoresRouteImport } from './routes/_authenticated/colaboradores'
@@ -197,6 +198,12 @@ const AuthenticatedContractsRoute = AuthenticatedContractsRouteImport.update({
   path: '/contracts',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedContractModelsRoute =
+  AuthenticatedContractModelsRouteImport.update({
+    id: '/contract-models',
+    path: '/contract-models',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedConfiguracoesRoute =
   AuthenticatedConfiguracoesRouteImport.update({
     id: '/configuracoes',
@@ -313,6 +320,7 @@ export interface FileRoutesByFullPath {
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/competencias': typeof AuthenticatedCompetenciasRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/contract-models': typeof AuthenticatedContractModelsRoute
   '/contracts': typeof AuthenticatedContractsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/documentos': typeof AuthenticatedDocumentosRoute
@@ -359,6 +367,7 @@ export interface FileRoutesByTo {
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/competencias': typeof AuthenticatedCompetenciasRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/contract-models': typeof AuthenticatedContractModelsRoute
   '/contracts': typeof AuthenticatedContractsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/documentos': typeof AuthenticatedDocumentosRoute
@@ -407,6 +416,7 @@ export interface FileRoutesById {
   '/_authenticated/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/_authenticated/competencias': typeof AuthenticatedCompetenciasRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/_authenticated/contract-models': typeof AuthenticatedContractModelsRoute
   '/_authenticated/contracts': typeof AuthenticatedContractsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/documentos': typeof AuthenticatedDocumentosRoute
@@ -455,6 +465,7 @@ export interface FileRouteTypes {
     | '/colaboradores'
     | '/competencias'
     | '/configuracoes'
+    | '/contract-models'
     | '/contracts'
     | '/dashboard'
     | '/documentos'
@@ -501,6 +512,7 @@ export interface FileRouteTypes {
     | '/colaboradores'
     | '/competencias'
     | '/configuracoes'
+    | '/contract-models'
     | '/contracts'
     | '/dashboard'
     | '/documentos'
@@ -548,6 +560,7 @@ export interface FileRouteTypes {
     | '/_authenticated/colaboradores'
     | '/_authenticated/competencias'
     | '/_authenticated/configuracoes'
+    | '/_authenticated/contract-models'
     | '/_authenticated/contracts'
     | '/_authenticated/dashboard'
     | '/_authenticated/documentos'
@@ -789,6 +802,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedContractsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/contract-models': {
+      id: '/_authenticated/contract-models'
+      path: '/contract-models'
+      fullPath: '/contract-models'
+      preLoaderRoute: typeof AuthenticatedContractModelsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/configuracoes': {
       id: '/_authenticated/configuracoes'
       path: '/configuracoes'
@@ -965,6 +985,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedColaboradoresRoute: typeof AuthenticatedColaboradoresRoute
   AuthenticatedCompetenciasRoute: typeof AuthenticatedCompetenciasRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
+  AuthenticatedContractModelsRoute: typeof AuthenticatedContractModelsRoute
   AuthenticatedContractsRoute: typeof AuthenticatedContractsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRoute
@@ -998,6 +1019,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedColaboradoresRoute: AuthenticatedColaboradoresRoute,
   AuthenticatedCompetenciasRoute: AuthenticatedCompetenciasRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
+  AuthenticatedContractModelsRoute: AuthenticatedContractModelsRoute,
   AuthenticatedContractsRoute: AuthenticatedContractsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDocumentosRoute: AuthenticatedDocumentosRoute,
