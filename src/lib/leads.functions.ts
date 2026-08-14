@@ -116,8 +116,9 @@ export const updateLeadRecovery = createServerFn({ method: "POST" })
     internal_notes: z.string().optional()
   }).parse(data))
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { id, ...payload } = data;
-    const { error } = await (supabase as any)
+    const { error } = await supabaseAdmin
       .from("commercial_prospects")
       .update(payload)
       .eq("id", id);
@@ -133,10 +134,11 @@ export const addLeadHistory = createServerFn({ method: "POST" })
     content: z.string()
   }).parse(data))
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Unauthorized");
 
-    const { error } = await (supabase as any)
+    const { error } = await supabaseAdmin
       .from("commercial_prospect_history")
       .insert({
         ...data,
