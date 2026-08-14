@@ -2159,6 +2159,48 @@ export type Database = {
           },
         ]
       }
+      lead_history: {
+        Row: {
+          action_type: string | null
+          content: string | null
+          created_at: string | null
+          id: string
+          lead_id: string | null
+          profile_id: string | null
+        }
+        Insert: {
+          action_type?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          lead_id?: string | null
+          profile_id?: string | null
+        }
+        Update: {
+          action_type?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          lead_id?: string | null
+          profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_history_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_history_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           business_type: string | null
