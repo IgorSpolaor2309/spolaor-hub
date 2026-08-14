@@ -1,7 +1,10 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useSuspenseQuery, useQueryClient, useMutation } from '@tanstack/react-query'
+import { useServerFn } from '@tanstack/react-start'
 import { getLeads, updateLeadRecovery, addLeadHistory, getCollaborators } from '@/lib/leads.functions'
+import { getProposalByLead } from '@/lib/proposals.functions'
 import { askCommercialAi } from '@/lib/commercial-ai.functions'
+import { ProposalConfigurator } from '@/components/commercial/ProposalConfigurator'
 import { Card } from '@/components/ui/card'
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
@@ -50,6 +53,24 @@ function LeadsPage() {
   const [aiQuestion, setAiQuestion] = useState('')
   const [aiHistory, setAiHistory] = useState<{q: string, a: string}[]>([])
   const [isAiLoading, setIsAiLoading] = useState(false)
+  const [isProposalOpen, setIsProposalOpen] = useState(false)
+  const [activeProposal, setActiveProposal] = useState<any>(null)
+  const [isProposalLoading, setIsProposalLoading] = useState(false)
+
+  const getProposalFn = useServerFn(getProposalByLead)
+
+  const handleOpenProposal = async (lead: any) => {
+    setIsProposalLoading(true)
+    try {
+      const proposal = await getProposalFn({ data: { leadId: lead.id } })
+      setActiveProposal(proposal)
+      setIsProposalOpen(true)
+    } catch (err: any) {
+      toast.error("Erro ao carregar proposta")
+    } finally {
+      setIsProposalLoading(false)
+    }
+  }
 
   const handleAskAi = async () => {
     if (!aiQuestion.trim() || isAiLoading) return
@@ -308,6 +329,16 @@ function LeadsPage() {
                     <Button 
                       variant="outline" 
                       size="sm"
+                      className="gap-1.5"
+                      onClick={() => handleOpenProposal(lead)}
+                      disabled={isProposalLoading}
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                      Proposta
+                    </Button>
+                    <Button 
+                      variant="default" 
+                      size="sm"
                       onClick={() => {
                         setSelectedLead(lead)
                         setIsRecoveryOpen(true)
@@ -446,6 +477,20 @@ function LeadsPage() {
                     </div>
                   )}
 
+                  <div className="pt-2">
+                    <Button 
+                      variant="outline" 
+                      className="w-full gap-2 border-primary/20 hover:bg-primary/5 text-primary"
+                      onClick={() => {
+                        setIsRecoveryOpen(false)
+                        handleOpenProposal(selectedLead)
+                      }}
+                    >
+                      <FileText className="h-4 w-4" />
+                      {selectedLead.interested_in_personalized_solution ? 'Configurar Proposta Personalizada' : 'Gerar Proposta'}
+                    </Button>
+                  </div>
+
                   <Separator />
 
                   <div className="space-y-4 bg-muted/30 p-4 rounded-lg">
@@ -567,6 +612,16 @@ function LeadsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {selectedLead && (
+        <ProposalConfigurator 
+          lead={selectedLead}
+          proposal={activeProposal}
+          isOpen={isProposalOpen}
+          onOpenChange={setIsProposalOpen}
+          collaborators={collaborators || []}
+        />
+      )}
     </div>
   )
 }
