@@ -5,6 +5,7 @@ export interface CommercialItem {
   name: string;
   value: number;
   type: 'plan' | 'service';
+  isIncluded?: boolean;
 }
 
 export interface CouponData {
@@ -22,7 +23,7 @@ export function calculateCommercialTotal(
   extraServices: CommercialItem[],
   coupon: CouponData | null
 ) {
-  const originalValue = (basePlan?.value ?? 0) + extraServices.reduce((acc, s) => acc + s.value, 0);
+  const originalValue = (basePlan?.value ?? 0) + extraServices.filter(s => !s.isIncluded).reduce((acc, s) => acc + s.value, 0);
   let discountValue = 0;
 
   if (coupon) {
