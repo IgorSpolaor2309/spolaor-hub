@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { getContractForReview } from "@/lib/contracts-management.functions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,26 +16,12 @@ function ReviewContractPage() {
   const { contractId } = Route.useParams();
   const navigate = useNavigate();
 
+  const fetchContract = useServerFn(getContractForReview);
+
   const { data: contract, isLoading, error } = useQuery({
     queryKey: ["generated-contract-public", contractId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("generated_contracts")
-        .select(`
-          *,
-          prospect:prospect_id (
-            contact_name,
-            cnpj,
-            final_value,
-            plan:plan_id (nome)
-          )
-        `)
-        .eq("id", contractId)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => fetchContract({ data: { contractId } }),
+    retry: false,
   });
 
   const brl = (n: number | null | undefined) =>
@@ -52,6 +39,18 @@ function ReviewContractPage() {
   }
 
   if (error || !contract) {
+    const errorMsg = (error as any)?.message;
+    let title = "Contrato não encontrado";
+    let description = "Não conseguimos localizar o contrato solicitado. O link pode ter expirado ou estar incorreto.";
+
+    if (errorMsg === "missing_snapshot") {
+      title = "Contrato ainda não gerado";
+      description = "O conteúdo do contrato ainda não foi processado. Por favor, tente novamente em alguns instantes.";
+    } else if (errorMsg === "erro_banco") {
+      title = "Erro ao carregar contrato";
+      description = "Houve um problema técnico ao acessar a base de dados. Nossa equipe já foi notificada.";
+    }
+
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
         <Card className="max-w-md p-8 text-center space-y-6 border-destructive/20 shadow-xl">
@@ -59,9 +58,9 @@ function ReviewContractPage() {
             <AlertTriangle className="h-8 w-8" />
           </div>
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold font-display">Contrato não encontrado</h1>
+            <h1 className="text-2xl font-bold font-display">{title}</h1>
             <p className="text-muted-foreground">
-              Não conseguimos localizar o contrato solicitado. O link pode ter expirado ou estar incorreto.
+              {description}
             </p>
           </div>
           <Button asChild className="w-full">
