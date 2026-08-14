@@ -130,13 +130,14 @@ export const generateContract = createServerFn({ method: "POST" })
     };
 
     if (proposal) {
+      const services = (proposal.services as any[]) || [];
       placeholders["{{valor_implantacao}}"] = (proposal.setup_value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-      placeholders["{{servicos_incluidos}}"] = (proposal.services || [])
+      placeholders["{{servicos_incluidos}}"] = services
         .filter((s: any) => s.included).map((s: any) => s.name).join(", ");
-      placeholders["{{servicos_extras}}"] = (proposal.services || [])
+      placeholders["{{servicos_extras}}"] = services
         .filter((s: any) => !s.included).map((s: any) => s.name).join(", ");
       placeholders["{{descontos}}"] = (proposal.discount_value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-      placeholders["{{condicoes_especiais}}"] = proposal.special_conditions || "Nenhuma";
+      placeholders["{{condicoes_especiais}}"] = (proposal.special_conditions as string) || "Nenhuma";
     }
 
     // 4. Replace placeholders in content
