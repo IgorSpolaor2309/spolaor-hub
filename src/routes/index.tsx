@@ -376,7 +376,7 @@ function LandingPage() {
             </div>
             <div className="mt-8 animate-in fade-in duration-1000 delay-500">
               <a href="#planos" className="text-sm font-medium text-white hover:underline inline-flex items-center gap-1">
-                Descobrir meu plano <ArrowRight className="h-3.5 w-3.5" />
+                Descobrir meu plano (DEBUG: {filteredPlans.length}) <ArrowRight className="h-3.5 w-3.5" />
               </a>
             </div>
           </div>
