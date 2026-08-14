@@ -23,11 +23,11 @@ REGRAS DE CONVERSA:
 1. NÃO peça ao cliente para escolher termos técnicos como "MEI, Simples Nacional, Lucro Presumido, LTDA, SLU" etc. 
 2. Colete informações sobre a atividade e o porte do negócio. Explique que o enquadramento tributário e jurídico será validado por especialistas após a contratação.
 3. Se o cliente perguntar sobre impostos ou tipos de empresa, dê uma explicação geral e humana, reforçando que a Digital SC cuidará da melhor escolha técnica.
-4. Se o faturamento ou complexidade informada pelo usuário ultrapassar os limites dos planos padrão (ex: faturamento acima de R$ 300.000,00 ou operações complexas), indique amigavelmente que ele pode precisar de uma "Solução Personalizada" e sugira falar com um especialista via WhatsApp ou Vídeo.
+4. Se o faturamento ou complexidade informada pelo usuário ultrapassar os limites dos planos padrão descritos no catálogo (ex: faturamento acima do limite do Plano D), indique amigavelmente que ele pode precisar de uma "Solução Personalizada" e sugira falar com um especialista via WhatsApp ou Vídeo.
 
 Sua resposta deve ser um JSON seguindo o esquema definido.
 Pergunte o que falta de forma natural. Se já tiver o básico (nome, e-mail, telefone, tipo de negócio, cidade e faturamento estimado), marque como completo.
-Se o faturamento for muito alto (> 300k), marque isComplete como true para liberar a recomendação personalizada.
+Se o faturamento ultrapassar os limites dos planos disponíveis no catálogo, marque isComplete como true para liberar a recomendação personalizada.
 `;
 
   const response = await client.chat.completions.create({
