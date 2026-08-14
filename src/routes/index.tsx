@@ -381,7 +381,7 @@ function LandingPage() {
                           {plan.limite_faturamento && (
                             <div className="text-[10px] text-muted-foreground mt-1 whitespace-pre-line">
                               Até {brl(plan.limite_faturamento)} de faturamento/mês
-                              {plan.nome === 'Plano B' && "\nSimples Nacional - Anexo III"}
+                              {(plan.nome === 'Plano B' || plan.nome === 'Plano C' || plan.nome === 'Plano D') && "\nSimples Nacional - Anexo III"}
                             </div>
                           )}
                         </div>
