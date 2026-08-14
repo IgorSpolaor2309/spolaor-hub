@@ -73,13 +73,12 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
         .single();
     }
     
-    // Explicit console log for debugging in sandbox
-    console.log(`[Lead Track] Success for ${data.journeyStep}. ID: ${result.data?.id}`);
-
     if (result.error) {
-      console.error("Error tracking lead:", result.error);
+      console.error("Error tracking lead (admin):", result.error);
       throw result.error;
     }
+    
+    console.log(`[Lead Track] Success for ${data.journeyStep}. ID: ${result.data?.id}`);
 
     return { success: true, prospectId: result.data.id };
   });
