@@ -86,10 +86,19 @@ function ContractModelsPage() {
   };
 
   const PLACEHOLDERS = [
+    // CONTRATANTE
     "{{razao_social}}", "{{cnpj}}", "{{email}}", "{{telefone}}",
+    "{{natureza_juridica}}", "{{endereco}}", "{{nome_responsavel}}", "{{cpf_responsavel}}",
+    
+    // COMERCIAL / OPERACIONAL
     "{{plano}}", "{{valor_mensal}}", "{{valor_implantacao}}",
     "{{servicos_incluidos}}", "{{servicos_extras}}", "{{descontos}}",
-    "{{condicoes_especiais}}", "{{data_contratacao}}"
+    "{{condicoes_especiais}}", "{{data_contratacao}}",
+    "{{dia_vencimento}}", "{{competencia_inicial}}", "{{limite_faturamento}}",
+    "{{estrutura_incluida}}", "{{vigencia}}", "{{reajuste}}",
+    
+    // CONTRATADA
+    "{{crc_sp}}", "{{cidade_assinatura}}", "{{representante_contratada}}", "{{cpf_representante_contratada}}"
   ];
 
   return (
