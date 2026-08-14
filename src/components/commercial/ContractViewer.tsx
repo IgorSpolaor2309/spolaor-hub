@@ -40,7 +40,7 @@ export function ContractViewer({ prospect, isOpen, onOpenChange }: ContractViewe
   const isImmutable = isSigned || isSent;
 
   const generateMutation = useMutation({
-    mutationFn: () => generateFn({ data: { prospectId: prospect.id } }),
+    mutationFn: () => generateFn({ data: { prospectId: prospect.id, contractingId: prospect.contracting_id } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["generated-contracts", prospect.id] });
       toast.success("Contrato gerado com sucesso");

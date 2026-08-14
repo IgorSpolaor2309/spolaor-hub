@@ -70,7 +70,7 @@ export const confirmContracting = createServerFn({ method: "POST" })
     }
 
     // 2. Cria a intenção de Contrato vinculada (Usando supabaseAdmin para evitar erro de auth em fluxo público)
-    const { error: contractError } = await supabaseAdmin
+    const { data: contracting, error: contractError } = await supabaseAdmin
       .from("commercial_contracts")
       .insert({
         prospect_id: prospect.id,
@@ -88,7 +88,9 @@ export const confirmContracting = createServerFn({ method: "POST" })
           ...data.extracted_data
         },
         status: 'aguardando_contrato'
-      });
+      })
+      .select()
+      .single();
 
     if (contractError) {
       console.error("Error creating contract intent:", contractError);
@@ -99,6 +101,7 @@ export const confirmContracting = createServerFn({ method: "POST" })
       success: true, 
       message: "Intenção de contratação registrada com sucesso!",
       prospectId: prospect.id,
-      leadId: prospect.id // Mapeando prospectId para leadId para facilitar a transição no frontend
+      leadId: prospect.id,
+      contractingId: contracting?.id
     };
   });
