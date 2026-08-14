@@ -14,6 +14,7 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RevisarContratoContractIdRouteImport } from './routes/revisar-contrato.$contractId'
 import { Route as AuthenticatedValidadesRouteImport } from './routes/_authenticated/validades'
 import { Route as AuthenticatedSolicitacoesRouteImport } from './routes/_authenticated/solicitacoes'
 import { Route as AuthenticatedProcessosModelosRouteImport } from './routes/_authenticated/processos-modelos'
@@ -80,6 +81,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RevisarContratoContractIdRoute =
+  RevisarContratoContractIdRouteImport.update({
+    id: '/revisar-contrato/$contractId',
+    path: '/revisar-contrato/$contractId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedValidadesRoute = AuthenticatedValidadesRouteImport.update({
   id: '/validades',
   path: '/validades',
@@ -343,6 +350,7 @@ export interface FileRoutesByFullPath {
   '/processos-modelos': typeof AuthenticatedProcessosModelosRoute
   '/solicitacoes': typeof AuthenticatedSolicitacoesRoute
   '/validades': typeof AuthenticatedValidadesRoute
+  '/revisar-contrato/$contractId': typeof RevisarContratoContractIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
@@ -390,6 +398,7 @@ export interface FileRoutesByTo {
   '/processos-modelos': typeof AuthenticatedProcessosModelosRoute
   '/solicitacoes': typeof AuthenticatedSolicitacoesRoute
   '/validades': typeof AuthenticatedValidadesRoute
+  '/revisar-contrato/$contractId': typeof RevisarContratoContractIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
@@ -439,6 +448,7 @@ export interface FileRoutesById {
   '/_authenticated/processos-modelos': typeof AuthenticatedProcessosModelosRoute
   '/_authenticated/solicitacoes': typeof AuthenticatedSolicitacoesRoute
   '/_authenticated/validades': typeof AuthenticatedValidadesRoute
+  '/revisar-contrato/$contractId': typeof RevisarContratoContractIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/clientes/$id': typeof AuthenticatedClientesIdRoute
@@ -488,6 +498,7 @@ export interface FileRouteTypes {
     | '/processos-modelos'
     | '/solicitacoes'
     | '/validades'
+    | '/revisar-contrato/$contractId'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/clientes/$id'
@@ -535,6 +546,7 @@ export interface FileRouteTypes {
     | '/processos-modelos'
     | '/solicitacoes'
     | '/validades'
+    | '/revisar-contrato/$contractId'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/clientes/$id'
@@ -583,6 +595,7 @@ export interface FileRouteTypes {
     | '/_authenticated/processos-modelos'
     | '/_authenticated/solicitacoes'
     | '/_authenticated/validades'
+    | '/revisar-contrato/$contractId'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/clientes/$id'
@@ -604,6 +617,7 @@ export interface RootRouteChildren {
   SegurancaRoute: typeof SegurancaRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  RevisarContratoContractIdRoute: typeof RevisarContratoContractIdRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicTestSwitchingRoute: typeof ApiPublicTestSwitchingRoute
@@ -646,6 +660,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/revisar-contrato/$contractId': {
+      id: '/revisar-contrato/$contractId'
+      path: '/revisar-contrato/$contractId'
+      fullPath: '/revisar-contrato/$contractId'
+      preLoaderRoute: typeof RevisarContratoContractIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/validades': {
@@ -1062,6 +1083,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  RevisarContratoContractIdRoute: RevisarContratoContractIdRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicTestSwitchingRoute: ApiPublicTestSwitchingRoute,

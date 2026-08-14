@@ -85,34 +85,38 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
     if (data.journeyStep === 'checkout_iniciado' || data.journeyStep === 'contratacao_confirmada') {
       const prospectPayload: any = {
         flow_origin: data.origin || data.flowType,
-        contact_name: payload.name,
-        contact_email: payload.email,
-        contact_phone: payload.phone,
+        contact_name: payload.name || data.contactData?.name,
+        contact_email: payload.email || data.contactData?.email,
+        contact_phone: payload.phone || data.contactData?.phone,
         cnpj: data.cnpj,
         plan_id: data.planId,
         estimated_value: data.estimatedValue,
-        status_comercial: 'contratação_em_andamento',
+        status_comercial: data.journeyStep === 'contratacao_confirmada' ? 'contrato_gerado' : 'contratação_em_andamento',
         updated_at: new Date().toISOString()
       };
 
-      const { data: existingProspect } = await supabaseAdmin
-        .from("commercial_prospects")
-        .select("id")
-        .eq("contact_email", payload.email)
-        .maybeSingle();
+      const emailToLookup = payload.email || data.contactData?.email;
+      
+      if (emailToLookup) {
+        const { data: existingProspect } = await supabaseAdmin
+          .from("commercial_prospects")
+          .select("id")
+          .eq("contact_email", emailToLookup)
+          .maybeSingle();
 
-      if (existingProspect) {
-        await supabaseAdmin
-          .from("commercial_prospects")
-          .update(prospectPayload)
-          .eq("id", existingProspect.id);
-      } else {
-        await supabaseAdmin
-          .from("commercial_prospects")
-          .insert({
-            ...prospectPayload,
-            created_at: new Date().toISOString()
-          });
+        if (existingProspect) {
+          await supabaseAdmin
+            .from("commercial_prospects")
+            .update(prospectPayload)
+            .eq("id", existingProspect.id);
+        } else {
+          await supabaseAdmin
+            .from("commercial_prospects")
+            .insert({
+              ...prospectPayload,
+              created_at: new Date().toISOString()
+            });
+        }
       }
     }
 

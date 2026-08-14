@@ -10,6 +10,7 @@ import { getPublicPlans, getPublicServices } from "@/lib/public-catalog.function
 import { validateCoupon, confirmContracting } from "@/lib/commercial.functions";
 import { safeTrackLead as trackJourney } from "@/lib/leads-client";
 import { useServerFn } from "@tanstack/react-start";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 interface CheckoutViewProps {
@@ -41,6 +42,7 @@ export function CheckoutView({
   const [appliedCoupon, setAppliedCoupon] = useState<CouponData | null>(null);
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
+  const navigate = useNavigate();
 
   const validateCouponFn = useServerFn(validateCoupon);
   const confirmContractingFn = useServerFn(confirmContracting);
@@ -123,21 +125,30 @@ export function CheckoutView({
         }
       });
       
-      // 2. Rastrear jornada final
+      // 2. Gerar o contrato automaticamente
+      const generateContractFn = (await import("@/lib/contracts-management.functions")).generateContract;
+      const generated = await generateContractFn({
+        data: { prospectId: result.prospectId }
+      });
+
+      // 3. Rastrear jornada final
       await trackJourney({
         data: {
           leadId: result.leadId || leadId,
           journeyStep: 'contratacao_confirmada',
           estimatedValue: totals.finalValue,
-          lastInteraction: `Contratação confirmada para o plano ${selectedPlan?.name}`
+          lastInteraction: `Contrato gerado (${generated.id}) para o plano ${selectedPlan?.name}. Redirecionando para revisão.`
         }
       });
 
-      toast.success("Solicitação recebida! Em breve entraremos em contato para assinatura.");
-      onConfirm(result.prospectId);
-    } catch (e) {
+      toast.success("Contrato gerado com sucesso! Redirecionando para revisão.");
+      navigate({ 
+        to: "/revisar-contrato/$contractId", 
+        params: { contractId: generated.id } 
+      });
+    } catch (e: any) {
       console.error("Erro no checkout:", e);
-      toast.error("Erro ao registrar intenção de contratação");
+      toast.error(e.message || "Erro ao registrar intenção de contratação");
     } finally {
       setIsConfirming(false);
     }
@@ -290,7 +301,7 @@ export function CheckoutView({
                 </>
               ) : (
                 <>
-                  Quero contratar
+                  Revisar contrato
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </>
               )}
