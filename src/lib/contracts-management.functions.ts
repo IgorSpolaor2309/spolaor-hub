@@ -351,7 +351,6 @@ export const generateContract = createServerFn({ method: "POST" })
       isInstitucionalDemo: !!(INSTITUCIONAL_DIGITAL_SC as any).is_demo
     };
   });
-  });
 
 
 export const getContractForReview = createServerFn({ method: "GET" })
