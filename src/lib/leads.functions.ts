@@ -125,7 +125,7 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
     }
 
     console.log(`[Lead Track] Success for ${data.journeyStep}. ID: ${result.data?.id}`);
-    return { success: true, prospectId: result.data.id };
+    return { success: true, prospectId: result.data?.id ?? null };
   });
 
 export const getLeads = createServerFn({ method: "GET" })
