@@ -91,7 +91,7 @@ export function CheckoutView({
     return {
       id: plan.id,
       name: plan.nome,
-      value: plan.valor_padrao,
+      value: plan.valor_padrao || 0,
       type: 'plan' as const
     };
   }, [plans, selectedPlanId]);
@@ -265,7 +265,7 @@ export function CheckoutView({
                   <span className="font-bold">{p.nome}</span>
                   {selectedPlanId === p.id && <Check className="h-4 w-4 text-primary" />}
                 </div>
-                <div className="text-lg font-bold text-primary">{brl(p.valor_padrao)}<span className="text-[10px] text-muted-foreground font-normal">/mês</span></div>
+                <div className="text-lg font-bold text-primary">{brl(p.valor_padrao || 0)}<span className="text-[10px] text-muted-foreground font-normal">/mês</span></div>
                 <p className="text-[10px] text-muted-foreground mt-2 line-clamp-2">{p.descricao}</p>
               </Card>
             ))}
