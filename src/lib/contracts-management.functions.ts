@@ -237,14 +237,14 @@ export const generateContract = createServerFn({ method: "POST" })
     
     // contractData centralizer for placeholders
     const contractData = {
-      razao_social: extracted.razao_social || extracted.company_name || lead?.name || "A informar",
-      cnpj: prospect.cnpj || lead?.cnpj || extracted.cnpj || "00000000000000",
-      endereco: extracted.address || extracted.logradouro || lead?.city || "A informar",
-      email: prospect.contact_email || lead?.email || extracted.email || "A informar",
-      telefone: prospect.contact_phone || lead?.phone || extracted.phone || "A informar",
-      natureza_juridica: extracted.legal_nature || extracted.natureza_juridica || "A informar",
-      nome_responsavel: extracted.representative_name || extracted.responsavel || lead?.name || prospect.contact_name || "A informar",
-      cpf_responsavel: extracted.representative_cpf || extracted.cpf || "00000000000",
+      razao_social: extracted.razao_social || extracted.company_name || contracting?.contract_data?.razao_social || lead?.name || "A informar",
+      cnpj: prospect.cnpj || lead?.cnpj || extracted.cnpj || contracting?.contract_data?.cnpj || "00000000000000",
+      endereco: extracted.address || extracted.logradouro || contracting?.contract_data?.endereco || lead?.city || "A informar",
+      email: prospect.contact_email || lead?.email || extracted.email || contracting?.contract_data?.email || "A informar",
+      telefone: prospect.contact_phone || lead?.phone || extracted.phone || contracting?.contract_data?.telefone || "A informar",
+      natureza_juridica: extracted.legal_nature || extracted.natureza_juridica || contracting?.contract_data?.natureza_juridica || "A informar",
+      nome_responsavel: extracted.representative_name || extracted.responsavel || lead?.name || prospect.contact_name || contracting?.contract_data?.nome_responsavel || "A informar",
+      cpf_responsavel: extracted.representative_cpf || extracted.cpf || contracting?.contract_data?.cpf_responsavel || "00000000000",
     };
 
     // Correct Razão Social rule: Never use contact_name as company name if we have a real company name or CNPJ
@@ -269,8 +269,8 @@ export const generateContract = createServerFn({ method: "POST" })
       return clean.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
     };
 
-    const monthlyFee = prospect.final_value || 0;
-    const origValue = prospect.original_value || 0;
+    const monthlyFee = contracting?.final_value || prospect.final_value || 0;
+    const origValue = contracting?.plan_value || prospect.original_value || 0;
     const setupFee = origValue > monthlyFee ? (origValue - monthlyFee) : 0;
     const finalSetupValue = (proposal as any)?.setup_value ?? setupFee;
     const finalPlanName = prospect.plan?.nome || "Personalizado";
