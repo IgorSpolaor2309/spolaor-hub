@@ -190,7 +190,7 @@ export const generateContract = createServerFn({ method: "POST" })
     const readjustmentRule = "IPCA/IBGE anual";
 
     const placeholders: Record<string, string> = {
-      "{{razao_social}}": companyName,
+      "{{razao_social}}": companyName || "A informar",
       "{{cnpj}}": formatCNPJ(prospect.cnpj || lead?.cnpj || extracted.cnpj || "00000000000000"),
       "{{email}}": prospect.contact_email || lead?.email || extracted.email || "A informar",
       "{{telefone}}": prospect.contact_phone || lead?.phone || extracted.phone || "A informar",
