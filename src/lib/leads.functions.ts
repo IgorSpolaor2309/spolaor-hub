@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
 
 const LeadTrackSchema = z.object({
@@ -54,7 +55,7 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
 
     let result;
     if (data.prospectId) {
-      result = await (supabase as any)
+      result = await supabaseAdmin
         .from("commercial_prospects")
         .update(payload)
         .eq("id", data.prospectId)
@@ -62,7 +63,7 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
         .single();
     } else {
       // Se não tem ID, cria um novo lead (interessado inicial)
-      result = await (supabase as any)
+      result = await supabaseAdmin
         .from("commercial_prospects")
         .insert({
           ...payload,
