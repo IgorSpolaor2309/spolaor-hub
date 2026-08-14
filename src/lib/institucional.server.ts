@@ -8,5 +8,6 @@ export const INSTITUCIONAL_DIGITAL_SC = {
   cidade_assinatura: "São Paulo - SP",
   telefone: "(11) 98765-4321",
   email: "contato@digitalsc.com.br",
-  site: "https://digital-sc.com.br"
+  site: "https://digital-sc.com.br",
+  is_demo: true // Flag to indicate if this is demo data
 };

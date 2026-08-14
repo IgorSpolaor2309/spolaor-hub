@@ -142,7 +142,7 @@ function ReviewContractPage() {
                 <div className="bg-muted/50 p-4 rounded-lg space-y-3">
                   <div>
                     <span className="block text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-1">Empresa / Contratante</span>
-                    <span className="font-medium text-foreground">{contract.prospect?.contact_name}</span>
+                    <span className="font-medium text-foreground">{contract.prospect?.contact_name || (contract as any).placeholders?.razao_social}</span>
                     <span className="block text-xs text-muted-foreground mt-0.5">{contract.prospect?.cnpj}</span>
                   </div>
                   <div>
@@ -156,13 +156,28 @@ function ReviewContractPage() {
                 </div>
 
                 <div className="space-y-4 pt-2">
+                  {(contract as any).validation_errors?.length > 0 && (
+                    <div className="bg-destructive/10 border border-destructive/20 p-4 rounded-lg space-y-2">
+                      <div className="flex items-center gap-2 text-destructive font-bold text-xs uppercase">
+                        <AlertTriangle className="h-4 w-4" />
+                        Pendências no Contrato
+                      </div>
+                      <ul className="text-[10px] text-destructive/80 list-disc list-inside">
+                        {(contract as any).validation_errors.map((err: string) => (
+                          <li key={err}>{err.replace(/_/g, ' ')} ausente</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
                   <Button 
                     className="w-full h-12 text-lg font-bold shadow-lg shadow-primary/20" 
+                    disabled={(contract as any).validation_errors?.length > 0}
                     onClick={() => {
                       toast.info("Em breve: Integração com assinatura digital (Docusign/Clicksign)");
                     }}
                   >
-                    Continuar para assinatura
+                    {(contract as any).validation_errors?.length > 0 ? "Corrija as pendências" : "Continuar para assinatura"}
                   </Button>
                   
                   <p className="text-[10px] text-center text-muted-foreground px-2 leading-relaxed">
