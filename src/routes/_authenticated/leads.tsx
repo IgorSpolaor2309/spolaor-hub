@@ -411,6 +411,26 @@ function LeadsPage() {
                     </Select>
                   </div>
 
+                  {selectedLead.interested_in_personalized_solution && (
+                    <div className="bg-purple-50 border border-purple-100 p-4 rounded-lg space-y-2">
+                      <div className="flex items-center gap-2 text-purple-700 font-bold text-sm">
+                        <Sparkles className="h-4 w-4" /> Solução Personalizada Solicitada
+                      </div>
+                      <div className="text-xs text-purple-600 flex items-center gap-4">
+                        <span className="flex items-center gap-1 capitalize">
+                          {selectedLead.preferred_contact_channel === 'whatsapp' ? <MessageSquare className="h-3 w-3" /> : <Workflow className="h-3 w-3" />}
+                          Canal: {selectedLead.preferred_contact_channel}
+                        </span>
+                        {selectedLead.requested_personalized_at && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {format(new Date(selectedLead.requested_personalized_at), "dd/MM HH:mm", { locale: ptBR })}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   <Separator />
 
                   <div className="space-y-4 bg-muted/30 p-4 rounded-lg">
