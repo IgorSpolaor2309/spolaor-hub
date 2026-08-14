@@ -13,6 +13,7 @@ import { OpeningChatFlow } from "@/components/opening/OpeningChatFlow";
 import { SwitchingChatFlow } from "@/components/switching/SwitchingChatFlow";
 import { safeTrackLead as trackJourney } from "@/lib/leads-client";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { safeTrackLead as trackJourney } from "@/lib/leads-client";
 import { cn } from "@/lib/utils";
 
 import logoAsset from "@/assets/logo-spolaor.png.asset.json";
