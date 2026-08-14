@@ -145,7 +145,7 @@ export const generateContract = createServerFn({ method: "POST" })
     // 4. Check for existing contract (REGENERATION LOGIC)
     const { data: existingContract } = await supabaseAdmin
       .from("generated_contracts")
-      .select("id, status, content_snapshot")
+      .select("id, status, content_snapshot, metadata")
       .eq("prospect_id", data.prospectId)
       .order("created_at", { ascending: false })
       .limit(1)
