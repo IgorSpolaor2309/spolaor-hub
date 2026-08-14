@@ -3,9 +3,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { AppLogo } from "@/components/sc/Logo";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { getPublicPlans, getPublicServices } from "@/lib/public-catalog.functions";
 import { Check, ArrowRight, ShieldCheck, Clock, Inbox, FileText, Receipt, Users, UserCog, MessageSquare, Workflow, Briefcase } from "lucide-react";
 import { OpeningChatFlow } from "@/components/opening/OpeningChatFlow";
@@ -38,6 +39,9 @@ function LandingPage() {
   const navigate = useNavigate();
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [showPersonalizedDialog, setShowPersonalizedDialog] = useState(false);
+  const [personalizedContactType, setPersonalizedContactType] = useState<'whatsapp' | 'videoconference' | null>(null);
+  const WHATSAPP_NUMBER = "5513997626359"; // Configurable number
 
   const heroImages = [
     { url: foto4Asset.url, alt: "Ambiente amplo com mesa branca e divisórias de vidro" },
@@ -90,6 +94,34 @@ function LandingPage() {
       setShowSwitchingFlow(true);
     }
     setShowPlanChoice(false);
+  };
+
+  const handlePersonalizedSolution = async (channel: 'whatsapp' | 'videoconference') => {
+    setPersonalizedContactType(channel);
+    
+    // Register the lead request
+    try {
+      await trackJourney({
+        data: {
+          journeyStep: 'solicitacao_personalizada',
+          interestedInPersonalized: true,
+          preferredChannel: channel,
+          lastInteraction: `Solicitou proposta personalizada via ${channel === 'whatsapp' ? 'WhatsApp' : 'Videoconferência'}`,
+          origin: 'landing_personalized'
+        }
+      });
+      
+      if (channel === 'whatsapp') {
+        const message = encodeURIComponent("Olá! Vim pelo site da Digital SC e gostaria de conversar sobre uma solução contábil personalizada para minha empresa.");
+        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
+      } else {
+        toast.success("Solicitação de videoconferência registrada! Nossa equipe entrará em contato em breve.");
+      }
+    } catch (err) {
+      console.error("Error tracking personalized lead:", err);
+    }
+    
+    setShowPersonalizedDialog(false);
   };
 
   const plansQ = useQuery({
@@ -378,6 +410,24 @@ function LandingPage() {
           </div>
         </section>
 
+        {/* Seção Plano Personalizado */}
+        <section className="py-12 bg-background border-t">
+          <div className="container mx-auto px-4 text-center max-w-3xl">
+            <h3 className="font-display text-2xl font-bold mb-4">Não encontrou o plano ideal para sua empresa?</h3>
+            <p className="text-muted-foreground mb-8 text-lg">
+              Montamos uma solução personalizada de acordo com a operação e as necessidades da sua empresa.
+            </p>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="px-8 border-primary text-primary hover:bg-primary/5 font-bold"
+              onClick={() => setShowPersonalizedDialog(true)}
+            >
+              Quero uma proposta personalizada
+            </Button>
+          </div>
+        </section>
+
         {/* Dialog de escolha de fluxo quando plano é selecionado */}
         <Dialog open={showPlanChoice} onOpenChange={setShowPlanChoice}>
           <DialogContent className="sm:max-w-md">
@@ -403,6 +453,42 @@ function LandingPage() {
               >
                 <div className="font-bold">Trocar de contador</div>
                 <div className="text-[10px] text-muted-foreground font-normal">Já tenho empresa e quero migrar para a Digital SC</div>
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de Solução Personalizada */}
+        <Dialog open={showPersonalizedDialog} onOpenChange={setShowPersonalizedDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-center font-display text-xl">Como prefere ser atendido?</DialogTitle>
+              <DialogDescription className="text-center">
+                Escolha o melhor canal para conversarmos sobre sua proposta personalizada.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid grid-cols-1 gap-4 py-4">
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col gap-1 items-center justify-center hover:border-primary hover:bg-primary/5 transition-all"
+                onClick={() => handlePersonalizedSolution('videoconference')}
+              >
+                <div className="font-bold flex items-center gap-2">
+                  <Workflow className="h-4 w-4" />
+                  Agendar uma videoconferência
+                </div>
+                <div className="text-[10px] text-muted-foreground font-normal">Nossa equipe entrará em contato para marcar o horário</div>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col gap-1 items-center justify-center hover:border-primary hover:bg-primary/5 transition-all"
+                onClick={() => handlePersonalizedSolution('whatsapp')}
+              >
+                <div className="font-bold flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  Falar com nossa equipe pelo WhatsApp
+                </div>
+                <div className="text-[10px] text-muted-foreground font-normal">Atendimento imediato via chat</div>
               </Button>
             </div>
           </DialogContent>

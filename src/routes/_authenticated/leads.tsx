@@ -9,7 +9,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { User, Mail, Phone, AlertCircle, Clock, Search, Filter, History, MessageSquare, Calendar, UserPlus, CheckCircle2, Bot, Send, Sparkles, FileText } from 'lucide-react'
+import { User, Mail, Phone, AlertCircle, Clock, Search, Filter, History, MessageSquare, Calendar, UserPlus, CheckCircle2, Bot, Send, Sparkles, FileText, Workflow } from 'lucide-react'
 import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -93,7 +93,17 @@ function LeadsPage() {
     onError: (error: any) => toast.error(`Erro ao registrar interação: ${error.message}`)
   })
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, lead?: any) => {
+    if (lead?.interested_in_personalized_solution) {
+      return (
+        <div className="flex flex-col gap-1 items-start">
+          <Badge variant="default" className="bg-purple-500">Personalizado</Badge>
+          <Badge variant="outline" className="text-[9px] lowercase">
+            {lead.preferred_contact_channel === 'whatsapp' ? 'via WhatsApp' : 'via Vídeo'}
+          </Badge>
+        </div>
+      )
+    }
     switch (status) {
       case 'interessado': return <Badge variant="secondary">Interessado</Badge>
       case 'contratação_em_andamento': return <Badge variant="default" className="bg-blue-500">Em contratação</Badge>
@@ -251,7 +261,7 @@ function LeadsPage() {
                   {getPriorityBadge(lead.priority)}
                 </TableCell>
                 <TableCell>
-                  {getStatusBadge(lead.status_comercial)}
+                  {getStatusBadge(lead.status_comercial, lead)}
                 </TableCell>
                 <TableCell>
                   {lead.next_action_date ? (
@@ -319,10 +329,18 @@ function LeadsPage() {
                     </DialogDescription>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    {getStatusBadge(selectedLead.status_comercial)}
-                    <Badge variant="outline" className="text-[10px]">
-                      Origem: {selectedLead.flow_origin === 'opening' ? 'Abertura' : 'Troca'}
-                    </Badge>
+                    {getStatusBadge(selectedLead.status_comercial, selectedLead)}
+                    <div className="flex flex-col items-end gap-1 mt-1">
+                      <Badge variant="outline" className="text-[10px]">
+                        Origem: {selectedLead.flow_origin === 'opening' ? 'Abertura' : selectedLead.flow_origin === 'switching' ? 'Troca' : 'Landing Personalizado'}
+                      </Badge>
+                      {selectedLead.requested_personalized_at && (
+                        <span className="text-[9px] text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-2.5 w-2.5" />
+                          Personalizado em {format(new Date(selectedLead.requested_personalized_at), "dd/MM HH:mm", { locale: ptBR })}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </DialogHeader>
@@ -392,6 +410,26 @@ function LeadsPage() {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {selectedLead.interested_in_personalized_solution && (
+                    <div className="bg-purple-50 border border-purple-100 p-4 rounded-lg space-y-2">
+                      <div className="flex items-center gap-2 text-purple-700 font-bold text-sm">
+                        <Sparkles className="h-4 w-4" /> Solução Personalizada Solicitada
+                      </div>
+                      <div className="text-xs text-purple-600 flex items-center gap-4">
+                        <span className="flex items-center gap-1 capitalize">
+                          {selectedLead.preferred_contact_channel === 'whatsapp' ? <MessageSquare className="h-3 w-3" /> : <Workflow className="h-3 w-3" />}
+                          Canal: {selectedLead.preferred_contact_channel}
+                        </span>
+                        {selectedLead.requested_personalized_at && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {format(new Date(selectedLead.requested_personalized_at), "dd/MM HH:mm", { locale: ptBR })}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   <Separator />
 

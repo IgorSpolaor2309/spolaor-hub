@@ -1079,6 +1079,7 @@ export type Database = {
           final_value: number
           flow_origin: string
           id: string
+          interested_in_personalized_solution: boolean | null
           internal_notes: string | null
           journey_step: string | null
           last_interaction_at: string | null
@@ -1086,7 +1087,9 @@ export type Database = {
           next_action_description: string | null
           original_value: number
           plan_id: string | null
+          preferred_contact_channel: string | null
           priority: string | null
+          requested_personalized_at: string | null
           responsible_profile_id: string | null
           status_comercial: string | null
           updated_at: string | null
@@ -1106,6 +1109,7 @@ export type Database = {
           final_value: number
           flow_origin: string
           id?: string
+          interested_in_personalized_solution?: boolean | null
           internal_notes?: string | null
           journey_step?: string | null
           last_interaction_at?: string | null
@@ -1113,7 +1117,9 @@ export type Database = {
           next_action_description?: string | null
           original_value: number
           plan_id?: string | null
+          preferred_contact_channel?: string | null
           priority?: string | null
+          requested_personalized_at?: string | null
           responsible_profile_id?: string | null
           status_comercial?: string | null
           updated_at?: string | null
@@ -1133,6 +1139,7 @@ export type Database = {
           final_value?: number
           flow_origin?: string
           id?: string
+          interested_in_personalized_solution?: boolean | null
           internal_notes?: string | null
           journey_step?: string | null
           last_interaction_at?: string | null
@@ -1140,7 +1147,9 @@ export type Database = {
           next_action_description?: string | null
           original_value?: number
           plan_id?: string | null
+          preferred_contact_channel?: string | null
           priority?: string | null
+          requested_personalized_at?: string | null
           responsible_profile_id?: string | null
           status_comercial?: string | null
           updated_at?: string | null
