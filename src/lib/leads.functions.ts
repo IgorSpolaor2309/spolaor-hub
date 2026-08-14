@@ -152,7 +152,7 @@ export const updateLeadRecovery = createServerFn({ method: "POST" })
     const { id, ...payload } = data;
     const { error } = await supabaseAdmin
       .from("leads")
-      .update(payload)
+      .update(payload as any)
       .eq("id", id);
 
     if (error) throw error;
