@@ -227,3 +227,42 @@ export const generateContract = createServerFn({ method: "POST" })
     if (gError) throw gError;
     return generated;
   });
+
+export const getContractForReview = createServerFn({ method: "GET" })
+  .inputValidator((data) => z.object({ contractId: z.string() }).parse(data))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    
+    console.log(`[getContractForReview] Fetching contract: ${data.contractId}`);
+    
+    const { data: contract, error } = await supabaseAdmin
+      .from("generated_contracts")
+      .select(`
+        *,
+        prospect:prospect_id (
+          contact_name,
+          cnpj,
+          final_value,
+          plan:plan_id (nome)
+        )
+      `)
+      .eq("id", data.contractId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("[getContractForReview] Database error:", error);
+      throw new Error("erro_banco");
+    }
+
+    if (!contract) {
+      console.warn(`[getContractForReview] Contract not found: ${data.contractId}`);
+      throw new Error("not_found");
+    }
+
+    if (!contract.content_snapshot) {
+      console.warn(`[getContractForReview] Missing snapshot for contract: ${data.contractId}`);
+      throw new Error("missing_snapshot");
+    }
+
+    return contract;
+  });
