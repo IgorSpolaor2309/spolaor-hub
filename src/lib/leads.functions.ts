@@ -72,6 +72,9 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
         .select()
         .single();
     }
+    
+    // Explicit console log for debugging in sandbox
+    console.log(`[Lead Track] Success for ${data.journeyStep}. ID: ${result.data?.id}`);
 
     if (result.error) {
       console.error("Error tracking lead:", result.error);
