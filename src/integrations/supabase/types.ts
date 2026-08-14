@@ -2159,6 +2159,69 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          business_type: string | null
+          city: string | null
+          cnpj: string | null
+          created_at: string | null
+          email: string | null
+          estimated_revenue: number | null
+          id: string
+          interested_in_personalized_solution: boolean | null
+          journey_data: Json | null
+          last_interaction_at: string | null
+          last_interaction_description: string | null
+          name: string | null
+          origin: string | null
+          phone: string | null
+          preferred_contact_channel: string | null
+          session_id: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          business_type?: string | null
+          city?: string | null
+          cnpj?: string | null
+          created_at?: string | null
+          email?: string | null
+          estimated_revenue?: number | null
+          id?: string
+          interested_in_personalized_solution?: boolean | null
+          journey_data?: Json | null
+          last_interaction_at?: string | null
+          last_interaction_description?: string | null
+          name?: string | null
+          origin?: string | null
+          phone?: string | null
+          preferred_contact_channel?: string | null
+          session_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          business_type?: string | null
+          city?: string | null
+          cnpj?: string | null
+          created_at?: string | null
+          email?: string | null
+          estimated_revenue?: number | null
+          id?: string
+          interested_in_personalized_solution?: boolean | null
+          journey_data?: Json | null
+          last_interaction_at?: string | null
+          last_interaction_description?: string | null
+          name?: string | null
+          origin?: string | null
+          phone?: string | null
+          preferred_contact_channel?: string | null
+          session_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       legacy_route_access_log: {
         Row: {
           action: string
