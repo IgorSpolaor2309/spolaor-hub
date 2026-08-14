@@ -103,7 +103,7 @@ function ReviewContractPage() {
               {/* Contrato Formatado */}
               <div 
                 className="whitespace-pre-wrap font-serif text-[15px] leading-relaxed text-slate-800"
-                dangerouslySetInnerHTML={{ __html: contract.content_snapshot?.replace(/\n/g, '<br />') }}
+                dangerouslySetInnerHTML={{ __html: String(contract.content_snapshot || "").replace(/\n/g, '<br />') }}
               />
             </div>
             

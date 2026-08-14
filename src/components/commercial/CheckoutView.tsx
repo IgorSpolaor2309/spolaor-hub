@@ -10,6 +10,7 @@ import { getPublicPlans, getPublicServices } from "@/lib/public-catalog.function
 import { validateCoupon, confirmContracting } from "@/lib/commercial.functions";
 import { safeTrackLead as trackJourney } from "@/lib/leads-client";
 import { useServerFn } from "@tanstack/react-start";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 interface CheckoutViewProps {
@@ -41,6 +42,7 @@ export function CheckoutView({
   const [appliedCoupon, setAppliedCoupon] = useState<CouponData | null>(null);
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
+  const navigate = useNavigate();
 
   const validateCouponFn = useServerFn(validateCoupon);
   const confirmContractingFn = useServerFn(confirmContracting);
