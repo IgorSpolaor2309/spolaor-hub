@@ -9,7 +9,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { User, Mail, Phone, AlertCircle, Clock, Search, Filter, History, MessageSquare, Calendar, UserPlus, CheckCircle2, Bot, Send, Sparkles, FileText } from 'lucide-react'
+import { User, Mail, Phone, AlertCircle, Clock, Search, Filter, History, MessageSquare, Calendar, UserPlus, CheckCircle2, Bot, Send, Sparkles, FileText, Workflow } from 'lucide-react'
 import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
