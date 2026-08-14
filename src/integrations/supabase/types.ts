@@ -2300,6 +2300,7 @@ export type Database = {
           external_signature_id: string | null
           external_status: string | null
           id: string
+          metadata: Json | null
           model_id: string | null
           prospect_id: string | null
           sent_at: string | null
@@ -2307,6 +2308,7 @@ export type Database = {
           signed_at: string | null
           status: string
           updated_at: string | null
+          validation_errors: Json | null
           version: number
         }
         Insert: {
@@ -2316,6 +2318,7 @@ export type Database = {
           external_signature_id?: string | null
           external_status?: string | null
           id?: string
+          metadata?: Json | null
           model_id?: string | null
           prospect_id?: string | null
           sent_at?: string | null
@@ -2323,6 +2326,7 @@ export type Database = {
           signed_at?: string | null
           status?: string
           updated_at?: string | null
+          validation_errors?: Json | null
           version: number
         }
         Update: {
@@ -2332,6 +2336,7 @@ export type Database = {
           external_signature_id?: string | null
           external_status?: string | null
           id?: string
+          metadata?: Json | null
           model_id?: string | null
           prospect_id?: string | null
           sent_at?: string | null
@@ -2339,6 +2344,7 @@ export type Database = {
           signed_at?: string | null
           status?: string
           updated_at?: string | null
+          validation_errors?: Json | null
           version?: number
         }
         Relationships: [
