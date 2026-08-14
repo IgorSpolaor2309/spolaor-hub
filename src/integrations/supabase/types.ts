@@ -2427,6 +2427,7 @@ export type Database = {
           phone: string | null
           preferred_contact_channel: string | null
           priority: string | null
+          requested_personalized_at: string | null
           responsible_profile_id: string | null
           session_id: string | null
           status: string | null
@@ -2452,6 +2453,7 @@ export type Database = {
           phone?: string | null
           preferred_contact_channel?: string | null
           priority?: string | null
+          requested_personalized_at?: string | null
           responsible_profile_id?: string | null
           session_id?: string | null
           status?: string | null
@@ -2477,6 +2479,7 @@ export type Database = {
           phone?: string | null
           preferred_contact_channel?: string | null
           priority?: string | null
+          requested_personalized_at?: string | null
           responsible_profile_id?: string | null
           session_id?: string | null
           status?: string | null
