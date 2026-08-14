@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useSuspenseQuery, useQueryClient, useMutation } from '@tanstack/react-query'
+import { useServerFn } from '@tanstack/react-start'
 import { getLeads, updateLeadRecovery, addLeadHistory, getCollaborators } from '@/lib/leads.functions'
 import { getProposalByLead } from '@/lib/proposals.functions'
 import { askCommercialAi } from '@/lib/commercial-ai.functions'
