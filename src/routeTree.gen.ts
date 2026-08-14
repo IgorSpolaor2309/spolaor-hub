@@ -46,6 +46,8 @@ import { Route as AuthenticatedChecklistRouteImport } from './routes/_authentica
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as ApiPublicTestSwitchingRouteImport } from './routes/api/public/test-switching'
+import { Route as ApiPublicDebugContractRouteImport } from './routes/api/public/debug-contract'
+import { Route as ApiPublicCheckAuthRouteImport } from './routes/api/public/check-auth'
 import { Route as AuthenticatedProcessosIdRouteImport } from './routes/_authenticated/processos.$id'
 import { Route as AuthenticatedPortalProcessosIdRouteImport } from './routes/_authenticated/portal-processos.$id'
 import { Route as AuthenticatedIntegracoesOmieRouteImport } from './routes/_authenticated/integracoes.omie'
@@ -256,6 +258,16 @@ const ApiPublicTestSwitchingRoute = ApiPublicTestSwitchingRouteImport.update({
   path: '/api/public/test-switching',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicDebugContractRoute = ApiPublicDebugContractRouteImport.update({
+  id: '/api/public/debug-contract',
+  path: '/api/public/debug-contract',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicCheckAuthRoute = ApiPublicCheckAuthRouteImport.update({
+  id: '/api/public/check-auth',
+  path: '/api/public/check-auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedProcessosIdRoute =
   AuthenticatedProcessosIdRouteImport.update({
     id: '/$id',
@@ -357,6 +369,8 @@ export interface FileRoutesByFullPath {
   '/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
   '/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
+  '/api/public/check-auth': typeof ApiPublicCheckAuthRoute
+  '/api/public/debug-contract': typeof ApiPublicDebugContractRoute
   '/api/public/test-switching': typeof ApiPublicTestSwitchingRoute
   '/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/meu-mes/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
@@ -405,6 +419,8 @@ export interface FileRoutesByTo {
   '/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
   '/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
+  '/api/public/check-auth': typeof ApiPublicCheckAuthRoute
+  '/api/public/debug-contract': typeof ApiPublicDebugContractRoute
   '/api/public/test-switching': typeof ApiPublicTestSwitchingRoute
   '/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/meu-mes/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
@@ -455,6 +471,8 @@ export interface FileRoutesById {
   '/_authenticated/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
   '/_authenticated/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/_authenticated/processos/$id': typeof AuthenticatedProcessosIdRoute
+  '/api/public/check-auth': typeof ApiPublicCheckAuthRoute
+  '/api/public/debug-contract': typeof ApiPublicDebugContractRoute
   '/api/public/test-switching': typeof ApiPublicTestSwitchingRoute
   '/_authenticated/competencias_/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/_authenticated/meu-mes_/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
@@ -505,6 +523,8 @@ export interface FileRouteTypes {
     | '/integracoes/omie'
     | '/portal-processos/$id'
     | '/processos/$id'
+    | '/api/public/check-auth'
+    | '/api/public/debug-contract'
     | '/api/public/test-switching'
     | '/competencias/$clientId/$competence'
     | '/meu-mes/$clientId/$competence'
@@ -553,6 +573,8 @@ export interface FileRouteTypes {
     | '/integracoes/omie'
     | '/portal-processos/$id'
     | '/processos/$id'
+    | '/api/public/check-auth'
+    | '/api/public/debug-contract'
     | '/api/public/test-switching'
     | '/competencias/$clientId/$competence'
     | '/meu-mes/$clientId/$competence'
@@ -602,6 +624,8 @@ export interface FileRouteTypes {
     | '/_authenticated/integracoes/omie'
     | '/_authenticated/portal-processos/$id'
     | '/_authenticated/processos/$id'
+    | '/api/public/check-auth'
+    | '/api/public/debug-contract'
     | '/api/public/test-switching'
     | '/_authenticated/competencias_/$clientId/$competence'
     | '/_authenticated/meu-mes_/$clientId/$competence'
@@ -620,6 +644,8 @@ export interface RootRouteChildren {
   RevisarContratoContractIdRoute: typeof RevisarContratoContractIdRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiPublicCheckAuthRoute: typeof ApiPublicCheckAuthRoute
+  ApiPublicDebugContractRoute: typeof ApiPublicDebugContractRoute
   ApiPublicTestSwitchingRoute: typeof ApiPublicTestSwitchingRoute
   ApiPublicHooksCleanupChatOrphansRoute: typeof ApiPublicHooksCleanupChatOrphansRoute
   ApiPublicHooksCompetenceMonthlyGenerationRoute: typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
@@ -886,6 +912,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTestSwitchingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/debug-contract': {
+      id: '/api/public/debug-contract'
+      path: '/api/public/debug-contract'
+      fullPath: '/api/public/debug-contract'
+      preLoaderRoute: typeof ApiPublicDebugContractRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/check-auth': {
+      id: '/api/public/check-auth'
+      path: '/api/public/check-auth'
+      fullPath: '/api/public/check-auth'
+      preLoaderRoute: typeof ApiPublicCheckAuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/processos/$id': {
       id: '/_authenticated/processos/$id'
       path: '/$id'
@@ -1086,6 +1126,8 @@ const rootRouteChildren: RootRouteChildren = {
   RevisarContratoContractIdRoute: RevisarContratoContractIdRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiPublicCheckAuthRoute: ApiPublicCheckAuthRoute,
+  ApiPublicDebugContractRoute: ApiPublicDebugContractRoute,
   ApiPublicTestSwitchingRoute: ApiPublicTestSwitchingRoute,
   ApiPublicHooksCleanupChatOrphansRoute: ApiPublicHooksCleanupChatOrphansRoute,
   ApiPublicHooksCompetenceMonthlyGenerationRoute:
