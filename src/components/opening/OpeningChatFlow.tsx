@@ -11,6 +11,7 @@ import { processOpeningMessage } from "@/lib/opening-chat.functions";
 import { useQuery } from "@tanstack/react-query";
 import { getPublicPlans } from "@/lib/public-catalog.functions";
 import { safeTrackLead as trackJourney, getStoredProspectId } from "@/lib/leads-client";
+import { cn } from "@/lib/utils";
 
 export function OpeningChatFlow({ onBack, preSelectedPlanId }: { onBack: () => void, preSelectedPlanId?: string }) {
   const [step, setStep] = useState<'chat' | 'confirm' | 'diagnostic' | 'checkout' | 'success'>('chat');
