@@ -124,8 +124,11 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
       }
     }
 
-    console.log(`[Lead Track] Success for ${data.journeyStep}. ID: ${result.data?.id}`);
-    return { success: true, prospectId: result.data?.id ?? null };
+    if (!result?.data) throw new Error("Não foi possível registrar o lead.");
+
+    console.log(`[Lead Track] Success for ${data.journeyStep}. ID: ${result.data.id}`);
+    return { success: true, prospectId: result.data.id as string };
+
   });
 
 export const getLeads = createServerFn({ method: "GET" })
