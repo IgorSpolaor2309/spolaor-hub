@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { getPublicPlans, getPublicServices } from "./public-catalog.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 
 export async function getOpenAIClient() {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -44,5 +45,26 @@ ${plansCtx}
 
 SERVIÇOS DISPONÍVEIS:
 ${servicesCtx}
+`;
+}
+
+export async function getContractRequirementsContext() {
+  const { data: model } = await supabase
+    .from("contract_models")
+    .select("content")
+    .eq("status", "ativo")
+    .maybeSingle();
+
+  if (!model) return "";
+
+  const placeholders = model.content.match(/\{\{.*?\}\}/g) || [];
+  const uniquePlaceholders = [...new Set(placeholders)];
+
+  return `
+REQUISITOS OBRIGATÓRIOS DO CONTRATO ATUAL (Placeholders):
+Os campos abaixo são necessários para gerar o contrato jurídico. Se você ainda não os tiver, deve coletá-los naturalmente:
+${uniquePlaceholders.join(', ')}
+
+Nota: 'razao_social' e 'cnpj' geralmente vêm da consulta automática quando o usuário fornece o CNPJ, mas os dados do 'nome_responsavel', 'cpf_responsavel', 'endereco' completo, 'telefone' e 'email' são fundamentais para a validade do documento.
 `;
 }

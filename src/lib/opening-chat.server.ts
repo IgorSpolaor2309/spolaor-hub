@@ -1,12 +1,14 @@
-import { getOpenAIClient, BASE_SYSTEM_PROMPT, getDetailedCatalogContext } from "./ai-gateway.server";
+import { getOpenAIClient, BASE_SYSTEM_PROMPT, getDetailedCatalogContext, getContractRequirementsContext } from "./ai-gateway.server";
 
 export async function aiAnalyzeOpening(context: string, history: any[]) {
   const client = await getOpenAIClient();
   const catalogContext = await getDetailedCatalogContext();
+  const contractRequirements = await getContractRequirementsContext();
 
   const systemPrompt = `
 ${BASE_SYSTEM_PROMPT}
 ${catalogContext}
+${contractRequirements}
 
 CONTEXTO ESPECÍFICO: Abertura de Empresa.
 Você deve extrair:
@@ -26,8 +28,16 @@ REGRAS DE CONVERSA:
 4. Se o faturamento ou complexidade informada pelo usuário ultrapassar os limites dos planos padrão descritos no catálogo (ex: faturamento acima do limite do Plano D), indique amigavelmente que ele pode precisar de uma "Solução Personalizada" e sugira falar com um especialista via WhatsApp ou Vídeo.
 
 Sua resposta deve ser um JSON seguindo o esquema definido.
-Pergunte o que falta de forma natural. Se já tiver o básico (nome, e-mail, telefone, tipo de negócio, cidade e faturamento estimado), marque como completo.
-Se o faturamento ultrapassar os limites dos planos disponíveis no catálogo, marque isComplete como true para liberar a recomendação personalizada.
+Pergunte o que falta de forma natural e conversacional, um dado por vez para não sobrecarregar. 
+
+CRITÉRIO DE CONCLUSÃO (isComplete = true):
+Marque como completo SOMENTE quando:
+1. Você tiver o diagnóstico básico (tipo de negócio, cidade e faturamento estimado).
+2. Você tiver coletado os dados essenciais para o contrato (Nome, E-mail, Telefone, CPF e Endereço).
+3. Você tiver apresentado uma recomendação de plano baseada no faturamento.
+
+Se o faturamento ultrapassar os limites dos planos disponíveis no catálogo, você ainda deve coletar os dados de contato e marcar isComplete como true para liberar a recomendação personalizada.
+
 `;
 
   const response = await client.chat.completions.create({

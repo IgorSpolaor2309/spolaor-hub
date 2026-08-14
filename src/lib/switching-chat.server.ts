@@ -1,12 +1,14 @@
-import { getOpenAIClient, BASE_SYSTEM_PROMPT, getDetailedCatalogContext } from "./ai-gateway.server";
+import { getOpenAIClient, BASE_SYSTEM_PROMPT, getDetailedCatalogContext, getContractRequirementsContext } from "./ai-gateway.server";
 
 export async function aiAnalyzeSwitching(context: string, history: any[]) {
   const client = await getOpenAIClient();
   const catalogContext = await getDetailedCatalogContext();
+  const contractRequirements = await getContractRequirementsContext();
 
   const systemPrompt = `
 ${BASE_SYSTEM_PROMPT}
 ${catalogContext}
+${contractRequirements}
 
  CONTEXTO ESPECÍFICO: Troca de Contador (Migração).
  Você deve conversar com o cliente para entender as necessidades dele.
