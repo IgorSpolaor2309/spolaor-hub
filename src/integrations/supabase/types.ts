@@ -1582,6 +1582,100 @@ export type Database = {
           },
         ]
       }
+      custom_proposals: {
+        Row: {
+          acceptance_snapshot: Json | null
+          accepted_at: string | null
+          base_plan_id: string | null
+          branch_count: number | null
+          commercial_notes: string | null
+          company_count: number | null
+          created_at: string | null
+          discount_value: number | null
+          employee_count: number | null
+          final_monthly_value: number
+          id: string
+          lead_id: string
+          max_revenue: number | null
+          monthly_value: number
+          responsible_profile_id: string | null
+          services: Json | null
+          setup_value: number | null
+          special_conditions: string | null
+          status: Database["public"]["Enums"]["proposal_status"] | null
+          updated_at: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          acceptance_snapshot?: Json | null
+          accepted_at?: string | null
+          base_plan_id?: string | null
+          branch_count?: number | null
+          commercial_notes?: string | null
+          company_count?: number | null
+          created_at?: string | null
+          discount_value?: number | null
+          employee_count?: number | null
+          final_monthly_value?: number
+          id?: string
+          lead_id: string
+          max_revenue?: number | null
+          monthly_value?: number
+          responsible_profile_id?: string | null
+          services?: Json | null
+          setup_value?: number | null
+          special_conditions?: string | null
+          status?: Database["public"]["Enums"]["proposal_status"] | null
+          updated_at?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          acceptance_snapshot?: Json | null
+          accepted_at?: string | null
+          base_plan_id?: string | null
+          branch_count?: number | null
+          commercial_notes?: string | null
+          company_count?: number | null
+          created_at?: string | null
+          discount_value?: number | null
+          employee_count?: number | null
+          final_monthly_value?: number
+          id?: string
+          lead_id?: string
+          max_revenue?: number | null
+          monthly_value?: number
+          responsible_profile_id?: string | null
+          services?: Json | null
+          setup_value?: number | null
+          special_conditions?: string | null
+          status?: Database["public"]["Enums"]["proposal_status"] | null
+          updated_at?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_proposals_base_plan_id_fkey"
+            columns: ["base_plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custom_proposals_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custom_proposals_responsible_profile_id_fkey"
+            columns: ["responsible_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demo_audit_log: {
         Row: {
           action: string
@@ -3113,6 +3207,55 @@ export type Database = {
           },
         ]
       }
+      proposal_history: {
+        Row: {
+          change_notes: string | null
+          created_at: string | null
+          id: string
+          new_status: Database["public"]["Enums"]["proposal_status"] | null
+          previous_status: Database["public"]["Enums"]["proposal_status"] | null
+          profile_id: string | null
+          proposal_id: string
+        }
+        Insert: {
+          change_notes?: string | null
+          created_at?: string | null
+          id?: string
+          new_status?: Database["public"]["Enums"]["proposal_status"] | null
+          previous_status?:
+            | Database["public"]["Enums"]["proposal_status"]
+            | null
+          profile_id?: string | null
+          proposal_id: string
+        }
+        Update: {
+          change_notes?: string | null
+          created_at?: string | null
+          id?: string
+          new_status?: Database["public"]["Enums"]["proposal_status"] | null
+          previous_status?:
+            | Database["public"]["Enums"]["proposal_status"]
+            | null
+          profile_id?: string | null
+          proposal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_history_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposal_history_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "custom_proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           categoria: string
@@ -4319,6 +4462,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "collaborator" | "client"
+      proposal_status:
+        | "rascunho"
+        | "enviada"
+        | "aceita"
+        | "recusada"
+        | "expirada"
+        | "cancelada"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4447,6 +4597,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "collaborator", "client"],
+      proposal_status: [
+        "rascunho",
+        "enviada",
+        "aceita",
+        "recusada",
+        "expirada",
+        "cancelada",
+      ],
     },
   },
 } as const
