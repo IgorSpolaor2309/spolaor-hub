@@ -149,7 +149,6 @@ export const getLeads = createServerFn({ method: "GET" })
         proposals:custom_proposals (
           id,
           status,
-          version,
           created_at
         )
       `)
