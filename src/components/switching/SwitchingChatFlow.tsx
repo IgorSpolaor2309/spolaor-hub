@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Loader2, Send, Check, Briefcase, TrendingUp, Building2, AlertCircle, MessageSquare, Workflow } from "lucide-react";
+import { Loader2, Send, Check, Briefcase, TrendingUp, Building2, AlertCircle, MessageSquare, Workflow, ArrowRight } from "lucide-react";
 import { CheckoutView } from "@/components/commercial/CheckoutView";
 import { SuccessScreen } from "@/components/commercial/SuccessScreen";
 import { toast } from "sonner";
