@@ -1,7 +1,6 @@
 import OpenAI from "openai";
 import { getPublicPlans, getPublicServices } from "./public-catalog.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { supabase } from "@/integrations/supabase/client";
 
 export async function getOpenAIClient() {
   const apiKey = process.env.OPENAI_API_KEY;
