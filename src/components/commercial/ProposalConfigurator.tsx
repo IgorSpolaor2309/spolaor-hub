@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { 
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter 
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription 
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,8 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { 
-  Save, History, Plus, Trash2, CheckCircle2, XCircle, Send, Copy, 
-  ChevronRight, Info, Calculator, FileText, AlertTriangle 
+  Save, Plus, Trash2, CheckCircle2, XCircle, Send, Copy, 
+  Calculator, FileText, AlertTriangle 
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -168,7 +168,6 @@ export function ProposalConfigurator({ lead, proposal, isOpen, onOpenChange, col
         </DialogHeader>
 
         <div className="flex-1 flex overflow-hidden">
-          {/* Painel de Configuração */}
           <ScrollArea className="flex-1 p-6">
             <div className="space-y-8 pb-10">
               {isAccepted && (
@@ -181,7 +180,6 @@ export function ProposalConfigurator({ lead, proposal, isOpen, onOpenChange, col
                 </div>
               )}
 
-              {/* Seção 1: Base e Valores Principais */}
               <section className="space-y-4">
                 <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                   <Calculator className="h-4 w-4" /> Plano Base e Valores
@@ -194,7 +192,7 @@ export function ProposalConfigurator({ lead, proposal, isOpen, onOpenChange, col
                       value={formData.base_plan_id || undefined}
                       onValueChange={(val) => {
                         const plan = plans.find(p => p.id === val);
-                        setFormData(prev => ({ 
+                        setFormData((prev: any) => ({ 
                           ...prev, 
                           base_plan_id: val,
                           monthly_value: plan?.valor_padrao || prev.monthly_value 
@@ -217,7 +215,7 @@ export function ProposalConfigurator({ lead, proposal, isOpen, onOpenChange, col
                       type="number"
                       disabled={isAccepted}
                       value={formData.monthly_value}
-                      onChange={e => setFormData(prev => ({ ...prev, monthly_value: e.target.value }))}
+                      onChange={e => setFormData((prev: any) => ({ ...prev, monthly_value: e.target.value }))}
                     />
                   </div>
                   <div className="space-y-2">
@@ -226,7 +224,7 @@ export function ProposalConfigurator({ lead, proposal, isOpen, onOpenChange, col
                       type="number"
                       disabled={isAccepted}
                       value={formData.setup_value}
-                      onChange={e => setFormData(prev => ({ ...prev, setup_value: e.target.value }))}
+                      onChange={e => setFormData((prev: any) => ({ ...prev, setup_value: e.target.value }))}
                     />
                   </div>
                   <div className="space-y-2">
@@ -235,13 +233,12 @@ export function ProposalConfigurator({ lead, proposal, isOpen, onOpenChange, col
                       type="number"
                       disabled={isAccepted}
                       value={formData.discount_value}
-                      onChange={e => setFormData(prev => ({ ...prev, discount_value: e.target.value }))}
+                      onChange={e => setFormData((prev: any) => ({ ...prev, discount_value: e.target.value }))}
                     />
                   </div>
                 </div>
               </section>
 
-              {/* Seção 2: Escopo e Limites */}
               <section className="space-y-4">
                 <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                    Escopo do Atendimento
@@ -253,7 +250,7 @@ export function ProposalConfigurator({ lead, proposal, isOpen, onOpenChange, col
                       type="number"
                       disabled={isAccepted}
                       value={formData.max_revenue || ""}
-                      onChange={e => setFormData(prev => ({ ...prev, max_revenue: e.target.value }))}
+                      onChange={e => setFormData((prev: any) => ({ ...prev, max_revenue: e.target.value }))}
                     />
                   </div>
                   <div className="space-y-2">
@@ -262,7 +259,7 @@ export function ProposalConfigurator({ lead, proposal, isOpen, onOpenChange, col
                       type="number"
                       disabled={isAccepted}
                       value={formData.company_count}
-                      onChange={e => setFormData(prev => ({ ...prev, company_count: e.target.value }))}
+                      onChange={e => setFormData((prev: any) => ({ ...prev, company_count: e.target.value }))}
                     />
                   </div>
                   <div className="space-y-2">
@@ -271,7 +268,7 @@ export function ProposalConfigurator({ lead, proposal, isOpen, onOpenChange, col
                       type="number"
                       disabled={isAccepted}
                       value={formData.employee_count}
-                      onChange={e => setFormData(prev => ({ ...prev, employee_count: e.target.value }))}
+                      onChange={e => setFormData((prev: any) => ({ ...prev, employee_count: e.target.value }))}
                     />
                   </div>
                   <div className="space-y-2">
@@ -280,13 +277,12 @@ export function ProposalConfigurator({ lead, proposal, isOpen, onOpenChange, col
                       type="date"
                       disabled={isAccepted}
                       value={formData.valid_until ? formData.valid_until.split('T')[0] : ""}
-                      onChange={e => setFormData(prev => ({ ...prev, valid_until: e.target.value }))}
+                      onChange={e => setFormData((prev: any) => ({ ...prev, valid_until: e.target.value }))}
                     />
                   </div>
                 </div>
               </section>
 
-              {/* Seção 3: Serviços */}
               <section className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
@@ -368,7 +364,6 @@ export function ProposalConfigurator({ lead, proposal, isOpen, onOpenChange, col
                 </div>
               </section>
 
-              {/* Seção 4: Notas e Condições */}
               <section className="space-y-4">
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2">
@@ -378,7 +373,7 @@ export function ProposalConfigurator({ lead, proposal, isOpen, onOpenChange, col
                       placeholder="Informações relevantes para o fechamento..."
                       className="min-h-[100px] text-sm"
                       value={formData.commercial_notes || ""}
-                      onChange={e => setFormData(prev => ({ ...prev, commercial_notes: e.target.value }))}
+                      onChange={e => setFormData((prev: any) => ({ ...prev, commercial_notes: e.target.value }))}
                     />
                   </div>
                   <div className="space-y-2">
@@ -388,7 +383,7 @@ export function ProposalConfigurator({ lead, proposal, isOpen, onOpenChange, col
                       placeholder="Prazos, carências, etc..."
                       className="min-h-[100px] text-sm"
                       value={formData.special_conditions || ""}
-                      onChange={e => setFormData(prev => ({ ...prev, special_conditions: e.target.value }))}
+                      onChange={e => setFormData((prev: any) => ({ ...prev, special_conditions: e.target.value }))}
                     />
                   </div>
                 </div>
@@ -396,7 +391,6 @@ export function ProposalConfigurator({ lead, proposal, isOpen, onOpenChange, col
             </div>
           </ScrollArea>
 
-          {/* Resumo Lateral */}
           <div className="w-[300px] border-l bg-slate-50/30 p-6 flex flex-col">
             <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-6">Resumo Financeiro</h4>
             
