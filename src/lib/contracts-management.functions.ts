@@ -389,6 +389,14 @@ export const generateContract = createServerFn({ method: "POST" })
           metadata: { placeholders }
         } as any)
         .select().single();
+
+      // IMPORTANT: Update commercial_contracts status if it was aguardando_contrato
+      if (contracting && contracting.status === 'aguardando_contrato') {
+        await supabaseAdmin
+          .from("commercial_contracts")
+          .update({ status: 'contrato_gerado' })
+          .eq("id", contracting.id);
+      }
     }
 
     if (result.error) {
