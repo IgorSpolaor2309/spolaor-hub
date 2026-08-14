@@ -130,6 +130,12 @@ export const getLeads = createServerFn({ method: "GET" })
         history:lead_history (
           *,
           profile:profile_id (full_name)
+        ),
+        proposals:custom_proposals (
+          id,
+          status,
+          version,
+          created_at
         )
       `)
       .order("created_at", { ascending: false });
