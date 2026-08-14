@@ -41,42 +41,57 @@ function ReviewContractPage() {
         <div className="text-center space-y-4">
           <Loader2 className="h-10 w-10 animate-spin mx-auto text-primary" />
           <p className="text-muted-foreground animate-pulse">Carregando seu contrato...</p>
+          <div className="text-[10px] font-mono opacity-50">
+            ID: {contractId}
+          </div>
         </div>
       </div>
     );
   }
+
+  // Painel de Diagnóstico Temporário
+  const DiagnosticPanel = () => (
+    <div className="fixed bottom-4 right-4 z-50 max-w-sm bg-black/90 text-white p-4 rounded-lg text-[10px] font-mono border border-white/20 shadow-2xl space-y-1">
+      <div className="font-bold border-b border-white/20 pb-1 mb-2 flex justify-between">
+        <span>DIAGNÓSTICO TÉCNICO</span>
+        <span className="text-green-400">ATIVO</span>
+      </div>
+      <p>ROUTE_PARAM_ID: <span className="text-yellow-400">{contractId}</span></p>
+      <p>FETCH_EXECUTED: <span className="text-blue-400">{isLoading ? 'NÃO' : 'SIM'}</span></p>
+      <p>CONTRACT_FOUND: <span className={contract ? 'text-green-400' : 'text-red-400'}>{contract ? 'SIM' : 'NÃO'}</span></p>
+      <p>CONTRACT_ID_DB: <span className="text-blue-400">{contract?.id || 'N/A'}</span></p>
+      <p>STATUS: <span className="text-blue-400">{contract?.status || 'N/A'}</span></p>
+      <p>SNAPSHOT_EXISTS: <span className={contract?.content_snapshot ? 'text-green-400' : 'text-red-400'}>{contract?.content_snapshot ? 'SIM' : 'NÃO'}</span></p>
+      <p>SNAPSHOT_TYPE: <span className="text-blue-400">{typeof contract?.content_snapshot}</span></p>
+      <p>SNAPSHOT_LENGTH: <span className="text-blue-400">{contract?.content_snapshot?.length || 0}</span></p>
+      {error && <p className="text-red-400 font-bold">ERROR: {String((error as any)?.message || error)}</p>}
+      <div className="mt-2 pt-1 border-t border-white/20 text-[8px] opacity-70">
+        Verifique se o snapshot RAW aparece abaixo do resumo.
+      </div>
+    </div>
+  );
 
   if (error || !contract) {
     const errorMsg = (error as any)?.message;
     let title = "Contrato não encontrado";
     let description = "Não conseguimos localizar o contrato solicitado. O link pode ter expirado ou estar incorreto.";
 
-    if (errorMsg === "missing_snapshot" || !contract?.content_snapshot) {
+    if (errorMsg === "missing_snapshot" || (contract && !contract.content_snapshot)) {
       title = "Contrato sem conteúdo";
       description = "O conteúdo do contrato não foi processado ou está vazio. Por favor, retorne e tente gerar novamente.";
-    } else if (errorMsg === "erro_banco") {
-      title = "Erro ao carregar contrato";
-      description = "Houve um problema técnico ao acessar a base de dados. Nossa equipe já foi notificada.";
     }
-
-    console.error("[CONTRACT_FETCH_ERROR]", { error, contractId, errorMsg });
 
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <DiagnosticPanel />
         <Card className="max-w-md p-8 text-center space-y-6 border-destructive/20 shadow-xl">
           <div className="h-16 w-16 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mx-auto">
             <AlertTriangle className="h-8 w-8" />
           </div>
           <div className="space-y-2">
             <h1 className="text-2xl font-bold font-display">{title}</h1>
-            <p className="text-muted-foreground">
-              {description}
-            </p>
-            {contractId && (
-              <p className="text-[10px] text-muted-foreground mt-4 font-mono">
-                ID: {contractId}
-              </p>
-            )}
+            <p className="text-muted-foreground">{description}</p>
+            <p className="text-[10px] text-muted-foreground mt-4 font-mono">ID: {contractId}</p>
           </div>
           <Button asChild className="w-full">
             <Link to="/">Voltar ao início</Link>
@@ -91,32 +106,22 @@ function ReviewContractPage() {
 
   return (
     <div className="min-h-screen bg-muted/30 py-12 px-4">
+      <DiagnosticPanel />
       <div className="container max-w-4xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="space-y-2">
-            <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 px-3 py-1 text-xs font-bold uppercase tracking-wider">
-              Etapa 2 de 3: Revisão
-            </Badge>
-            <h1 className="text-3xl md:text-4xl font-bold font-display tracking-tight text-foreground">
-              Revise seu contrato
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              Leia atentamente os termos antes de prosseguir para a assinatura digital.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => window.history.back()} className="text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Voltar e corrigir
-            </Button>
-          </div>
-        </div>
-
+        ...
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Contract Content */}
           <Card className="lg:col-span-2 p-0 overflow-hidden border-none shadow-2xl bg-white min-h-[800px] flex flex-col">
             <div className="p-8 md:p-12 prose prose-slate max-w-none flex-1 overflow-y-auto min-h-[600px]">
+              {/* TESTE DE RENDERIZAÇÃO RAW OBRIGATÓRIO */}
+              <div className="mb-8 p-4 bg-slate-50 border-2 border-dashed border-slate-200 rounded text-[10px] font-mono">
+                <p className="font-bold text-slate-400 mb-2 uppercase">RAW CONTENT DEBUG (Visible only for fix verification)</p>
+                <div className="max-h-40 overflow-auto whitespace-pre-wrap">
+                  {String(contract.content_snapshot).substring(0, 500)}...
+                </div>
+              </div>
+
               {/* Contrato Formatado */}
               {contract.content_snapshot ? (
                 <div 
@@ -137,6 +142,7 @@ function ReviewContractPage() {
               <span>Snapshot gerado em {new Date(contract.created_at || new Date().toISOString()).toLocaleString('pt-BR')} • Versão {contract.version}</span>
             </div>
           </Card>
+
 
           {/* Sidebar Summary */}
           <div className="space-y-6">
