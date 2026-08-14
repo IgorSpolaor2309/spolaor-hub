@@ -124,9 +124,9 @@ function LeadsPage() {
   }
 
   const filteredLeads = leads?.filter((l: any) => 
-    l.contact_name?.toLowerCase().includes(search.toLowerCase()) ||
-    l.contact_email?.toLowerCase().includes(search.toLowerCase()) ||
-    l.contact_phone?.includes(search)
+    l.name?.toLowerCase().includes(search.toLowerCase()) ||
+    l.email?.toLowerCase().includes(search.toLowerCase()) ||
+    l.phone?.includes(search)
   )
 
   const brl = (n: number | null) => 
@@ -240,7 +240,7 @@ function LeadsPage() {
                     </span>
                     <span className="text-[10px] text-muted-foreground flex items-center gap-2">
                       <Phone className="h-3 w-3" />
-                      {lead.contact_phone || '—'}
+                      {lead.phone || '—'}
                     </span>
                   </div>
                 </TableCell>
@@ -261,7 +261,7 @@ function LeadsPage() {
                   {getPriorityBadge(lead.priority)}
                 </TableCell>
                 <TableCell>
-                  {getStatusBadge(lead.status_comercial, lead)}
+                  {getStatusBadge(lead.status, lead)}
                 </TableCell>
                 <TableCell>
                   {lead.next_action_date ? (
@@ -283,7 +283,7 @@ function LeadsPage() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    {lead.status_comercial === 'contratação_em_andamento' && (
+                    {lead.status === 'contratação_em_andamento' && (
                       <Button variant="ghost" size="sm" asChild title="Ver Contrato">
                         <Link to="/contracts">
                           <FileText className="h-4 w-4 text-primary" />
@@ -316,20 +316,20 @@ function LeadsPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <DialogTitle className="text-2xl flex items-center gap-3">
-                      {selectedLead.contact_name || 'Lead sem nome'}
-                      {selectedLead.status_comercial === 'contratação_em_andamento' && (
+                      {selectedLead.name || 'Lead sem nome'}
+                      {selectedLead.status === 'contratação_em_andamento' && (
                         <Link to="/contracts" className="text-primary hover:underline text-xs font-normal flex items-center gap-1 bg-primary/5 px-2 py-1 rounded">
                           <FileText className="h-3 w-3" /> Ver Contrato
                         </Link>
                       )}
                     </DialogTitle>
                     <DialogDescription className="flex items-center gap-4 mt-1">
-                      <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {selectedLead.contact_email || '—'}</span>
-                      <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {selectedLead.contact_phone || '—'}</span>
+                      <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {selectedLead.email || '—'}</span>
+                      <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {selectedLead.phone || '—'}</span>
                     </DialogDescription>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    {getStatusBadge(selectedLead.status_comercial, selectedLead)}
+                    {getStatusBadge(selectedLead.status, selectedLead)}
                     <div className="flex flex-col items-end gap-1 mt-1">
                       <Badge variant="outline" className="text-[10px]">
                         Origem: {selectedLead.origin === 'opening' ? 'Abertura' : selectedLead.origin === 'switching' ? 'Troca' : selectedLead.origin === 'landing_personalized' ? 'Landing Personalizado' : selectedLead.origin || 'Desconhecida'}
