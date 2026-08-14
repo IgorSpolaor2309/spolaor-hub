@@ -396,8 +396,8 @@ function LeadsPage() {
                   <div className="space-y-2">
                     <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Alterar Status Comercial</label>
                     <Select 
-                      defaultValue={selectedLead.status_comercial}
-                      onValueChange={(val) => updateMutation.mutate({ data: { id: selectedLead.id, status_comercial: val } })}
+                      defaultValue={selectedLead.status}
+                      onValueChange={(val) => updateMutation.mutate({ data: { id: selectedLead.id, status: val } })}
                     >
                       <SelectTrigger className="h-9">
                         <SelectValue />
