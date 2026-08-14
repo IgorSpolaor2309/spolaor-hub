@@ -112,8 +112,8 @@ function LandingPage() {
       });
       
       if (channel === 'whatsapp') {
-        const message = encodeURIComponent("Olá! Vim pelo site da Digital SC e gostaria de conversar sobre uma solução contábil personalizada para minha empresa.");
-        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
+        const message = encodeURIComponent(`Olá! Vim pelo site da Digital SC e gostaria de conversar sobre uma solução contábil personalizada para minha empresa.`);
+        window.open(`https://wa.me/5513997626359?text=${message}`, '_blank');
       } else {
         toast.success("Solicitação de videoconferência registrada! Nossa equipe entrará em contato em breve.");
       }
