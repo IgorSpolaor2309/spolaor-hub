@@ -25,10 +25,12 @@ const LeadTrackSchema = z.object({
 export const trackLeadJourney = createServerFn({ method: "POST" })
   .inputValidator((data) => LeadTrackSchema.parse(data))
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const payload: any = {
       journey_step: data.journeyStep,
       last_interaction_at: new Date().toISOString(),
-      last_interaction_description: data.lastInteraction || data.journeyStep
+      last_interaction_description: data.lastInteraction || data.journeyStep,
+      updated_at: new Date().toISOString()
     };
 
     if (data.bottleneckIndicator) payload.bottleneck_indicator = data.bottleneckIndicator;
@@ -54,7 +56,7 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
 
     let result;
     if (data.prospectId) {
-      result = await (supabase as any)
+      result = await supabaseAdmin
         .from("commercial_prospects")
         .update(payload)
         .eq("id", data.prospectId)
@@ -62,7 +64,7 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
         .single();
     } else {
       // Se não tem ID, cria um novo lead (interessado inicial)
-      result = await (supabase as any)
+      result = await supabaseAdmin
         .from("commercial_prospects")
         .insert({
           ...payload,
@@ -71,18 +73,22 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
         .select()
         .single();
     }
-
+    
     if (result.error) {
-      console.error("Error tracking lead:", result.error);
+      console.error("Error tracking lead (admin):", result.error);
       throw result.error;
     }
+    
+    console.log(`[Lead Track] Success for ${data.journeyStep}. ID: ${result.data?.id}`);
 
     return { success: true, prospectId: result.data.id };
   });
 
 export const getLeads = createServerFn({ method: "GET" })
   .handler(async () => {
-    const { data, error } = await (supabase as any)
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    
+    const { data, error } = await supabaseAdmin
       .from("commercial_prospects")
       .select(`
         *,
@@ -110,8 +116,9 @@ export const updateLeadRecovery = createServerFn({ method: "POST" })
     internal_notes: z.string().optional()
   }).parse(data))
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { id, ...payload } = data;
-    const { error } = await (supabase as any)
+    const { error } = await supabaseAdmin
       .from("commercial_prospects")
       .update(payload)
       .eq("id", id);
@@ -127,10 +134,11 @@ export const addLeadHistory = createServerFn({ method: "POST" })
     content: z.string()
   }).parse(data))
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Unauthorized");
 
-    const { error } = await (supabase as any)
+    const { error } = await supabaseAdmin
       .from("commercial_prospect_history")
       .insert({
         ...data,
@@ -143,7 +151,8 @@ export const addLeadHistory = createServerFn({ method: "POST" })
 
 export const getCollaborators = createServerFn({ method: "GET" })
   .handler(async () => {
-    const { data, error } = await (supabase as any)
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
       .from("profiles")
       .select("id, full_name, avatar_url")
       .or('role.eq.admin,role.eq.collaborator');

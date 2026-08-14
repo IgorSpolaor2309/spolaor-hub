@@ -1068,24 +1068,25 @@ export type Database = {
           ai_extracted_data: Json | null
           bottleneck_indicator: string | null
           cnpj: string | null
-          contact_email: string
-          contact_name: string
-          contact_phone: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
           coupon_id: string | null
           created_at: string | null
           discount_value: number | null
           estimated_value: number | null
           extra_service_ids: string[] | null
-          final_value: number
+          final_value: number | null
           flow_origin: string
           id: string
           interested_in_personalized_solution: boolean | null
           internal_notes: string | null
           journey_step: string | null
           last_interaction_at: string | null
+          last_interaction_description: string | null
           next_action_date: string | null
           next_action_description: string | null
-          original_value: number
+          original_value: number | null
           plan_id: string | null
           preferred_contact_channel: string | null
           priority: string | null
@@ -1098,24 +1099,25 @@ export type Database = {
           ai_extracted_data?: Json | null
           bottleneck_indicator?: string | null
           cnpj?: string | null
-          contact_email: string
-          contact_name: string
-          contact_phone: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           coupon_id?: string | null
           created_at?: string | null
           discount_value?: number | null
           estimated_value?: number | null
           extra_service_ids?: string[] | null
-          final_value: number
+          final_value?: number | null
           flow_origin: string
           id?: string
           interested_in_personalized_solution?: boolean | null
           internal_notes?: string | null
           journey_step?: string | null
           last_interaction_at?: string | null
+          last_interaction_description?: string | null
           next_action_date?: string | null
           next_action_description?: string | null
-          original_value: number
+          original_value?: number | null
           plan_id?: string | null
           preferred_contact_channel?: string | null
           priority?: string | null
@@ -1128,24 +1130,25 @@ export type Database = {
           ai_extracted_data?: Json | null
           bottleneck_indicator?: string | null
           cnpj?: string | null
-          contact_email?: string
-          contact_name?: string
-          contact_phone?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           coupon_id?: string | null
           created_at?: string | null
           discount_value?: number | null
           estimated_value?: number | null
           extra_service_ids?: string[] | null
-          final_value?: number
+          final_value?: number | null
           flow_origin?: string
           id?: string
           interested_in_personalized_solution?: boolean | null
           internal_notes?: string | null
           journey_step?: string | null
           last_interaction_at?: string | null
+          last_interaction_description?: string | null
           next_action_date?: string | null
           next_action_description?: string | null
-          original_value?: number
+          original_value?: number | null
           plan_id?: string | null
           preferred_contact_channel?: string | null
           priority?: string | null
