@@ -113,7 +113,9 @@ export const getGeneratedContracts = createServerFn({ method: "GET" })
 export const generateContract = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ prospectId: z.string() }).parse(data))
   .handler(async ({ data }) => {
-    console.log(`[CONTRACT_GENERATION_START] Prospect: ${data.prospectId}`);
+    // PADRONIZANDO O LOG DE INÍCIO
+    console.log(`[GENERATE_CONTRACT_INPUT] prospectId: ${data.prospectId}`);
+
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { INSTITUCIONAL_DIGITAL_SC } = await import("./institucional.server");
@@ -180,14 +182,14 @@ export const generateContract = createServerFn({ method: "POST" })
     const finalPlanName = prospect.plan?.nome || "Personalizado";
     
     const placeholders: Record<string, string> = {
-      "{{razao_social}}": extracted.razao_social || extracted.company_name || prospect.contact_name || lead?.name || "",
-      "{{cnpj}}": formatCNPJ(prospect.cnpj || lead?.cnpj || extracted.cnpj || ""),
-      "{{email}}": prospect.contact_email || lead?.email || extracted.email || "",
-      "{{telefone}}": prospect.contact_phone || lead?.phone || extracted.phone || "",
-      "{{endereco}}": extracted.address || extracted.logradouro || lead?.city || "",
-      "{{natureza_juridica}}": extracted.legal_nature || extracted.natureza_juridica || "",
-      "{{nome_responsavel}}": extracted.representative_name || extracted.responsavel || prospect.contact_name || "",
-      "{{cpf_responsavel}}": extracted.representative_cpf || extracted.cpf || "",
+      "{{razao_social}}": extracted.razao_social || extracted.company_name || prospect.contact_name || lead?.name || "A informar",
+      "{{cnpj}}": formatCNPJ(prospect.cnpj || lead?.cnpj || extracted.cnpj || "00000000000000"),
+      "{{email}}": prospect.contact_email || lead?.email || extracted.email || "A informar",
+      "{{telefone}}": prospect.contact_phone || lead?.phone || extracted.phone || "A informar",
+      "{{endereco}}": extracted.address || extracted.logradouro || lead?.city || "A informar",
+      "{{natureza_juridica}}": extracted.legal_nature || extracted.natureza_juridica || "A informar",
+      "{{nome_responsavel}}": extracted.representative_name || extracted.responsavel || prospect.contact_name || "A informar",
+      "{{cpf_responsavel}}": extracted.representative_cpf || extracted.cpf || "00000000000",
       "{{plano}}": finalPlanName,
       "{{valor_mensal}}": brl(monthlyFee),
       "{{valor_implantacao}}": finalSetupValue > 0 ? brl(finalSetupValue) : "Isento",
@@ -231,7 +233,7 @@ export const generateContract = createServerFn({ method: "POST" })
     };
 
     const missingFields = Object.entries(mandatory)
-      .filter(([_, value]) => !value || value === "A informar" || value === "A definir")
+      .filter(([_, value]) => !value || value === "A informar" || value === "A definir" || value === "" || value.includes("..."))
       .map(([key]) => key);
 
     let finalContent = model.content;
@@ -258,11 +260,13 @@ export const generateContract = createServerFn({ method: "POST" })
       throw gError;
     }
 
-    console.log(`[CONTRACT_CREATED] ID: ${generated.id}, Errors: ${missingFields.length}`);
+    console.log(`[CONTRACT_CREATED_RESPONSE] success: true, contractId: ${generated.id}`);
+    
     return {
       success: true,
       contractId: generated.id,
-      ...generated,
+      id: generated.id, // Compatibilidade com acessos antigos por .id
+      content_snapshot: generated.content_snapshot,
       missingFields,
       isInstitucionalDemo: !!(INSTITUCIONAL_DIGITAL_SC as any).is_demo
     };

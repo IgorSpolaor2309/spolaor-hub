@@ -159,28 +159,25 @@ export function CheckoutView({
     try {
       console.log(`[CONTRACT_GENERATION_START] Prospect: ${prospectId}`);
       
+      console.log(`[generateContract_CALL] prospectId: ${prospectId}`);
       const result = await generateContractFn({
         data: { prospectId }
       });
 
-      console.log("GENERATE_CONTRACT_RESULT", result);
+      console.log("[generateContract_RESULT]", result);
 
       const contractId = result.contractId || result.id;
-      console.log("CONTRACT_ID_FOR_NAVIGATION", contractId);
+      console.log("[contractId_FOUND]", contractId);
+
 
       console.log(`[VALIDATION_RESULT] Errors: ${result.missingFields?.length || 0}`);
       
-      // 3. Se houver campos obrigatórios faltando, abrir o modal
-      if (result.missingFields && result.missingFields.length > 0) {
-        console.log(`[MISSING_FIELDS]`, result.missingFields);
-        setMissingFieldsModal({
-          isOpen: true,
-          missingFields: result.missingFields,
-          prospectId: prospectId,
-          extractedData: extractedData
-        });
-        return;
-      }
+      // 3. Se houver campos obrigatórios faltando, NÃO BLOQUEAR a revisão.
+      // Apenas registrar os erros para exibir no contrato se necessário.
+      // O modal de campos faltantes deve ser opcional ou não bloqueante para a geração.
+      // REMOVIDO BLOQUEIO: permitimos que o contrato seja gerado mesmo incompleto.
+      console.log(`[VALIDATION_ERRORS] Fields missing:`, result.missingFields);
+
 
       // 4. Se não houver erros, validar se tem ID e Snapshot
       if (!contractId) {
@@ -207,13 +204,12 @@ export function CheckoutView({
         }
       });
 
-      console.log("NAVIGATING_TO_REVIEW", contractId);
+      console.log(`[NAVIGATING_TO_REVIEW] ID: ${contractId}`);
       toast.success("Contrato gerado com sucesso! Redirecionando para revisão.");
       
-      navigate({ 
-        to: "/revisar-contrato/$contractId", 
-        params: { contractId } 
-      });
+      // Forçar navegação imediata
+      window.location.href = `/revisar-contrato/${contractId}`;
+      
       console.log("NAVIGATION_CALLED");
     } catch (e: any) {
       console.error("[CONTRACT_GENERATION_ERROR]", e);
