@@ -4,6 +4,7 @@ import { z } from "zod";
 
 const LeadTrackSchema = z.object({
   leadId: z.string().optional(),
+  prospectId: z.string().optional(), // Mantido para compatibilidade legado durante a transição
   journeyStep: z.string(),
   bottleneckIndicator: z.string().optional(),
   estimatedValue: z.number().optional(),
@@ -54,11 +55,12 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
     if (data.sessionId) payload.session_id = data.sessionId;
 
     let result;
-    if (data.leadId) {
+    const effectiveId = data.leadId || data.prospectId;
+    if (effectiveId) {
       result = await supabaseAdmin
         .from("leads")
         .update(payload)
-        .eq("id", data.leadId)
+        .eq("id", effectiveId)
         .select()
         .single();
     } else {
