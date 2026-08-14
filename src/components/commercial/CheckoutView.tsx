@@ -204,13 +204,12 @@ export function CheckoutView({
         }
       });
 
-      console.log("NAVIGATING_TO_REVIEW", contractId);
+      console.log(`[NAVIGATING_TO_REVIEW] ID: ${contractId}`);
       toast.success("Contrato gerado com sucesso! Redirecionando para revisão.");
       
-      navigate({ 
-        to: "/revisar-contrato/$contractId", 
-        params: { contractId } 
-      });
+      // Forçar navegação imediata
+      window.location.href = `/revisar-contrato/${contractId}`;
+      
       console.log("NAVIGATION_CALLED");
     } catch (e: any) {
       console.error("[CONTRACT_GENERATION_ERROR]", e);

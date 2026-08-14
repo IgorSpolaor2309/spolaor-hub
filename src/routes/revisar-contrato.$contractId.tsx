@@ -168,12 +168,12 @@ function ReviewContractPage() {
 
                   <Button 
                     className="w-full h-12 text-lg font-bold shadow-lg shadow-primary/20" 
-                    disabled={(contract as any).validation_errors?.length > 0}
+                    disabled={contract.validation_errors && contract.validation_errors.length > 0}
                     onClick={() => {
                       toast.info("Em breve: Integração com assinatura digital (Docusign/Clicksign)");
                     }}
                   >
-                    {(contract as any).validation_errors?.length > 0 ? "Corrija as pendências" : "Continuar para assinatura"}
+                    {contract.validation_errors && contract.validation_errors.length > 0 ? "Corrija as pendências" : "Continuar para assinatura"}
                   </Button>
                   
                   <p className="text-[10px] text-center text-muted-foreground px-2 leading-relaxed">
