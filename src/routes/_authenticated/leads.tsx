@@ -332,7 +332,7 @@ function LeadsPage() {
                     {getStatusBadge(selectedLead.status_comercial, selectedLead)}
                     <div className="flex flex-col items-end gap-1 mt-1">
                       <Badge variant="outline" className="text-[10px]">
-                        Origem: {selectedLead.flow_origin === 'opening' ? 'Abertura' : selectedLead.flow_origin === 'switching' ? 'Troca' : 'Landing Personalizado'}
+                        Origem: {selectedLead.flow_origin === 'opening' ? 'Abertura' : selectedLead.flow_origin === 'switching' ? 'Troca' : selectedLead.flow_origin === 'landing_personalized' ? 'Landing Personalizado' : selectedLead.flow_origin}
                       </Badge>
                       {selectedLead.requested_personalized_at && (
                         <span className="text-[9px] text-muted-foreground flex items-center gap-1">
