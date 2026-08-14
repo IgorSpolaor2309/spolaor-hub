@@ -153,12 +153,13 @@ export const generateContract = createServerFn({ method: "POST" })
       .maybeSingle();
 
     // 5. Base Placeholders Mapping
+    const extracted = ((lead?.journey_data as any)?.extracted ?? {}) as Record<string, any>;
     const placeholders: Record<string, string> = {
       // CONTRATANTE (Prospect/Lead)
-      "{{razao_social}}": prospect.contact_name || lead?.name || "",
-      "{{cnpj}}": prospect.cnpj || lead?.cnpj || "",
-      "{{email}}": prospect.contact_email || lead?.email || "",
-      "{{telefone}}": prospect.contact_phone || lead?.phone || "",
+      "{{razao_social}}": prospect.contact_name || lead?.name || extracted.company_name || extracted.razao_social || "",
+      "{{cnpj}}": prospect.cnpj || lead?.cnpj || extracted.cnpj || "A informar",
+      "{{email}}": prospect.contact_email || lead?.email || extracted.email || "",
+      "{{telefone}}": prospect.contact_phone || lead?.phone || extracted.phone || "",
       "{{endereco}}": (lead?.journey_data as any)?.extracted?.address || lead?.city || "",
       "{{natureza_juridica}}": (lead?.journey_data as any)?.extracted?.legal_nature || "A definir",
       "{{nome_responsavel}}": prospect.contact_name || "",
@@ -199,7 +200,7 @@ export const generateContract = createServerFn({ method: "POST" })
     }
 
     // 7. Validation of Mandatory Fields
-    const mandatory = ["{{razao_social}}", "{{cnpj}}", "{{email}}"];
+    const mandatory = ["{{razao_social}}", "{{email}}"];
     for (const key of mandatory) {
       if (!placeholders[key]) {
         throw new Error(`Campo obrigatório faltando para o contrato: ${key.replace('{{', '').replace('}}', '').replace('_', ' ')}`);
