@@ -236,7 +236,7 @@ function LeadsPage() {
                   <div className="flex flex-col gap-1">
                     <span className="font-medium flex items-center gap-2">
                       <User className="h-3 w-3 text-muted-foreground" />
-                      {lead.contact_name || 'Sem nome'}
+                      {lead.name || 'Sem nome'}
                     </span>
                     <span className="text-[10px] text-muted-foreground flex items-center gap-2">
                       <Phone className="h-3 w-3" />
@@ -332,7 +332,7 @@ function LeadsPage() {
                     {getStatusBadge(selectedLead.status_comercial, selectedLead)}
                     <div className="flex flex-col items-end gap-1 mt-1">
                       <Badge variant="outline" className="text-[10px]">
-                        Origem: {selectedLead.flow_origin === 'opening' ? 'Abertura' : selectedLead.flow_origin === 'switching' ? 'Troca' : selectedLead.flow_origin === 'landing_personalized' ? 'Landing Personalizado' : selectedLead.flow_origin || 'Desconhecida'}
+                        Origem: {selectedLead.origin === 'opening' ? 'Abertura' : selectedLead.origin === 'switching' ? 'Troca' : selectedLead.origin === 'landing_personalized' ? 'Landing Personalizado' : selectedLead.origin || 'Desconhecida'}
                       </Badge>
                       {selectedLead.requested_personalized_at && (
                         <span className="text-[9px] text-muted-foreground flex items-center gap-1">

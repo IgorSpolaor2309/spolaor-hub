@@ -107,7 +107,8 @@ export function OpeningChatFlow({ onBack, preSelectedPlanId }: { onBack: () => v
     if (!extractedData) return plans.find((p: any) => p.id === preSelectedPlanId) || null;
     
     const rev = extractedData.revenue || 0;
-    if (rev > 300000) return null; // personalized
+    const maxPlanLimit = Math.max(...plans.map((p: any) => p.limite_faturamento || 0));
+    if (rev > maxPlanLimit && maxPlanLimit > 0) return null; // personalized
     if (rev <= 8000) return plans.find((p: any) => p.nome === 'Plano A');
     if (rev <= 15000) return plans.find((p: any) => p.nome === 'Plano B');
     if (rev <= 100000) return plans.find((p: any) => p.nome === 'Plano C');
