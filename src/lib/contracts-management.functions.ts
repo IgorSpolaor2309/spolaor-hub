@@ -274,34 +274,39 @@ export const getContractForReview = createServerFn({ method: "GET" })
     
     console.log(`[getContractForReview] Fetching contract: ${data.contractId}`);
     
-    const { data: contract, error } = await supabaseAdmin
-      .from("generated_contracts")
-      .select(`
-        *,
-        prospect:prospect_id (
-          contact_name,
-          cnpj,
-          final_value,
-          plan:plan_id (nome)
-        )
-      `)
-      .eq("id", data.contractId)
-      .maybeSingle();
+    try {
+      const { data: contract, error } = await supabaseAdmin
+        .from("generated_contracts")
+        .select(`
+          *,
+          prospect:prospect_id (
+            contact_name,
+            cnpj,
+            final_value,
+            plan:plan_id (nome)
+          )
+        `)
+        .eq("id", data.contractId)
+        .maybeSingle();
 
-    if (error) {
-      console.error("[getContractForReview] Database error:", error);
-      throw new Error("erro_banco");
+      if (error) {
+        console.error("[getContractForReview] Database error:", error);
+        throw new Error(`erro_banco: ${error.message}`);
+      }
+
+      if (!contract) {
+        console.warn(`[getContractForReview] Contract not found: ${data.contractId}`);
+        throw new Error("not_found");
+      }
+
+      if (!contract.content_snapshot) {
+        console.warn(`[getContractForReview] Missing snapshot for contract: ${data.contractId}`);
+        throw new Error("missing_snapshot");
+      }
+
+      return contract;
+    } catch (err: any) {
+      console.error("[getContractForReview] Catch-all error:", err);
+      throw err;
     }
-
-    if (!contract) {
-      console.warn(`[getContractForReview] Contract not found: ${data.contractId}`);
-      throw new Error("not_found");
-    }
-
-    if (!contract.content_snapshot) {
-      console.warn(`[getContractForReview] Missing snapshot for contract: ${data.contractId}`);
-      throw new Error("missing_snapshot");
-    }
-
-    return contract;
   });
