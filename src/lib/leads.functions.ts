@@ -91,7 +91,7 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
         cnpj: data.cnpj,
         plan_id: data.planId,
         estimated_value: data.estimatedValue,
-        status_comercial: 'contratação_em_andamento',
+        status_comercial: data.journeyStep === 'contratacao_confirmada' ? 'contrato_gerado' : 'contratação_em_andamento',
         updated_at: new Date().toISOString()
       };
 
