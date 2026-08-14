@@ -211,11 +211,23 @@ export const getCollaborators = createServerFn({ method: "GET" })
   .handler(async () => {
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Papéis vivem em public.user_roles (profiles não possui coluna role).
+    const { data: roleRows, error: rolesErr } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id, role")
+      .in("role", ["admin", "collaborator"]);
+
+    if (rolesErr) throw rolesErr;
+
+    const ids = Array.from(new Set((roleRows ?? []).map((r: any) => r.user_id).filter(Boolean)));
+    if (ids.length === 0) return [];
+
     const { data, error } = await supabaseAdmin
       .from("profiles")
       .select("id, full_name, avatar_url")
-      .or('role.eq.admin,role.eq.collaborator');
+      .in("id", ids);
 
     if (error) throw error;
-    return data;
+    return data ?? [];
   });
