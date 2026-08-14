@@ -485,33 +485,29 @@ function LandingPage() {
               ) : (
                 filteredPlans.map((plan: any, index: number) => {
                   const prevPlan = index > 0 ? filteredPlans[index - 1] : null;
-                    const displayName = plan.nome;
-                    const isRecomendado = plan.nome === 'Plano B';
-                    const displayName = plan.nome;
-                    const includedServices = plan.plan_services || [];
-                    const prevPlanServiceIds = new Set(prevPlan?.plan_services?.map((ps: any) => ps.service_id) || []);
-                    const newServices = prevPlan 
-                      ? includedServices.filter((ps: any) => !prevPlanServiceIds.has(ps.service_id))
-                      : includedServices;
+                  const isRecomendado = plan.nome === 'Plano B';
+                  const displayName = plan.nome;
+                  const includedServices = plan.plan_services || [];
+                  const prevPlanServiceIds = new Set(prevPlan?.plan_services?.map((ps: any) => ps.service_id) || []);
+                  const newServices = prevPlan 
+                    ? includedServices.filter((ps: any) => !prevPlanServiceIds.has(ps.service_id))
+                    : includedServices;
 
-                    return (
-                      <PlanCardItem 
-                        key={plan.id}
-                        plan={plan}
-                        prevPlan={prevPlan}
-                        isRecomendado={isRecomendado}
-                        displayName={displayName}
-                        includedServices={includedServices}
-                        newServices={newServices}
-                        onSelect={handlePlanSelection}
-                      />
-                    );
-                  })
-                )}
-              </div>
+                  return (
+                    <PlanCardItem 
+                      key={plan.id}
+                      plan={plan}
+                      prevPlan={prevPlan}
+                      isRecomendado={isRecomendado}
+                      displayName={displayName}
+                      includedServices={includedServices}
+                      newServices={newServices}
+                      onSelect={handlePlanSelection}
+                    />
+                  );
+                })
+              )}
             </div>
-          </section>
-            )}
           </div>
         </section>
 
