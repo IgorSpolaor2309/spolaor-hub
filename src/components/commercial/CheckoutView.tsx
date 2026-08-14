@@ -172,11 +172,19 @@ export function CheckoutView({
 
       console.log(`[VALIDATION_RESULT] Errors: ${result.missingFields?.length || 0}`);
       
-      // 3. Se houver campos obrigatórios faltando, NÃO BLOQUEAR a revisão.
-      // Apenas registrar os erros para exibir no contrato se necessário.
-      // O modal de campos faltantes deve ser opcional ou não bloqueante para a geração.
-      // REMOVIDO BLOQUEIO: permitimos que o contrato seja gerado mesmo incompleto.
-      console.log(`[VALIDATION_ERRORS] Fields missing:`, result.missingFields);
+      // 3. Se houver campos obrigatórios faltando, exibimos o modal para que o usuário complete.
+      // O contrato JÁ FOI gerado, mas para seguir para a revisão idealmente os dados devem estar lá.
+      if (result.missingFields && result.missingFields.length > 0) {
+        console.log(`[VALIDATION_ERRORS] Fields missing:`, result.missingFields);
+        setMissingFieldsModal({
+          isOpen: true,
+          missingFields: result.missingFields,
+          prospectId: prospectId,
+          extractedData: extractedData
+        });
+        return;
+      }
+
 
 
       // 4. Se não houver erros, validar se tem ID e Snapshot
