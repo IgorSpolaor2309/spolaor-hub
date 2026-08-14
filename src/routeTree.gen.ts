@@ -46,9 +46,6 @@ import { Route as AuthenticatedChecklistRouteImport } from './routes/_authentica
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as ApiPublicTestSwitchingRouteImport } from './routes/api/public/test-switching'
-import { Route as ApiPublicDebugListRouteImport } from './routes/api/public/debug-list'
-import { Route as ApiPublicDebugContractRouteImport } from './routes/api/public/debug-contract'
-import { Route as ApiPublicCheckAuthRouteImport } from './routes/api/public/check-auth'
 import { Route as AuthenticatedProcessosIdRouteImport } from './routes/_authenticated/processos.$id'
 import { Route as AuthenticatedPortalProcessosIdRouteImport } from './routes/_authenticated/portal-processos.$id'
 import { Route as AuthenticatedIntegracoesOmieRouteImport } from './routes/_authenticated/integracoes.omie'
@@ -57,7 +54,6 @@ import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicHooksCompetenceMonthlyGenerationRouteImport } from './routes/api/public/hooks/competence-monthly-generation'
 import { Route as ApiPublicHooksCleanupChatOrphansRouteImport } from './routes/api/public/hooks/cleanup-chat-orphans'
-import { Route as ApiPublicHooksCheckEnvRouteImport } from './routes/api/public/hooks/check-env'
 import { Route as AuthenticatedMeuMesClientIdCompetenceRouteImport } from './routes/_authenticated/meu-mes_.$clientId.$competence'
 import { Route as AuthenticatedCompetenciasClientIdCompetenceRouteImport } from './routes/_authenticated/competencias_.$clientId.$competence'
 
@@ -260,21 +256,6 @@ const ApiPublicTestSwitchingRoute = ApiPublicTestSwitchingRouteImport.update({
   path: '/api/public/test-switching',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicDebugListRoute = ApiPublicDebugListRouteImport.update({
-  id: '/api/public/debug-list',
-  path: '/api/public/debug-list',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicDebugContractRoute = ApiPublicDebugContractRouteImport.update({
-  id: '/api/public/debug-contract',
-  path: '/api/public/debug-contract',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicCheckAuthRoute = ApiPublicCheckAuthRouteImport.update({
-  id: '/api/public/check-auth',
-  path: '/api/public/check-auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedProcessosIdRoute =
   AuthenticatedProcessosIdRouteImport.update({
     id: '/$id',
@@ -321,11 +302,6 @@ const ApiPublicHooksCleanupChatOrphansRoute =
     path: '/api/public/hooks/cleanup-chat-orphans',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicHooksCheckEnvRoute = ApiPublicHooksCheckEnvRouteImport.update({
-  id: '/api/public/hooks/check-env',
-  path: '/api/public/hooks/check-env',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedMeuMesClientIdCompetenceRoute =
   AuthenticatedMeuMesClientIdCompetenceRouteImport.update({
     id: '/meu-mes_/$clientId/$competence',
@@ -381,13 +357,9 @@ export interface FileRoutesByFullPath {
   '/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
   '/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
-  '/api/public/check-auth': typeof ApiPublicCheckAuthRoute
-  '/api/public/debug-contract': typeof ApiPublicDebugContractRoute
-  '/api/public/debug-list': typeof ApiPublicDebugListRoute
   '/api/public/test-switching': typeof ApiPublicTestSwitchingRoute
   '/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/meu-mes/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
-  '/api/public/hooks/check-env': typeof ApiPublicHooksCheckEnvRoute
   '/api/public/hooks/cleanup-chat-orphans': typeof ApiPublicHooksCleanupChatOrphansRoute
   '/api/public/hooks/competence-monthly-generation': typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
 }
@@ -433,13 +405,9 @@ export interface FileRoutesByTo {
   '/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
   '/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
-  '/api/public/check-auth': typeof ApiPublicCheckAuthRoute
-  '/api/public/debug-contract': typeof ApiPublicDebugContractRoute
-  '/api/public/debug-list': typeof ApiPublicDebugListRoute
   '/api/public/test-switching': typeof ApiPublicTestSwitchingRoute
   '/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/meu-mes/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
-  '/api/public/hooks/check-env': typeof ApiPublicHooksCheckEnvRoute
   '/api/public/hooks/cleanup-chat-orphans': typeof ApiPublicHooksCleanupChatOrphansRoute
   '/api/public/hooks/competence-monthly-generation': typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
 }
@@ -487,13 +455,9 @@ export interface FileRoutesById {
   '/_authenticated/integracoes/omie': typeof AuthenticatedIntegracoesOmieRoute
   '/_authenticated/portal-processos/$id': typeof AuthenticatedPortalProcessosIdRoute
   '/_authenticated/processos/$id': typeof AuthenticatedProcessosIdRoute
-  '/api/public/check-auth': typeof ApiPublicCheckAuthRoute
-  '/api/public/debug-contract': typeof ApiPublicDebugContractRoute
-  '/api/public/debug-list': typeof ApiPublicDebugListRoute
   '/api/public/test-switching': typeof ApiPublicTestSwitchingRoute
   '/_authenticated/competencias_/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/_authenticated/meu-mes_/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
-  '/api/public/hooks/check-env': typeof ApiPublicHooksCheckEnvRoute
   '/api/public/hooks/cleanup-chat-orphans': typeof ApiPublicHooksCleanupChatOrphansRoute
   '/api/public/hooks/competence-monthly-generation': typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
 }
@@ -541,13 +505,9 @@ export interface FileRouteTypes {
     | '/integracoes/omie'
     | '/portal-processos/$id'
     | '/processos/$id'
-    | '/api/public/check-auth'
-    | '/api/public/debug-contract'
-    | '/api/public/debug-list'
     | '/api/public/test-switching'
     | '/competencias/$clientId/$competence'
     | '/meu-mes/$clientId/$competence'
-    | '/api/public/hooks/check-env'
     | '/api/public/hooks/cleanup-chat-orphans'
     | '/api/public/hooks/competence-monthly-generation'
   fileRoutesByTo: FileRoutesByTo
@@ -593,13 +553,9 @@ export interface FileRouteTypes {
     | '/integracoes/omie'
     | '/portal-processos/$id'
     | '/processos/$id'
-    | '/api/public/check-auth'
-    | '/api/public/debug-contract'
-    | '/api/public/debug-list'
     | '/api/public/test-switching'
     | '/competencias/$clientId/$competence'
     | '/meu-mes/$clientId/$competence'
-    | '/api/public/hooks/check-env'
     | '/api/public/hooks/cleanup-chat-orphans'
     | '/api/public/hooks/competence-monthly-generation'
   id:
@@ -646,13 +602,9 @@ export interface FileRouteTypes {
     | '/_authenticated/integracoes/omie'
     | '/_authenticated/portal-processos/$id'
     | '/_authenticated/processos/$id'
-    | '/api/public/check-auth'
-    | '/api/public/debug-contract'
-    | '/api/public/debug-list'
     | '/api/public/test-switching'
     | '/_authenticated/competencias_/$clientId/$competence'
     | '/_authenticated/meu-mes_/$clientId/$competence'
-    | '/api/public/hooks/check-env'
     | '/api/public/hooks/cleanup-chat-orphans'
     | '/api/public/hooks/competence-monthly-generation'
   fileRoutesById: FileRoutesById
@@ -668,11 +620,7 @@ export interface RootRouteChildren {
   RevisarContratoContractIdRoute: typeof RevisarContratoContractIdRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
-  ApiPublicCheckAuthRoute: typeof ApiPublicCheckAuthRoute
-  ApiPublicDebugContractRoute: typeof ApiPublicDebugContractRoute
-  ApiPublicDebugListRoute: typeof ApiPublicDebugListRoute
   ApiPublicTestSwitchingRoute: typeof ApiPublicTestSwitchingRoute
-  ApiPublicHooksCheckEnvRoute: typeof ApiPublicHooksCheckEnvRoute
   ApiPublicHooksCleanupChatOrphansRoute: typeof ApiPublicHooksCleanupChatOrphansRoute
   ApiPublicHooksCompetenceMonthlyGenerationRoute: typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
 }
@@ -938,27 +886,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTestSwitchingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/debug-list': {
-      id: '/api/public/debug-list'
-      path: '/api/public/debug-list'
-      fullPath: '/api/public/debug-list'
-      preLoaderRoute: typeof ApiPublicDebugListRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/debug-contract': {
-      id: '/api/public/debug-contract'
-      path: '/api/public/debug-contract'
-      fullPath: '/api/public/debug-contract'
-      preLoaderRoute: typeof ApiPublicDebugContractRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/check-auth': {
-      id: '/api/public/check-auth'
-      path: '/api/public/check-auth'
-      fullPath: '/api/public/check-auth'
-      preLoaderRoute: typeof ApiPublicCheckAuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated/processos/$id': {
       id: '/_authenticated/processos/$id'
       path: '/$id'
@@ -1013,13 +940,6 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/cleanup-chat-orphans'
       fullPath: '/api/public/hooks/cleanup-chat-orphans'
       preLoaderRoute: typeof ApiPublicHooksCleanupChatOrphansRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/check-env': {
-      id: '/api/public/hooks/check-env'
-      path: '/api/public/hooks/check-env'
-      fullPath: '/api/public/hooks/check-env'
-      preLoaderRoute: typeof ApiPublicHooksCheckEnvRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/meu-mes_/$clientId/$competence': {
@@ -1166,11 +1086,7 @@ const rootRouteChildren: RootRouteChildren = {
   RevisarContratoContractIdRoute: RevisarContratoContractIdRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
-  ApiPublicCheckAuthRoute: ApiPublicCheckAuthRoute,
-  ApiPublicDebugContractRoute: ApiPublicDebugContractRoute,
-  ApiPublicDebugListRoute: ApiPublicDebugListRoute,
   ApiPublicTestSwitchingRoute: ApiPublicTestSwitchingRoute,
-  ApiPublicHooksCheckEnvRoute: ApiPublicHooksCheckEnvRoute,
   ApiPublicHooksCleanupChatOrphansRoute: ApiPublicHooksCleanupChatOrphansRoute,
   ApiPublicHooksCompetenceMonthlyGenerationRoute:
     ApiPublicHooksCompetenceMonthlyGenerationRoute,
