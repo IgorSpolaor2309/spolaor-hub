@@ -28,7 +28,6 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     
-    // Preparar payload para a tabela de LEADS
     const payload: any = {
       journey_data: { 
         step: data.journeyStep,
@@ -78,8 +77,7 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
       throw result.error;
     }
     
-    // SE houver intenção explícita de contratação (checkout iniciado), 
-    // TAMBÉM criamos/atualizamos o commercial_prospects
+    // Explicit intent to contract
     if (data.journeyStep === 'checkout_iniciado' || data.journeyStep === 'contratacao_confirmada') {
       const prospectPayload: any = {
         flow_origin: data.origin || data.flowType,
@@ -93,7 +91,6 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
         updated_at: new Date().toISOString()
       };
 
-      // Tenta encontrar um prospect já existente pelo email ou criar novo
       const { data: existingProspect } = await supabaseAdmin
         .from("commercial_prospects")
         .select("id")
@@ -116,14 +113,13 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
     }
 
     console.log(`[Lead Track] Success for ${data.journeyStep}. ID: ${result.data?.id}`);
-    return { success: true, prospectId: result.data.id }; // Mantendo nome prospectId para compatibilidade no frontend por enquanto
+    return { success: true, prospectId: result.data.id };
   });
 
 export const getLeads = createServerFn({ method: "GET" })
   .handler(async () => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     
-    // Agora buscamos da tabela LEADS para o dashboard inicial
     const { data, error } = await supabaseAdmin
       .from("leads")
       .select(`
@@ -149,7 +145,7 @@ export const updateLeadRecovery = createServerFn({ method: "POST" })
     next_action_description: z.string().optional(),
     next_action_date: z.string().optional().nullable(),
     internal_notes: z.string().optional(),
-    last_interaction_description: z.string().optional(),
+    last_interaction_description: z.string().optional()
   }).parse(data))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -163,10 +159,9 @@ export const updateLeadRecovery = createServerFn({ method: "POST" })
     return { success: true };
   });
 
-// Adiciona histórico ao commercial_prospect se ele existir
 export const addLeadHistory = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({
-    prospect_id: z.string(),
+    lead_id: z.string(),
     action_type: z.string(),
     content: z.string()
   }).parse(data))
@@ -176,7 +171,7 @@ export const addLeadHistory = createServerFn({ method: "POST" })
     if (!user) throw new Error("Unauthorized");
 
     const { error } = await supabaseAdmin
-      .from("commercial_prospect_history")
+      .from("lead_history")
       .insert({
         ...data,
         profile_id: user.id
