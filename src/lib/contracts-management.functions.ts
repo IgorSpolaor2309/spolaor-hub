@@ -180,14 +180,14 @@ export const generateContract = createServerFn({ method: "POST" })
     const finalPlanName = prospect.plan?.nome || "Personalizado";
     
     const placeholders: Record<string, string> = {
-      "{{razao_social}}": extracted.razao_social || extracted.company_name || prospect.contact_name || lead?.name || "",
-      "{{cnpj}}": formatCNPJ(prospect.cnpj || lead?.cnpj || extracted.cnpj || ""),
-      "{{email}}": prospect.contact_email || lead?.email || extracted.email || "",
-      "{{telefone}}": prospect.contact_phone || lead?.phone || extracted.phone || "",
-      "{{endereco}}": extracted.address || extracted.logradouro || lead?.city || "",
-      "{{natureza_juridica}}": extracted.legal_nature || extracted.natureza_juridica || "",
-      "{{nome_responsavel}}": extracted.representative_name || extracted.responsavel || prospect.contact_name || "",
-      "{{cpf_responsavel}}": extracted.representative_cpf || extracted.cpf || "",
+      "{{razao_social}}": extracted.razao_social || extracted.company_name || prospect.contact_name || lead?.name || "A informar",
+      "{{cnpj}}": formatCNPJ(prospect.cnpj || lead?.cnpj || extracted.cnpj || "00000000000000"),
+      "{{email}}": prospect.contact_email || lead?.email || extracted.email || "A informar",
+      "{{telefone}}": prospect.contact_phone || lead?.phone || extracted.phone || "A informar",
+      "{{endereco}}": extracted.address || extracted.logradouro || lead?.city || "A informar",
+      "{{natureza_juridica}}": extracted.legal_nature || extracted.natureza_juridica || "A informar",
+      "{{nome_responsavel}}": extracted.representative_name || extracted.responsavel || prospect.contact_name || "A informar",
+      "{{cpf_responsavel}}": extracted.representative_cpf || extracted.cpf || "00000000000",
       "{{plano}}": finalPlanName,
       "{{valor_mensal}}": brl(monthlyFee),
       "{{valor_implantacao}}": finalSetupValue > 0 ? brl(finalSetupValue) : "Isento",
