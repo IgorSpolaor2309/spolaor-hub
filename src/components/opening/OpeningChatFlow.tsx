@@ -106,6 +106,7 @@ export function OpeningChatFlow({ onBack, preSelectedPlanId }: { onBack: () => v
     if (!extractedData) return plans.find((p: any) => p.id === preSelectedPlanId) || null;
     
     const rev = extractedData.revenue || 0;
+    if (rev > 300000) return null; // personalized
     if (rev <= 8000) return plans.find((p: any) => p.nome === 'Plano A');
     if (rev <= 15000) return plans.find((p: any) => p.nome === 'Plano B');
     if (rev <= 100000) return plans.find((p: any) => p.nome === 'Plano C');
@@ -232,8 +233,8 @@ export function OpeningChatFlow({ onBack, preSelectedPlanId }: { onBack: () => v
             </section>
           </Card>
 
-          <Card className="p-6 bg-primary text-primary-foreground flex flex-col">
-            <h3 className="font-bold text-lg mb-2">Plano Recomendado</h3>
+          <Card className={cn("p-6 flex flex-col", !plan ? "bg-purple-600 text-white" : "bg-primary text-primary-foreground")}>
+            <h3 className="font-bold text-lg mb-2">{plan ? "Plano Recomendado" : "Solução Personalizada"}</h3>
             {plan ? (
               <>
                 <div className="text-3xl font-bold mb-1">{plan.nome}</div>
@@ -263,6 +264,40 @@ export function OpeningChatFlow({ onBack, preSelectedPlanId }: { onBack: () => v
                   setStep('checkout');
                 }}>Iniciar Abertura</Button>
               </>
+            ) : extractedData?.revenue > 300000 ? (
+              <div className="flex-1 flex flex-col justify-between">
+                <div>
+                  <div className="text-2xl font-bold mb-4 italic">Boutique Digital SC</div>
+                  <p className="text-sm opacity-90 leading-relaxed">
+                    Seu faturamento de {brl(extractedData?.revenue)} exige uma estrutura personalizada. Montaremos uma proposta sob medida para sua operação.
+                  </p>
+                </div>
+                <div className="space-y-3 mt-6">
+                  <Button 
+                    variant="secondary" 
+                    className="w-full text-purple-700 font-bold flex items-center gap-2"
+                    onClick={() => {
+                      const message = encodeURIComponent(`Olá! Estou abrindo uma empresa com faturamento de ${brl(extractedData?.revenue)} e gostaria de uma proposta personalizada.`);
+                      trackJourney({ data: { prospectId, interestedInPersonalized: true, preferredChannel: 'whatsapp', lastInteraction: 'IA sugeriu personalizado via WhatsApp' } });
+                      window.open(`https://wa.me/5513997626359?text=${message}`, '_blank');
+                    }}
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    Falar via WhatsApp
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20 flex items-center gap-2"
+                    onClick={() => {
+                      trackJourney({ data: { prospectId, interestedInPersonalized: true, preferredChannel: 'videoconference', lastInteraction: 'IA sugeriu personalizado via Vídeo' } });
+                      toast.success("Solicitação de videoconferência registrada!");
+                    }}
+                  >
+                    <Workflow className="h-4 w-4" />
+                    Agendar Vídeo
+                  </Button>
+                </div>
+              </div>
             ) : (
               <p>Carregando recomendação...</p>
             )}
