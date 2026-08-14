@@ -135,6 +135,15 @@ export const generateContract = createServerFn({ method: "POST" })
 
     const planServicesList = planServices?.map(ps => (ps.service as any)?.nome).filter(Boolean).join(", ") || "";
 
+    // 2.1. Determine monthly fee and setup fee correctly
+    const monthlyFee = prospect.final_value || 0;
+    const setupFee = prospect.original_value > monthlyFee ? (prospect.original_value - monthlyFee) : 0;
+    // Note: In our current prospect model, original_value often includes setup + first month
+    // or we might need to adjust this logic based on how the total was calculated in CheckoutView.
+    // For now, if original_value is significantly higher, we assume the difference is setup.
+    // If not, we check proposal.
+    const finalSetupValue = proposal?.setup_value ?? setupFee;
+
     // 3. Fetch Lead Data
     const { data: lead } = await supabaseAdmin
       .from("leads")
@@ -183,13 +192,13 @@ export const generateContract = createServerFn({ method: "POST" })
       "{{nome_responsavel}}": extracted.representative_name || extracted.responsavel || prospect.contact_name || "",
       "{{cpf_responsavel}}": extracted.representative_cpf || extracted.cpf || "",
       "{{plano}}": finalPlanName,
-      "{{valor_mensal}}": brl(prospect.final_value || 0),
-      "{{valor_implantacao}}": brl(setupValue),
+      "{{valor_mensal}}": brl(monthlyFee),
+      "{{valor_implantacao}}": finalSetupValue > 0 ? brl(finalSetupValue) : "R$ 0,00",
       "{{dia_vencimento}}": "10",
       "{{competencia_inicial}}": new Date().toLocaleDateString("pt-BR", { month: 'long', year: 'numeric' }),
       "{{limite_faturamento}}": prospect.plan?.limite_faturamento 
-        ? `Até ${brl(prospect.plan.limite_faturamento)} por mês`
-        : (proposal?.max_revenue ? `Até ${brl(proposal.max_revenue)} por mês` : "Conforme Proposta"),
+        ? `Até ${brl(prospect.plan.limite_faturamento).replace(',00', '')} por mês`
+        : (proposal?.max_revenue ? `Até ${brl(proposal.max_revenue).replace(',00', '')} por mês` : "Conforme Proposta"),
       "{{estrutura_incluida}}": "Atendimento Digital via WhatsApp e Plataforma",
       "{{vigencia}}": "12 meses",
       "{{reajuste}}": model.internal_notes?.includes("IPCA") ? "IPCA/IBGE anual" : "IGP-M/FGV anual",
@@ -242,7 +251,8 @@ export const generateContract = createServerFn({ method: "POST" })
         version: model.version,
         content_snapshot: finalContent,
         status: 'contrato_gerado',
-        validation_errors: missingFields.length > 0 ? missingFields : null
+        validation_errors: missingFields.length > 0 ? missingFields : null,
+        metadata: { placeholders } // Store placeholders for reference in UI
       } as any)
       .select().single();
 
