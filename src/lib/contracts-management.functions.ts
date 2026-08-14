@@ -260,6 +260,8 @@ export const generateContract = createServerFn({ method: "POST" })
 
     console.log(`[CONTRACT_CREATED] ID: ${generated.id}, Errors: ${missingFields.length}`);
     return {
+      success: true,
+      contractId: generated.id,
       ...generated,
       missingFields,
       isInstitucionalDemo: !!(INSTITUCIONAL_DIGITAL_SC as any).is_demo
