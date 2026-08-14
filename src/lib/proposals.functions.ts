@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+
 
 const ProposalServiceSchema = z.object({
   service_id: z.string(),
@@ -32,9 +34,11 @@ const ProposalSchema = z.object({
 });
 
 export const getProposalByLead = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({ leadId: z.string() }).parse(data))
-  .handler(async ({ data }) => {
-    const { data: proposal, error } = await (supabase as any)
+  .handler(async ({ data, context }) => {
+    const { data: proposal, error } = await (context.supabase as any)
+
       .from("custom_proposals")
       .select(`
         *,
@@ -54,11 +58,12 @@ export const getProposalByLead = createServerFn({ method: "GET" })
   });
 
 export const saveProposal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => ProposalSchema.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { id, ...payload } = data;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Unauthorized");
+    const { supabase, userId } = context;
+
 
     let result;
     if (id) {
@@ -87,7 +92,7 @@ export const saveProposal = createServerFn({ method: "POST" })
         .from("custom_proposals")
         .insert({
           ...payload,
-          responsible_profile_id: payload.responsible_profile_id || user.id
+          responsible_profile_id: payload.responsible_profile_id || userId
         })
         .select()
         .single();
@@ -98,15 +103,16 @@ export const saveProposal = createServerFn({ method: "POST" })
   });
 
 export const updateProposalStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({
     id: z.string(),
     status: z.enum(['rascunho', 'enviada', 'aceita', 'recusada', 'expirada', 'cancelada']),
     notes: z.string().optional()
   }).parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Unauthorized");
+    const { supabase, userId } = context;
+
 
     const { data: proposal } = await (supabase as any)
       .from("custom_proposals")
@@ -190,7 +196,7 @@ export const updateProposalStatus = createServerFn({ method: "POST" })
       .from("proposal_history")
       .insert({
         proposal_id: data.id,
-        profile_id: user.id,
+        profile_id: userId,
         previous_status: proposal.status,
         new_status: data.status,
         change_notes: data.notes
@@ -200,9 +206,11 @@ export const updateProposalStatus = createServerFn({ method: "POST" })
   });
 
 export const duplicateProposal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({ id: z.string() }).parse(data))
-  .handler(async ({ data }) => {
-    const { data: original } = await (supabase as any)
+  .handler(async ({ data, context }) => {
+    const { data: original } = await (context.supabase as any)
+
       .from("custom_proposals")
       .select("*")
       .eq("id", data.id)
