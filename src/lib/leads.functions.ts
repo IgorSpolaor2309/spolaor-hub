@@ -86,11 +86,9 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
 
 export const getLeads = createServerFn({ method: "GET" })
   .handler(async () => {
-    // Debug leads in server logs
-    const { data: countData } = await (supabase as any).from("commercial_prospects").select("id", { count: 'exact' });
-    console.log(`[getLeads] Total leads in DB: ${countData?.length || 0}`);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabaseAdmin
       .from("commercial_prospects")
       .select(`
         *,
