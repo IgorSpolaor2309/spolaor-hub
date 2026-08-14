@@ -57,6 +57,7 @@ function ContractsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'aguardando_contrato': return <Badge variant="outline"><Clock className="mr-1 h-3 w-3" /> Aguardando</Badge>
+      case 'contrato_gerado': return <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100"><FileText className="mr-1 h-3 w-3" /> Gerado</Badge>
       case 'contrato_enviado': return <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100"><Send className="mr-1 h-3 w-3" /> Enviado</Badge>
       case 'contrato_assinado': return <Badge variant="default" className="bg-green-500 hover:bg-green-600"><CheckCircle2 className="mr-1 h-3 w-3" /> Assinado</Badge>
       case 'cancelado': return <Badge variant="destructive"><XCircle className="mr-1 h-3 w-3" /> Cancelado</Badge>
@@ -225,6 +226,7 @@ function ContractsPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="aguardando_contrato">Aguardando Contrato</SelectItem>
+                        <SelectItem value="contrato_gerado">Contrato Gerado</SelectItem>
                         <SelectItem value="contrato_enviado">Contrato Enviado</SelectItem>
                         <SelectItem value="contrato_assinado">Marcar como Assinado (Gera Cliente)</SelectItem>
                         <SelectItem value="cancelado">Cancelar</SelectItem>
