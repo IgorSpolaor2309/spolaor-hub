@@ -204,7 +204,7 @@ export function ProposalConfigurator({ lead, proposal, isOpen, onOpenChange, col
                       </SelectTrigger>
                       <SelectContent>
                         {plans.map(p => (
-                          <SelectItem key={p.id} value={p.id}>{p.nome} ({brl(p.valor_padrao)})</SelectItem>
+                          <SelectItem key={p.id} value={p.id}>{p.nome} ({brl(p.valor_padrao || 0)})</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
