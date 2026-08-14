@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useSuspenseQuery, useQueryClient, useMutation } from '@tanstack/react-query'
+import { useSuspenseQuery, useQueryClient, useMutation, useQuery } from '@tanstack/react-query'
 import { useServerFn } from '@tanstack/react-start'
 import { getLeads, updateLeadRecovery, addLeadHistory, getCollaborators } from '@/lib/leads.functions'
 import { getProposalByLead } from '@/lib/proposals.functions'
@@ -12,7 +12,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { User, Mail, Phone, AlertCircle, Clock, Search, Filter, History, MessageSquare, Calendar, UserPlus, CheckCircle2, Bot, Send, Sparkles, FileText, Workflow } from 'lucide-react'
+import { User, Mail, Phone, AlertCircle, Clock, Search, Filter, History, MessageSquare, Calendar, UserPlus, CheckCircle2, Bot, Send, Sparkles, FileText, Workflow, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -30,16 +30,21 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 
 export const Route = createFileRoute('/_authenticated/leads')({
   loader: async ({ context }) => {
-    await Promise.all([
-      context.queryClient.ensureQueryData({
-        queryKey: ['leads'],
-        queryFn: () => getLeads()
-      }),
-      context.queryClient.ensureQueryData({
-        queryKey: ['collaborators'],
-        queryFn: () => getCollaborators()
-      })
-    ])
+    try {
+      await Promise.all([
+        context.queryClient.ensureQueryData({
+          queryKey: ['leads'],
+          queryFn: () => getLeads()
+        }),
+        context.queryClient.ensureQueryData({
+          queryKey: ['collaborators'],
+          queryFn: () => getCollaborators()
+        })
+      ])
+    } catch (err) {
+      console.error("[LeadsRoute.loader] Erro ao pré-carregar leads:", err);
+      // Não lançar erro aqui para permitir que o componente lide com o estado de erro via useQuery
+    }
   },
   component: LeadsPage
 })
@@ -86,14 +91,16 @@ function LeadsPage() {
     }
   }
 
-  const { data: leads } = useSuspenseQuery({
+  const { data: leads, isLoading: isLoadingLeads, error: leadsError } = useQuery({
     queryKey: ['leads'],
-    queryFn: () => getLeads()
+    queryFn: () => getLeads(),
+    retry: 1
   })
-
-  const { data: collaborators } = useSuspenseQuery({
+  
+  const { data: collaborators, isLoading: isLoadingCollaborators } = useQuery({
     queryKey: ['collaborators'],
-    queryFn: () => getCollaborators()
+    queryFn: () => getCollaborators(),
+    retry: 1
   })
 
   const updateMutation = useMutation({
@@ -257,7 +264,45 @@ function LeadsPage() {
         </DialogContent>
       </Dialog>
 
-      <Card>
+      {leadsError ? (
+        <Card className="p-12 text-center space-y-4">
+          <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+            <AlertCircle className="h-6 w-6 text-destructive" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold">Erro ao carregar leads</h3>
+            <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+              Não foi possível buscar as informações dos leads. Verifique sua conexão ou permissões.
+            </p>
+          </div>
+          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['leads'] })}>
+            Tentar novamente
+          </Button>
+          {leadsError instanceof Error && (
+            <p className="text-[10px] text-muted-foreground mt-4">
+              Detalhes: {leadsError.message}
+            </p>
+          )}
+        </Card>
+      ) : isLoadingLeads ? (
+        <Card className="p-12 text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <p className="text-sm text-muted-foreground">Carregando leads...</p>
+        </Card>
+      ) : leads && leads.length === 0 ? (
+        <Card className="p-12 text-center space-y-4">
+          <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+            <Search className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold">Nenhum lead encontrado</h3>
+            <p className="text-sm text-muted-foreground">
+              Ainda não existem registros de leads no sistema.
+            </p>
+          </div>
+        </Card>
+      ) : (
+
         <Table>
           <TableHeader>
             <TableRow>
@@ -357,7 +402,7 @@ function LeadsPage() {
             ))}
           </TableBody>
         </Table>
-      </Card>
+      )}
 
       <Dialog open={isRecoveryOpen} onOpenChange={setIsRecoveryOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
