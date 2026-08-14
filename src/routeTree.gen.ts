@@ -46,6 +46,7 @@ import { Route as AuthenticatedChecklistRouteImport } from './routes/_authentica
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as ApiPublicTestSwitchingRouteImport } from './routes/api/public/test-switching'
+import { Route as ApiPublicDebugListRouteImport } from './routes/api/public/debug-list'
 import { Route as ApiPublicDebugContractRouteImport } from './routes/api/public/debug-contract'
 import { Route as ApiPublicCheckAuthRouteImport } from './routes/api/public/check-auth'
 import { Route as AuthenticatedProcessosIdRouteImport } from './routes/_authenticated/processos.$id'
@@ -258,6 +259,11 @@ const ApiPublicTestSwitchingRoute = ApiPublicTestSwitchingRouteImport.update({
   path: '/api/public/test-switching',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicDebugListRoute = ApiPublicDebugListRouteImport.update({
+  id: '/api/public/debug-list',
+  path: '/api/public/debug-list',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicDebugContractRoute = ApiPublicDebugContractRouteImport.update({
   id: '/api/public/debug-contract',
   path: '/api/public/debug-contract',
@@ -371,6 +377,7 @@ export interface FileRoutesByFullPath {
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
   '/api/public/check-auth': typeof ApiPublicCheckAuthRoute
   '/api/public/debug-contract': typeof ApiPublicDebugContractRoute
+  '/api/public/debug-list': typeof ApiPublicDebugListRoute
   '/api/public/test-switching': typeof ApiPublicTestSwitchingRoute
   '/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/meu-mes/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
@@ -421,6 +428,7 @@ export interface FileRoutesByTo {
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
   '/api/public/check-auth': typeof ApiPublicCheckAuthRoute
   '/api/public/debug-contract': typeof ApiPublicDebugContractRoute
+  '/api/public/debug-list': typeof ApiPublicDebugListRoute
   '/api/public/test-switching': typeof ApiPublicTestSwitchingRoute
   '/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/meu-mes/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
@@ -473,6 +481,7 @@ export interface FileRoutesById {
   '/_authenticated/processos/$id': typeof AuthenticatedProcessosIdRoute
   '/api/public/check-auth': typeof ApiPublicCheckAuthRoute
   '/api/public/debug-contract': typeof ApiPublicDebugContractRoute
+  '/api/public/debug-list': typeof ApiPublicDebugListRoute
   '/api/public/test-switching': typeof ApiPublicTestSwitchingRoute
   '/_authenticated/competencias_/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/_authenticated/meu-mes_/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
@@ -525,6 +534,7 @@ export interface FileRouteTypes {
     | '/processos/$id'
     | '/api/public/check-auth'
     | '/api/public/debug-contract'
+    | '/api/public/debug-list'
     | '/api/public/test-switching'
     | '/competencias/$clientId/$competence'
     | '/meu-mes/$clientId/$competence'
@@ -575,6 +585,7 @@ export interface FileRouteTypes {
     | '/processos/$id'
     | '/api/public/check-auth'
     | '/api/public/debug-contract'
+    | '/api/public/debug-list'
     | '/api/public/test-switching'
     | '/competencias/$clientId/$competence'
     | '/meu-mes/$clientId/$competence'
@@ -626,6 +637,7 @@ export interface FileRouteTypes {
     | '/_authenticated/processos/$id'
     | '/api/public/check-auth'
     | '/api/public/debug-contract'
+    | '/api/public/debug-list'
     | '/api/public/test-switching'
     | '/_authenticated/competencias_/$clientId/$competence'
     | '/_authenticated/meu-mes_/$clientId/$competence'
@@ -646,6 +658,7 @@ export interface RootRouteChildren {
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicCheckAuthRoute: typeof ApiPublicCheckAuthRoute
   ApiPublicDebugContractRoute: typeof ApiPublicDebugContractRoute
+  ApiPublicDebugListRoute: typeof ApiPublicDebugListRoute
   ApiPublicTestSwitchingRoute: typeof ApiPublicTestSwitchingRoute
   ApiPublicHooksCleanupChatOrphansRoute: typeof ApiPublicHooksCleanupChatOrphansRoute
   ApiPublicHooksCompetenceMonthlyGenerationRoute: typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
@@ -912,6 +925,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTestSwitchingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/debug-list': {
+      id: '/api/public/debug-list'
+      path: '/api/public/debug-list'
+      fullPath: '/api/public/debug-list'
+      preLoaderRoute: typeof ApiPublicDebugListRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/debug-contract': {
       id: '/api/public/debug-contract'
       path: '/api/public/debug-contract'
@@ -1128,6 +1148,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicCheckAuthRoute: ApiPublicCheckAuthRoute,
   ApiPublicDebugContractRoute: ApiPublicDebugContractRoute,
+  ApiPublicDebugListRoute: ApiPublicDebugListRoute,
   ApiPublicTestSwitchingRoute: ApiPublicTestSwitchingRoute,
   ApiPublicHooksCleanupChatOrphansRoute: ApiPublicHooksCleanupChatOrphansRoute,
   ApiPublicHooksCompetenceMonthlyGenerationRoute:
