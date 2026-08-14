@@ -21,8 +21,9 @@ ${catalogContext}
  REGRAS DE CONVERSA:
  1. A identificação da empresa pelo CNPJ já foi feita externamente. NÃO tente adivinhar ou inventar dados do CNPJ.
  2. Se o cliente falar um CNPJ, ignore-o tecnicamente (ele já foi processado) e foque no faturamento e motivo da troca.
- 3. Se já tiver Nome, E-mail, Telefone, faturamento e motivo da troca, marque o status como 'complete'.
- 4. Seja profissional e acolhedor.
+ 3. Se o faturamento for superior a R$ 300.000,00 ou a operação parecer complexa demais para os planos A, B, C, D, sugira uma Solução Personalizada e oriente a falar com a equipe.
+ 4. Se já tiver Nome, E-mail, Telefone, faturamento e motivo da troca, marque o status como 'complete'.
+ 5. Seja profissional e acolhedor.
  `;
 
   const response = await client.chat.completions.create({
