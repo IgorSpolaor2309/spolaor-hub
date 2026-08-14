@@ -6,10 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export const getPublicPlans = createServerFn({ method: "GET" })
   .handler(async () => {
-    console.log("[SERVER_FN] getPublicPlans starting");
+    // Usamos o admin client no servidor para contornar qualquer restrição de RLS
+    // que possa estar afetando a visibilidade pública da tabela plans.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     
-    // Explicitly using the generated client which uses VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("plans")
       .select(`
         *,
@@ -25,8 +26,6 @@ export const getPublicPlans = createServerFn({ method: "GET" })
       throw error;
     }
     
-    console.log("[SERVER_FN] getPublicPlans success, count:", data?.length);
-    // Standardize the return to ensure compatibility
     return (data || []).map(p => ({
       ...p,
       nome: p.nome || '',
@@ -37,8 +36,8 @@ export const getPublicPlans = createServerFn({ method: "GET" })
 
 export const getPublicServices = createServerFn({ method: "GET" })
   .handler(async () => {
-    console.log("[SERVER_FN] getPublicServices starting");
-    const { data, error } = await supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
       .from("services")
       .select("*")
       .eq("status", "active");
@@ -47,6 +46,5 @@ export const getPublicServices = createServerFn({ method: "GET" })
       console.error("[SERVER_FN] getPublicServices error:", error);
       throw error;
     }
-    console.log("[SERVER_FN] getPublicServices success, count:", data?.length);
     return (data as any[]) || [];
   });
