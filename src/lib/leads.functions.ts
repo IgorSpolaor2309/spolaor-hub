@@ -128,7 +128,11 @@ export const getLeads = createServerFn({ method: "GET" })
       .from("leads")
       .select(`
         *,
-        responsible:responsible_profile_id (full_name, avatar_url)
+        responsible:responsible_profile_id (full_name, avatar_url),
+        history:lead_history (
+          *,
+          profile:profile_id (full_name)
+        )
       `)
       .order("created_at", { ascending: false });
 
