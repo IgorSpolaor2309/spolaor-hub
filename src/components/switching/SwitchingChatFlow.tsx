@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Loader2, Send, Check, Briefcase, TrendingUp, Building2, AlertCircle, MessageSquare, Workflow } from "lucide-react";
+import { Loader2, Send, Check, Briefcase, TrendingUp, Building2, AlertCircle, MessageSquare, Workflow, ArrowRight } from "lucide-react";
 import { CheckoutView } from "@/components/commercial/CheckoutView";
 import { SuccessScreen } from "@/components/commercial/SuccessScreen";
 import { toast } from "sonner";
@@ -136,7 +136,7 @@ export function SwitchingChatFlow({ onBack, preSelectedPlanId }: { onBack: () =>
             lastInteraction: 'Diagnóstico de transição concluído via IA'
           }
         }).catch(console.error);
-        setTimeout(() => setStep('confirm'), 2000);
+        // Removido o redirecionamento automático
       }
     } catch (e: any) {
       console.error(e);
@@ -428,6 +428,17 @@ export function SwitchingChatFlow({ onBack, preSelectedPlanId }: { onBack: () =>
                <Loader2 className="animate-spin h-3 w-3" />
                Analisando empresa...
              </div>
+          </div>
+        )}
+        {messages.length > 1 && messages[messages.length - 1].role === 'ai' && extractedData?.revenue && (
+          <div className="flex justify-center py-4 animate-in fade-in zoom-in duration-500">
+            <Button 
+              onClick={() => setStep('confirm')}
+              className="group gap-2 px-8 py-6 text-lg shadow-lg hover:shadow-primary/20 transition-all"
+            >
+              Ver meu plano de transição
+              <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            </Button>
           </div>
         )}
         <div ref={chatEndRef} />

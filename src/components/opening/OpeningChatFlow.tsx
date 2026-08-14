@@ -82,7 +82,7 @@ export function OpeningChatFlow({ onBack, preSelectedPlanId }: { onBack: () => v
             lastInteraction: 'Diagnóstico concluído via IA'
           }
         }).catch(console.error);
-        setTimeout(() => setStep('confirm'), 2000);
+        // Removido o redirecionamento automático
       }
     } catch (e) {
       console.error(e);
@@ -373,6 +373,17 @@ export function OpeningChatFlow({ onBack, preSelectedPlanId }: { onBack: () => v
                <Loader2 className="animate-spin h-3 w-3" />
                Processando seu negócio...
              </div>
+          </div>
+        )}
+        {messages.length > 1 && messages[messages.length - 1].role === 'ai' && extractedData?.revenue && (
+          <div className="flex justify-center py-4 animate-in fade-in zoom-in duration-500">
+            <Button 
+              onClick={() => setStep('confirm')}
+              className="group gap-2 px-8 py-6 text-lg shadow-lg hover:shadow-primary/20 transition-all"
+            >
+              Ver meu plano de abertura
+              <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            </Button>
           </div>
         )}
         <div ref={chatEndRef} />

@@ -1,12 +1,14 @@
-import { getOpenAIClient, BASE_SYSTEM_PROMPT, getDetailedCatalogContext } from "./ai-gateway.server";
+import { getOpenAIClient, BASE_SYSTEM_PROMPT, getDetailedCatalogContext, getContractRequirementsContext } from "./ai-gateway.server";
 
 export async function aiAnalyzeSwitching(context: string, history: any[]) {
   const client = await getOpenAIClient();
   const catalogContext = await getDetailedCatalogContext();
+  const contractRequirements = await getContractRequirementsContext();
 
   const systemPrompt = `
 ${BASE_SYSTEM_PROMPT}
 ${catalogContext}
+${contractRequirements}
 
  CONTEXTO ESPECÍFICO: Troca de Contador (Migração).
  Você deve conversar com o cliente para entender as necessidades dele.
@@ -22,8 +24,12 @@ ${catalogContext}
  1. A identificação da empresa pelo CNPJ já foi feita externamente. NÃO tente adivinhar ou inventar dados do CNPJ.
  2. Se o cliente falar um CNPJ, ignore-o tecnicamente (ele já foi processado) e foque no faturamento e motivo da troca.
  3. Se o faturamento for superior aos limites dos planos padrão descritos no catálogo ou a operação parecer complexa demais, sugira uma Solução Personalizada e oriente a falar com a equipe.
- 4. Se já tiver Nome, E-mail, Telefone, faturamento e motivo da troca, marque o status como 'complete'.
+ 4. CRITÉRIO DE CONCLUSÃO (status = 'complete'): Marque como completo SOMENTE quando tiver coletado Nome, E-mail, Telefone, Faturamento, Motivo da troca e o CPF do representante. O Endereço geralmente já vem do CNPJ, mas se estiver faltando no contexto, pergunte.
  5. Seja profissional e acolhedor.
+ 6. Mantenha a conversa natural, peça um dado por vez.
+ 7. Se já tiver informações suficientes para o diagnóstico e o contrato, informe ao usuário que o plano de transição está pronto.
+ 8. A identificação da empresa pelo CNPJ já foi feita. Foque em completar o que falta para o contrato e diagnóstico.
+ 9. IMPORTANTE: Não invente dados. Se não souber, pergunte.
  `;
 
   const response = await client.chat.completions.create({
