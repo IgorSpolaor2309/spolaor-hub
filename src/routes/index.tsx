@@ -356,25 +356,16 @@ function LandingPage() {
               <p className="text-muted-foreground">Planos pensados para diferentes perfis e necessidades de negócio.</p>
             </div>
 
-            {plansQ.isLoading ? (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 animate-pulse">
-                {[1, 2, 3, 4].map(i => <Card key={i} className="h-96 bg-muted/50" />)}
-              </div>
-            ) : (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                {plansQ.isLoading ? (
-                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 animate-pulse">
-                    {[1, 2, 3, 4].map(i => <Card key={i} className="h-96 bg-muted/50" />)}
-                  </div>
-                ) : (
-                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                    {filteredPlans.length === 0 ? (
-                      <div className="col-span-full py-12 text-center text-muted-foreground border-2 border-dashed rounded-xl">
-                        Carregando catálogo... (Plans: {plansQ.data?.length || 0})
-                      </div>
-                    ) : (
-                      filteredPlans.map((plan: any, index: number) => {
-                        const prevPlan = index > 0 ? filteredPlans[index - 1] : null;
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              {plansQ.isLoading ? (
+                [1, 2, 3, 4].map(i => <Card key={i} className="h-96 bg-muted/50 animate-pulse" />)
+              ) : filteredPlans.length === 0 ? (
+                <div className="col-span-full py-12 text-center text-muted-foreground border-2 border-dashed rounded-xl">
+                  Carregando catálogo... (Plans: {plansQ.data?.length || 0})
+                </div>
+              ) : (
+                filteredPlans.map((plan: any, index: number) => {
+                  const prevPlan = index > 0 ? filteredPlans[index - 1] : null;
                     const displayName = plan.nome;
                     const isRecomendado = plan.nome === 'Plano B';
                     const [isExpanded, setIsExpanded] = useState(false);
@@ -482,11 +473,10 @@ function LandingPage() {
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                       </Card>
-                        );
-                      })
-                    )}
-                  </div>
-                )}
+                  );
+                })
+              )}
+            </div>
               </div>
             )}
           </div>
