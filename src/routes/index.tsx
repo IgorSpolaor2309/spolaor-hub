@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { AppLogo } from "@/components/sc/Logo";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { getPublicPlans, getPublicServices } from "@/lib/public-catalog.functions";
 import { Check, ArrowRight, ShieldCheck, Clock, Inbox, FileText, Receipt, Users, UserCog, MessageSquare, Workflow, Briefcase } from "lucide-react";
 import { OpeningChatFlow } from "@/components/opening/OpeningChatFlow";
