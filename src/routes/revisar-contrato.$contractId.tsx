@@ -138,7 +138,7 @@ function ReviewContractPage() {
                 <div className="bg-muted/50 p-4 rounded-lg space-y-3">
                   <div>
                     <span className="block text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-1">Empresa / Contratante</span>
-                    <span className="font-medium text-foreground">{contract.prospect?.razao_social || (contract as any).placeholders?.razao_social || contract.prospect?.contact_name}</span>
+                    <span className="font-medium text-foreground">{(contract.prospect as any)?.razao_social || (contract as any).placeholders?.razao_social || contract.prospect?.contact_name}</span>
                     <span className="block text-xs text-muted-foreground mt-0.5">{contract.prospect?.cnpj}</span>
                   </div>
                   <div>
