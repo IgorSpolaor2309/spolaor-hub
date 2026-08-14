@@ -246,7 +246,13 @@ function LandingPage() {
 
   const plansQ = useQuery({
     queryKey: ["public-plans"],
-    queryFn: () => getPublicPlans(),
+    queryFn: async () => {
+      const data = await getPublicPlans();
+      if (!data || data.length === 0) {
+        console.warn("[CLIENT] getPublicPlans returned no data");
+      }
+      return data;
+    },
     staleTime: 1000 * 60 * 60,
   });
 
@@ -257,12 +263,16 @@ function LandingPage() {
   });
 
   const filteredPlans = useMemo(() => {
-    return (plansQ.data ?? [])
+    const rawData = plansQ.data || [];
+    console.log("[CLIENT] Filtering plans, raw count:", rawData.length);
+    const filtered = rawData
       .filter((p: any) => p.status === 'ativo' && !p.nome.startsWith('TEMP_') && p.nome !== 'Demais')
       .sort((a: any, b: any) => {
         const order = { 'Plano A': 1, 'Plano B': 2, 'Plano C': 3, 'Plano D': 4 };
         return (order[a.nome as keyof typeof order] || 99) - (order[b.nome as keyof typeof order] || 99);
       });
+    console.log("[CLIENT] Filtered plans count:", filtered.length);
+    return filtered;
   }, [plansQ.data]);
 
   if (showOpeningFlow || showSwitchingFlow) {

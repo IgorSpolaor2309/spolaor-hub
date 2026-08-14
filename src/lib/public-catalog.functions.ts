@@ -7,8 +7,9 @@ import { supabase } from "@/integrations/supabase/client";
 export const getPublicPlans = createServerFn({ method: "GET" })
   .handler(async () => {
     // Usamos o admin client no servidor para contornar qualquer restrição de RLS
-    // que possa estar afetando a visibilidade pública da tabela plans.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    
+    console.log("[SERVER_FN] getPublicPlans - Attempting fetch with supabaseAdmin");
     
     const { data, error } = await supabaseAdmin
       .from("plans")
@@ -25,6 +26,8 @@ export const getPublicPlans = createServerFn({ method: "GET" })
       console.error("[SERVER_FN] getPublicPlans error:", error);
       throw error;
     }
+    
+    console.log("[SERVER_FN] getPublicPlans success - Count:", data?.length);
     
     return (data || []).map(p => ({
       ...p,
