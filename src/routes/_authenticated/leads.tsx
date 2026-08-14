@@ -145,6 +145,11 @@ function LeadsPage() {
             via {lead.preferred_contact_channel === 'whatsapp' ? 'WhatsApp' : 'Vídeo'}
           </span>
         )}
+        {lead?.proposals && lead.proposals.length > 0 && (
+          <Badge variant="outline" className="text-[9px] h-4 py-0 font-normal border-purple-200 text-purple-700 bg-purple-50">
+            {lead.proposals.length} Proposta(s)
+          </Badge>
+        )}
       </div>
     );
   };
