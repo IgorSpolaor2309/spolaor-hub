@@ -89,6 +89,7 @@ export const generateContract = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ prospectId: z.string() }).parse(data))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { INSTITUCIONAL_DIGITAL_SC } = await import("./institucional.server");
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Unauthorized");
 
@@ -101,7 +102,14 @@ export const generateContract = createServerFn({ method: "POST" })
     
     if (pError || !prospect) throw new Error("Prospect não encontrado");
 
-    // 2. Get Active Model
+    // 2. Fetch Lead Data manually since there is no FK
+    const { data: lead } = await supabaseAdmin
+      .from("leads")
+      .select("*")
+      .eq("email", prospect.contact_email || "")
+      .maybeSingle();
+
+    // 3. Get Active Model
     const { data: model, error: mError } = await supabaseAdmin
       .from("contract_models")
       .select("*")
@@ -110,43 +118,77 @@ export const generateContract = createServerFn({ method: "POST" })
     
     if (mError || !model) throw new Error("Nenhum modelo de contrato ativo encontrado");
 
-    // 3. Prepare placeholders
-    // For custom proposals, we might need to fetch the proposal snapshot
+    // 4. Get Proposal Snapshot if personalized
     const { data: proposal } = await supabaseAdmin
       .from("custom_proposals")
       .select("*")
-      .eq("lead_id", (prospect as any).lead_id || "") // Need to ensure prospect has lead_id or email link
+      .eq("lead_id", lead?.id || "")
       .eq("status", "aceita")
       .maybeSingle();
 
+    // 5. Base Placeholders Mapping
     const placeholders: Record<string, string> = {
-      "{{razao_social}}": prospect.contact_name || "",
-      "{{cnpj}}": prospect.cnpj || "",
-      "{{email}}": prospect.contact_email || "",
-      "{{telefone}}": prospect.contact_phone || "",
+      // CONTRATANTE (Prospect/Lead)
+      "{{razao_social}}": prospect.contact_name || lead?.name || "",
+      "{{cnpj}}": prospect.cnpj || lead?.cnpj || "",
+      "{{email}}": prospect.contact_email || lead?.email || "",
+      "{{telefone}}": prospect.contact_phone || lead?.phone || "",
+      "{{endereco}}": (lead?.journey_data as any)?.extracted?.address || lead?.city || "",
+      "{{natureza_juridica}}": (lead?.journey_data as any)?.extracted?.legal_nature || "A definir",
+      "{{nome_responsavel}}": prospect.contact_name || "",
+      "{{cpf_responsavel}}": (lead?.journey_data as any)?.extracted?.cpf || "",
+      
+      // COMERCIAL / OPERACIONAL
       "{{plano}}": prospect.plan?.nome || "Personalizado",
       "{{valor_mensal}}": (prospect.final_value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
+      "{{valor_implantacao}}": (prospect.original_value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
+      "{{dia_vencimento}}": "10", // Padrão Digital SC
+      "{{competencia_inicial}}": new Date().toLocaleDateString("pt-BR", { month: 'long', year: 'numeric' }),
+      "{{limite_faturamento}}": String(prospect.plan?.limite_faturamento || (proposal?.max_revenue ? proposal.max_revenue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "Conforme Proposta")),
+      "{{estrutura_incluida}}": "Atendimento Digital via WhatsApp e Plataforma",
+      "{{vigencia}}": "12 meses",
+      "{{reajuste}}": "IGP-M/FGV anual",
       "{{data_contratacao}}": new Date().toLocaleDateString("pt-BR"),
+      
+      // CONTRATADA (Institucional)
+      "{{crc_sp}}": INSTITUCIONAL_DIGITAL_SC.crc_sp,
+      "{{cidade_assinatura}}": INSTITUCIONAL_DIGITAL_SC.cidade_assinatura,
+      "{{representante_contratada}}": INSTITUCIONAL_DIGITAL_SC.representante,
+      "{{cpf_representante_contratada}}": INSTITUCIONAL_DIGITAL_SC.cpf_representante,
     };
 
+    // 6. Override/Add Custom Proposal Data
     if (proposal) {
       const services = (proposal.services as any[]) || [];
       placeholders["{{valor_implantacao}}"] = (proposal.setup_value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-      placeholders["{{servicos_incluidos}}"] = services
-        .filter((s: any) => s.included).map((s: any) => s.name).join(", ");
-      placeholders["{{servicos_extras}}"] = services
-        .filter((s: any) => !s.included).map((s: any) => s.name).join(", ");
+      placeholders["{{servicos_incluidos}}"] = services.filter((s: any) => s.included).map((s: any) => s.name).join(", ");
+      placeholders["{{servicos_extras}}"] = services.filter((s: any) => !s.included).map((s: any) => s.name).join(", ");
       placeholders["{{descontos}}"] = (proposal.discount_value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
       placeholders["{{condicoes_especiais}}"] = (proposal.special_conditions as string) || "Nenhuma";
+    } else {
+      placeholders["{{servicos_incluidos}}"] = "Serviços Contábeis padrão conforme catálogo";
+      placeholders["{{servicos_extras}}"] = "Consultoria Especializada, Auditoria Retroativa";
+      placeholders["{{descontos}}"] = "R$ 0,00";
+      placeholders["{{condicoes_especiais}}"] = "Nenhuma";
     }
 
-    // 4. Replace placeholders in content
+    // 7. Validation of Mandatory Fields
+    const mandatory = ["{{razao_social}}", "{{cnpj}}", "{{email}}"];
+    for (const key of mandatory) {
+      if (!placeholders[key]) {
+        throw new Error(`Campo obrigatório faltando para o contrato: ${key.replace('{{', '').replace('}}', '').replace('_', ' ')}`);
+      }
+    }
+
+    // 8. Replace placeholders in content
     let finalContent = model.content;
     Object.entries(placeholders).forEach(([key, value]) => {
-      finalContent = finalContent.replace(new RegExp(key, 'g'), value);
+      // Use empty string for empty values, prevent "undefined"
+      const safeValue = String(value || "");
+      finalContent = finalContent.replace(new RegExp(key, 'g'), safeValue);
     });
 
-    // 5. Save generated contract
+    // 9. Save generated contract
     const { data: generated, error: gError } = await supabaseAdmin
       .from("generated_contracts")
       .insert({
@@ -157,8 +199,7 @@ export const generateContract = createServerFn({ method: "POST" })
         status: 'contrato_gerado',
         created_by: user.id
       })
-      .select()
-      .single();
+      .select().single();
 
     if (gError) throw gError;
     return generated;
