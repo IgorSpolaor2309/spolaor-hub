@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
 import { z } from "zod";
 
 const ContractModelSchema = z.object({
@@ -22,11 +24,26 @@ export const getContractModels = createServerFn({ method: "GET" })
   });
 
 export const saveContractModel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => ContractModelSchema.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { id, ...payload } = data;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Unauthorized");
+    const { supabase, userId } = context;
+
+    // 1. Verify administrative role via security-definer function
+    const { data: isAdmin, error: roleError } = await supabase.rpc('has_role', {
+      _user_id: userId,
+      _role: 'admin'
+    });
+
+    if (roleError) {
+      console.error("Error checking role:", roleError);
+      throw new Error("Erro ao verificar permissões de acesso.");
+    }
+
+    if (!isAdmin) {
+      throw new Error("Acesso negado: Apenas administradores podem gerenciar modelos de contrato.");
+    }
 
     let result;
     if (id) {
@@ -34,7 +51,7 @@ export const saveContractModel = createServerFn({ method: "POST" })
         .from("contract_models")
         .update({
           ...payload,
-          updated_by: user.id,
+          updated_by: userId,
           updated_at: new Date().toISOString()
         })
         .eq("id", id)
@@ -45,14 +62,21 @@ export const saveContractModel = createServerFn({ method: "POST" })
         .from("contract_models")
         .insert({
           ...payload,
-          created_by: user.id,
-          updated_by: user.id
+          created_by: userId,
+          updated_by: userId
         })
         .select()
         .single();
     }
 
-    if (result.error) throw result.error;
+    if (result.error) {
+      console.error("Database error saving contract model:", result.error);
+      if (result.error.code === '42501') {
+        throw new Error("Permissão negada no banco de dados. Verifique as políticas RLS.");
+      }
+      throw result.error;
+    }
+    
     return result.data;
   });
 
