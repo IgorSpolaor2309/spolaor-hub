@@ -118,8 +118,7 @@ export const generateContract = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { INSTITUCIONAL_DIGITAL_SC } = await import("./institucional.server");
 
-
-    // 1. Get Prospect Data
+    // 1. Get Prospect Data with Plan details
     const { data: prospect, error: pError } = await supabaseAdmin
       .from("commercial_prospects")
       .select("*, plan:plan_id (*)")
@@ -128,14 +127,22 @@ export const generateContract = createServerFn({ method: "POST" })
     
     if (pError || !prospect) throw new Error("Prospect não encontrado");
 
-    // 2. Fetch Lead Data manually since there is no FK
+    // 2. Fetch Services for the plan
+    const { data: planServices } = await supabaseAdmin
+      .from("plan_services")
+      .select("*, service:service_id (nome, descricao)")
+      .eq("plan_id", prospect.plan_id);
+
+    const planServicesList = planServices?.map(ps => (ps.service as any)?.nome).filter(Boolean).join(", ") || "";
+
+    // 3. Fetch Lead Data
     const { data: lead } = await supabaseAdmin
       .from("leads")
       .select("*")
       .eq("email", prospect.contact_email || "")
       .maybeSingle();
 
-    // 3. Get Active Model
+    // 4. Get Active Model
     const { data: model, error: mError } = await supabaseAdmin
       .from("contract_models")
       .select("*")
@@ -144,7 +151,7 @@ export const generateContract = createServerFn({ method: "POST" })
     
     if (mError || !model) throw new Error("Nenhum modelo de contrato ativo encontrado");
 
-    // 4. Get Proposal Snapshot if personalized
+    // 5. Get Proposal Snapshot if personalized
     const { data: proposal } = await supabaseAdmin
       .from("custom_proposals")
       .select("*")
@@ -152,70 +159,81 @@ export const generateContract = createServerFn({ method: "POST" })
       .eq("status", "aceita")
       .maybeSingle();
 
-    // 5. Base Placeholders Mapping
-    const extracted = ((lead?.journey_data as any)?.extracted ?? {}) as Record<string, any>;
+    // 6. Base Placeholders Mapping
+    const journeyData = (lead?.journey_data as any) || (prospect?.ai_extracted_data as any) || {};
+    const extracted = (journeyData?.extracted ?? {}) as Record<string, any>;
+    
+    const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    const formatCNPJ = (val: string) => {
+      const clean = val.replace(/\D/g, '');
+      if (clean.length !== 14) return val;
+      return clean.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+    };
+
+    const setupValue = proposal?.setup_value ?? 0;
+    const finalPlanName = prospect.plan?.nome || "Personalizado";
+    
     const placeholders: Record<string, string> = {
-      // CONTRATANTE (Prospect/Lead)
-      "{{razao_social}}": prospect.contact_name || lead?.name || extracted.company_name || extracted.razao_social || "",
-      "{{cnpj}}": prospect.cnpj || lead?.cnpj || extracted.cnpj || "A informar",
+      "{{razao_social}}": extracted.razao_social || extracted.company_name || prospect.contact_name || lead?.name || "",
+      "{{cnpj}}": formatCNPJ(prospect.cnpj || lead?.cnpj || extracted.cnpj || ""),
       "{{email}}": prospect.contact_email || lead?.email || extracted.email || "",
       "{{telefone}}": prospect.contact_phone || lead?.phone || extracted.phone || "",
-      "{{endereco}}": (lead?.journey_data as any)?.extracted?.address || lead?.city || "",
-      "{{natureza_juridica}}": (lead?.journey_data as any)?.extracted?.legal_nature || "A definir",
-      "{{nome_responsavel}}": prospect.contact_name || "",
-      "{{cpf_responsavel}}": (lead?.journey_data as any)?.extracted?.cpf || "",
-      
-      // COMERCIAL / OPERACIONAL
-      "{{plano}}": prospect.plan?.nome || "Personalizado",
-      "{{valor_mensal}}": (prospect.final_value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
-      "{{valor_implantacao}}": (prospect.original_value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
-      "{{dia_vencimento}}": "10", // Padrão Digital SC
+      "{{endereco}}": extracted.address || extracted.logradouro || lead?.city || "",
+      "{{natureza_juridica}}": extracted.legal_nature || extracted.natureza_juridica || "",
+      "{{nome_responsavel}}": extracted.representative_name || extracted.responsavel || prospect.contact_name || "",
+      "{{cpf_responsavel}}": extracted.representative_cpf || extracted.cpf || "",
+      "{{plano}}": finalPlanName,
+      "{{valor_mensal}}": brl(prospect.final_value || 0),
+      "{{valor_implantacao}}": brl(setupValue),
+      "{{dia_vencimento}}": "10",
       "{{competencia_inicial}}": new Date().toLocaleDateString("pt-BR", { month: 'long', year: 'numeric' }),
-      "{{limite_faturamento}}": String(prospect.plan?.limite_faturamento || (proposal?.max_revenue ? proposal.max_revenue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "Conforme Proposta")),
+      "{{limite_faturamento}}": prospect.plan?.limite_faturamento 
+        ? `Até ${brl(prospect.plan.limite_faturamento)} por mês`
+        : (proposal?.max_revenue ? `Até ${brl(proposal.max_revenue)} por mês` : "Conforme Proposta"),
       "{{estrutura_incluida}}": "Atendimento Digital via WhatsApp e Plataforma",
       "{{vigencia}}": "12 meses",
-      "{{reajuste}}": "IGP-M/FGV anual",
+      "{{reajuste}}": model.internal_notes?.includes("IPCA") ? "IPCA/IBGE anual" : "IGP-M/FGV anual",
       "{{data_contratacao}}": new Date().toLocaleDateString("pt-BR"),
-      
-      // CONTRATADA (Institucional)
       "{{crc_sp}}": INSTITUCIONAL_DIGITAL_SC.crc_sp,
       "{{cidade_assinatura}}": INSTITUCIONAL_DIGITAL_SC.cidade_assinatura,
       "{{representante_contratada}}": INSTITUCIONAL_DIGITAL_SC.representante,
       "{{cpf_representante_contratada}}": INSTITUCIONAL_DIGITAL_SC.cpf_representante,
     };
 
-    // 6. Override/Add Custom Proposal Data
     if (proposal) {
       const services = (proposal.services as any[]) || [];
-      placeholders["{{valor_implantacao}}"] = (proposal.setup_value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-      placeholders["{{servicos_incluidos}}"] = services.filter((s: any) => s.included).map((s: any) => s.name).join(", ");
-      placeholders["{{servicos_extras}}"] = services.filter((s: any) => !s.included).map((s: any) => s.name).join(", ");
-      placeholders["{{descontos}}"] = (proposal.discount_value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+      const included = services.filter((s: any) => s.included).map((s: any) => s.name).join(", ");
+      const extras = services.filter((s: any) => !s.included).map((s: any) => s.name).join(", ");
+      placeholders["{{servicos_incluidos}}"] = included || planServicesList || "Serviços Contábeis padrão conforme catálogo";
+      placeholders["{{servicos_extras}}"] = extras || "Consultoria Especializada, Auditoria Retroativa";
+      placeholders["{{descontos}}"] = brl(proposal.discount_value || 0);
       placeholders["{{condicoes_especiais}}"] = (proposal.special_conditions as string) || "Nenhuma";
     } else {
-      placeholders["{{servicos_incluidos}}"] = "Serviços Contábeis padrão conforme catálogo";
+      placeholders["{{servicos_incluidos}}"] = planServicesList || "Serviços Contábeis padrão conforme catálogo";
       placeholders["{{servicos_extras}}"] = "Consultoria Especializada, Auditoria Retroativa";
-      placeholders["{{descontos}}"] = "R$ 0,00";
+      placeholders["{{descontos}}"] = brl(prospect.discount_value || 0);
       placeholders["{{condicoes_especiais}}"] = "Nenhuma";
     }
 
-    // 7. Validation of Mandatory Fields
-    const mandatory = ["{{razao_social}}", "{{email}}"];
-    for (const key of mandatory) {
-      if (!placeholders[key]) {
-        throw new Error(`Campo obrigatório faltando para o contrato: ${key.replace('{{', '').replace('}}', '').replace('_', ' ')}`);
-      }
-    }
+    const mandatory = {
+      "razao_social": placeholders["{{razao_social}}"],
+      "cnpj": placeholders["{{cnpj}}"],
+      "email": placeholders["{{email}}"],
+      "endereco": placeholders["{{endereco}}"],
+      "nome_responsavel": placeholders["{{nome_responsavel}}"],
+      "cpf_responsavel": placeholders["{{cpf_responsavel}}"]
+    };
 
-    // 8. Replace placeholders in content
+    const missingFields = Object.entries(mandatory)
+      .filter(([_, value]) => !value || value === "A informar" || value === "A definir")
+      .map(([key]) => key);
+
     let finalContent = model.content;
     Object.entries(placeholders).forEach(([key, value]) => {
-      // Use empty string for empty values, prevent "undefined"
-      const safeValue = String(value || "");
+      const safeValue = String(value || "A definir");
       finalContent = finalContent.replace(new RegExp(key, 'g'), safeValue);
     });
 
-    // 9. Save generated contract
     const { data: generated, error: gError } = await supabaseAdmin
       .from("generated_contracts")
       .insert({
@@ -223,8 +241,9 @@ export const generateContract = createServerFn({ method: "POST" })
         model_id: model.id,
         version: model.version,
         content_snapshot: finalContent,
-        status: 'contrato_gerado'
-      })
+        status: 'contrato_gerado',
+        validation_errors: missingFields.length > 0 ? missingFields : null
+      } as any)
       .select().single();
 
     if (gError) {
@@ -232,9 +251,14 @@ export const generateContract = createServerFn({ method: "POST" })
       throw gError;
     }
 
-    console.log(`[CONTRACT_CREATED] ID: ${generated.id}, Prospect: ${data.prospectId}, Snapshot length: ${generated.content_snapshot?.length}`);
-    return generated;
+    console.log(`[CONTRACT_CREATED] ID: ${generated.id}, Errors: ${missingFields.length}`);
+    return {
+      ...generated,
+      missingFields,
+      isInstitucionalDemo: !!(INSTITUCIONAL_DIGITAL_SC as any).is_demo
+    };
   });
+
 
 export const getContractForReview = createServerFn({ method: "GET" })
   .inputValidator((data) => z.object({ contractId: z.string() }).parse(data))
