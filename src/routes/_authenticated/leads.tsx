@@ -532,7 +532,7 @@ function LeadsPage() {
                             if (input?.value.trim()) {
                               historyMutation.mutate({
                                 data: {
-                                  prospect_id: selectedLead.id,
+                                  lead_id: selectedLead.id,
                                   action_type: 'tentativa_contato',
                                   content: input.value.trim()
                                 }
