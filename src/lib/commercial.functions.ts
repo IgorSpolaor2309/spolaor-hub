@@ -69,15 +69,16 @@ export const confirmContracting = createServerFn({ method: "POST" })
       throw new Error("Falha ao registrar a intenção de contratação.");
     }
 
-    // 2. Cria a intenção de Contrato vinculada
-    await createContractIntent({
-      data: {
+    // 2. Cria a intenção de Contrato vinculada (Usando supabaseAdmin para evitar erro de auth em fluxo público)
+    const { error: contractError } = await supabaseAdmin
+      .from("commercial_contracts")
+      .insert({
         prospect_id: prospect.id,
         plan_id: data.plan_id,
-        plan_value: data.totals.originalValue, // Valor base do plano
+        plan_value: data.totals.originalValue,
         final_value: data.totals.finalValue,
         discount_value: data.totals.discountValue,
-        applied_coupon: data.coupon_id, // Salvando ID por enquanto
+        applied_coupon: data.coupon_id,
         extra_services: data.extra_service_ids,
         contract_data: {
           razao_social: data.extracted_data?.razao_social || data.contact_data.name,
@@ -85,9 +86,14 @@ export const confirmContracting = createServerFn({ method: "POST" })
           email: data.contact_data.email,
           telefone: data.contact_data.phone,
           ...data.extracted_data
-        }
-      }
-    });
+        },
+        status: 'aguardando_contrato'
+      });
+
+    if (contractError) {
+      console.error("Error creating contract intent:", contractError);
+      throw new Error("Falha ao criar intenção de contrato.");
+    }
 
     return { 
       success: true, 
