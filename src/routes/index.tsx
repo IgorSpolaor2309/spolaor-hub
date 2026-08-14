@@ -31,6 +31,125 @@ export const Route = createFileRoute("/")({
 const brl = (n: number | null | undefined) =>
   n == null ? "—" : Number(n).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+interface PlanCardItemProps {
+  plan: any;
+  prevPlan: any;
+  isRecomendado: boolean;
+  displayName: string;
+  includedServices: any[];
+  newServices: any[];
+  onSelect: (planId: string) => void;
+}
+
+function PlanCardItem({ 
+  plan, 
+  prevPlan, 
+  isRecomendado, 
+  displayName, 
+  includedServices, 
+  newServices, 
+  onSelect 
+}: PlanCardItemProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  return (
+    <Card key={plan.id} className={`p-6 flex flex-col relative overflow-hidden transition-all hover:shadow-xl ${isRecomendado ? 'ring-2 ring-primary scale-105 z-10' : 'hover:scale-[1.02]'}`}>
+      {isRecomendado && (
+        <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-bl-lg">
+          RECOMENDADO
+        </div>
+      )}
+      <div className="mb-6">
+        <h3 className="font-display text-2xl font-bold">{displayName}</h3>
+        <p className="text-sm text-muted-foreground mt-2 min-h-[40px] leading-snug">
+          {plan.publico_alvo || "Solução ideal para sua empresa"}
+        </p>
+      </div>
+      <div className="mb-8 border-b pb-6">
+        <div className="flex items-baseline gap-1">
+          <span className="text-3xl font-bold">
+            {plan.tipo_preco === 'sob_orcamento' ? 'Sob orçamento' : brl(plan.valor_padrao)}
+          </span>
+          {plan.tipo_preco !== 'sob_orcamento' && <span className="text-sm font-medium text-muted-foreground">/mês</span>}
+        </div>
+        {plan.limite_faturamento > 0 && (
+          <div className="flex items-center gap-1.5 text-xs text-primary font-medium mt-2 bg-primary/5 w-fit px-2 py-1 rounded">
+            <Receipt className="h-3 w-3" />
+            Faturamento até {brl(plan.limite_faturamento).replace(',00', '')}/mês
+          </div>
+        )}
+      </div>
+      
+      <div className="space-y-4 mb-8 flex-1">
+        {prevPlan && (
+          <p className="text-xs font-bold text-primary flex items-center gap-1.5">
+            <Plus className="h-3 w-3" />
+            Tudo do {prevPlan.nome}, mais:
+          </p>
+        )}
+        
+        <ul className="space-y-3">
+          {(isExpanded ? includedServices : (prevPlan ? newServices : includedServices).slice(0, 5)).map((ps: any) => (
+            <li key={ps.id} className="text-sm flex items-start gap-2 group">
+              <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <div className="flex items-center gap-1">
+                <span className="text-muted-foreground group-hover:text-foreground transition-colors">
+                  {ps.services?.nome}
+                  {ps.tipo_inclusao === 'incluido_com_limite' && ps.limite_quantidade && (
+                    <span className="text-[10px] ml-1 opacity-70">
+                      ({ps.limite_quantidade} {ps.unidade_limite || 'un'})
+                    </span>
+                  )}
+                </span>
+                {ps.services?.descricao && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button className="text-muted-foreground hover:text-primary transition-colors">
+                          <Info className="h-3 w-3" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-[200px] text-xs">
+                        {ps.services.descricao}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        {includedServices.length > 5 && (
+          <button 
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-primary text-xs font-bold hover:underline flex items-center gap-1 w-fit mt-2"
+          >
+            {isExpanded ? (
+              <>Ver menos <ChevronUp className="h-3 w-3" /></>
+            ) : (
+              <>Ver tudo que está incluído <ChevronDown className="h-3 w-3" /></>
+            )}
+          </button>
+        )}
+      </div>
+      
+      <Button 
+        variant={isRecomendado ? 'default' : 'outline'} 
+        size="lg"
+        className={cn(
+          "w-full font-bold transition-all",
+          isRecomendado ? "shadow-lg shadow-primary/20 hover:shadow-primary/30" : ""
+        )} 
+        onClick={() => onSelect(plan.id)}
+      >
+        Selecionar plano
+        <ArrowRight className="ml-2 h-4 w-4" />
+      </Button>
+    </Card>
+  );
+}
+
 function LandingPage() {
   const [showOpeningFlow, setShowOpeningFlow] = useState(false);
   const [showSwitchingFlow, setShowSwitchingFlow] = useState(false);
@@ -368,116 +487,30 @@ function LandingPage() {
                   const prevPlan = index > 0 ? filteredPlans[index - 1] : null;
                     const displayName = plan.nome;
                     const isRecomendado = plan.nome === 'Plano B';
-                    const [isExpanded, setIsExpanded] = useState(false);
-                    
+                    const displayName = plan.nome;
                     const includedServices = plan.plan_services || [];
                     const prevPlanServiceIds = new Set(prevPlan?.plan_services?.map((ps: any) => ps.service_id) || []);
-                    
-                    // Lógica "Tudo do anterior mais"
                     const newServices = prevPlan 
                       ? includedServices.filter((ps: any) => !prevPlanServiceIds.has(ps.service_id))
                       : includedServices;
 
                     return (
-                      <Card key={plan.id} className={`p-6 flex flex-col relative overflow-hidden transition-all hover:shadow-xl ${isRecomendado ? 'ring-2 ring-primary scale-105 z-10' : 'hover:scale-[1.02]'}`}>
-                        {isRecomendado && (
-                          <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-bl-lg">
-                            RECOMENDADO
-                          </div>
-                        )}
-                        <div className="mb-6">
-                          <h3 className="font-display text-2xl font-bold">{displayName}</h3>
-                          <p className="text-sm text-muted-foreground mt-2 min-h-[40px] leading-snug">
-                            {plan.publico_alvo || "Solução ideal para sua empresa"}
-                          </p>
-                        </div>
-                        <div className="mb-8 border-b pb-6">
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-3xl font-bold">
-                              {plan.tipo_preco === 'sob_orcamento' ? 'Sob orçamento' : brl(plan.valor_padrao)}
-                            </span>
-                            {plan.tipo_preco !== 'sob_orcamento' && <span className="text-sm font-medium text-muted-foreground">/mês</span>}
-                          </div>
-                          {plan.limite_faturamento > 0 && (
-                            <div className="flex items-center gap-1.5 text-xs text-primary font-medium mt-2 bg-primary/5 w-fit px-2 py-1 rounded">
-                              <Receipt className="h-3 w-3" />
-                              Faturamento até {brl(plan.limite_faturamento).replace(',00', '')}/mês
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="space-y-4 mb-8 flex-1">
-                          {prevPlan && (
-                            <p className="text-xs font-bold text-primary flex items-center gap-1.5">
-                              <Plus className="h-3 w-3" />
-                              Tudo do {prevPlan.nome}, mais:
-                            </p>
-                          )}
-                          
-                          <ul className="space-y-3">
-                            {(isExpanded ? includedServices : (prevPlan ? newServices : includedServices).slice(0, 5)).map((ps: any) => (
-                              <li key={ps.id} className="text-sm flex items-start gap-2 group">
-                                <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                                <div className="flex items-center gap-1">
-                                  <span className="text-muted-foreground group-hover:text-foreground transition-colors">
-                                    {ps.services?.nome}
-                                    {ps.tipo_inclusao === 'incluido_com_limite' && ps.limite_quantidade && (
-                                      <span className="text-[10px] ml-1 opacity-70">
-                                        ({ps.limite_quantidade} {ps.unidade_limite || 'un'})
-                                      </span>
-                                    )}
-                                  </span>
-                                  {ps.services?.descricao && (
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <button className="text-muted-foreground hover:text-primary transition-colors">
-                                            <Info className="h-3 w-3" />
-                                          </button>
-                                        </TooltipTrigger>
-                                        <TooltipContent className="max-w-[200px] text-xs">
-                                          {ps.services.descricao}
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  )}
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-
-                          {includedServices.length > 5 && (
-                            <button 
-                              onClick={() => setIsExpanded(!isExpanded)}
-                              className="text-primary text-xs font-bold hover:underline flex items-center gap-1 w-fit mt-2"
-                            >
-                              {isExpanded ? (
-                                <>Ver menos <ChevronUp className="h-3 w-3" /></>
-                              ) : (
-                                <>Ver tudo que está incluído <ChevronDown className="h-3 w-3" /></>
-                              )}
-                            </button>
-                          )}
-                        </div>
-                        
-                        <Button 
-                          variant={isRecomendado ? 'default' : 'outline'} 
-                          size="lg"
-                          className={cn(
-                            "w-full font-bold transition-all",
-                            isRecomendado ? "shadow-lg shadow-primary/20 hover:shadow-primary/30" : ""
-                          )} 
-                          onClick={() => handlePlanSelection(plan.id)}
-                        >
-                          Selecionar plano
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </Card>
-                  );
-                })
-              )}
-            </div>
+                      <PlanCardItem 
+                        key={plan.id}
+                        plan={plan}
+                        prevPlan={prevPlan}
+                        isRecomendado={isRecomendado}
+                        displayName={displayName}
+                        includedServices={includedServices}
+                        newServices={newServices}
+                        onSelect={handlePlanSelection}
+                      />
+                    );
+                  })
+                )}
               </div>
+            </div>
+          </section>
             )}
           </div>
         </section>
