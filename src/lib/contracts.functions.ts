@@ -16,9 +16,10 @@ const ContractSchema = z.object({
 });
 
 export const createContractIntent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => ContractSchema.parse(data))
-  .handler(async ({ data }) => {
-    const { error } = await (supabase as any)
+  .handler(async ({ data, context }) => {
+    const { error } = await (context.supabase as any)
       .from("commercial_contracts")
       .insert({
         ...data,
