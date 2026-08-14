@@ -250,6 +250,9 @@ export const generateContract = createServerFn({ method: "POST" })
       "{{cidade_assinatura}}": INSTITUCIONAL_DIGITAL_SC.cidade_assinatura,
       "{{representante_contratada}}": INSTITUCIONAL_DIGITAL_SC.representante,
       "{{cpf_representante_contratada}}": INSTITUCIONAL_DIGITAL_SC.cpf_representante,
+      "{{contratada_razao_social}}": INSTITUCIONAL_DIGITAL_SC.razao_social,
+      "{{contratada_cnpj}}": INSTITUCIONAL_DIGITAL_SC.cnpj,
+      "{{contratada_endereco}}": INSTITUCIONAL_DIGITAL_SC.endereco,
     };
 
     // Services Mapping
