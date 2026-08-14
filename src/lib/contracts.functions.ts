@@ -75,6 +75,7 @@ export const updateContractStatus = createServerFn({ method: "POST" })
       const { data: rpcData, error: rpcError } = await (supabase as any)
         .rpc('process_signed_contract', { _contract_id: id });
 
+
       if (rpcError) {
         console.error("RPC Error processing contract:", rpcError);
         throw rpcError;
