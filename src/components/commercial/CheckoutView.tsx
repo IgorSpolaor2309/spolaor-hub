@@ -157,7 +157,7 @@ export function CheckoutView({
       console.log(`[CHECKOUT_CONFIRMED] Prospect: ${result.prospectId}`);
       
       // 2. Tentar gerar o contrato
-      await processContractGeneration(result.prospectId, result.leadId || leadId);
+      await processContractGeneration(result.prospectId, result.leadId || leadId, result.contractingId);
 
     } catch (e: any) {
       console.error("[CONTRACT_GENERATION_ERROR]", e);
@@ -167,13 +167,13 @@ export function CheckoutView({
     }
   };
 
-  const processContractGeneration = async (prospectId: string, leadIdParam?: string) => {
+  const processContractGeneration = async (prospectId: string, leadIdParam?: string, contractingId?: string) => {
     try {
       console.log(`[CONTRACT_GENERATION_START] Prospect: ${prospectId}`);
       
       console.log(`[generateContract_CALL] prospectId: ${prospectId}`);
       const result = await generateContractFn({
-        data: { prospectId }
+        data: { prospectId, contractingId }
       });
 
       console.log("[generateContract_RESULT]", result);

@@ -111,21 +111,71 @@ export const getGeneratedContracts = createServerFn({ method: "GET" })
   });
 
 export const generateContract = createServerFn({ method: "POST" })
-  .inputValidator((data) => z.object({ prospectId: z.string() }).parse(data))
+  .inputValidator((data) => z.object({ 
+    prospectId: z.string().optional(),
+    contractingId: z.string().optional() 
+  }).parse(data))
   .handler(async ({ data }) => {
-    console.log(`[GENERATE_CONTRACT_INPUT] prospectId: ${data.prospectId}`);
+    console.log(`[GENERATE_CONTRACT_INPUT] prospectId: ${data.prospectId}, contractingId: ${data.contractingId}`);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { INSTITUCIONAL_DIGITAL_SC } = await import("./institucional.server");
 
-    // 1. Get Prospect Data with Plan details
-    const { data: prospect, error: pError } = await supabaseAdmin
-      .from("commercial_prospects")
-      .select("*, plan:plan_id (*)")
-      .eq("id", data.prospectId)
+    let prospect: any = null;
+    let contracting: any = null;
+
+    // 1. Resolve Contracting and Prospect
+    if (data.contractingId) {
+      const { data: cData, error: cError } = await supabaseAdmin
+        .from("commercial_contracts")
+        .select("*, prospect:prospect_id (*)")
+        .eq("id", data.contractingId)
+        .maybeSingle();
+      
+      if (cError) throw new Error(`Erro ao buscar contratação: ${cError.message}`);
+      if (!cData) throw new Error("Contratação não encontrada.");
+      
+      contracting = cData;
+      prospect = cData.prospect;
+    } else if (data.prospectId) {
+      const { data: pData, error: pError } = await supabaseAdmin
+        .from("commercial_prospects")
+        .select("*")
+        .eq("id", data.prospectId)
+        .maybeSingle();
+      
+      if (pError) throw new Error(`Erro ao buscar prospect: ${pError.message}`);
+      if (!pData) throw new Error("Prospect não encontrado.");
+      
+      prospect = pData;
+
+      // Try to find an existing contract for this prospect
+      const { data: cData } = await supabaseAdmin
+        .from("commercial_contracts")
+        .select("*")
+        .eq("prospect_id", prospect.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      contracting = cData;
+    }
+
+    if (!prospect) {
+       throw new Error("Não foi possível identificar o Prospect para esta geração.");
+    }
+
+    // Ensure we have a plan
+    const planId = prospect.plan_id || contracting?.plan_id;
+    if (!planId) throw new Error("Esta contratação não possui um plano vinculado.");
+
+    const { data: plan } = await supabaseAdmin
+      .from("plans")
+      .select("*")
+      .eq("id", planId)
       .single();
     
-    if (pError || !prospect) throw new Error("Prospect não encontrado");
+    prospect.plan = plan;
 
     // 2. Fetch Lead Data
     const { data: lead } = await supabaseAdmin
@@ -146,7 +196,7 @@ export const generateContract = createServerFn({ method: "POST" })
     const { data: existingContract } = await supabaseAdmin
       .from("generated_contracts")
       .select("id, status, content_snapshot, metadata")
-      .eq("prospect_id", data.prospectId)
+      .eq("prospect_id", prospect.id)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
