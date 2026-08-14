@@ -45,7 +45,7 @@ export const getContracts = createServerFn({ method: "GET" })
 export const updateContractStatus = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({
     id: z.string(),
-    status: z.enum(['aguardando_contrato', 'contrato_enviado', 'contrato_assinado', 'cancelado'])
+    status: z.enum(['aguardando_contrato', 'contrato_gerado', 'contrato_enviado', 'contrato_assinado', 'cancelado'])
   }).parse(data))
   .handler(async ({ data }) => {
     const { id, status } = data;
