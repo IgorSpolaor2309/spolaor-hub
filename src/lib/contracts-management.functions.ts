@@ -313,7 +313,11 @@ export const generateContract = createServerFn({ method: "POST" })
         .update({
           content_snapshot: finalContent,
           validation_errors: missingFields.length > 0 ? missingFields : null,
-          metadata: { ...existingContract.metadata, placeholders, updated_at: new Date().toISOString() },
+          metadata: { 
+            ...((existingContract?.metadata as any) || {}), 
+            placeholders, 
+            updated_at: new Date().toISOString() 
+          },
           version: model.version,
           model_id: model.id
         })
