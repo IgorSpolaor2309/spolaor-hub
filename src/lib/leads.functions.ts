@@ -29,6 +29,7 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
     const payload: any = {
       journey_step: data.journeyStep,
       last_interaction_at: new Date().toISOString(),
+      last_interaction_description: data.lastInteraction || data.journeyStep,
       updated_at: new Date().toISOString()
     };
 
