@@ -439,7 +439,7 @@ export function SwitchingChatFlow({ onBack, preSelectedPlanId }: { onBack: () =>
           value={input} 
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-          placeholder="Ex: Meu CNPJ é 12.345..."
+          placeholder="Ex: Meu CNPJ é 12.345.678/0001-00"
           disabled={loading}
         />
         <Button onClick={sendMessage} disabled={loading || !input.trim()}>
