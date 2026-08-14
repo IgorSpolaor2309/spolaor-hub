@@ -26,7 +26,13 @@ export const getPublicPlans = createServerFn({ method: "GET" })
     }
     
     console.log("[SERVER_FN] getPublicPlans success, count:", data?.length);
-    return (data as any[]) || [];
+    // Standardize the return to ensure compatibility
+    return (data || []).map(p => ({
+      ...p,
+      nome: p.nome || '',
+      status: p.status || '',
+      plan_services: p.plan_services || []
+    }));
   });
 
 export const getPublicServices = createServerFn({ method: "GET" })

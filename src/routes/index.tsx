@@ -151,6 +151,7 @@ function PlanCardItem({
 }
 
 function LandingPage() {
+  console.log("[CLIENT] LandingPage render");
   const [showOpeningFlow, setShowOpeningFlow] = useState(false);
   const [showSwitchingFlow, setShowSwitchingFlow] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
