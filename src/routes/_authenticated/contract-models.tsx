@@ -49,7 +49,18 @@ function ContractModelsPage() {
       toast.success("Modelo salvo com sucesso");
       setIsEditorOpen(false);
     },
-    onError: (err: any) => toast.error(`Erro ao salvar: ${err.message}`)
+    onError: (err: any) => {
+      console.error("Save error:", err);
+      const message = err.message || "Erro desconhecido";
+      
+      if (message.includes("Acesso negado") || message.includes("Permissão negada")) {
+        toast.error("Você não tem permissão para realizar esta operação.");
+      } else if (message.includes("Unauthorized") || message.includes("Sessão inválida")) {
+        toast.error("Sua sessão expirou. Por favor, faça login novamente.");
+      } else {
+        toast.error(`Falha ao salvar modelo: ${message}`);
+      }
+    }
   });
 
   const [formData, setFormData] = useState<any>({

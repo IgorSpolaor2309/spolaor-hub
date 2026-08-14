@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+
 
 const ContractSchema = z.object({
   prospect_id: z.string(),
@@ -14,9 +16,10 @@ const ContractSchema = z.object({
 });
 
 export const createContractIntent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => ContractSchema.parse(data))
-  .handler(async ({ data }) => {
-    const { error } = await (supabase as any)
+  .handler(async ({ data, context }) => {
+    const { error } = await (context.supabase as any)
       .from("commercial_contracts")
       .insert({
         ...data,
@@ -28,8 +31,9 @@ export const createContractIntent = createServerFn({ method: "POST" })
   });
 
 export const getContracts = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const { data, error } = await (supabase as any)
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await (context.supabase as any)
       .from("commercial_contracts")
       .select(`
         *,
@@ -37,6 +41,7 @@ export const getContracts = createServerFn({ method: "GET" })
         plan:plan_id (nome)
       `)
       .order("created_at", { ascending: false });
+
 
     if (error) throw error;
     return data;
@@ -47,8 +52,11 @@ export const updateContractStatus = createServerFn({ method: "POST" })
     id: z.string(),
     status: z.enum(['aguardando_contrato', 'contrato_gerado', 'contrato_enviado', 'contrato_assinado', 'cancelado'])
   }).parse(data))
-  .handler(async ({ data }) => {
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data, context }) => {
     const { id, status } = data;
+    const { supabase } = context;
+
     
     // Atualiza status básico
     const updatePayload: any = { status };
@@ -67,6 +75,7 @@ export const updateContractStatus = createServerFn({ method: "POST" })
     if (status === 'contrato_assinado') {
       const { data: rpcData, error: rpcError } = await (supabase as any)
         .rpc('process_signed_contract', { _contract_id: id });
+
 
       if (rpcError) {
         console.error("RPC Error processing contract:", rpcError);
