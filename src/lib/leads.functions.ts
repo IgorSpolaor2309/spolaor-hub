@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+
 
 const LeadTrackSchema = z.object({
   leadId: z.string().optional(),
@@ -119,7 +121,9 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
   });
 
 export const getLeads = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
   .handler(async () => {
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     
     const { data, error } = await supabaseAdmin
@@ -155,7 +159,9 @@ export const updateLeadRecovery = createServerFn({ method: "POST" })
     internal_notes: z.string().optional(),
     last_interaction_description: z.string().optional()
   }).parse(data))
+  .middleware([requireSupabaseAuth])
   .handler(async ({ data }) => {
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { id, ...payload } = data;
     const { error } = await supabaseAdmin
@@ -173,16 +179,17 @@ export const addLeadHistory = createServerFn({ method: "POST" })
     action_type: z.string(),
     content: z.string()
   }).parse(data))
-  .handler(async ({ data }) => {
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Unauthorized");
+    const { userId } = context;
+
 
     const { error } = await supabaseAdmin
       .from("lead_history")
       .insert({
         ...data,
-        profile_id: user.id
+        profile_id: userId
       });
 
     if (error) throw error;
@@ -190,7 +197,9 @@ export const addLeadHistory = createServerFn({ method: "POST" })
   });
 
 export const getCollaborators = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
   .handler(async () => {
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("profiles")
