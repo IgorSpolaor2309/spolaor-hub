@@ -57,6 +57,7 @@ import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicHooksCompetenceMonthlyGenerationRouteImport } from './routes/api/public/hooks/competence-monthly-generation'
 import { Route as ApiPublicHooksCleanupChatOrphansRouteImport } from './routes/api/public/hooks/cleanup-chat-orphans'
+import { Route as ApiPublicHooksCheckEnvRouteImport } from './routes/api/public/hooks/check-env'
 import { Route as AuthenticatedMeuMesClientIdCompetenceRouteImport } from './routes/_authenticated/meu-mes_.$clientId.$competence'
 import { Route as AuthenticatedCompetenciasClientIdCompetenceRouteImport } from './routes/_authenticated/competencias_.$clientId.$competence'
 
@@ -320,6 +321,11 @@ const ApiPublicHooksCleanupChatOrphansRoute =
     path: '/api/public/hooks/cleanup-chat-orphans',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksCheckEnvRoute = ApiPublicHooksCheckEnvRouteImport.update({
+  id: '/api/public/hooks/check-env',
+  path: '/api/public/hooks/check-env',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedMeuMesClientIdCompetenceRoute =
   AuthenticatedMeuMesClientIdCompetenceRouteImport.update({
     id: '/meu-mes_/$clientId/$competence',
@@ -381,6 +387,7 @@ export interface FileRoutesByFullPath {
   '/api/public/test-switching': typeof ApiPublicTestSwitchingRoute
   '/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/meu-mes/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
+  '/api/public/hooks/check-env': typeof ApiPublicHooksCheckEnvRoute
   '/api/public/hooks/cleanup-chat-orphans': typeof ApiPublicHooksCleanupChatOrphansRoute
   '/api/public/hooks/competence-monthly-generation': typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
 }
@@ -432,6 +439,7 @@ export interface FileRoutesByTo {
   '/api/public/test-switching': typeof ApiPublicTestSwitchingRoute
   '/competencias/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/meu-mes/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
+  '/api/public/hooks/check-env': typeof ApiPublicHooksCheckEnvRoute
   '/api/public/hooks/cleanup-chat-orphans': typeof ApiPublicHooksCleanupChatOrphansRoute
   '/api/public/hooks/competence-monthly-generation': typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
 }
@@ -485,6 +493,7 @@ export interface FileRoutesById {
   '/api/public/test-switching': typeof ApiPublicTestSwitchingRoute
   '/_authenticated/competencias_/$clientId/$competence': typeof AuthenticatedCompetenciasClientIdCompetenceRoute
   '/_authenticated/meu-mes_/$clientId/$competence': typeof AuthenticatedMeuMesClientIdCompetenceRoute
+  '/api/public/hooks/check-env': typeof ApiPublicHooksCheckEnvRoute
   '/api/public/hooks/cleanup-chat-orphans': typeof ApiPublicHooksCleanupChatOrphansRoute
   '/api/public/hooks/competence-monthly-generation': typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
 }
@@ -538,6 +547,7 @@ export interface FileRouteTypes {
     | '/api/public/test-switching'
     | '/competencias/$clientId/$competence'
     | '/meu-mes/$clientId/$competence'
+    | '/api/public/hooks/check-env'
     | '/api/public/hooks/cleanup-chat-orphans'
     | '/api/public/hooks/competence-monthly-generation'
   fileRoutesByTo: FileRoutesByTo
@@ -589,6 +599,7 @@ export interface FileRouteTypes {
     | '/api/public/test-switching'
     | '/competencias/$clientId/$competence'
     | '/meu-mes/$clientId/$competence'
+    | '/api/public/hooks/check-env'
     | '/api/public/hooks/cleanup-chat-orphans'
     | '/api/public/hooks/competence-monthly-generation'
   id:
@@ -641,6 +652,7 @@ export interface FileRouteTypes {
     | '/api/public/test-switching'
     | '/_authenticated/competencias_/$clientId/$competence'
     | '/_authenticated/meu-mes_/$clientId/$competence'
+    | '/api/public/hooks/check-env'
     | '/api/public/hooks/cleanup-chat-orphans'
     | '/api/public/hooks/competence-monthly-generation'
   fileRoutesById: FileRoutesById
@@ -660,6 +672,7 @@ export interface RootRouteChildren {
   ApiPublicDebugContractRoute: typeof ApiPublicDebugContractRoute
   ApiPublicDebugListRoute: typeof ApiPublicDebugListRoute
   ApiPublicTestSwitchingRoute: typeof ApiPublicTestSwitchingRoute
+  ApiPublicHooksCheckEnvRoute: typeof ApiPublicHooksCheckEnvRoute
   ApiPublicHooksCleanupChatOrphansRoute: typeof ApiPublicHooksCleanupChatOrphansRoute
   ApiPublicHooksCompetenceMonthlyGenerationRoute: typeof ApiPublicHooksCompetenceMonthlyGenerationRoute
 }
@@ -1002,6 +1015,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksCleanupChatOrphansRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/check-env': {
+      id: '/api/public/hooks/check-env'
+      path: '/api/public/hooks/check-env'
+      fullPath: '/api/public/hooks/check-env'
+      preLoaderRoute: typeof ApiPublicHooksCheckEnvRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/meu-mes_/$clientId/$competence': {
       id: '/_authenticated/meu-mes_/$clientId/$competence'
       path: '/meu-mes/$clientId/$competence'
@@ -1150,6 +1170,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicDebugContractRoute: ApiPublicDebugContractRoute,
   ApiPublicDebugListRoute: ApiPublicDebugListRoute,
   ApiPublicTestSwitchingRoute: ApiPublicTestSwitchingRoute,
+  ApiPublicHooksCheckEnvRoute: ApiPublicHooksCheckEnvRoute,
   ApiPublicHooksCleanupChatOrphansRoute: ApiPublicHooksCleanupChatOrphansRoute,
   ApiPublicHooksCompetenceMonthlyGenerationRoute:
     ApiPublicHooksCompetenceMonthlyGenerationRoute,
