@@ -151,7 +151,8 @@ export const addLeadHistory = createServerFn({ method: "POST" })
 
 export const getCollaborators = createServerFn({ method: "GET" })
   .handler(async () => {
-    const { data, error } = await (supabase as any)
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
       .from("profiles")
       .select("id, full_name, avatar_url")
       .or('role.eq.admin,role.eq.collaborator');
