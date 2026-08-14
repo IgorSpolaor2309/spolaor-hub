@@ -20,6 +20,7 @@ import {
 import { toast } from 'sonner'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
+import { ContractViewer } from '@/components/commercial/ContractViewer'
 
 export const Route = createFileRoute('/_authenticated/contracts')({
   loader: async ({ context }) => {
