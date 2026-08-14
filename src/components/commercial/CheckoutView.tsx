@@ -159,18 +159,23 @@ export function CheckoutView({
     try {
       console.log(`[CONTRACT_GENERATION_START] Prospect: ${prospectId}`);
       
-      const generated = await generateContractFn({
+      const result = await generateContractFn({
         data: { prospectId }
       });
 
-      console.log(`[VALIDATION_RESULT] Errors: ${generated.missingFields?.length || 0}`);
+      console.log("GENERATE_CONTRACT_RESULT", result);
+
+      const contractId = result.contractId || result.id;
+      console.log("CONTRACT_ID_FOR_NAVIGATION", contractId);
+
+      console.log(`[VALIDATION_RESULT] Errors: ${result.missingFields?.length || 0}`);
       
       // 3. Se houver campos obrigatórios faltando, abrir o modal
-      if (generated.missingFields && generated.missingFields.length > 0) {
-        console.log(`[MISSING_FIELDS]`, generated.missingFields);
+      if (result.missingFields && result.missingFields.length > 0) {
+        console.log(`[MISSING_FIELDS]`, result.missingFields);
         setMissingFieldsModal({
           isOpen: true,
-          missingFields: generated.missingFields,
+          missingFields: result.missingFields,
           prospectId: prospectId,
           extractedData: extractedData
         });
@@ -178,30 +183,38 @@ export function CheckoutView({
       }
 
       // 4. Se não houver erros, validar se tem ID e Snapshot
-      if (!generated.id || !generated.content_snapshot) {
-        console.error("[CONTRACT_GENERATION_ERROR] Missing ID or Snapshot", generated);
-        throw new Error("Erro na geração do conteúdo do contrato.");
+      if (!contractId) {
+        console.error("[CONTRACT_GENERATION_ERROR] Missing ID", result);
+        toast.error("Contrato gerado, mas não foi possível abrir a revisão.");
+        return;
       }
 
-      console.log(`[CONTRACT_GENERATION_SUCCESS] ID: ${generated.id}, Snapshot length: ${generated.content_snapshot.length}`);
-      console.log(`[REVIEW_REDIRECT] Navigating to /revisar-contrato/${generated.id}`);
+      if (!result.content_snapshot || result.content_snapshot.length === 0) {
+        console.error("[CONTRACT_GENERATION_ERROR] Missing or empty Snapshot", result);
+        toast.error("Contrato gerado sem conteúdo. Por favor, tente novamente.");
+        return;
+      }
 
+      console.log(`[CONTRACT_GENERATION_SUCCESS] ID: ${contractId}, Snapshot length: ${result.content_snapshot.length}`);
+      
       // 5. Rastrear jornada final
       await trackJourney({
         data: {
           leadId: leadIdParam || leadId,
           journeyStep: 'contratacao_confirmada',
           estimatedValue: totals.finalValue,
-          lastInteraction: `Contrato gerado (${generated.id}) para o plano ${selectedPlan?.name}. Redirecionando para revisão.`
+          lastInteraction: `Contrato gerado (${contractId}) para o plano ${selectedPlan?.name}. Redirecionando para revisão.`
         }
       });
 
+      console.log("NAVIGATING_TO_REVIEW", contractId);
       toast.success("Contrato gerado com sucesso! Redirecionando para revisão.");
       
       navigate({ 
         to: "/revisar-contrato/$contractId", 
-        params: { contractId: generated.id } 
+        params: { contractId } 
       });
+      console.log("NAVIGATION_CALLED");
     } catch (e: any) {
       console.error("[CONTRACT_GENERATION_ERROR]", e);
       toast.error(e.message || "Erro ao gerar contrato");
