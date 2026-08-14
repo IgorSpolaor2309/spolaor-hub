@@ -14,8 +14,9 @@ const ContractModelSchema = z.object({
 });
 
 export const getContractModels = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const { data, error } = await supabase
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
       .from("contract_models")
       .select("*")
       .order("created_at", { ascending: false });
@@ -110,12 +111,13 @@ export const getGeneratedContracts = createServerFn({ method: "GET" })
   });
 
 export const generateContract = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({ prospectId: z.string() }).parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { INSTITUCIONAL_DIGITAL_SC } = await import("./institucional.server");
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Unauthorized");
+    const { userId } = context;
+
 
     // 1. Get Prospect Data
     const { data: prospect, error: pError } = await supabaseAdmin
@@ -221,7 +223,7 @@ export const generateContract = createServerFn({ method: "POST" })
         version: model.version,
         content_snapshot: finalContent,
         status: 'contrato_gerado',
-        created_by: user.id
+        created_by: userId
       })
       .select().single();
 
