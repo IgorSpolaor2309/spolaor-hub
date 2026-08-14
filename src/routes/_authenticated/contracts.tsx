@@ -117,7 +117,7 @@ function ContractsPage() {
                       variant="outline" 
                       size="sm"
                       onClick={() => {
-                        setSelectedContract(contract)
+                        setSelectedContract({ ...contract, prospect: { ...contract.prospect, id: contract.prospect_id, contracting_id: contract.id } })
                         setIsViewerOpen(true)
                       }}
                     >
