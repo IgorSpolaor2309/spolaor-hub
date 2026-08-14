@@ -30,13 +30,6 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
       last_interaction_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
-    
-    // Check if last_interaction_description exists in the database schema 
-    // to avoid PGRST204 errors if cache is stale
-    const { data: columns } = await (supabase as any).rpc('get_table_columns', { t_name: 'commercial_prospects' }).catch(() => ({ data: [] }));
-    if (columns?.includes('last_interaction_description')) {
-      payload.last_interaction_description = data.lastInteraction || data.journeyStep;
-    }
 
     if (data.bottleneckIndicator) payload.bottleneck_indicator = data.bottleneckIndicator;
     if (data.estimatedValue) payload.estimated_value = data.estimatedValue;
