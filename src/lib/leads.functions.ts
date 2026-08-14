@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 
 const LeadTrackSchema = z.object({
-  prospectId: z.string().optional(),
+  leadId: z.string().optional(),
   journeyStep: z.string(),
   bottleneckIndicator: z.string().optional(),
   estimatedValue: z.number().optional(),
@@ -19,56 +19,55 @@ const LeadTrackSchema = z.object({
   lastInteraction: z.string().optional(),
   interestedInPersonalized: z.boolean().optional(),
   preferredChannel: z.enum(["whatsapp", "videoconference"]).optional(),
-  origin: z.string().optional()
+  origin: z.string().optional(),
+  sessionId: z.string().optional()
 });
 
 export const trackLeadJourney = createServerFn({ method: "POST" })
   .inputValidator((data) => LeadTrackSchema.parse(data))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    
+    // Preparar payload para a tabela de LEADS
     const payload: any = {
-      journey_step: data.journeyStep,
+      journey_data: { 
+        step: data.journeyStep,
+        bottleneck: data.bottleneckIndicator,
+        extracted: data.extractedData,
+        plan_id: data.planId
+      },
       last_interaction_at: new Date().toISOString(),
       last_interaction_description: data.lastInteraction || data.journeyStep,
       updated_at: new Date().toISOString()
     };
 
-    if (data.bottleneckIndicator) payload.bottleneck_indicator = data.bottleneckIndicator;
-    if (data.estimatedValue) payload.estimated_value = data.estimatedValue;
-    if (data.extractedData) payload.ai_extracted_data = data.extractedData;
-    if (data.contactData?.name) payload.contact_name = data.contactData.name;
-    if (data.contactData?.email) payload.contact_email = data.contactData.email;
-    if (data.contactData?.phone) payload.contact_phone = data.contactData.phone;
-    if (data.planId) payload.plan_id = data.planId;
-    if (data.flowType) payload.flow_origin = data.flowType;
+    if (data.contactData?.name) payload.name = data.contactData.name;
+    if (data.contactData?.email) payload.email = data.contactData.email;
+    if (data.contactData?.phone) payload.phone = data.contactData.phone;
     if (data.cnpj) payload.cnpj = data.cnpj;
+    if (data.estimatedValue) payload.estimated_revenue = data.estimatedValue;
     if (data.interestedInPersonalized !== undefined) {
       payload.interested_in_personalized_solution = data.interestedInPersonalized;
-      payload.requested_personalized_at = new Date().toISOString();
+      payload.status = 'aguardando_contato';
     }
     if (data.preferredChannel) payload.preferred_contact_channel = data.preferredChannel;
-    if (data.origin) payload.flow_origin = data.origin;
-    
-    // Check for "Quero contratar" equivalent
-    if (data.journeyStep === 'checkout_iniciado') {
-      payload.status_comercial = 'contratação_em_andamento';
-    }
+    if (data.origin || data.flowType) payload.origin = data.origin || data.flowType;
+    if (data.sessionId) payload.session_id = data.sessionId;
 
     let result;
-    if (data.prospectId) {
+    if (data.leadId) {
       result = await supabaseAdmin
-        .from("commercial_prospects")
+        .from("leads")
         .update(payload)
-        .eq("id", data.prospectId)
+        .eq("id", data.leadId)
         .select()
         .single();
     } else {
-      // Se não tem ID, cria um novo lead (interessado inicial)
       result = await supabaseAdmin
-        .from("commercial_prospects")
+        .from("leads")
         .insert({
           ...payload,
-          status_comercial: "interessado"
+          status: payload.status || "novo"
         })
         .select()
         .single();
@@ -79,25 +78,56 @@ export const trackLeadJourney = createServerFn({ method: "POST" })
       throw result.error;
     }
     
-    console.log(`[Lead Track] Success for ${data.journeyStep}. ID: ${result.data?.id}`);
+    // SE houver intenção explícita de contratação (checkout iniciado), 
+    // TAMBÉM criamos/atualizamos o commercial_prospects
+    if (data.journeyStep === 'checkout_iniciado' || data.journeyStep === 'contratacao_confirmada') {
+      const prospectPayload: any = {
+        flow_origin: data.origin || data.flowType,
+        contact_name: payload.name,
+        contact_email: payload.email,
+        contact_phone: payload.phone,
+        cnpj: data.cnpj,
+        plan_id: data.planId,
+        estimated_value: data.estimatedValue,
+        status_comercial: 'contratação_em_andamento',
+        updated_at: new Date().toISOString()
+      };
 
-    return { success: true, prospectId: result.data.id };
+      // Tenta encontrar um prospect já existente pelo email ou criar novo
+      const { data: existingProspect } = await supabaseAdmin
+        .from("commercial_prospects")
+        .select("id")
+        .eq("contact_email", payload.email)
+        .maybeSingle();
+
+      if (existingProspect) {
+        await supabaseAdmin
+          .from("commercial_prospects")
+          .update(prospectPayload)
+          .eq("id", existingProspect.id);
+      } else {
+        await supabaseAdmin
+          .from("commercial_prospects")
+          .insert({
+            ...prospectPayload,
+            created_at: new Date().toISOString()
+          });
+      }
+    }
+
+    console.log(`[Lead Track] Success for ${data.journeyStep}. ID: ${result.data?.id}`);
+    return { success: true, prospectId: result.data.id }; // Mantendo nome prospectId para compatibilidade no frontend por enquanto
   });
 
 export const getLeads = createServerFn({ method: "GET" })
   .handler(async () => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     
+    // Agora buscamos da tabela LEADS para o dashboard inicial
     const { data, error } = await supabaseAdmin
-      .from("commercial_prospects")
+      .from("leads")
       .select(`
-        *,
-        plans:plan_id (nome),
-        responsible:responsible_profile_id (full_name, avatar_url),
-        history:commercial_prospect_history (
-          *,
-          profile:profile_id (full_name)
-        )
+        *
       `)
       .order("created_at", { ascending: false });
 
@@ -108,18 +138,15 @@ export const getLeads = createServerFn({ method: "GET" })
 export const updateLeadRecovery = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({
     id: z.string(),
-    responsible_profile_id: z.string().optional().nullable(),
-    priority: z.string().optional(),
-    status_comercial: z.string().optional(),
-    next_action_description: z.string().optional(),
-    next_action_date: z.string().optional().nullable(),
-    internal_notes: z.string().optional()
+    status: z.string().optional(),
+    last_interaction_description: z.string().optional(),
+    // add other fields as needed
   }).parse(data))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { id, ...payload } = data;
     const { error } = await supabaseAdmin
-      .from("commercial_prospects")
+      .from("leads")
       .update(payload)
       .eq("id", id);
 
@@ -127,6 +154,7 @@ export const updateLeadRecovery = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+// Adiciona histórico ao commercial_prospect se ele existir
 export const addLeadHistory = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({
     prospect_id: z.string(),
