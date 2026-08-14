@@ -176,7 +176,7 @@ export const generateContract = createServerFn({ method: "POST" })
       return clean.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
     };
 
-    const setupValue = proposal?.setup_value ?? 0;
+    
     const finalPlanName = prospect.plan?.nome || "Personalizado";
     
     const placeholders: Record<string, string> = {
