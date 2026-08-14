@@ -131,7 +131,7 @@ export const generateContract = createServerFn({ method: "POST" })
     const { data: planServices } = await supabaseAdmin
       .from("plan_services")
       .select("*, service:service_id (nome, descricao)")
-      .eq("plan_id", prospect.plan_id);
+      .eq("plan_id", prospect.plan_id || "");
 
     const planServicesList = planServices?.map(ps => (ps.service as any)?.nome).filter(Boolean).join(", ") || "";
 
