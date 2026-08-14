@@ -200,7 +200,7 @@ export const generateContract = createServerFn({ method: "POST" })
     }
 
     // 7. Validation of Mandatory Fields
-    const mandatory = ["{{razao_social}}", "{{cnpj}}", "{{email}}"];
+    const mandatory = ["{{razao_social}}", "{{email}}"];
     for (const key of mandatory) {
       if (!placeholders[key]) {
         throw new Error(`Campo obrigatório faltando para o contrato: ${key.replace('{{', '').replace('}}', '').replace('_', ' ')}`);
