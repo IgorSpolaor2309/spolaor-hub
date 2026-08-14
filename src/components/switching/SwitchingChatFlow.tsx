@@ -63,7 +63,7 @@ export function SwitchingChatFlow({ onBack, preSelectedPlanId }: { onBack: () =>
     try {
       // Regra: Se ainda não temos CNPJ e o input parece um CNPJ (ou contém um), tentamos validar via API real
       const digits = onlyDigits(trimmedInput);
-      if (!extractedData?.cnpj && digits.length >= 11) {
+      if (!extractedData?.cnpj && digits.length >= 8) {
         if (digits.length === 14) {
           if (!validateCnpj(digits)) {
             setMessages(prev => [...prev, { role: 'ai', content: "Este número não parece um CNPJ válido (falha no dígito verificador). Pode conferir?" }]);
