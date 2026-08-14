@@ -15,7 +15,7 @@ import { toast } from "sonner";
 interface CheckoutViewProps {
   flowType: "opening" | "switching";
   initialPlanId?: string;
-  prospectId?: string;
+  leadId?: string;
   extractedData: any;
   contactData: {
     name: string;
@@ -29,7 +29,7 @@ interface CheckoutViewProps {
 export function CheckoutView({ 
   flowType, 
   initialPlanId, 
-  prospectId,
+  leadId,
   extractedData, 
   contactData,
   onBack, 
@@ -88,10 +88,10 @@ export function CheckoutView({
       const result = await validateCouponFn({ data: { code: couponCode } });
       if (result.valid && result.coupon) {
         setAppliedCoupon(result.coupon as any);
-        if (prospectId) {
+        if (leadId) {
           trackJourney({
             data: {
-              prospectId,
+              leadId,
               journeyStep: 'cupom_aplicado'
             }
           }).catch(console.error);
@@ -126,7 +126,7 @@ export function CheckoutView({
       // 2. Rastrear jornada final
       await trackJourney({
         data: {
-          prospectId: result.prospectId,
+          leadId: result.leadId || leadId,
           journeyStep: 'contratacao_confirmada',
           estimatedValue: totals.finalValue,
           lastInteraction: `Contratação confirmada para o plano ${selectedPlan?.name}`

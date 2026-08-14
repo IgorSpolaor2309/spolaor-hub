@@ -2159,6 +2159,134 @@ export type Database = {
           },
         ]
       }
+      lead_history: {
+        Row: {
+          action_type: string | null
+          content: string | null
+          created_at: string | null
+          id: string
+          lead_id: string | null
+          profile_id: string | null
+        }
+        Insert: {
+          action_type?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          lead_id?: string | null
+          profile_id?: string | null
+        }
+        Update: {
+          action_type?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          lead_id?: string | null
+          profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_history_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_history_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          business_type: string | null
+          city: string | null
+          cnpj: string | null
+          created_at: string | null
+          email: string | null
+          estimated_revenue: number | null
+          id: string
+          interested_in_personalized_solution: boolean | null
+          internal_notes: string | null
+          journey_data: Json | null
+          last_interaction_at: string | null
+          last_interaction_description: string | null
+          name: string | null
+          next_action_date: string | null
+          next_action_description: string | null
+          origin: string | null
+          phone: string | null
+          preferred_contact_channel: string | null
+          priority: string | null
+          responsible_profile_id: string | null
+          session_id: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          business_type?: string | null
+          city?: string | null
+          cnpj?: string | null
+          created_at?: string | null
+          email?: string | null
+          estimated_revenue?: number | null
+          id?: string
+          interested_in_personalized_solution?: boolean | null
+          internal_notes?: string | null
+          journey_data?: Json | null
+          last_interaction_at?: string | null
+          last_interaction_description?: string | null
+          name?: string | null
+          next_action_date?: string | null
+          next_action_description?: string | null
+          origin?: string | null
+          phone?: string | null
+          preferred_contact_channel?: string | null
+          priority?: string | null
+          responsible_profile_id?: string | null
+          session_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          business_type?: string | null
+          city?: string | null
+          cnpj?: string | null
+          created_at?: string | null
+          email?: string | null
+          estimated_revenue?: number | null
+          id?: string
+          interested_in_personalized_solution?: boolean | null
+          internal_notes?: string | null
+          journey_data?: Json | null
+          last_interaction_at?: string | null
+          last_interaction_description?: string | null
+          name?: string | null
+          next_action_date?: string | null
+          next_action_description?: string | null
+          origin?: string | null
+          phone?: string | null
+          preferred_contact_channel?: string | null
+          priority?: string | null
+          responsible_profile_id?: string | null
+          session_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_responsible_profile_id_fkey"
+            columns: ["responsible_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       legacy_route_access_log: {
         Row: {
           action: string

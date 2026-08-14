@@ -94,24 +94,39 @@ function LeadsPage() {
   })
 
   const getStatusBadge = (status: string, lead?: any) => {
+    const badges = [];
+    
     if (lead?.interested_in_personalized_solution) {
-      return (
-        <div className="flex flex-col gap-1 items-start">
-          <Badge variant="default" className="bg-purple-500">Personalizado</Badge>
-          <Badge variant="outline" className="text-[9px] lowercase">
-            {lead.preferred_contact_channel === 'whatsapp' ? 'via WhatsApp' : 'via Vídeo'}
-          </Badge>
-        </div>
-      )
+      badges.push(<Badge key="pers" variant="default" className="bg-purple-600">Personalizado</Badge>);
     }
-    switch (status) {
-      case 'interessado': return <Badge variant="secondary">Interessado</Badge>
-      case 'contratação_em_andamento': return <Badge variant="default" className="bg-blue-500">Em contratação</Badge>
-      case 'abandonado': return <Badge variant="destructive">Abandonado</Badge>
-      case 'perdido': return <Badge variant="outline">Perdido</Badge>
-      default: return <Badge variant="outline">{status}</Badge>
-    }
-  }
+
+    const statusMap: Record<string, { label: string, color: string }> = {
+      novo: { label: 'Novo', color: 'bg-blue-500' },
+      aguardando_contato: { label: 'Aguardando Contato', color: 'bg-yellow-500' },
+      em_atendimento: { label: 'Em Atendimento', color: 'bg-indigo-500' },
+      proposta_enviada: { label: 'Proposta Enviada', color: 'bg-orange-500' },
+      contratado: { label: 'Contratado', color: 'bg-green-500' },
+      perdido: { label: 'Perdido', color: 'bg-slate-500' },
+      spam: { label: 'Spam', color: 'bg-red-500' },
+      interessado: { label: 'Interessado', color: 'bg-blue-400' },
+      contratação_em_andamento: { label: 'Em contratação', color: 'bg-blue-600' },
+      abandonado: { label: 'Abandonado', color: 'bg-red-400' },
+    };
+
+    const config = statusMap[status] || { label: status, color: 'bg-slate-400' };
+    badges.push(<Badge key="status" className={config.color}>{config.label}</Badge>);
+
+    return (
+      <div className="flex flex-col gap-1 items-start">
+        {badges}
+        {lead?.preferred_contact_channel && (
+          <span className="text-[9px] text-muted-foreground lowercase">
+            via {lead.preferred_contact_channel === 'whatsapp' ? 'WhatsApp' : 'Vídeo'}
+          </span>
+        )}
+      </div>
+    );
+  };
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
@@ -124,9 +139,9 @@ function LeadsPage() {
   }
 
   const filteredLeads = leads?.filter((l: any) => 
-    l.contact_name?.toLowerCase().includes(search.toLowerCase()) ||
-    l.contact_email?.toLowerCase().includes(search.toLowerCase()) ||
-    l.contact_phone?.includes(search)
+    l.name?.toLowerCase().includes(search.toLowerCase()) ||
+    l.email?.toLowerCase().includes(search.toLowerCase()) ||
+    l.phone?.includes(search)
   )
 
   const brl = (n: number | null) => 
@@ -236,11 +251,11 @@ function LeadsPage() {
                   <div className="flex flex-col gap-1">
                     <span className="font-medium flex items-center gap-2">
                       <User className="h-3 w-3 text-muted-foreground" />
-                      {lead.contact_name || 'Sem nome'}
+                      {lead.name || 'Sem nome'}
                     </span>
                     <span className="text-[10px] text-muted-foreground flex items-center gap-2">
                       <Phone className="h-3 w-3" />
-                      {lead.contact_phone || '—'}
+                      {lead.phone || '—'}
                     </span>
                   </div>
                 </TableCell>
@@ -261,7 +276,7 @@ function LeadsPage() {
                   {getPriorityBadge(lead.priority)}
                 </TableCell>
                 <TableCell>
-                  {getStatusBadge(lead.status_comercial, lead)}
+                  {getStatusBadge(lead.status, lead)}
                 </TableCell>
                 <TableCell>
                   {lead.next_action_date ? (
@@ -283,7 +298,7 @@ function LeadsPage() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    {lead.status_comercial === 'contratação_em_andamento' && (
+                    {lead.status === 'contratação_em_andamento' && (
                       <Button variant="ghost" size="sm" asChild title="Ver Contrato">
                         <Link to="/contracts">
                           <FileText className="h-4 w-4 text-primary" />
@@ -316,23 +331,23 @@ function LeadsPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <DialogTitle className="text-2xl flex items-center gap-3">
-                      {selectedLead.contact_name || 'Lead sem nome'}
-                      {selectedLead.status_comercial === 'contratação_em_andamento' && (
+                      {selectedLead.name || 'Lead sem nome'}
+                      {selectedLead.status === 'contratação_em_andamento' && (
                         <Link to="/contracts" className="text-primary hover:underline text-xs font-normal flex items-center gap-1 bg-primary/5 px-2 py-1 rounded">
                           <FileText className="h-3 w-3" /> Ver Contrato
                         </Link>
                       )}
                     </DialogTitle>
                     <DialogDescription className="flex items-center gap-4 mt-1">
-                      <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {selectedLead.contact_email || '—'}</span>
-                      <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {selectedLead.contact_phone || '—'}</span>
+                      <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {selectedLead.email || '—'}</span>
+                      <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {selectedLead.phone || '—'}</span>
                     </DialogDescription>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    {getStatusBadge(selectedLead.status_comercial, selectedLead)}
+                    {getStatusBadge(selectedLead.status, selectedLead)}
                     <div className="flex flex-col items-end gap-1 mt-1">
                       <Badge variant="outline" className="text-[10px]">
-                        Origem: {selectedLead.flow_origin === 'opening' ? 'Abertura' : selectedLead.flow_origin === 'switching' ? 'Troca' : selectedLead.flow_origin === 'landing_personalized' ? 'Landing Personalizado' : selectedLead.flow_origin || 'Desconhecida'}
+                        Origem: {selectedLead.origin === 'opening' ? 'Abertura' : selectedLead.origin === 'switching' ? 'Troca' : selectedLead.origin === 'landing_personalized' ? 'Landing Personalizado' : selectedLead.origin || 'Desconhecida'}
                       </Badge>
                       {selectedLead.requested_personalized_at && (
                         <span className="text-[9px] text-muted-foreground flex items-center gap-1">
@@ -396,8 +411,8 @@ function LeadsPage() {
                   <div className="space-y-2">
                     <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Alterar Status Comercial</label>
                     <Select 
-                      defaultValue={selectedLead.status_comercial}
-                      onValueChange={(val) => updateMutation.mutate({ data: { id: selectedLead.id, status_comercial: val } })}
+                      defaultValue={selectedLead.status}
+                      onValueChange={(val) => updateMutation.mutate({ data: { id: selectedLead.id, status: val } })}
                     >
                       <SelectTrigger className="h-9">
                         <SelectValue />
@@ -532,7 +547,7 @@ function LeadsPage() {
                             if (input?.value.trim()) {
                               historyMutation.mutate({
                                 data: {
-                                  prospect_id: selectedLead.id,
+                                  lead_id: selectedLead.id,
                                   action_type: 'tentativa_contato',
                                   content: input.value.trim()
                                 }

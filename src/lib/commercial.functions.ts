@@ -42,8 +42,9 @@ export const confirmContracting = createServerFn({ method: "POST" })
     })
   }).parse(data))
   .handler(async ({ data }) => {
-    // 1. Registra o Prospect
-    const { data: prospect, error } = await (supabase as any)
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // 1. Registra o Prospect na tabela legacy para manter compatibilidade com o fluxo de contrato
+    const { data: prospect, error } = await supabaseAdmin
       .from("commercial_prospects")
       .insert({
         flow_origin: data.flow_type,
@@ -91,6 +92,7 @@ export const confirmContracting = createServerFn({ method: "POST" })
     return { 
       success: true, 
       message: "Intenção de contratação registrada com sucesso!",
-      prospectId: prospect.id 
+      prospectId: prospect.id,
+      leadId: prospect.id // Mapeando prospectId para leadId para facilitar a transição no frontend
     };
   });
