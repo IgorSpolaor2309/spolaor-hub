@@ -178,14 +178,16 @@ export function CheckoutView({
 
       console.log("[generateContract_RESULT]", result);
 
+      if (result.success === false) {
+        toast.error(result.error || "Não foi possível gerar o contrato.");
+        setIsConfirming(false);
+        return;
+      }
+
       const contractId = result.contractId || result.id;
       console.log("[contractId_FOUND]", contractId);
 
-
-      console.log(`[VALIDATION_RESULT] Errors: ${result.missingFields?.length || 0}`);
-      
-      // 3. Se houver campos obrigatórios faltando, exibimos o modal para que o usuário complete.
-      // O contrato JÁ FOI gerado, mas para seguir para a revisão idealmente os dados devem estar lá.
+      // Se houver campos obrigatórios faltando, exibimos o modal para que o usuário complete.
       if (result.missingFields && result.missingFields.length > 0) {
         console.log(`[VALIDATION_ERRORS] Fields missing:`, result.missingFields);
         setMissingFieldsModal({
@@ -194,27 +196,26 @@ export function CheckoutView({
           prospectId: prospectId,
           extractedData: extractedData
         });
+        setIsConfirming(false);
         return;
       }
 
-
-
-      // 4. Se não houver erros, validar se tem ID e Snapshot
       if (!contractId) {
         console.error("[CONTRACT_GENERATION_ERROR] Missing ID", result);
         toast.error("Contrato gerado, mas não foi possível abrir a revisão.");
+        setIsConfirming(false);
         return;
       }
 
       if (!result.content_snapshot || result.content_snapshot.length === 0) {
         console.error("[CONTRACT_GENERATION_ERROR] Missing or empty Snapshot", result);
         toast.error("Contrato gerado sem conteúdo. Por favor, tente novamente.");
+        setIsConfirming(false);
         return;
       }
 
       console.log(`[CONTRACT_GENERATION_SUCCESS] ID: ${contractId}, Snapshot length: ${result.content_snapshot.length}`);
       
-      // 5. Rastrear jornada final
       await trackJourney({
         data: {
           leadId: leadIdParam || leadId,
@@ -229,12 +230,10 @@ export function CheckoutView({
       
       // Forçar navegação imediata
       window.location.href = `/revisar-contrato/${contractId}`;
-      
-      console.log("NAVIGATION_CALLED");
     } catch (e: any) {
       console.error("[CONTRACT_GENERATION_ERROR]", e);
       toast.error(e.message || "Erro ao gerar contrato");
-      throw e;
+      setIsConfirming(false);
     }
   };
 

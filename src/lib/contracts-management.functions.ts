@@ -113,9 +113,7 @@ export const getGeneratedContracts = createServerFn({ method: "GET" })
 export const generateContract = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ prospectId: z.string() }).parse(data))
   .handler(async ({ data }) => {
-    // PADRONIZANDO O LOG DE INÍCIO
     console.log(`[GENERATE_CONTRACT_INPUT] prospectId: ${data.prospectId}`);
-
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { INSTITUCIONAL_DIGITAL_SC } = await import("./institucional.server");
@@ -129,7 +127,14 @@ export const generateContract = createServerFn({ method: "POST" })
     
     if (pError || !prospect) throw new Error("Prospect não encontrado");
 
-    // 2. Fetch Services for the plan
+    // 2. Fetch Lead Data
+    const { data: lead } = await supabaseAdmin
+      .from("leads")
+      .select("*")
+      .eq("email", prospect.contact_email || "")
+      .maybeSingle();
+
+    // 3. Fetch Services for the plan
     const { data: planServices } = await supabaseAdmin
       .from("plan_services")
       .select("*, service:service_id (nome, descricao)")
@@ -137,14 +142,29 @@ export const generateContract = createServerFn({ method: "POST" })
 
     const planServicesList = planServices?.map(ps => (ps.service as any)?.nome).filter(Boolean).join(", ") || "";
 
-    // 3. Fetch Lead Data
-    const { data: lead } = await supabaseAdmin
-      .from("leads")
-      .select("*")
-      .eq("email", prospect.contact_email || "")
+    // 4. Check for existing contract (REGENERATION LOGIC)
+    const { data: existingContract } = await supabaseAdmin
+      .from("generated_contracts")
+      .select("id, status, content_snapshot, metadata")
+      .eq("prospect_id", data.prospectId)
+      .order("created_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
-    // 4. Get Active Model
+    if (existingContract) {
+      const status = existingContract.status;
+      if (status === 'contrato_enviado' || status === 'contrato_assinado') {
+        console.warn(`[GENERATE_CONTRACT] Blocked regeneration for status: ${status}`);
+        return {
+          success: false,
+          error: "O contrato já foi enviado ou assinado e não pode ser regenerado.",
+          contractId: existingContract.id
+        };
+      }
+      console.log(`[GENERATE_CONTRACT] Regenerating contract ${existingContract.id} (status: ${status})`);
+    }
+
+    // 5. Get Active Model
     const { data: model, error: mError } = await supabaseAdmin
       .from("contract_models")
       .select("*")
@@ -153,7 +173,7 @@ export const generateContract = createServerFn({ method: "POST" })
     
     if (mError || !model) throw new Error("Nenhum modelo de contrato ativo encontrado");
 
-    // 5. Get Proposal Snapshot if personalized
+    // 6. Get Proposal Snapshot if personalized
     const { data: proposal } = await supabaseAdmin
       .from("custom_proposals")
       .select("*")
@@ -161,16 +181,37 @@ export const generateContract = createServerFn({ method: "POST" })
       .eq("status", "aceita")
       .maybeSingle();
 
-    // 5.1. Determine monthly fee and setup fee correctly
-    const monthlyFee = prospect.final_value || 0;
-    const origValue = prospect.original_value || 0;
-    const setupFee = origValue > monthlyFee ? (origValue - monthlyFee) : 0;
-    const finalSetupValue = (proposal as any)?.setup_value ?? setupFee;
-
-    // 6. Base Placeholders Mapping
+    // 7. Base Data Structuring (PLACEHOLDER MAPPING IMPROVEMENT)
     const journeyData = (lead?.journey_data as any) || (prospect?.ai_extracted_data as any) || {};
     const extracted = (journeyData?.extracted ?? {}) as Record<string, any>;
     
+    // contractData centralizer for placeholders
+    const contractData = {
+      razao_social: extracted.razao_social || extracted.company_name || lead?.name || "A informar",
+      cnpj: prospect.cnpj || lead?.cnpj || extracted.cnpj || "00000000000000",
+      endereco: extracted.address || extracted.logradouro || lead?.city || "A informar",
+      email: prospect.contact_email || lead?.email || extracted.email || "A informar",
+      telefone: prospect.contact_phone || lead?.phone || extracted.phone || "A informar",
+      natureza_juridica: extracted.legal_nature || extracted.natureza_juridica || "A informar",
+      nome_responsavel: extracted.representative_name || extracted.responsavel || lead?.name || prospect.contact_name || "A informar",
+      cpf_responsavel: extracted.representative_cpf || extracted.cpf || "00000000000",
+    };
+
+    // Correct Razão Social rule: Never use contact_name as company name if we have a real company name or CNPJ
+    if (prospect.cnpj || lead?.cnpj || extracted.cnpj) {
+       if (contractData.razao_social === prospect.contact_name || contractData.razao_social === lead?.name) {
+         if (!extracted.razao_social && !extracted.company_name) {
+            // Keep it as "A informar" to avoid using contact name for company
+            contractData.razao_social = "A informar (Razão Social)";
+         }
+       }
+    }
+
+    console.log(`CONTRACT_DATA_RAZAO_SOCIAL: ${contractData.razao_social}`);
+    console.log(`CONTRACT_DATA_ENDERECO: ${contractData.endereco}`);
+    console.log(`CONTRACT_DATA_RESPONSAVEL: ${contractData.nome_responsavel}`);
+    console.log(`CONTRACT_DATA_CPF: ${contractData.cpf_responsavel}`);
+
     const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
     const formatCNPJ = (val: string) => {
       const clean = val.replace(/\D/g, '');
@@ -178,26 +219,21 @@ export const generateContract = createServerFn({ method: "POST" })
       return clean.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
     };
 
+    const monthlyFee = prospect.final_value || 0;
+    const origValue = prospect.original_value || 0;
+    const setupFee = origValue > monthlyFee ? (origValue - monthlyFee) : 0;
+    const finalSetupValue = (proposal as any)?.setup_value ?? setupFee;
     const finalPlanName = prospect.plan?.nome || "Personalizado";
 
-    // 6.1 Identify Real Company Name vs Representative
-    // Never use contact_name as company name if we have a real company name
-    const companyName = extracted.razao_social || extracted.company_name || "A informar";
-    const repName = extracted.representative_name || extracted.responsavel || prospect.contact_name || "A informar";
-    
-    // 6.2 Define Consistant Readjustment Rule
-    // Use IPCA/IBGE as the official rule
-    const readjustmentRule = "IPCA/IBGE anual";
-
     const placeholders: Record<string, string> = {
-      "{{razao_social}}": companyName || "A informar",
-      "{{cnpj}}": formatCNPJ(prospect.cnpj || lead?.cnpj || extracted.cnpj || "00000000000000"),
-      "{{email}}": prospect.contact_email || lead?.email || extracted.email || "A informar",
-      "{{telefone}}": prospect.contact_phone || lead?.phone || extracted.phone || "A informar",
-      "{{endereco}}": extracted.address || extracted.logradouro || lead?.city || "A informar",
-      "{{natureza_juridica}}": extracted.legal_nature || extracted.natureza_juridica || "A informar",
-      "{{nome_responsavel}}": repName,
-      "{{cpf_responsavel}}": extracted.representative_cpf || extracted.cpf || "00000000000",
+      "{{razao_social}}": contractData.razao_social,
+      "{{cnpj}}": formatCNPJ(contractData.cnpj),
+      "{{email}}": contractData.email,
+      "{{telefone}}": contractData.telefone,
+      "{{endereco}}": contractData.endereco,
+      "{{natureza_juridica}}": contractData.natureza_juridica,
+      "{{nome_responsavel}}": contractData.nome_responsavel,
+      "{{cpf_responsavel}}": contractData.cpf_responsavel,
       "{{plano}}": finalPlanName,
       "{{valor_mensal}}": brl(monthlyFee),
       "{{valor_implantacao}}": finalSetupValue > 0 ? brl(finalSetupValue) : "Isento",
@@ -208,19 +244,21 @@ export const generateContract = createServerFn({ method: "POST" })
         : (proposal?.max_revenue ? `Até ${brl(proposal.max_revenue).replace(',00', '')} por mês` : "Conforme Proposta"),
       "{{estrutura_incluida}}": "Atendimento Digital via WhatsApp e Plataforma",
       "{{vigencia}}": "12 meses",
-      "{{reajuste}}": readjustmentRule,
+      "{{reajuste}}": "IPCA/IBGE anual",
       "{{data_contratacao}}": new Date().toLocaleDateString("pt-BR"),
       "{{crc_sp}}": INSTITUCIONAL_DIGITAL_SC.crc_sp,
       "{{cidade_assinatura}}": INSTITUCIONAL_DIGITAL_SC.cidade_assinatura,
       "{{representante_contratada}}": INSTITUCIONAL_DIGITAL_SC.representante,
       "{{cpf_representante_contratada}}": INSTITUCIONAL_DIGITAL_SC.cpf_representante,
+      "{{contratada_razao_social}}": INSTITUCIONAL_DIGITAL_SC.razao_social,
+      "{{contratada_cnpj}}": INSTITUCIONAL_DIGITAL_SC.cnpj,
+      "{{contratada_endereco}}": INSTITUCIONAL_DIGITAL_SC.endereco,
     };
 
+    // Services Mapping
     if (proposal) {
       const services = (proposal.services as any[]) || [];
       const included = services.filter((s: any) => s.included).map((s: any) => s.name).join(", ");
-      
-      // Get explicitly selected extra services from prospect
       const selectedExtraIds = (prospect.extra_service_ids as string[]) || [];
       const { data: dbExtraServices } = await supabaseAdmin
         .from("services")
@@ -228,15 +266,12 @@ export const generateContract = createServerFn({ method: "POST" })
         .in("id", selectedExtraIds);
         
       const extras = dbExtraServices?.map(s => s.nome).join(", ") || "";
-      
       placeholders["{{servicos_incluidos}}"] = included || planServicesList || "Serviços Contábeis padrão conforme catálogo";
       placeholders["{{servicos_extras}}"] = extras || "Consultoria Especializada, Auditoria Retroativa";
       placeholders["{{descontos}}"] = brl(proposal.discount_value || 0);
       placeholders["{{condicoes_especiais}}"] = (proposal.special_conditions as string) || "Nenhuma";
     } else {
       placeholders["{{servicos_incluidos}}"] = planServicesList || "Serviços Contábeis padrão conforme catálogo";
-      
-      // Fetch specifically selected services for non-personalized flow
       const selectedExtraIds = (prospect.extra_service_ids as string[]) || [];
       const { data: dbExtraServices } = await supabaseAdmin
         .from("services")
@@ -249,6 +284,7 @@ export const generateContract = createServerFn({ method: "POST" })
       placeholders["{{condicoes_especiais}}"] = "Nenhuma";
     }
 
+    // Validation Check
     const mandatory = {
       "razao_social": placeholders["{{razao_social}}"],
       "cnpj": placeholders["{{cnpj}}"],
@@ -256,54 +292,67 @@ export const generateContract = createServerFn({ method: "POST" })
       "endereco": placeholders["{{endereco}}"],
       "nome_responsavel": placeholders["{{nome_responsavel}}"],
       "cpf_responsavel": placeholders["{{cpf_responsavel}}"],
-      "institucional_crc": INSTITUCIONAL_DIGITAL_SC.crc_sp,
-      "institucional_cpf": INSTITUCIONAL_DIGITAL_SC.cpf_representante
     };
 
     const missingFields = Object.entries(mandatory)
       .filter(([key, value]) => {
-        if (!value || value === "A informar" || value === "A definir" || value === "" || value.includes("...")) return true;
+        if (!value || value === "A informar" || value === "A informar (Razão Social)" || value === "" || value.includes("...")) return true;
         if (key === "cnpj" && (value.includes("00.000.000/0000-00") || value.length < 14)) return true;
-        if (key === "cpf_responsavel" && (value.includes("000.000.000-00") || value.replace(/\D/g, '') === "00000000000")) return true;
-        // Check for Institutional demo values
-        if (Object.values(INSTITUCIONAL_DIGITAL_SC).some(demoVal => typeof demoVal === 'string' && value.includes(demoVal))) {
-          // If it's the contratada's data, it's a demo/pendency
-          if (key.includes("contratada") || key === "crc_sp") return true;
-        }
+        if (key === "cpf_responsavel" && (value.replace(/\D/g, '') === "00000000000")) return true;
         return false;
       })
       .map(([key]) => key);
 
     let finalContent = model.content;
     Object.entries(placeholders).forEach(([key, value]) => {
-      const safeValue = String(value || "A definir");
-      finalContent = finalContent.replace(new RegExp(key, 'g'), safeValue);
+      finalContent = finalContent.replace(new RegExp(key, 'g'), String(value || "A definir"));
     });
 
-    const { data: generated, error: gError } = await supabaseAdmin
-      .from("generated_contracts")
-      .insert({
-        prospect_id: prospect.id,
-        model_id: model.id,
-        version: model.version,
-        content_snapshot: finalContent,
-        status: 'contrato_gerado',
-        validation_errors: missingFields.length > 0 ? missingFields : null,
-        metadata: { placeholders } // Store placeholders for reference in UI
-      } as any)
-      .select().single();
-
-    if (gError) {
-      console.error("[CONTRACT_GENERATION_ERROR]", gError);
-      throw gError;
+    // 8. DB UPSERT (CREATE OR UPDATE)
+    let result;
+    if (existingContract) {
+      result = await supabaseAdmin
+        .from("generated_contracts")
+        .update({
+          content_snapshot: finalContent,
+          validation_errors: missingFields.length > 0 ? missingFields : null,
+          metadata: { 
+            ...((existingContract?.metadata as any) || {}), 
+            placeholders, 
+            updated_at: new Date().toISOString() 
+          },
+          version: model.version,
+          model_id: model.id
+        })
+        .eq("id", existingContract.id)
+        .select().single();
+    } else {
+      result = await supabaseAdmin
+        .from("generated_contracts")
+        .insert({
+          prospect_id: prospect.id,
+          model_id: model.id,
+          version: model.version,
+          content_snapshot: finalContent,
+          status: 'contrato_gerado',
+          validation_errors: missingFields.length > 0 ? missingFields : null,
+          metadata: { placeholders }
+        } as any)
+        .select().single();
     }
 
-    console.log(`[CONTRACT_CREATED_RESPONSE] success: true, contractId: ${generated.id}`);
+    if (result.error) {
+      console.error("[CONTRACT_GENERATION_DB_ERROR]", result.error);
+      throw result.error;
+    }
+
+    const generated = result.data;
+    console.log(`[CONTRACT_GENERATION_COMPLETE] success: true, contractId: ${generated.id}`);
     
     return {
       success: true,
       contractId: generated.id,
-      id: generated.id, // Compatibilidade com acessos antigos por .id
+      id: generated.id,
       content_snapshot: generated.content_snapshot,
       missingFields,
       isInstitucionalDemo: !!(INSTITUCIONAL_DIGITAL_SC as any).is_demo
