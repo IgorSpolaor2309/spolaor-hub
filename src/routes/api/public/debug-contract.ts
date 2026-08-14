@@ -5,29 +5,22 @@ export const Route = createFileRoute('/api/public/debug-contract')({
     handlers: {
       GET: async ({ request }) => {
         const url = new URL(request.url)
-        const contractId = url.searchParams.get('id')
         
-        if (!contractId) {
-          return new Response(JSON.stringify({ error: 'Missing id param' }), { status: 400 })
-        }
-
         try {
           const { supabaseAdmin } = await import('@/integrations/supabase/client.server')
           
           const { data, error } = await supabaseAdmin
             .from('generated_contracts')
-            .select(`
-              *,
-              prospect:prospect_id (*)
-            `)
-            .eq('id', contractId)
-            .maybeSingle()
+            .select('*')
+            .limit(5)
 
           return new Response(JSON.stringify({ 
-            contractId,
-            found: !!data,
+            contracts: data,
             error,
-            data
+            env: {
+                SUPABASE_URL: !!process.env.VITE_SUPABASE_URL,
+                SB_KEY: !!process.env.SB_SECRET_SERVICE_ROLE_KEY
+            }
           }, null, 2), {
             headers: { 'Content-Type': 'application/json' }
           })
@@ -38,3 +31,4 @@ export const Route = createFileRoute('/api/public/debug-contract')({
     }
   }
 })
+
